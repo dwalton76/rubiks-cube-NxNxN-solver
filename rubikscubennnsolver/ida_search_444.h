@@ -23,6 +23,6 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(char *cube, unsigned in
                                                          struct key_value_pair **reduce_333_444,
                                                          char *reduce_333_edges_only, char *reduce_333_centers_only,
                                                          struct wings_for_edges_recolor_pattern_444 *wings_for_recolor);
-int ida_search_complete_reduce_333_444(char *cube);
+unsigned char ida_search_complete_reduce_333_444(char *cube);
 
 #endif /* _IDA_SEARCH_444_H */

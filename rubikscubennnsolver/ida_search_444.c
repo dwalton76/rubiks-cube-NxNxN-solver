@@ -633,7 +633,7 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
     return result;
 }
 
-int ida_search_complete_reduce_333_444(char *cube) {
+unsigned char ida_search_complete_reduce_333_444(char *cube) {
     // Are the centers solved?
     if (cube[6] == cube[7] && cube[10] == cube[11] && cube[6] == cube[10] && cube[22] == cube[23] &&
         cube[26] == cube[27] && cube[22] == cube[26] && cube[38] == cube[39] && cube[42] == cube[43] &&

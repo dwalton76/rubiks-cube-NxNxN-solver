@@ -258,7 +258,7 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, un
     }
 }
 
-int ida_search_complete(char *cube, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
+unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
                         unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll, move_type *moves_to_here) {
     struct key_value_pair *pt_entry = NULL;
     unsigned int orbit0_wide_quarter_turn_count = 0;

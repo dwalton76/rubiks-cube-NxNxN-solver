@@ -32,10 +32,15 @@ unsigned int right_oblique_edges_666[NUM_RIGHT_OBLIQUE_EDGES_666] = {
 };
 
 unsigned int get_unpaired_obliques_count_666(char *cube) {
-    int unpaired_obliques = 8;
+    unsigned int unpaired_obliques = 8;
+    unsigned int left_cube_index = 0;
+    unsigned int right_cube_index = 0;
 
     for (int i = 0; i < NUM_LEFT_OBLIQUE_EDGES_666; i++) {
-        if (cube[left_oblique_edges_666[i]] == '1' && cube[right_oblique_edges_666[i]] == '1') {
+        left_cube_index = left_oblique_edges_666[i];
+        right_cube_index = right_oblique_edges_666[i];
+
+        if (cube[left_cube_index] == '1' && cube[right_cube_index] == '1') {
             unpaired_obliques -= 1;
         }
     }
@@ -85,10 +90,19 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube,
     return result;
 }
 
-int ida_search_complete_LR_oblique_edges_stage_666(char *cube) {
-    if (get_unpaired_obliques_count_666(cube) == 0) {
-        return 1;
-    } else {
-        return 0;
+unsigned char ida_search_complete_LR_oblique_edges_stage_666(char *cube) {
+    unsigned int left_cube_index = 0;
+    unsigned int right_cube_index = 0;
+
+    for (int i = 0; i < NUM_LEFT_OBLIQUE_EDGES_666; i++) {
+        left_cube_index = left_oblique_edges_666[i];
+        right_cube_index = right_oblique_edges_666[i];
+
+        if ((cube[left_cube_index] == '1' && cube[right_cube_index] == '0') ||
+            (cube[left_cube_index] == '0' && cube[right_cube_index] == '1')) {
+            return 0;
+        }
     }
+
+    return 1;
 }

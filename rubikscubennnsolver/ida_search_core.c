@@ -580,7 +580,6 @@ int outer_layer_moves_in_order(move_type move, move_type prev_move) {
     }
 }
 
-
 int steps_on_same_face_and_layer(move_type move, move_type prev_move) {
     switch (move) {
         case U:

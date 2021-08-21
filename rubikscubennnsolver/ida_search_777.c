@@ -104,10 +104,10 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube,
     }
     */
 
-   // The xyzzy heuristic was used to solve a few hundred cubes and build the following
-   // switch statement that maps unpaired_count to a move count. The results of this are
-   // not a huge difference from the xyzzy heuristic but it does speed up the search a good
-   // bit for some problematic cubes.
+    // The xyzzy heuristic was used to solve a few hundred cubes and build the following
+    // switch statement that maps unpaired_count to a move count. The results of this are
+    // not a huge difference from the xyzzy heuristic but it does speed up the search a good
+    // bit for some problematic cubes.
     switch (unpaired_count) {
         case 0:
         case 1:

@@ -259,7 +259,8 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, un
 }
 
 unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
-                        unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll, move_type *moves_to_here) {
+                                  unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll,
+                                  move_type *moves_to_here) {
     struct key_value_pair *pt_entry = NULL;
     unsigned int orbit0_wide_quarter_turn_count = 0;
     unsigned int orbit1_wide_quarter_turn_count = 0;
@@ -472,9 +473,9 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
 
         if (cube_size == 4) {
             rotate_444(cube_copy, cube_tmp, array_size, move);
-        } else if (cube_size == 6){
+        } else if (cube_size == 6) {
             rotate_666(cube_copy, cube_tmp, array_size, move);
-        } else if (cube_size == 7){
+        } else if (cube_size == 7) {
             rotate_777(cube_copy, cube_tmp, array_size, move);
         } else {
             printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
@@ -528,7 +529,6 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
         reduce_333_centers_only = ida_cost_only_preload(
             "lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
         wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
-
     }
 
     heuristic_result = ida_heuristic(cube, type, 99);
@@ -581,7 +581,6 @@ int main(int argc, char *argv[]) {
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
     memset(same_face_and_layer_matrix, 0, MOVE_MAX * MOVE_MAX);
-
 
     for (int i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
@@ -798,10 +797,10 @@ int main(int argc, char *argv[]) {
             if (steps_on_same_face_and_layer(i_move, j_move)) {
                 move_matrix[i_move][j] = MOVE_NONE;
 
-            // if we are solving centers, we want to avoid doing permutations of outer layer moves as they
-            // will all result in the same cube state.  For instance there is no point in doing F U B, B U F,
-            // U B F, etc. We can do only one of those and that is enough.
             } else if (centers_only && !outer_layer_moves_in_order(i_move, j_move)) {
+                // if we are solving centers, we want to avoid doing permutations of outer layer moves as they
+                // will all result in the same cube state.  For instance there is no point in doing F U B, B U F,
+                // U B F, etc. We can do only one of those and that is enough.
                 move_matrix[i_move][j] = MOVE_NONE;
 
             } else {

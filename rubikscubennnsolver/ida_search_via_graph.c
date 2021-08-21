@@ -559,7 +559,6 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         f_cost = node->cost_to_here + node->cost_to_goal;
 
         if (node->cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
-
             // We found a solution!!
             solution_count++;
 
@@ -1037,10 +1036,10 @@ int main(int argc, char *argv[]) {
             if (steps_on_same_face_and_layer(i_move, j_move)) {
                 move_matrix[i_move][j] = MOVE_NONE;
 
-            // if we are solving centers, we want to avoid doing permutations of outer layer moves as they
-            // will all result in the same cube state.  For instance there is no point in doing F U B, B U F,
-            // U B F, etc. We can do only one of those and that is enough.
             } else if (centers_only && !outer_layer_moves_in_order(i_move, j_move)) {
+                // if we are solving centers, we want to avoid doing permutations of outer layer moves as they
+                // will all result in the same cube state.  For instance there is no point in doing F U B, B U F,
+                // U B F, etc. We can do only one of those and that is enough.
                 move_matrix[i_move][j] = MOVE_NONE;
 
             } else {

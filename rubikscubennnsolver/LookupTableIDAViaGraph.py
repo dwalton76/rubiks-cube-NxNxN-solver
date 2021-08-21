@@ -70,6 +70,7 @@ class LookupTableIDAViaGraph(LookupTable):
         perfect_hash02_filename: str = None,
         pt1_state_max: int = None,
         pt2_state_max: int = None,
+        centers_only: bool = False,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -82,6 +83,7 @@ class LookupTableIDAViaGraph(LookupTable):
         self.main_table_state_length = main_table_state_length
         self.main_table_max_depth = main_table_max_depth
         self.main_table_prune_tables = main_table_prune_tables
+        self.centers_only = centers_only
 
         if perfect_hash01_filename:
             self.perfect_hash01_filename = "lookup-tables/" + perfect_hash01_filename
@@ -297,6 +299,9 @@ class LookupTableIDAViaGraph(LookupTable):
         if max_ida_threshold is not None:
             cmd.append("--max-ida-threshold")
             cmd.append(str(max_ida_threshold))
+
+        if self.centers_only:
+            cmd.append("--centers-only")
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))

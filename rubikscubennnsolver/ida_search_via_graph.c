@@ -760,6 +760,7 @@ int main(int argc, char *argv[]) {
     unsigned long prune_table_3_state = 0;
     unsigned long prune_table_4_state = 0;
     unsigned char max_ida_threshold = 30;
+    unsigned char centers_only = 0;
     char *prune_table_states_filename = NULL;
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
@@ -848,6 +849,9 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--max-ida-threshold")) {
             i++;
             max_ida_threshold = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--centers-only")) {
+            centers_only = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;
@@ -1004,6 +1008,12 @@ int main(int argc, char *argv[]) {
             move_type j_move = legal_moves[j];
 
             if (steps_on_same_face_and_layer(i_move, j_move)) {
+                move_matrix[i_move][j] = MOVE_NONE;
+
+            // if we are solving centers, we want to avoid doing permutations of outer layer moves as they
+            // will all result in the same cube state.  For instance there is no point in doing F U B, B U F,
+            // U B F, etc. We can do only one of those and that is enough.
+            } else if (centers_only && !outer_layer_moves_in_order(i_move, j_move)) {
                 move_matrix[i_move][j] = MOVE_NONE;
 
             } else {

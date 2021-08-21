@@ -1335,6 +1335,7 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
             ),
             perfect_hash01_filename="lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash",
             pt1_state_max=12870,
+            centers_only=True,
         )
 
 
@@ -1781,7 +1782,8 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
                 parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
             ),
-            multiplier=1.2,
+            multiplier=1.06,
+            centers_only=True,
         )
 
 

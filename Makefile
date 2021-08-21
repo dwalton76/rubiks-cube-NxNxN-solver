@@ -1,6 +1,6 @@
 
 clean:
-	rm -rf build dist venv rubikscubennnsolver.egg-info cache ida_search ida_search_via_graph
+	rm -rf build dist venv rubikscubennnsolver.egg-info cache ida_search ida_search_via_graph my-pt-states.txt
 	find . -name __pycache__ | xargs rm -rf
 
 init: clean

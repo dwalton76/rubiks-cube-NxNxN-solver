@@ -789,7 +789,7 @@ class RubiksCube444(RubiksCube):
                     # If we evaluate all 2048 of them on a pi3 it takes about 1500ms which ends
                     # up being a huge chunk of the total solve time.  Checking the first 25% will
                     # get us a reasonably short solution.
-                    if self.cpu_mode == "fast" and count >= 512:
+                    if count >= 512:
                         break
 
             logger.info(

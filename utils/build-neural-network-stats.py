@@ -23,7 +23,6 @@ def cli():
 @click.option("--filename", type=str, default="cube.csv", show_default=True, help="ressults filename")
 def stage_centers_555(cube_count: int, move_count: int, batch_size: int, filename: str) -> None:
     cube = RubiksCube555(solved_555, "URFDLB")
-    cube.cpu_mode = "normal"
     cube.lt_init()
     cube.re_init()
     original_state = cube.state[:]
@@ -46,7 +45,6 @@ def stage_centers_555(cube_count: int, move_count: int, batch_size: int, filenam
 def lr_centers_555() -> None:
     filename_nn = "cube.csv"
     cube = RubiksCube555(solved_555, "URFDLB")
-    cube.cpu_mode = "normal"
     cube.lt_init()
     cube.re_init()
     pt_count = len(cube.lt_LR_centers_stage.prune_tables)

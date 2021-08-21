@@ -1,6 +1,7 @@
 # standard libraries
 import itertools
 import logging
+import subprocess
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -588,7 +589,8 @@ class LookupTable555LRTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("L", "R") else "0" for x in self.t_centers_555])
+        LR_colors = (parent_state[38], parent_state[88])
+        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.t_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -646,7 +648,8 @@ class LookupTable555LRXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("L", "R") else "0" for x in self.x_centers_555])
+        LR_colors = (parent_state[38], parent_state[88])
+        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.x_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -707,7 +710,8 @@ class LookupTable555FBTCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in UFBD_t_centers_555])
+        FB_colors = (parent_state[63], parent_state[113])
+        state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_t_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -754,7 +758,8 @@ class LookupTable555FBXCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        state = "".join(["1" if parent_state[x] in ("F", "B") else "0" for x in UFBD_x_centers_555])
+        FB_colors = (parent_state[63], parent_state[113])
+        state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_x_centers_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -1969,7 +1974,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             perfect_hash02_filename="lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.pt-state-perfect-hash",
             pt1_state_max=117600,
             pt2_state_max=117600,
-            multiplier=1.12,
+            multiplier=1.05,
         )
 
 
@@ -2403,7 +2408,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
-            multiplier=1.2,
+            multiplier=1.09,
         )
 
 
@@ -2870,33 +2875,29 @@ class RubiksCube555(RubiksCube):
         """
         Stage LR centers
         """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
 
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_LR_centers_stage.solve_via_c()
             self.print_cube()
             self.solution.append(
-                "COMMENT_%d_steps_555_LR_centers_staged"
+                "COMMENT_%d_steps_555_two_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
 
         logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def group_centers_stage_FB(self):
+    def group_centers_stage_FB(self, max_ida_threshold: int = None):
         """
         Stage FB centers
         """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
 
         if not self.FB_centers_staged():
             tmp_solution_len = len(self.solution)
-            self.lt_FB_centers_stage.solve_via_c()
+            self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
             self.print_cube()
             self.solution.append(
-                "COMMENT_%d_steps_555_FB_centers_staged"
+                "COMMENT_%d_steps_555_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
         else:
@@ -2912,9 +2913,10 @@ class RubiksCube555(RubiksCube):
 
     def eo_edges(self):
         """
-        Our goal is to get the edges split into high/low groups but we do not care what the final orienation is of the edges. Each edge can either
-        be in its final orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2 is because there cannot be an odd number of edges
-        not in their final orientation.
+        Our goal is to get the edges split into high/low groups but we do not care what
+        the final orienation is of the edges. Each edge can either be in its final
+        orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2
+        is because there cannot be an odd number of edges not in their final orientation.
         """
         permutations = []
         original_state = self.state[:]
@@ -3047,9 +3049,7 @@ class RubiksCube555(RubiksCube):
         original_solution = self.solution[:]
         original_solution_len = len(self.solution)
         results = []
-
-        min_phase4_solution_len = 99
-        min_phase4_high_low_count = 0
+        min_phase4_solution_len = None
 
         for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
             wing_str_combo = sorted(wing_str_combo)
@@ -3060,41 +3060,30 @@ class RubiksCube555(RubiksCube):
             if self.lt_phase4.solve():
                 phase4_solution = self.solution[original_solution_len:]
                 phase4_solution_len = len(phase4_solution)
-                high_edge_count = self.high_edge_midge_pair_count(self.lt_phase4.wing_strs)
-                low_edge_count = self.low_edge_midge_pair_count(self.lt_phase4.wing_strs)
-                high_low_count = high_edge_count + low_edge_count
-                results.append((phase4_solution_len, high_low_count, wing_str_combo))
+                results.append((phase4_solution_len, wing_str_combo))
 
-                if phase4_solution_len < min_phase4_solution_len:
+                if min_phase4_solution_len is None or phase4_solution_len < min_phase4_solution_len:
                     min_phase4_solution_len = phase4_solution_len
-                    min_phase4_high_low_count = high_low_count
                     logger.info(
-                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (NEW MIN)"
                     )
 
                 elif phase4_solution_len == min_phase4_solution_len:
-                    if high_low_count > min_phase4_high_low_count:
-                        min_phase4_high_low_count = high_low_count
-                        logger.info(
-                            f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (NEW MIN)"
-                        )
-                    else:
-                        logger.info(
-                            f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count} (TIE)"
-                        )
+                    logger.info(
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (TIE)"
+                    )
                 else:
                     logger.debug(
-                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}, high/low count {high_low_count}"
+                        f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
                     )
             else:
                 logger.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        results = sorted(results, key=lambda x: (x[0], -x[1]))
-
-        # logger.info("\n" + "\n".join(map(str, results[0:20])))
-        results = [x[2] for x in results[0:20]]
+        results.sort()
+        # logger.info("\n" + "\n".join(map(str, results)))
+        results = [x[1] for x in results]
         return results
 
     def pair_first_four_edges(self, phase4_wing_str_combo):
@@ -3181,15 +3170,88 @@ class RubiksCube555(RubiksCube):
 
         logger.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
+    def group_centers_phase1_and_2(self) -> None:
+        """
+        phase1 stages the centers on sides L and R
+        phase2 stages the centers on sides F and B
+
+        There are three different combinations of colors we can put on sides LR (colors LR, UD or FB).
+        Try all three combinations and see which leads to the shortest phase1 + phase2 solution length.
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        min_phase1_2_len = None
+        min_phase1_2_pre_step = None
+
+        # disable INFO messages as we try all three combinations
+        logging.getLogger().setLevel(logging.WARNING)
+
+        # z will move LR to UD and vice versa
+        # y will move LR to FB and vice versa
+        for pre_step in (None, "z", "y"):
+            self.rotate(pre_step)
+            self.group_centers_stage_LR()
+
+            # If we already have a candidate solution for phase1_2 then we can put a cap on how deep
+            # into phase2 should look. This can save some cycles by aborting a phase2 once we know
+            # the phase1_2 solution will not be shorter than our current min_phase1_2_len.
+            if min_phase1_2_len is not None:
+                phase1_len = self.get_solution_len_minus_rotates(self.solution)
+                max_ida_threshold = min_phase1_2_len - phase1_len
+            else:
+                max_ida_threshold = None
+
+            try:
+                self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
+                found_phase2_solution = True
+            except subprocess.CalledProcessError:
+                logger.warning(
+                    f"pre_step {pre_step}, phase1 len {phase1_len}, max_ida_threshold {max_ida_threshold} (NO SOLUTION)"
+                )
+                found_phase2_solution = False
+
+            if found_phase2_solution:
+                phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
+
+                if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
+                    logger.warning(f"pre_step {pre_step}, phase1_2 len {phase1_2_solution_len} (NEW MIN)")
+                    min_phase1_2_len = phase1_2_solution_len
+                    min_phase1_2_pre_step = pre_step
+                else:
+                    logger.warning(f"pre_step {pre_step}, phase1_2 len {phase1_2_solution_len}")
+
+            self.solution = original_solution[:]
+            self.state = original_state[:]
+
+        logging.getLogger().setLevel(logging.INFO)
+        self.rotate(min_phase1_2_pre_step)
+        self.group_centers_stage_LR()
+        self.group_centers_stage_FB()
+
+        # rotate cube so sides U and F are where they should be
+        pre_rotate_state = self.state[:]
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
+        if self.state != pre_rotate_state:
+            self.print_cube()
+            logger.info("rotated cube so sides U and F are where they should be")
+
     def reduce_333(self):
         self.lt_init()
 
         if not self.centers_solved() or not self.edges_paired():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+
             # phase 1
             self.group_centers_stage_LR()
 
             # phase 2
             self.group_centers_stage_FB()
+
+            # phase 1 and phase 2 - stages all centers
+            # self.group_centers_phase1_and_2()
 
             # phase 3
             self.eo_edges()
@@ -3201,10 +3263,14 @@ class RubiksCube555(RubiksCube):
             original_solution = self.solution[:]
             original_solution_len = len(self.solution)
 
-            min_phase456_solution_len = 99
+            min_phase456_solution_len = None
             min_phase456_solution = []
             min_phase456_state = []
             edge_messages = []
+
+            # controls how many first four wing_str combos we evaluate.  Make this number 495 to evaluate all of them, you
+            # would only do so for a FMC as this will take a long time.
+            MAX_INDEX = 0
 
             for (index, wing_str_combo) in enumerate(self.find_first_four_edges_to_pair()):
                 self.state = original_state[:]
@@ -3215,20 +3281,21 @@ class RubiksCube555(RubiksCube):
                 phase456_solution = self.solution[original_solution_len:]
                 phase456_solution_len = self.get_solution_len_minus_rotates(phase456_solution)
 
-                if phase456_solution_len < min_phase456_solution_len:
+                if min_phase456_solution_len is None or phase456_solution_len < min_phase456_solution_len:
                     min_phase456_solution_len = phase456_solution_len
                     min_phase456_state = self.state[:]
                     min_phase456_solution = self.solution[:]
                     msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps (NEW MIN)"
+                elif phase456_solution_len == min_phase456_solution_len:
+                    msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps (TIE)"
                 else:
                     msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps"
 
                 logger.info(msg)
                 edge_messages.append(msg)
 
-                # If you are doing a FMC comment this out and we will evaluate 20 different first four wing_str_combos
-                # This saves a move or two but takes a while.
-                break
+                if index >= MAX_INDEX:
+                    break
 
             if len(edge_messages) > 1:
                 logger.info("")

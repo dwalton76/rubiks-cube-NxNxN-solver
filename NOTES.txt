@@ -1,0 +1,85 @@
+python ./utils/test.py --size 5x5x5
+
+- 555 phase1+2 could be faster by
+    - have phase1 return all solutions of the shortest length
+    - could build a lookup table of phase2 costs...there are only 165 million states in phase2
+    - could also have phase2 return all solutions of the shortest length
+    - could phase3 then work for multiple phase1+2 solutions?  This would give us a way to find the
+      shortest phase1+2+3 solution.
+
+- 555 phase456 solution could be faster by
+    - solve a bunch of cubes and find average solution lengths for phase5 and phase6
+    - try all wing_str combos but put IDA max thresholds based on average solution lengths for phase5 and phase6
+    - that would give us a much much faster way to try many wing_str combos
+
+- 555 phase456 solution needs an option to take the 333 solution into account
+
+Look at the "B' F U" permutations in the middle of the solution...we should not be exploring all of those nodes
+
+[2021-08-19T11:36:09.241] IDA count 8,727,608, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' B' F U Lw' Uw Fw' 
+[2021-08-19T11:36:09.241] IDA count 8,727,635, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' B' F U Lw' Uw Fw 
+[2021-08-19T11:36:09.241] IDA count 8,727,748, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' B' U F Lw' Uw Fw' 
+[2021-08-19T11:36:09.241] IDA count 8,727,775, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' B' U F Lw' Uw Fw 
+[2021-08-19T11:36:09.241] IDA count 8,727,971, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' F B' U Lw' Uw Fw' 
+[2021-08-19T11:36:09.241] IDA count 8,727,998, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' F B' U Lw' Uw Fw 
+[2021-08-19T11:36:09.241] IDA count 8,728,081, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' F U B' Lw' Uw Fw' 
+[2021-08-19T11:36:09.241] IDA count 8,728,108, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' F U B' Lw' Uw Fw 
+[2021-08-19T11:36:09.241] IDA count 8,728,354, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' U B' F Lw' Uw Fw' 
+[2021-08-19T11:36:09.241] IDA count 8,728,381, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' U B' F Lw' Uw Fw 
+[2021-08-19T11:36:09.241] IDA count 8,728,476, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' U F B' Lw' Uw Fw' 
+[2021-08-19T11:36:09.241] IDA count 8,728,503, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Bw Rw2 Uw R2 Lw' U F B' Lw' Uw Fw 
+
+
+
+777
+===
+./ida_search --kociemba .........xUU...x...x..x...x..U...x...xxU...................................................................Uxx...U...U..U...x..U...x...xUx..................UxU...U...U..U...x..x...U...Uxx...................................................................UUx...U...x..U...U..x...U...xUx......... --type 7x7x7-UD-oblique-edges-stage
+[2021-08-21T12:02:26.688] IDA threshold 8, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-21T12:02:26.688] IDA threshold 9, explored 110 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-21T12:02:26.692] IDA threshold 10, explored 3,743 nodes, took 0.003s, 1,247,666 nodes-per-sec
+[2021-08-21T12:02:26.771] IDA threshold 11, explored 97,742 nodes, took 0.079s, 1,237,240 nodes-per-sec
+[2021-08-21T12:02:27.731] IDA threshold 12, explored 2,390,252 nodes, took 0.960s, 2,489,846 nodes-per-sec
+[2021-08-21T12:02:52.953] IDA threshold 13, explored 57,674,436 nodes, took 25.221s, 2,286,762 nodes-per-sec
+[2021-08-21T12:02:59.081] IDA count 12,891,769, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
+SOLUTION: U 3Rw2 3Fw2 B' D' 3Rw2 Rw' 3Dw2 F' 3Uw2 U' 3Fw2 3Bw2 
+
+              . . . . . . . 
+              . . 1 1 1 . . 
+              . 0 . . . 0 . 
+              . 0 . . . 0 . 
+              . 0 . . . 0 . 
+              . . 1 1 1 . . 
+              . . . . . . . 
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . 1 1 1 . . . . . . . . . . . 0 0 0 . . 
+. . . . . . . . 0 . . . 1 . . . . . . . . . 1 . . . 0 . 
+. . . . . . . . 0 . . . 1 . . . . . . . . . 1 . . . 0 . 
+. . . . . . . . 0 . . . 1 . . . . . . . . . 1 . . . 0 . 
+. . . . . . . . . 1 1 1 . . . . . . . . . . . 0 0 0 . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+
+              . . . . . . . 
+              . . 1 1 1 . . 
+              . 1 . . . 0 . 
+              . 1 . . . 0 . 
+              . 1 . . . 0 . 
+              . . 0 0 0 . . 
+              . . . . . . . 
+
+[2021-08-21T12:02:59.081] IDA threshold 14, explored 12,891,769 nodes, took 6.129s, 2,103,405 nodes-per-sec
+[2021-08-21T12:02:59.081] IDA found solution, explored 73,058,053 total nodes, took 32.394s, 2,255,296 nodes-per-sec
+
+

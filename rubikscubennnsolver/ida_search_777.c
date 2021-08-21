@@ -104,10 +104,10 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube,
     }
     */
 
-   // The xyzzy heuristic was used to solve a few hundred cubes and build the following
-   // switch statement that maps unpaired_count to a move count. The results of this are
-   // not a huge difference from the xyzzy heuristic but it does speed up the search a good
-   // bit for some problematic cubes.
+    // The xyzzy heuristic was used to solve a few hundred cubes and build the following
+    // switch statement that maps unpaired_count to a move count. The results of this are
+    // not a huge difference from the xyzzy heuristic but it does speed up the search a good
+    // bit for some problematic cubes.
     switch (unpaired_count) {
         case 0:
         case 1:
@@ -143,12 +143,25 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube,
     return result;
 }
 
-int ida_search_complete_LR_oblique_edges_stage_777(char *cube) {
-    if (get_unpaired_obliques_count_777(cube) == 0) {
-        return 1;
-    } else {
-        return 0;
+unsigned char ida_search_complete_LR_oblique_edges_stage_777(char *cube) {
+    unsigned int left_cube_index = 0;
+    unsigned int middle_cube_index = 0;
+    unsigned int right_cube_index = 0;
+
+    for (unsigned char i = 0; i < NUM_LEFT_OBLIQUE_EDGES_777; i++) {
+        middle_cube_index = middle_oblique_edges_777[i];
+
+        if (cube[middle_cube_index] == '1') {
+            left_cube_index = left_oblique_edges_777[i];
+            right_cube_index = right_oblique_edges_777[i];
+
+            if (cube[left_cube_index] != '1' || cube[right_cube_index] != '1') {
+                return 0;
+            }
+        }
     }
+
+    return 1;
 }
 
 // ============================================================================
@@ -232,19 +245,72 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube,
     sprintf(result.lt_state, "%012llx", state);
 
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
+    /*
     if (unpaired_count > 8) {
         result.cost_to_goal = 4 + (unpaired_count >> 1);
     } else {
         result.cost_to_goal = unpaired_count;
     }
+    */
+
+    // The xyzzy heuristic was used to solve a few hundred cubes and build the following
+    // switch statement that maps unpaired_count to a move count. The results of this are
+    // not a huge difference from the xyzzy heuristic but it does speed up the search a good
+    // bit for some problematic cubes.
+    switch (unpaired_count) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            result.cost_to_goal = unpaired_count;
+            break;
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            result.cost_to_goal = unpaired_count + 1;
+            break;
+        case 8:
+        case 9:
+            result.cost_to_goal = 10;
+            break;
+        case 10:
+        case 11:
+            result.cost_to_goal = 11;
+            break;
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+            result.cost_to_goal = 12;
+            break;
+        default:
+            printf("invalid case %d\n", unpaired_count);
+            exit(1);
+            break;
+    }
 
     return result;
 }
 
-int ida_search_complete_UD_oblique_edges_stage_777(char *cube) {
-    if (get_UFBD_unpaired_obliques_count_777(cube) == 0) {
-        return 1;
-    } else {
-        return 0;
+unsigned char ida_search_complete_UD_oblique_edges_stage_777(char *cube) {
+    unsigned int left_cube_index = 0;
+    unsigned int middle_cube_index = 0;
+    unsigned int right_cube_index = 0;
+
+    for (int i = 0; i < UFBD_NUM_LEFT_OBLIQUE_EDGES_777; i++) {
+        middle_cube_index = UFBD_middle_oblique_edges_777[i];
+
+        if (cube[middle_cube_index] == '1') {
+            left_cube_index = UFBD_left_oblique_edges_777[i];
+            right_cube_index = UFBD_right_oblique_edges_777[i];
+
+            if (cube[left_cube_index] != '1' || cube[right_cube_index] != '1') {
+                return 0;
+            }
+        }
     }
+
+    return 1;
 }

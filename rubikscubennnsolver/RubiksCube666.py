@@ -958,6 +958,9 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (),
             "6x6x6-LR-oblique-edges-stage",  # C_ida_type
+            all_moves=moves_666,
+            illegal_moves=["3Uw", "3Uw'", "3Dw", "3Dw'", "3Lw", "3Lw'", "3Rw", "3Rw'", "3Fw", "3Fw'", "3Bw", "3Bw'"],
+            centers_only=True,
         )
 
     def recolor(self):
@@ -1335,6 +1338,7 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
             ),
             perfect_hash01_filename="lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash",
             pt1_state_max=12870,
+            centers_only=True,
         )
 
 
@@ -1781,7 +1785,8 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
                 parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
             ),
-            multiplier=1.2,
+            multiplier=1.06,
+            centers_only=True,
         )
 
 

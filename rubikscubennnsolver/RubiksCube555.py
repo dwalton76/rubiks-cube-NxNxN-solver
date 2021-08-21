@@ -671,6 +671,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
             multiplier=1.09,
+            centers_only=True,
         )
 
 
@@ -780,6 +781,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
             prune_tables=[parent.lt_FB_t_centers_stage, parent.lt_FB_x_centers_stage],
+            centers_only=True,
         )
 
 

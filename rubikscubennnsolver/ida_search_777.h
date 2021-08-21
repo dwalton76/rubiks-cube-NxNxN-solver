@@ -33,9 +33,9 @@
 #define BUCKETSIZE_STEP63_777 6350411
 
 struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube, unsigned int max_cost_to_goal);
-int ida_search_complete_UD_oblique_edges_stage_777(char *cube);
+unsigned char ida_search_complete_UD_oblique_edges_stage_777(char *cube);
 
 struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube, unsigned int max_cost_to_goal);
-int ida_search_complete_LR_oblique_edges_stage_777(char *cube);
+unsigned char ida_search_complete_LR_oblique_edges_stage_777(char *cube);
 
 #endif /* _IDA_SEARCH_777_H */

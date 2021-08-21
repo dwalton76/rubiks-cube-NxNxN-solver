@@ -769,6 +769,15 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
                 }
             }
 
+            // This is the scenario where the move is on the same face and layer as prev_move
+            if (move == MOVE_NONE) {
+                continue;
+            }
+
+            if (!outer_layer_moves_in_order(prev_move, move)) {
+                continue;
+            }
+
             char cube_copy[array_size];
             memcpy(cube_copy, cube, sizeof(char) * array_size);
             rotate_666(cube_copy, cube_tmp, array_size, move);
@@ -818,6 +827,15 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
                 } else {
                     skip_other_steps_this_face = MOVE_NONE;
                 }
+            }
+
+            // This is the scenario where the move is on the same face and layer as prev_move
+            if (move == MOVE_NONE) {
+                continue;
+            }
+
+            if (!outer_layer_moves_in_order(prev_move, move)) {
+                continue;
             }
 
             char cube_copy[array_size];

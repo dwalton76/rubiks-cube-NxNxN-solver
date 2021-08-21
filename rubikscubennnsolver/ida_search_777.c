@@ -232,10 +232,50 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube,
     sprintf(result.lt_state, "%012llx", state);
 
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
+    /*
     if (unpaired_count > 8) {
         result.cost_to_goal = 4 + (unpaired_count >> 1);
     } else {
         result.cost_to_goal = unpaired_count;
+    }
+    */
+
+    // The xyzzy heuristic was used to solve a few hundred cubes and build the following
+    // switch statement that maps unpaired_count to a move count. The results of this are
+    // not a huge difference from the xyzzy heuristic but it does speed up the search a good
+    // bit for some problematic cubes.
+    switch (unpaired_count) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            result.cost_to_goal = unpaired_count;
+            break;
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            result.cost_to_goal = unpaired_count + 1;
+            break;
+        case 8:
+        case 9:
+            result.cost_to_goal = 10;
+            break;
+        case 10:
+        case 11:
+            result.cost_to_goal = 11;
+            break;
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+            result.cost_to_goal = 12;
+            break;
+        default:
+            printf("invalid case %d\n", unpaired_count);
+            exit(1);
+            break;
     }
 
     return result;

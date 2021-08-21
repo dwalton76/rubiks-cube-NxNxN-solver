@@ -1345,7 +1345,16 @@ class LookupTableIDAViaC(object):
     A base class for IDA* lookup tables but using C to do the heavy lifting
     """
 
-    def __init__(self, parent, files: List[Tuple[str, int, str]], C_ida_type: str):
+    def __init__(
+        self,
+        parent,
+        files: List[Tuple[str, int, str]],
+        C_ida_type: str,
+        all_moves: List[str] = [],
+        illegal_moves: List[str] = [],
+        legal_moves: List[str] = [],
+        centers_only: bool = False,
+    ):
         self.avoid_oll = None
         self.avoid_pll = False
         self.nuke_corners = False
@@ -1354,11 +1363,27 @@ class LookupTableIDAViaC(object):
         self.recolor_positions = []
         self.parent = parent
         self.C_ida_type = C_ida_type
+        self.centers_only = centers_only
 
         for (filename, filesize, md5target) in files:
             filename = "lookup-tables/" + filename
             rm_file_if_mismatch(filename, filesize, md5target)
             download_file_if_needed(filename, self.parent.size)
+
+        if legal_moves:
+            self.all_moves = list(legal_moves)
+        else:
+            for x in illegal_moves:
+                if x not in all_moves:
+                    raise Exception("illegal move %s is not in the list of legal moves" % x)
+
+            self.all_moves = []
+
+            for x in all_moves:
+                if x not in illegal_moves:
+                    self.all_moves.append(x)
+
+        logger.debug("%s: all_moves %s" % (self, ",".join(self.all_moves)))
 
     def __str__(self) -> str:
         """
@@ -1440,6 +1465,12 @@ class LookupTableIDAViaC(object):
             # should have already done) the edge swaps must be even.
             assert self.parent.size == 4, "avoid_pll should only be True for 4x4x4 cubes"
             cmd.append("--avoid-pll")
+
+        if self.centers_only:
+            cmd.append("--centers-only")
+
+        cmd.append("--legal-moves")
+        cmd.append(",".join(self.all_moves))
 
         logger.info("%s: solving via C ida_search\n\n%s" % (self, " ".join(cmd)))
         output = subprocess.check_output(cmd).decode("ascii")

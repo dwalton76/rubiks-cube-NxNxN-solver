@@ -22,6 +22,11 @@ unsigned long array_size;
 unsigned long long ida_count;
 unsigned long long ida_count_total;
 unsigned long long seek_calls = 0;
+unsigned char centers_only = 0;
+unsigned char legal_move_count = 0;
+move_type legal_moves[MOVE_MAX];
+move_type move_matrix[MOVE_MAX][MOVE_MAX];
+move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
 #define MAX_IDA_THRESHOLD 20
 
 // Supported IDA searches
@@ -53,101 +58,6 @@ char *reduce_333_edges_only = NULL;
 char *reduce_333_centers_only = NULL;
 struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
 
-/* Remove leading and trailing whitespaces */
-char *strstrip(char *s) {
-    size_t size;
-    char *end;
-
-    size = strlen(s);
-
-    if (!size) return s;
-
-    // Removing trailing whitespaces
-    end = s + size - 1;
-    while (end >= s && isspace(*end)) end--;
-    *(end + 1) = '\0';
-
-    // Remove leading whitespaces
-    // The lookup table files do not have any leading whitespaces so commenting this out to save a few CPU cycles
-    // while (*s && isspace(*s))
-    //    s++;
-
-    return s;
-}
-
-/* The file must be sorted and all lines must be the same width */
-unsigned long file_binary_search(char *filename, char *state_to_find, int statewidth, unsigned long linecount,
-                                 int linewidth) {
-    FILE *fh_read = NULL;
-    unsigned long first = 0;
-    unsigned long midpoint = 0;
-    unsigned long last = linecount - 1;
-    char line[128];
-    int str_cmp_result;
-    char *foo;
-
-    fh_read = fopen(filename, "r");
-
-    if (fh_read == NULL) {
-        printf("ERROR: file_binary_search could not open %s\n", filename);
-        exit(1);
-    }
-
-    while (first <= last) {
-        midpoint = (unsigned long)((first + last) / 2);
-        fseek(fh_read, midpoint * linewidth, SEEK_SET);
-
-        if (fread(line, statewidth, 1, fh_read)) {
-            seek_calls++;
-
-            str_cmp_result = strncmp(state_to_find, line, statewidth);
-
-            if (str_cmp_result == 0) {
-                // read the entire line, not just the state
-                fseek(fh_read, midpoint * linewidth, SEEK_SET);
-
-                if (fread(line, linewidth, 1, fh_read)) {
-                    strstrip(line);
-                    fclose(fh_read);
-                    return 1;
-                } else {
-                    printf("ERROR: linewidth read failed for %s\n", filename);
-                    exit(1);
-                }
-
-            } else if (str_cmp_result < 0) {
-                last = midpoint - 1;
-
-            } else {
-                first = midpoint + 1;
-            }
-        } else {
-            printf("ERROR: statewidth read failed for %s\n", filename);
-            exit(1);
-        }
-    }
-
-    fclose(fh_read);
-    return 0;
-}
-
-/*
- * Replace all occurrences of 'old' with 'new'
- */
-void streplace(char *str, char old, char new) {
-    int i = 0;
-
-    /* Run till end of string */
-    while (str[i] != '\0') {
-        /* If occurrence of character is found */
-        if (str[i] == old) {
-            str[i] = new;
-        }
-
-        i++;
-    }
-}
-
 void str_replace_for_binary(char *str, char *ones) {
     int i = 0;
     int j;
@@ -175,27 +85,6 @@ void str_replace_for_binary(char *str, char *ones) {
             } else {
                 str[i] = '0';
             }
-        }
-
-        i++;
-    }
-}
-
-void str_replace_list_of_chars(char *str, char *old, char *new) {
-    int i = 0;
-    int j;
-
-    /* Run till end of string */
-    while (str[i] != '\0') {
-        j = 0;
-
-        while (old[j] != '\0') {
-            /* If occurrence of character is found */
-            if (str[i] == old[j]) {
-                str[i] = new[0];
-                break;
-            }
-            j++;
         }
 
         i++;
@@ -283,26 +172,6 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
     }
 }
 
-int moves_cost(char *moves) {
-    int cost = 0;
-    int i = 0;
-
-    if (moves) {
-        cost++;
-
-        while (moves[i] != '\0') {
-            // Moves are separated by whitespace
-            if (moves[i] == ' ') {
-                cost++;
-            }
-
-            i++;
-        }
-    }
-
-    return cost;
-}
-
 void ida_prune_table_preload(struct key_value_pair **hashtable, char *filename) {
     FILE *fh_read = NULL;
     int BUFFER_SIZE = 128;
@@ -363,19 +232,6 @@ char *ida_cost_only_preload(char *filename, unsigned long size) {
         printf("ERROR: ida_cost_only_preload read failed %s\n", filename);
         exit(1);
     }
-}
-
-int ida_prune_table_cost(struct key_value_pair *hashtable, char *state_to_find) {
-    int cost = 0;
-    struct key_value_pair *pt_entry = NULL;
-
-    pt_entry = hash_find(&hashtable, state_to_find);
-
-    if (pt_entry) {
-        cost = pt_entry->value;
-    }
-
-    return cost;
 }
 
 struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, unsigned int max_cost_to_goal) {
@@ -526,109 +382,6 @@ int ida_search_complete(char *cube, lookup_table_type type, unsigned int orbit0_
     return 0;
 }
 
-int step_allowed_by_ida_search(lookup_table_type type, move_type move) {
-    switch (type) {
-        // 4x4x4
-        case REDUCE_333_444:
-            switch (move) {
-                case Uw:
-                case Uw_PRIME:
-                case Lw:
-                case Lw_PRIME:
-                case Fw:
-                case Fw_PRIME:
-                case Rw:
-                case Rw_PRIME:
-                case Bw:
-                case Bw_PRIME:
-                case Dw:
-                case Dw_PRIME:
-                case L:
-                case L_PRIME:
-                case R:
-                case R_PRIME:
-                    return 0;
-                default:
-                    return 1;
-            }
-
-        // 6x6x6
-        case LR_OBLIQUE_EDGES_STAGE_666:
-            switch (move) {
-                case threeUw:
-                case threeUw_PRIME:
-                case threeDw:
-                case threeDw_PRIME:
-                case threeLw:
-                case threeLw_PRIME:
-                case threeRw:
-                case threeRw_PRIME:
-                case threeFw:
-                case threeFw_PRIME:
-                case threeBw:
-                case threeBw_PRIME:
-                    return 0;
-                default:
-                    return 1;
-            }
-
-        // 7x7x7
-        case LR_OBLIQUE_EDGES_STAGE_777:
-            switch (move) {
-                case threeUw:
-                case threeUw_PRIME:
-                case threeDw:
-                case threeDw_PRIME:
-                case threeFw:
-                case threeFw_PRIME:
-                case threeBw:
-                case threeBw_PRIME:
-                    return 0;
-                default:
-                    return 1;
-            }
-
-        case UD_OBLIQUE_EDGES_STAGE_777:
-            switch (move) {
-                case threeUw:
-                case threeUw_PRIME:
-                case threeDw:
-                case threeDw_PRIME:
-                case threeLw:
-                case threeLw_PRIME:
-                case threeRw:
-                case threeRw_PRIME:
-                case threeFw:
-                case threeFw_PRIME:
-                case threeBw:
-                case threeBw_PRIME:
-
-                case Uw:
-                case Uw_PRIME:
-                case Dw:
-                case Dw_PRIME:
-                case Fw:
-                case Fw_PRIME:
-                case Bw:
-                case Bw_PRIME:
-
-                case L:
-                case L_PRIME:
-                case L2:
-                case R:
-                case R_PRIME:
-                case R2:
-                    return 0;
-                default:
-                    return 1;
-            }
-
-        default:
-            printf("ERROR: step_allowed_by_ida_search add support for this type\n");
-            exit(1);
-    }
-}
-
 struct ida_search_result {
     unsigned int f_cost;
     unsigned int found_solution;
@@ -689,16 +442,8 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     hash_add(&ida_explored, heuristic_result.lt_state, 0);
 
     if (cube_size == 4) {
-        for (int i = 0; i < MOVE_COUNT_444; i++) {
-            move = moves_444[i];
-
-            if (steps_on_same_face_and_layer(move, prev_move)) {
-                continue;
-            }
-
-            if (!step_allowed_by_ida_search(type, move)) {
-                continue;
-            }
+        for (unsigned char i = 0; i < legal_move_count; i++) {
+            move = move_matrix[prev_move][i];
 
             // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             /*
@@ -711,11 +456,16 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
              * --cs0x7f
              */
             if (skip_other_steps_this_face != MOVE_NONE) {
-                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
                     continue;
                 } else {
                     skip_other_steps_this_face = MOVE_NONE;
                 }
+            }
+
+            // This is the scenario where the move is on the same face and layer as prev_move
+            if (move == MOVE_NONE) {
+                continue;
             }
 
             char cube_copy[array_size];
@@ -740,16 +490,8 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         }
 
     } else if (cube_size == 6) {
-        for (int i = 0; i < MOVE_COUNT_666; i++) {
-            move = moves_666[i];
-
-            if (steps_on_same_face_and_layer(move, prev_move)) {
-                continue;
-            }
-
-            if (!step_allowed_by_ida_search(type, move)) {
-                continue;
-            }
+        for (unsigned char i = 0; i < legal_move_count; i++) {
+            move = move_matrix[prev_move][i];
 
             // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             /*
@@ -762,7 +504,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
              * --cs0x7f
              */
             if (skip_other_steps_this_face != MOVE_NONE) {
-                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
                     continue;
                 } else {
                     skip_other_steps_this_face = MOVE_NONE;
@@ -771,10 +513,6 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
 
             // This is the scenario where the move is on the same face and layer as prev_move
             if (move == MOVE_NONE) {
-                continue;
-            }
-
-            if (!outer_layer_moves_in_order(prev_move, move)) {
                 continue;
             }
 
@@ -800,16 +538,8 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         }
 
     } else if (cube_size == 7) {
-        for (int i = 0; i < MOVE_COUNT_777; i++) {
-            move = moves_777[i];
-
-            if (steps_on_same_face_and_layer(move, prev_move)) {
-                continue;
-            }
-
-            if (!step_allowed_by_ida_search(type, move)) {
-                continue;
-            }
+        for (unsigned char i = 0; i < legal_move_count; i++) {
+            move = move_matrix[prev_move][i];
 
             // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
             /*
@@ -822,7 +552,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
              * --cs0x7f
              */
             if (skip_other_steps_this_face != MOVE_NONE) {
-                if (steps_on_same_face_and_layer(move, skip_other_steps_this_face)) {
+                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
                     continue;
                 } else {
                     skip_other_steps_this_face = MOVE_NONE;
@@ -831,10 +561,6 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
 
             // This is the scenario where the move is on the same face and layer as prev_move
             if (move == MOVE_NONE) {
-                continue;
-            }
-
-            if (!outer_layer_moves_in_order(prev_move, move)) {
                 continue;
             }
 
@@ -944,6 +670,10 @@ int main(int argc, char *argv[]) {
     unsigned int avoid_pll = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
+    memset(legal_moves, MOVE_NONE, MOVE_MAX);
+    memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
+    memset(same_face_and_layer_matrix, 0, MOVE_MAX * MOVE_MAX);
+
 
     for (int i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
@@ -993,6 +723,133 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--avoid-pll")) {
             avoid_pll = 1;
 
+        } else if (strmatch(argv[i], "--centers-only")) {
+            centers_only = 1;
+
+        } else if (strmatch(argv[i], "--legal-moves")) {
+            i++;
+            char *p = strtok(argv[i], ",");
+
+            while (p != NULL) {
+                if (strmatch(p, "U")) {
+                    legal_moves[legal_move_count] = U;
+                } else if (strmatch(p, "U'")) {
+                    legal_moves[legal_move_count] = U_PRIME;
+                } else if (strmatch(p, "U2")) {
+                    legal_moves[legal_move_count] = U2;
+                } else if (strmatch(p, "Uw")) {
+                    legal_moves[legal_move_count] = Uw;
+                } else if (strmatch(p, "Uw'")) {
+                    legal_moves[legal_move_count] = Uw_PRIME;
+                } else if (strmatch(p, "Uw2")) {
+                    legal_moves[legal_move_count] = Uw2;
+                } else if (strmatch(p, "3Uw")) {
+                    legal_moves[legal_move_count] = threeUw;
+                } else if (strmatch(p, "3Uw'")) {
+                    legal_moves[legal_move_count] = threeUw_PRIME;
+                } else if (strmatch(p, "3Uw2")) {
+                    legal_moves[legal_move_count] = threeUw2;
+
+                } else if (strmatch(p, "L")) {
+                    legal_moves[legal_move_count] = L;
+                } else if (strmatch(p, "L'")) {
+                    legal_moves[legal_move_count] = L_PRIME;
+                } else if (strmatch(p, "L2")) {
+                    legal_moves[legal_move_count] = L2;
+                } else if (strmatch(p, "Lw")) {
+                    legal_moves[legal_move_count] = Lw;
+                } else if (strmatch(p, "Lw'")) {
+                    legal_moves[legal_move_count] = Lw_PRIME;
+                } else if (strmatch(p, "Lw2")) {
+                    legal_moves[legal_move_count] = Lw2;
+                } else if (strmatch(p, "3Lw")) {
+                    legal_moves[legal_move_count] = threeLw;
+                } else if (strmatch(p, "3Lw'")) {
+                    legal_moves[legal_move_count] = threeLw_PRIME;
+                } else if (strmatch(p, "3Lw2")) {
+                    legal_moves[legal_move_count] = threeLw2;
+
+                } else if (strmatch(p, "F")) {
+                    legal_moves[legal_move_count] = F;
+                } else if (strmatch(p, "F'")) {
+                    legal_moves[legal_move_count] = F_PRIME;
+                } else if (strmatch(p, "F2")) {
+                    legal_moves[legal_move_count] = F2;
+                } else if (strmatch(p, "Fw")) {
+                    legal_moves[legal_move_count] = Fw;
+                } else if (strmatch(p, "Fw'")) {
+                    legal_moves[legal_move_count] = Fw_PRIME;
+                } else if (strmatch(p, "Fw2")) {
+                    legal_moves[legal_move_count] = Fw2;
+                } else if (strmatch(p, "3Fw")) {
+                    legal_moves[legal_move_count] = threeFw;
+                } else if (strmatch(p, "3Fw'")) {
+                    legal_moves[legal_move_count] = threeFw_PRIME;
+                } else if (strmatch(p, "3Fw2")) {
+                    legal_moves[legal_move_count] = threeFw2;
+
+                } else if (strmatch(p, "R")) {
+                    legal_moves[legal_move_count] = R;
+                } else if (strmatch(p, "R'")) {
+                    legal_moves[legal_move_count] = R_PRIME;
+                } else if (strmatch(p, "R2")) {
+                    legal_moves[legal_move_count] = R2;
+                } else if (strmatch(p, "Rw")) {
+                    legal_moves[legal_move_count] = Rw;
+                } else if (strmatch(p, "Rw'")) {
+                    legal_moves[legal_move_count] = Rw_PRIME;
+                } else if (strmatch(p, "Rw2")) {
+                    legal_moves[legal_move_count] = Rw2;
+                } else if (strmatch(p, "3Rw")) {
+                    legal_moves[legal_move_count] = threeRw;
+                } else if (strmatch(p, "3Rw'")) {
+                    legal_moves[legal_move_count] = threeRw_PRIME;
+                } else if (strmatch(p, "3Rw2")) {
+                    legal_moves[legal_move_count] = threeRw2;
+
+                } else if (strmatch(p, "B")) {
+                    legal_moves[legal_move_count] = B;
+                } else if (strmatch(p, "B'")) {
+                    legal_moves[legal_move_count] = B_PRIME;
+                } else if (strmatch(p, "B2")) {
+                    legal_moves[legal_move_count] = B2;
+                } else if (strmatch(p, "Bw")) {
+                    legal_moves[legal_move_count] = Bw;
+                } else if (strmatch(p, "Bw'")) {
+                    legal_moves[legal_move_count] = Bw_PRIME;
+                } else if (strmatch(p, "Bw2")) {
+                    legal_moves[legal_move_count] = Bw2;
+                } else if (strmatch(p, "3Bw")) {
+                    legal_moves[legal_move_count] = threeBw;
+                } else if (strmatch(p, "3Bw'")) {
+                    legal_moves[legal_move_count] = threeBw_PRIME;
+                } else if (strmatch(p, "3Bw2")) {
+                    legal_moves[legal_move_count] = threeBw2;
+
+                } else if (strmatch(p, "D")) {
+                    legal_moves[legal_move_count] = D;
+                } else if (strmatch(p, "D'")) {
+                    legal_moves[legal_move_count] = D_PRIME;
+                } else if (strmatch(p, "D2")) {
+                    legal_moves[legal_move_count] = D2;
+                } else if (strmatch(p, "Dw")) {
+                    legal_moves[legal_move_count] = Dw;
+                } else if (strmatch(p, "Dw'")) {
+                    legal_moves[legal_move_count] = Dw_PRIME;
+                } else if (strmatch(p, "Dw2")) {
+                    legal_moves[legal_move_count] = Dw2;
+                } else if (strmatch(p, "3Dw")) {
+                    legal_moves[legal_move_count] = threeDw;
+                } else if (strmatch(p, "3Dw'")) {
+                    legal_moves[legal_move_count] = threeDw_PRIME;
+                } else if (strmatch(p, "3Dw2")) {
+                    legal_moves[legal_move_count] = threeDw2;
+                }
+
+                p = strtok(NULL, ",");
+                legal_move_count++;
+            }
+
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-LR-centers-stage\n\n");
             exit(0);
@@ -1020,6 +877,46 @@ int main(int argc, char *argv[]) {
         printf("ERROR: only 2x2x2 through 7x7x7 cubes are supported, yours is %dx%dx%d\n", cube_size_kociemba,
                cube_size_kociemba, cube_size_kociemba);
         exit(1);
+    }
+
+    // build the move matrix, we do this to avoid tons of
+    // steps_on_same_face_and_layer() during the IDA search
+    for (unsigned char i = 0; i < legal_move_count; i++) {
+        move_type i_move = legal_moves[i];
+
+        for (unsigned char j = 0; j < legal_move_count; j++) {
+            move_type j_move = legal_moves[j];
+
+            if (steps_on_same_face_and_layer(i_move, j_move)) {
+                move_matrix[i_move][j] = MOVE_NONE;
+
+            // if we are solving centers, we want to avoid doing permutations of outer layer moves as they
+            // will all result in the same cube state.  For instance there is no point in doing F U B, B U F,
+            // U B F, etc. We can do only one of those and that is enough.
+            } else if (centers_only && !outer_layer_moves_in_order(i_move, j_move)) {
+                move_matrix[i_move][j] = MOVE_NONE;
+
+            } else {
+                move_matrix[i_move][j] = j_move;
+            }
+        }
+    }
+
+    move_type i_move = MOVE_NONE;
+    for (unsigned char j = 0; j < legal_move_count; j++) {
+        move_matrix[i_move][j] = legal_moves[j];
+    }
+
+    // build the same_face_and_layer_matrix, we do this to avoid tons of
+    // steps_on_same_face_and_layer() during the IDA search
+    for (unsigned char i = 1; i < MOVE_MAX; i++) {
+        for (unsigned char j = 1; j < MOVE_MAX; j++) {
+            if (steps_on_same_face_and_layer(i, j)) {
+                same_face_and_layer_matrix[i][j] = 1;
+            } else {
+                same_face_and_layer_matrix[i][j] = 0;
+            }
+        }
     }
 
     unsigned int cube_size = cube_size_kociemba;

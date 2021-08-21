@@ -16,41 +16,42 @@ python ./utils/test.py --size 5x5x5
 
 777
 ===
-./ida_search --kociemba .........xUU...x...x..x...x..U...x...xxU...................................................................Uxx...U...U..U...x..U...x...xUx..................UxU...U...U..U...x..x...U...Uxx...................................................................UUx...U...x..U...U..x...U...xUx......... --type 7x7x7-UD-oblique-edges-stage
-[2021-08-21T12:02:26.688] IDA threshold 8, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-21T12:02:26.688] IDA threshold 9, explored 110 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-21T12:02:26.692] IDA threshold 10, explored 3,743 nodes, took 0.003s, 1,247,666 nodes-per-sec
-[2021-08-21T12:02:26.771] IDA threshold 11, explored 97,742 nodes, took 0.079s, 1,237,240 nodes-per-sec
-[2021-08-21T12:02:27.731] IDA threshold 12, explored 2,390,252 nodes, took 0.960s, 2,489,846 nodes-per-sec
-[2021-08-21T12:02:52.953] IDA threshold 13, explored 57,674,436 nodes, took 25.221s, 2,286,762 nodes-per-sec
-[2021-08-21T12:02:59.081] IDA count 12,891,769, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
-SOLUTION: U 3Rw2 3Fw2 B' D' 3Rw2 Rw' 3Dw2 F' 3Uw2 U' 3Fw2 3Bw2 
+./ida_search --kociemba .........xUU...x...x..x...x..U...x...xxU...................................................................Uxx...U...U..U...x..U...x...xUx..................UxU...U...U..U...x..x...U...Uxx...................................................................UUx...U...x..U...U..x...U...xUx......... --type 7x7x7-UD-oblique-edges-stage --centers-only --legal-moves U,U',U2,Uw2,3Uw2,Lw,Lw',Lw2,3Lw2,F,F',F2,Fw2,3Fw2,Rw,Rw',Rw2,3Rw2,B,B',B2,Bw2,3Bw2,D,D',D2,Dw2,3Dw2
+
+[2021-08-21T14:56:52.349] min_ida_threshold 8
+[2021-08-21T14:56:52.350] IDA threshold 8, explored 1 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-21T14:56:52.350] IDA threshold 9, explored 110 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-21T14:56:52.352] IDA threshold 10, explored 2,778 nodes, took 0.001s, 2,778,000 nodes-per-sec
+[2021-08-21T14:56:52.396] IDA threshold 11, explored 56,367 nodes, took 0.044s, 1,281,068 nodes-per-sec
+[2021-08-21T14:56:52.818] IDA threshold 12, explored 1,030,505 nodes, took 0.421s, 2,447,755 nodes-per-sec
+[2021-08-21T14:56:59.484] IDA threshold 13, explored 17,246,485 nodes, took 6.667s, 2,586,843 nodes-per-sec
+[2021-08-21T14:58:02.102] IDA count 146,609,684, f_cost 13 vs threshold 14 (cost_to_here 13, cost_to_goal 0)
+SOLUTION: 3Lw2 Rw B Lw 3Bw2 U 3Dw2 B Rw 3Fw2 3Bw2 U 3Fw2 
 
               . . . . . . . 
-              . . 1 1 1 . . 
-              . 0 . . . 0 . 
-              . 0 . . . 0 . 
-              . 0 . . . 0 . 
-              . . 1 1 1 . . 
-              . . . . . . . 
-
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
-. . . . . . . . . 1 1 1 . . . . . . . . . . . 0 0 0 . . 
-. . . . . . . . 0 . . . 1 . . . . . . . . . 1 . . . 0 . 
-. . . . . . . . 0 . . . 1 . . . . . . . . . 1 . . . 0 . 
-. . . . . . . . 0 . . . 1 . . . . . . . . . 1 . . . 0 . 
-. . . . . . . . . 1 1 1 . . . . . . . . . . . 0 0 0 . . 
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
-
-              . . . . . . . 
-              . . 1 1 1 . . 
+              . . 0 0 0 . . 
               . 1 . . . 0 . 
               . 1 . . . 0 . 
               . 1 . . . 0 . 
               . . 0 0 0 . . 
               . . . . . . . 
 
-[2021-08-21T12:02:59.081] IDA threshold 14, explored 12,891,769 nodes, took 6.129s, 2,103,405 nodes-per-sec
-[2021-08-21T12:02:59.081] IDA found solution, explored 73,058,053 total nodes, took 32.394s, 2,255,296 nodes-per-sec
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . 0 0 0 . . . . . . . . . . . 1 1 1 . . 
+. . . . . . . . 1 . . . 1 . . . . . . . . . 1 . . . 0 . 
+. . . . . . . . 1 . . . 1 . . . . . . . . . 1 . . . 0 . 
+. . . . . . . . 1 . . . 1 . . . . . . . . . 1 . . . 0 . 
+. . . . . . . . . 0 0 0 . . . . . . . . . . . 0 0 0 . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 
+              . . . . . . . 
+              . . 0 0 0 . . 
+              . 1 . . . 1 . 
+              . 1 . . . 1 . 
+              . 1 . . . 1 . 
+              . . 1 1 1 . . 
+              . . . . . . . 
 
+[2021-08-21T14:58:02.102] IDA threshold 14, explored 146,609,684 nodes, took 62.619s, 2,341,297 nodes-per-sec
+[2021-08-21T14:58:02.102] IDA found solution, explored 164,945,930 total nodes, took 69.753s, 2,364,714 nodes-per-sec
+Memory usage: 0 MB

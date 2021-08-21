@@ -422,6 +422,9 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (),
             "7x7x7-LR-oblique-edges-stage",  # C_ida_type
+            all_moves=moves_777,
+            illegal_moves=["3Uw", "3Uw'", "3Dw", "3Dw'", "3Fw", "3Fw'", "3Bw", "3Bw'"],
+            centers_only=True,
         )
 
     def recolor(self):
@@ -503,6 +506,36 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (),
             "7x7x7-UD-oblique-edges-stage",  # C_ida_type
+            all_moves=moves_777,
+            illegal_moves=[
+                "3Uw",
+                "3Uw'",
+                "3Dw",
+                "3Dw'",
+                "3Lw",
+                "3Lw'",
+                "3Rw",
+                "3Rw'",
+                "3Fw",
+                "3Fw'",
+                "3Bw",
+                "3Bw'",
+                "Uw",
+                "Uw'",
+                "Dw",
+                "Dw'",
+                "Fw",
+                "Fw'",
+                "Bw",
+                "Bw'",
+                "L",
+                "L'",
+                "L2",
+                "R",
+                "R'",
+                "R2",
+            ],
+            centers_only=True,
         )
 
     def recolor(self):

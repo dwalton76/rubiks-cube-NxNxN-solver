@@ -958,6 +958,9 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (),
             "6x6x6-LR-oblique-edges-stage",  # C_ida_type
+            all_moves=moves_666,
+            illegal_moves=["3Uw", "3Uw'", "3Dw", "3Dw'", "3Lw", "3Lw'", "3Rw", "3Rw'", "3Fw", "3Fw'", "3Bw", "3Bw'"],
+            centers_only=True,
         )
 
     def recolor(self):

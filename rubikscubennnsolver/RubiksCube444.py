@@ -563,6 +563,25 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             ),
             # fmt: on
             "4x4x4-reduce-333",  # C_ida_type
+            all_moves=moves_444,
+            illegal_moves=[
+                "Uw",
+                "Uw'",
+                "Lw",
+                "Lw'",
+                "Fw",
+                "Fw'",
+                "Rw",
+                "Rw'",
+                "Bw",
+                "Bw'",
+                "Dw",
+                "Dw'",
+                "L",
+                "L'",
+                "R",
+                "R'",
+            ],
         )
 
 

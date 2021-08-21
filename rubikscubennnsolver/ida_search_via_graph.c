@@ -39,6 +39,7 @@ float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
 move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
+// struct key_value_pair *ida_explored = NULL;
 
 struct ida_search_result {
     unsigned int f_cost;
@@ -596,7 +597,28 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
             continue;
         }
 
+        // The following works, it does reduce the number of nodes we explore but it does so at the cost
+        // of the memory to remember all of the nodes and the CPU to do the hash search to see if the
+        // node is one that has already been explored.  In the end it does not provide a significant reduction
+        // in time (it reduces the overall solution time by 2% or 3%) so we will leave this here for a rainy day.
+        /*
+        char key[64];
+        sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u",
+            node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state, node->pt4_state,
+            orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
+            orbit1_wide_quarter_turns ? get_orbit1_wide_quarter_turn_count(node->moves_to_here) : 0,
+            node->cost_to_here
+        );
+
+        if (hash_find(&ida_explored, key)) {
+            free(node);
+            continue;
+        }
+        hash_add(&ida_explored, key, 0);
+        */
+
         memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+
         skip_other_steps_this_face = MOVE_NONE;
 
         for (unsigned char i = 0; i < legal_move_count; i++) {
@@ -689,6 +711,7 @@ struct ida_search_result ida_solve(unsigned int pt0_state, unsigned int pt1_stat
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
+        // hash_delete_all(&ida_explored);
 
         search_result = ida_search(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 

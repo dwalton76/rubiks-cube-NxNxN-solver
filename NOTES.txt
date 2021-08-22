@@ -13,3 +13,15 @@ python ./utils/test.py --size 5x5x5
     - that would give us a much much faster way to try many wing_str combos
 
 - 555 phase456 solution needs an option to take the 333 solution into account
+
+
+- 555 combine phase1+2..attempt #432
+    - solve a few hundred of today's phase1 where we stage LR
+    - use that to build a 2D heuristic matrix based on x-center cost and t-center cost. This
+        will give us a way to get a heuristic that goes up to ~10.
+    - we can use that same matrix for the UD x-center and t-centers
+    - use multiplier 1.10, that will round 5 to 6, 6 to 7, etc
+    - assume we can eventually find a solution, even it if takes a few hours.  Do this for a 
+        few hundred (maybe thousand) cubes and then we can build a 4D heuristic matrix where the
+        heuristic goes up to ~16.
+        

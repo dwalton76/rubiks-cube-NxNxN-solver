@@ -828,8 +828,11 @@ class LookupTable555CenterStageOnePhase(LookupTableIDAViaGraph):
                 parent.lt_LR_t_centers_stage,
                 parent.lt_LR_x_centers_stage,
                 parent.lt_UD_t_centers_stage,
-                parent.lt_UD_x_centers_stage,
+                # dwalton
+                # parent.lt_UD_x_centers_stage,
             ],
+            centers_only=True,
+            use_uthash=True,
         )
 
 
@@ -2849,8 +2852,9 @@ class RubiksCube555(RubiksCube):
         # phase 1
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
+        # dwalton
         self.lt_UD_t_centers_stage = LookupTable555UDCenterStageTCenter(self)
-        self.lt_UD_x_centers_stage = LookupTable555UDCenterStageXCenter(self)
+        # self.lt_UD_x_centers_stage = LookupTable555UDCenterStageXCenter(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
         self.lt_centers_stage_experiment = LookupTable555CenterStageOnePhase(self)
 
@@ -3407,16 +3411,23 @@ class RubiksCube555(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-            # phase 1
             # dwalton
-            # self.group_centers_stage_LR()
-            self.lt_centers_stage_experiment.solve_via_c()
-            self.print_cube()
-            self.solution.append(
-                "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
-            )
-            logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            raise Exception("DONE")
+            # phase 1
+            if True:
+                self.group_centers_stage_LR()
+            else:
+                self.lt_centers_stage_experiment.solve_via_c()
+                self.print_cube()
+                self.solution.append(
+                    "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
+                )
+                logger.info(
+                    "%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+                )
+                # standard libraries
+                import sys
+
+                sys.exit(0)
 
             # phase 2
             self.group_centers_stage_FB()

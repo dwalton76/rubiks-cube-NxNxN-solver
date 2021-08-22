@@ -13,4 +13,3 @@ python ./utils/test.py --size 5x5x5
     - that would give us a much much faster way to try many wing_str combos
 
 - 555 phase456 solution needs an option to take the 333 solution into account
-

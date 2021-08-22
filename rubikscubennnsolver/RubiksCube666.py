@@ -958,6 +958,9 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (),
             "6x6x6-LR-oblique-edges-stage",  # C_ida_type
+            all_moves=moves_666,
+            illegal_moves=["3Uw", "3Uw'", "3Dw", "3Dw'", "3Lw", "3Lw'", "3Rw", "3Rw'", "3Fw", "3Fw'", "3Bw", "3Bw'"],
+            centers_only=True,
         )
 
     def recolor(self):
@@ -1335,6 +1338,7 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
             ),
             perfect_hash01_filename="lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash",
             pt1_state_max=12870,
+            centers_only=True,
         )
 
 
@@ -1781,7 +1785,8 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
                 parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
             ),
-            multiplier=1.2,
+            multiplier=1.06,
+            centers_only=True,
         )
 
 
@@ -1916,7 +1921,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def get_fake_444(self):
         if self.fake_444 is None:
             self.fake_444 = RubiksCube444(solved_444, "URFDLB")
-            self.fake_444.cpu_mode = "normal"
             self.fake_444.lt_init()
             self.fake_444.enable_print_cube = False
         else:
@@ -1926,7 +1930,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def get_fake_555(self):
         if self.fake_555 is None:
             self.fake_555 = RubiksCube555(solved_555, "URFDLB")
-            self.fake_555.cpu_mode = self.cpu_mode
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
 

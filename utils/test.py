@@ -7,7 +7,7 @@ from pprint import pformat
 from statistics import median
 
 # rubiks cube libraries
-from rubikscubennnsolver import NotSolving, SolveError, StuckInALoop, configure_logging
+from rubikscubennnsolver import SolveError, StuckInALoop, configure_logging
 from rubikscubennnsolver.RubiksCube222 import RubiksCube222, solved_222
 from rubikscubennnsolver.RubiksCube333 import RubiksCube333, solved_333
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
@@ -28,6 +28,7 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
     solved_131313,
     solved_151515,
 )
+from rubikscubennnsolver.RubiksSide import NotSolving
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -37,20 +38,7 @@ parser.add_argument("--size", type=str, default="4x4x4")
 parser.add_argument("--test-cubes", type=str, default="./utils/test-cubes.json")
 parser.add_argument("--start", type=int, default=0)
 
-# cpu_mode
-parser.add_argument("--fast", default=True, action="store_true", help="Find a solution quickly")
-parser.add_argument("--normal", default=False, action="store_true", help="Find a shorter solution but takes longer")
-parser.add_argument("--slow", default=False, action="store_true", help="Find shortest solution we can, takes a while")
 args = parser.parse_args()
-
-if args.slow:
-    cpu_mode = "slow"
-elif args.normal:
-    cpu_mode = "normal"
-elif args.fast:
-    cpu_mode = "fast"
-else:
-    raise Exception("What CPU mode to use?")
 
 try:
 
@@ -137,13 +125,11 @@ try:
             if args.size == "all" and index > 0:
                 continue
 
-            # os.system('clear')
             logger.warning("Test %d/%d %s cube: %s" % (index, num_test_cases, size, kociemba_string))
             num_test_cases_executed += 1
             kociemba_string = str(kociemba_string)
             cube.solution = []
             cube.load_state(kociemba_string, order)
-            cube.cpu_mode = cpu_mode
 
             try:
                 cube.solve()

@@ -113,11 +113,11 @@ class InvalidCubeReduction(Exception):
     pass
 
 
-def configure_logging() -> None:
+def configure_logging(level=logging.INFO) -> None:
     """
     Set the logging format
     """
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
+    logging.basicConfig(level=level, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
 
 
 def reverse_steps(steps: List[str]) -> List[str]:
@@ -525,7 +525,6 @@ class RubiksCube(object):
         self.use_nuke_corners = False
         self.use_nuke_edges = False
         self.use_nuke_centers = False
-        self.cpu_mode = None
         self.solution_with_markers = []
         self.color_map = {}
         self.color_map_html = {}
@@ -1284,6 +1283,8 @@ class RubiksCube(object):
         Args:
             action: the step to apply to the cube
         """
+        if action is None:
+            return
 
         if action.startswith("COMMENT"):
             self.solution.append(action)
@@ -4579,8 +4580,7 @@ class RubiksCube(object):
     def reduce_333_slow(self) -> None:
         """
         Solve the centers and pair the edges to reduce the cube to a 3x3x3 but try a few re-colorings to try
-        to find a shorter solution.  This is only used when doing a FMC (Fewest Move Challenge) where the cpu_mode
-        is set to slow.
+        to find a shorter solution.  This is only used when doing a FMC (Fewest Move Challenge).
         """
         tmp_state = self.state[:]
         tmp_solution = self.solution[:]
@@ -4658,12 +4658,10 @@ class RubiksCube(object):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-        if self.cpu_mode == "slow":
-            self.reduce_333_slow()
-        else:
-            logger.info("reduce_333 begin")
-            self.reduce_333()
-            logger.info("reduce_333 end")
+        logger.info("reduce_333 begin")
+        # self.reduce_333_slow()
+        self.reduce_333()
+        logger.info("reduce_333 end")
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()

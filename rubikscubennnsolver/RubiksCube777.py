@@ -422,6 +422,9 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (),
             "7x7x7-LR-oblique-edges-stage",  # C_ida_type
+            all_moves=moves_777,
+            illegal_moves=["3Uw", "3Uw'", "3Dw", "3Dw'", "3Fw", "3Fw'", "3Bw", "3Bw'"],
+            centers_only=True,
         )
 
     def recolor(self):
@@ -503,6 +506,36 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             (),
             "7x7x7-UD-oblique-edges-stage",  # C_ida_type
+            all_moves=moves_777,
+            illegal_moves=[
+                "3Uw",
+                "3Uw'",
+                "3Dw",
+                "3Dw'",
+                "3Lw",
+                "3Lw'",
+                "3Rw",
+                "3Rw'",
+                "3Fw",
+                "3Fw'",
+                "3Bw",
+                "3Bw'",
+                "Uw",
+                "Uw'",
+                "Dw",
+                "Dw'",
+                "Fw",
+                "Fw'",
+                "Bw",
+                "Bw'",
+                "L",
+                "L'",
+                "L2",
+                "R",
+                "R'",
+                "R2",
+            ],
+            centers_only=True,
         )
 
     def recolor(self):
@@ -1217,6 +1250,7 @@ class LookupTableIDA777Step40(LookupTableIDAViaGraph):
                 "D2",
             ),
             prune_tables=(parent.lt_step41, parent.lt_step42, parent.lt_step43, parent.lt_step44),
+            centers_only=True,
         )
 
 
@@ -2057,6 +2091,7 @@ class LookupTableIDA777Step50(LookupTableIDAViaGraph):
                 "D2",
             ),
             prune_tables=(parent.lt_step51, parent.lt_step52, parent.lt_step53, parent.lt_step54, parent.lt_step55),
+            centers_only=True,
         )
 
 
@@ -2590,6 +2625,7 @@ class LookupTableIDA777Step60(LookupTableIDAViaGraph):
                 "D'",
             ),
             prune_tables=(parent.lt_step61, parent.lt_step62, parent.lt_step65, parent.lt_step66),
+            centers_only=True,
         )
 
 
@@ -3126,7 +3162,8 @@ class LookupTableIDA777Step70(LookupTableIDAViaGraph):
                 "D'",
             ),
             prune_tables=(parent.lt_step71, parent.lt_step72, parent.lt_step75, parent.lt_step76),
-            multiplier=1.2,
+            multiplier=1.08,
+            centers_only=True,
         )
 
 

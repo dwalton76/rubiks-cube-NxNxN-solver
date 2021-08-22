@@ -38,7 +38,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
     def get_fake_777(self):
         if self.fake_777 is None:
             self.fake_777 = RubiksCube777(solved_777, "URFDLB")
-            self.fake_777.cpu_mode = self.cpu_mode
             self.fake_777.lt_init()
             self.fake_777.enable_print_cube = False
         else:

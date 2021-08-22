@@ -36,6 +36,20 @@ def remove_failed_ida_output(lines: List[str]) -> List[str]:
 
 
 class LookupTableIDAViaGraph(LookupTable):
+    """
+    multipliers
+        1.04 will round 13 to 14, 14 to 15, etc
+        1.05 will round 10 to 11, etc
+        1.06 will round 9 to 10, etc
+        1.07 will round 8 to 9, etc
+        1.08 will round 7 to 8, etc
+        1.09 will round 6 to 7, etc
+        1.10 will round 5 to 6, etc
+        1.11 will round 5 to 6, etc
+        1.12 will round 5 to 6, etc
+        1.13 will round 4 to 5, etc
+    """
+
     def __init__(
         self,
         parent,
@@ -56,7 +70,7 @@ class LookupTableIDAViaGraph(LookupTable):
         perfect_hash02_filename: str = None,
         pt1_state_max: int = None,
         pt2_state_max: int = None,
-        multiple_solutions: bool = False,
+        centers_only: bool = False,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -69,6 +83,7 @@ class LookupTableIDAViaGraph(LookupTable):
         self.main_table_state_length = main_table_state_length
         self.main_table_max_depth = main_table_max_depth
         self.main_table_prune_tables = main_table_prune_tables
+        self.centers_only = centers_only
 
         if perfect_hash01_filename:
             self.perfect_hash01_filename = "lookup-tables/" + perfect_hash01_filename
@@ -82,7 +97,6 @@ class LookupTableIDAViaGraph(LookupTable):
 
         self.pt1_state_max = pt1_state_max
         self.pt2_state_max = pt2_state_max
-        self.multiple_solutions = multiple_solutions
 
         if self.perfect_hash01_filename or self.pt1_state_max:
             assert (
@@ -221,19 +235,20 @@ class LookupTableIDAViaGraph(LookupTable):
                 fh_pt_state.write("\n".join(to_write) + "\n")
                 to_write = []
 
-    def solve_via_c(self, pt_states=[], line_index_pre_steps={}):
+    def solve_via_c(self, pt_states=[], line_index_pre_steps={}, max_ida_threshold: int = None):
         cmd = ["./ida_search_via_graph"]
+        my_pt_state_filename = "my-pt-states.txt"
 
         if pt_states:
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
                 cmd.append(pt.filename.replace(".txt", ".bin"))
 
-            with open("my-pt-states.txt", "w") as fh:
+            with open(my_pt_state_filename, "w") as fh:
                 for x in pt_states:
                     fh.write(",".join(map(str, x)) + "\n")
             cmd.append("--prune-table-states")
-            cmd.append("my-pt-states.txt")
+            cmd.append(my_pt_state_filename)
         else:
             self.init_ida_graph_nodes()
 
@@ -281,8 +296,12 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
 
-        if self.multiple_solutions:
-            cmd.append("--multiple-solutions")
+        if max_ida_threshold is not None:
+            cmd.append("--max-ida-threshold")
+            cmd.append(str(max_ida_threshold))
+
+        if self.centers_only:
+            cmd.append("--centers-only")
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))

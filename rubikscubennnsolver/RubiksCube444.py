@@ -357,6 +357,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
                 parent.lt_LR_centers_stage,
                 # parent.lt_FB_centers_stage,
             ],
+            centers_only=True,
         )
 
 
@@ -562,6 +563,25 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             ),
             # fmt: on
             "4x4x4-reduce-333",  # C_ida_type
+            all_moves=moves_444,
+            illegal_moves=[
+                "Uw",
+                "Uw'",
+                "Lw",
+                "Lw'",
+                "Fw",
+                "Fw'",
+                "Rw",
+                "Rw'",
+                "Bw",
+                "Bw'",
+                "Dw",
+                "Dw'",
+                "L",
+                "L'",
+                "R",
+                "R'",
+            ],
         )
 
 
@@ -789,7 +809,7 @@ class RubiksCube444(RubiksCube):
                     # If we evaluate all 2048 of them on a pi3 it takes about 1500ms which ends
                     # up being a huge chunk of the total solve time.  Checking the first 25% will
                     # get us a reasonably short solution.
-                    if self.cpu_mode == "fast" and count >= 512:
+                    if count >= 512:
                         break
 
             logger.info(

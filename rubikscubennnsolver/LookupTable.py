@@ -1472,7 +1472,12 @@ class LookupTableIDAViaC(object):
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
 
-        logger.info("%s: solving via C ida_search\n\n%s" % (self, " ".join(cmd)))
+        # wrap the X,Y,Z part of "--legal-moves X,Y,Z" in double quotes
+        cmd_string = " ".join(cmd)
+        cmd_string = cmd_string.replace("--legal-moves ", '--legal-moves "')
+        cmd_string += '"'
+
+        logger.info("%s: solving via C ida_search\n\n%s" % (self, cmd_string))
         output = subprocess.check_output(cmd).decode("ascii")
         logger.info("\n\n" + output + "\n\n")
 

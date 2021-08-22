@@ -602,12 +602,11 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         // node is one that has already been explored.  In the end it does not provide a significant reduction
         // in time (it reduces the overall solution time by 2% or 3%) so we will leave this here for a rainy day.
         if (use_uthash) {
-            sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u",
-                node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state, node->pt4_state,
-                orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
-                orbit1_wide_quarter_turns ? get_orbit1_wide_quarter_turn_count(node->moves_to_here) : 0,
-                node->cost_to_here
-            );
+            sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u", node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state,
+                    node->pt4_state,
+                    orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
+                    orbit1_wide_quarter_turns ? get_orbit1_wide_quarter_turn_count(node->moves_to_here) : 0,
+                    node->cost_to_here);
 
             if (hash_find(&ida_explored, key)) {
                 free(node);
@@ -688,7 +687,8 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
 }
 
 struct ida_search_result ida_solve(unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
-                                   unsigned int pt3_state, unsigned int pt4_state, unsigned char max_ida_threshold, unsigned char use_uthash) {
+                                   unsigned int pt3_state, unsigned int pt4_state, unsigned char max_ida_threshold,
+                                   unsigned char use_uthash) {
     struct cost_to_goal_result ctg;
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;

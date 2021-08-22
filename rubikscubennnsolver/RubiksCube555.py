@@ -828,8 +828,7 @@ class LookupTable555CenterStageOnePhase(LookupTableIDAViaGraph):
                 parent.lt_LR_t_centers_stage,
                 parent.lt_LR_x_centers_stage,
                 parent.lt_UD_t_centers_stage,
-                # dwalton
-                # parent.lt_UD_x_centers_stage,
+                parent.lt_UD_x_centers_stage,
             ],
             centers_only=True,
             use_uthash=True,
@@ -2852,9 +2851,8 @@ class RubiksCube555(RubiksCube):
         # phase 1
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
-        # dwalton
         self.lt_UD_t_centers_stage = LookupTable555UDCenterStageTCenter(self)
-        # self.lt_UD_x_centers_stage = LookupTable555UDCenterStageXCenter(self)
+        self.lt_UD_x_centers_stage = LookupTable555UDCenterStageXCenter(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
         self.lt_centers_stage_experiment = LookupTable555CenterStageOnePhase(self)
 

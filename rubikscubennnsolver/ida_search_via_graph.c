@@ -58,6 +58,19 @@ struct cost_to_goal_result {
     unsigned char perfect_hash02_cost;
 };
 
+// built from utils/build-555-LR-centers-stage-stats.py
+unsigned int centers_stage_555[9][9] = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8}, // t-center cost 0
+    {1, 1, 2, 3, 4, 5, 6, 7, 8}, // t-center cost 1
+    {2, 4, 2, 3, 4, 5, 8, 7, 8}, // t-center cost 2
+    {3, 3, 3, 3, 4, 5, 7, 8, 8}, // t-center cost 3
+    {4, 4, 4, 4, 4, 6, 7, 9, 9}, // t-center cost 4
+    {5, 5, 5, 6, 6, 6, 8, 9, 10}, // t-center cost 5
+    {6, 7, 8, 8, 8, 8, 9, 10, 11}, // t-center cost 6
+    {7, 7, 9, 9, 9, 9, 10, 10, 11}, // t-center cost 7
+    {8, 8, 8, 8, 8, 10, 11, 10, 8}, // t-center cost 8
+};
+
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
     switch (perfect_hash_cost) {
         case '0':
@@ -135,14 +148,19 @@ struct StackNode *pop(struct StackNode **root) {
     return temp;
 }
 
+unsigned char get_cost_to_goal_simple(unsigned int prev_pt0_state, unsigned int prev_pt1_state,
+                                             unsigned int prev_pt2_state, unsigned int prev_pt3_state,
+                                             unsigned int prev_pt4_state);
+
 inline unsigned char get_cost_to_goal_simple(unsigned int prev_pt0_state, unsigned int prev_pt1_state,
                                              unsigned int prev_pt2_state, unsigned int prev_pt3_state,
                                              unsigned int prev_pt4_state) {
-    unsigned char cost_to_goal = pt0[prev_pt0_state * ROW_LENGTH];
+    unsigned char pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
     unsigned char pt1_cost = 0;
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
+    unsigned char cost_to_goal = pt0_cost;
 
     if (pt_max == 1) {
         pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
@@ -168,6 +186,7 @@ inline unsigned char get_cost_to_goal_simple(unsigned int prev_pt0_state, unsign
         pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
         pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
 
+        /*
         if (pt1_cost > cost_to_goal) {
             cost_to_goal = pt1_cost;
         }
@@ -178,6 +197,14 @@ inline unsigned char get_cost_to_goal_simple(unsigned int prev_pt0_state, unsign
 
         if (pt3_cost > cost_to_goal) {
             cost_to_goal = pt3_cost;
+        }
+        */
+
+        // dwalton
+        cost_to_goal = centers_stage_555[pt0_cost][pt1_cost];
+
+        if (centers_stage_555[pt2_cost][pt3_cost] > cost_to_goal) {
+            cost_to_goal = centers_stage_555[pt2_cost][pt3_cost];
         }
 
     } else if (pt_max == 4) {
@@ -601,7 +628,7 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         // of the memory to remember all of the nodes and the CPU to do the hash search to see if the
         // node is one that has already been explored.  In the end it does not provide a significant reduction
         // in time (it reduces the overall solution time by 2% or 3%) so we will leave this here for a rainy day.
-        if (use_uthash) {
+        if (use_uthash && ida_count <= 200000000) {
             sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u", node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state,
                     node->pt4_state,
                     orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
@@ -648,23 +675,25 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
             offset = 1 + (4 * i);
             pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset);
 
-            if (pt_max == 1) {
-                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
-
-            } else if (pt_max == 2) {
-                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
-                pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
-
-            } else if (pt_max == 3) {
-                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
-                pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
-                pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset);
-
-            } else if (pt_max == 4) {
-                pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
-                pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
-                pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset);
-                pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset);
+            switch (pt_max) {
+                case 1:
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+                    break;
+                case 2:
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
+                    break;
+                case 3:
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
+                    pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset);
+                    break;
+                case 4:
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset);
+                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset);
+                    pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset);
+                    pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset);
+                    break;
             }
 
             cost_to_goal = get_cost_to_goal_simple(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);

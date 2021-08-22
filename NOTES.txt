@@ -21,7 +21,46 @@ python ./utils/test.py --size 5x5x5
         will give us a way to get a heuristic that goes up to ~10.
     - we can use that same matrix for the UD x-center and t-centers
     - use multiplier 1.10, that will round 5 to 6, 6 to 7, etc
+    DONE to here
+
     - assume we can eventually find a solution, even it if takes a few hours.  Do this for a 
         few hundred (maybe thousand) cubes and then we can build a 4D heuristic matrix where the
         heuristic goes up to ~16.
-        
+
+
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 118807 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 665499 --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-oente[2021-08-22T16:58:07.492] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-secles/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-onnter[2021-08-22T16:58:07.492] IDA threshold 11, explored 425 nodes, took 0.000s, 0 nodes-per-sec/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-onlters[2021-08-22T16:58:07.496] IDA threshold 12, explored 15,473 nodes, took 0.003s, 5,157,666 nodes-per-sece-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-onlyr-on[2021-08-22T16:58:07.689] IDA threshold 13, explored 554,626 nodes, took 0.193s, 2,873,710 nodes-per-secLw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+[2021-08-22T16:58:07.492] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-22T16:58:07.492] IDA threshold 11, explored 425 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-22T16:58:07.496] IDA threshold 12, explored 15,473 nodes, took 0.003s, 5,157,666 nodes-per-sec
+[2021-08-22T16:58:07.689] IDA threshold 13, explored 554,626 nodes, took 0.193s, 2,873,710 nodes-per-sec
+[2021-08-22T16:58:12.952] IDA threshold 14, explored 16,187,952 nodes, took 5.262s, 3,076,387 nodes-per-sec
+[2021-08-22T17:01:57.521] IDA threshold 15, explored 950,464,374 nodes, took 224.569s, 4,232,393 nodes-per-sec
+[2021-08-22T18:57:44.981] IDA threshold 16, explored 39,132,251,332 nodes, took 6947.460s, 5,632,598 nodes-per-sec
+
+
+
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" 
+[2021-08-22T22:57:14.506] IDA threshold 7, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-22T22:57:14.507] IDA threshold 8, explored 582 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-22T22:57:14.508] IDA threshold 9, explored 18,093 nodes, took 0.001s, 18,093,000 nodes-per-sec
+[2021-08-22T22:57:14.565] IDA threshold 10, explored 512,412 nodes, took 0.056s, 9,150,214 nodes-per-sec
+[2021-08-22T22:57:16.046] IDA threshold 11, explored 15,009,185 nodes, took 1.482s, 10,127,655 nodes-per-sec
+[2021-08-22T22:57:16.188] IDA count 1,371,012, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Dw2 D U' Bw D Rw2 Dw2 B' Lw2 Bw Dw' 
+[2021-08-22T22:57:16.188] IDA threshold 12, explored 1,371,012 nodes, took 0.141s, 9,723,489 nodes-per-sec
+[2021-08-22T22:57:16.188] IDA found solution, explored 16,911,284 total nodes, took 1.682s, 10,054,271 nodes-per-sec
+
+       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
+       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
+  INIT   6    7    0    0    0      0      0    0   11    0
+  Dw2    7    6    0    0    0      0      0    7   10    1
+    D    7    7    0    0    0      0      0    7    9    2
+   U'    6    7    0    0    0      0      0    7    8    3
+   Bw    5    6    0    0    0      0      0    6    7    4
+    D    4    6    0    0    0      0      0    6    6    5
+  Rw2    4    5    0    0    0      0      0    5    5    6
+  Dw2    3    4    0    0    0      0      0    4    4    7
+   B'    3    3    0    0    0      0      0    3    3    8
+  Lw2    2    2    0    0    0      0      0    2    2    9
+   Bw    1    1    0    0    0      0      0    1    1   10
+  Dw'    0    0    0    0    0      0      0    0    0   11

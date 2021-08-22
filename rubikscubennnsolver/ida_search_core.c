@@ -69,7 +69,7 @@ unsigned long max(unsigned long a, unsigned long b) { return (a > b ? a : b); }
 // uthash references
 // http://troydhanson.github.io/uthash/index.html
 // https://cfsa-pmw.warwick.ac.uk/SDF/SDF_C/blob/3cf5bf49856ef9ee4080cf6722cf9058a1e28b01/src/uthash/tests/example.c
-void hash_add(struct key_value_pair **hashtable, char *state_key, unsigned long value) {
+inline void hash_add(struct key_value_pair **hashtable, char *state_key, unsigned long value) {
     struct key_value_pair *s;
 
     s = malloc(sizeof(struct key_value_pair));

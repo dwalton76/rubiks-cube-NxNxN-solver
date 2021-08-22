@@ -39,7 +39,7 @@ float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
 move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
-// struct key_value_pair *ida_explored = NULL;
+struct key_value_pair *ida_explored = NULL;
 
 struct ida_search_result {
     unsigned int f_cost;
@@ -531,7 +531,7 @@ unsigned char parity_ok(move_type *moves_to_here) {
 
 struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int init_pt1_state,
                                     unsigned int init_pt2_state, unsigned int init_pt3_state,
-                                    unsigned int init_pt4_state) {
+                                    unsigned int init_pt4_state, unsigned char use_uthash) {
     struct ida_search_result search_result;
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
@@ -546,6 +546,7 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
     skip_other_steps_this_face = MOVE_NONE;
     memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
     search_result.found_solution = 0;
+    char key[64];
 
     struct StackNode *root = NULL;
     struct StackNode *node = NULL;
@@ -600,21 +601,19 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
         // of the memory to remember all of the nodes and the CPU to do the hash search to see if the
         // node is one that has already been explored.  In the end it does not provide a significant reduction
         // in time (it reduces the overall solution time by 2% or 3%) so we will leave this here for a rainy day.
-        /*
-        char key[64];
-        sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u",
-            node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state, node->pt4_state,
-            orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
-            orbit1_wide_quarter_turns ? get_orbit1_wide_quarter_turn_count(node->moves_to_here) : 0,
-            node->cost_to_here
-        );
+        if (use_uthash) {
+            sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u", node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state,
+                    node->pt4_state,
+                    orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
+                    orbit1_wide_quarter_turns ? get_orbit1_wide_quarter_turn_count(node->moves_to_here) : 0,
+                    node->cost_to_here);
 
-        if (hash_find(&ida_explored, key)) {
-            free(node);
-            continue;
+            if (hash_find(&ida_explored, key)) {
+                free(node);
+                continue;
+            }
+            hash_add(&ida_explored, key, 0);
         }
-        hash_add(&ida_explored, key, 0);
-        */
 
         memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
 
@@ -688,7 +687,8 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
 }
 
 struct ida_search_result ida_solve(unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
-                                   unsigned int pt3_state, unsigned int pt4_state, unsigned char max_ida_threshold) {
+                                   unsigned int pt3_state, unsigned int pt4_state, unsigned char max_ida_threshold,
+                                   unsigned char use_uthash) {
     struct cost_to_goal_result ctg;
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
@@ -710,9 +710,9 @@ struct ida_search_result ida_solve(unsigned int pt0_state, unsigned int pt1_stat
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
-        // hash_delete_all(&ida_explored);
+        hash_delete_all(&ida_explored);
 
-        search_result = ida_search(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+        search_result = ida_search(pt0_state, pt1_state, pt2_state, pt3_state, pt4_state, use_uthash);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
@@ -787,6 +787,7 @@ int main(int argc, char *argv[]) {
     unsigned long prune_table_4_state = 0;
     unsigned char max_ida_threshold = 30;
     unsigned char centers_only = 0;
+    unsigned char use_uthash = 0;
     char *prune_table_states_filename = NULL;
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
@@ -878,6 +879,9 @@ int main(int argc, char *argv[]) {
 
         } else if (strmatch(argv[i], "--centers-only")) {
             centers_only = 1;
+
+        } else if (strmatch(argv[i], "--uthash")) {
+            use_uthash = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;
@@ -1110,7 +1114,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 search_result = ida_solve(prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                          prune_table_3_state, prune_table_4_state, i_max_ida_threshold);
+                                          prune_table_3_state, prune_table_4_state, i_max_ida_threshold, use_uthash);
 
                 if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
                     min_search_result = search_result;
@@ -1135,7 +1139,7 @@ int main(int argc, char *argv[]) {
 
     } else {
         search_result = ida_solve(prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state,
-                                  prune_table_4_state, max_ida_threshold);
+                                  prune_table_4_state, max_ida_threshold, use_uthash);
 
         if (search_result.found_solution) {
             print_ida_summary(prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state,

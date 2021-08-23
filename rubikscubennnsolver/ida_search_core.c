@@ -382,80 +382,80 @@ unsigned char get_outer_layer_quarter_turn_count(move_type *moves) {
     return count;
 }
 
-unsigned char moves_cancel_out(move_type move, move_type prev_move) {
-    switch (move) {
+unsigned char moves_cancel_out(move_type prev_move, move_type move) {
+    switch (prev_move) {
         case U:
-            return (prev_move == U_PRIME);
+            return (move == U_PRIME);
         case U_PRIME:
-            return (prev_move == U);
+            return (move == U);
         case U2:
-            return (prev_move == U2);
+            return (move == U2);
         case L:
-            return (prev_move == L_PRIME);
+            return (move == L_PRIME);
         case L_PRIME:
-            return (prev_move == L);
+            return (move == L);
         case L2:
-            return (prev_move == L2);
+            return (move == L2);
         case F:
-            return (prev_move == F_PRIME);
+            return (move == F_PRIME);
         case F_PRIME:
-            return (prev_move == F);
+            return (move == F);
         case F2:
-            return (prev_move == F2);
+            return (move == F2);
         case R:
-            return (prev_move == R_PRIME);
+            return (move == R_PRIME);
         case R_PRIME:
-            return (prev_move == R);
+            return (move == R);
         case R2:
-            return (prev_move == R2);
+            return (move == R2);
         case B:
-            return (prev_move == B_PRIME);
+            return (move == B_PRIME);
         case B_PRIME:
-            return (prev_move == B);
+            return (move == B);
         case B2:
-            return (prev_move == B2);
+            return (move == B2);
         case D:
-            return (prev_move == D_PRIME);
+            return (move == D_PRIME);
         case D_PRIME:
-            return (prev_move == D);
+            return (move == D);
         case D2:
-            return (prev_move == D2);
+            return (move == D2);
         case Uw:
-            return (prev_move == Uw_PRIME);
+            return (move == Uw_PRIME);
         case Uw_PRIME:
-            return (prev_move == Uw);
+            return (move == Uw);
         case Uw2:
-            return (prev_move == Uw2);
+            return (move == Uw2);
         case Lw:
-            return (prev_move == Lw_PRIME);
+            return (move == Lw_PRIME);
         case Lw_PRIME:
-            return (prev_move == Lw);
+            return (move == Lw);
         case Lw2:
-            return (prev_move == Lw2);
+            return (move == Lw2);
         case Fw:
-            return (prev_move == Fw_PRIME);
+            return (move == Fw_PRIME);
         case Fw_PRIME:
-            return (prev_move == Fw);
+            return (move == Fw);
         case Fw2:
-            return (prev_move == Fw2);
+            return (move == Fw2);
         case Rw:
-            return (prev_move == Rw_PRIME);
+            return (move == Rw_PRIME);
         case Rw_PRIME:
-            return (prev_move == Rw);
+            return (move == Rw);
         case Rw2:
-            return (prev_move == Rw2);
+            return (move == Rw2);
         case Bw:
-            return (prev_move == Bw_PRIME);
+            return (move == Bw_PRIME);
         case Bw_PRIME:
-            return (prev_move == Bw);
+            return (move == Bw);
         case Bw2:
-            return (prev_move == Bw2);
+            return (move == Bw2);
         case Dw:
-            return (prev_move == Dw_PRIME);
+            return (move == Dw_PRIME);
         case Dw_PRIME:
-            return (prev_move == Dw);
+            return (move == Dw);
         case Dw2:
-            return (prev_move == Dw2);
+            return (move == Dw2);
         default:
             printf("ERROR: moves_cancel_out add support for %d\n", move);
             exit(1);
@@ -490,7 +490,7 @@ unsigned char outer_layer_move(move_type move) {
     }
 }
 
-unsigned char outer_layer_moves_in_order(move_type move, move_type prev_move) {
+unsigned char outer_layer_moves_in_order(move_type prev_move, move_type move) {
     if (!outer_layer_move(prev_move)) {
         return 1;
     }
@@ -580,12 +580,12 @@ unsigned char outer_layer_moves_in_order(move_type move, move_type prev_move) {
     }
 }
 
-unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) {
-    switch (move) {
+unsigned char steps_on_same_face_and_layer(move_type prev_move, move_type move) {
+    switch (prev_move) {
         case U:
         case U_PRIME:
         case U2:
-            switch (prev_move) {
+            switch (move) {
                 case U:
                 case U_PRIME:
                 case U2:
@@ -598,7 +598,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case L:
         case L_PRIME:
         case L2:
-            switch (prev_move) {
+            switch (move) {
                 case L:
                 case L_PRIME:
                 case L2:
@@ -611,7 +611,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case F:
         case F_PRIME:
         case F2:
-            switch (prev_move) {
+            switch (move) {
                 case F:
                 case F_PRIME:
                 case F2:
@@ -624,7 +624,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case R:
         case R_PRIME:
         case R2:
-            switch (prev_move) {
+            switch (move) {
                 case R:
                 case R_PRIME:
                 case R2:
@@ -637,7 +637,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case B:
         case B_PRIME:
         case B2:
-            switch (prev_move) {
+            switch (move) {
                 case B:
                 case B_PRIME:
                 case B2:
@@ -650,7 +650,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case D:
         case D_PRIME:
         case D2:
-            switch (prev_move) {
+            switch (move) {
                 case D:
                 case D_PRIME:
                 case D2:
@@ -664,7 +664,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case Uw:
         case Uw_PRIME:
         case Uw2:
-            switch (prev_move) {
+            switch (move) {
                 case Uw:
                 case Uw_PRIME:
                 case Uw2:
@@ -677,7 +677,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case Lw:
         case Lw_PRIME:
         case Lw2:
-            switch (prev_move) {
+            switch (move) {
                 case Lw:
                 case Lw_PRIME:
                 case Lw2:
@@ -690,7 +690,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case Fw:
         case Fw_PRIME:
         case Fw2:
-            switch (prev_move) {
+            switch (move) {
                 case Fw:
                 case Fw_PRIME:
                 case Fw2:
@@ -703,7 +703,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case Rw:
         case Rw_PRIME:
         case Rw2:
-            switch (prev_move) {
+            switch (move) {
                 case Rw:
                 case Rw_PRIME:
                 case Rw2:
@@ -716,7 +716,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case Bw:
         case Bw_PRIME:
         case Bw2:
-            switch (prev_move) {
+            switch (move) {
                 case Bw:
                 case Bw_PRIME:
                 case Bw2:
@@ -729,7 +729,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case Dw:
         case Dw_PRIME:
         case Dw2:
-            switch (prev_move) {
+            switch (move) {
                 case Dw:
                 case Dw_PRIME:
                 case Dw2:
@@ -743,7 +743,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case threeUw:
         case threeUw_PRIME:
         case threeUw2:
-            switch (prev_move) {
+            switch (move) {
                 case threeUw:
                 case threeUw_PRIME:
                 case threeUw2:
@@ -756,7 +756,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case threeLw:
         case threeLw_PRIME:
         case threeLw2:
-            switch (prev_move) {
+            switch (move) {
                 case threeLw:
                 case threeLw_PRIME:
                 case threeLw2:
@@ -769,7 +769,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case threeFw:
         case threeFw_PRIME:
         case threeFw2:
-            switch (prev_move) {
+            switch (move) {
                 case threeFw:
                 case threeFw_PRIME:
                 case threeFw2:
@@ -782,7 +782,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case threeRw:
         case threeRw_PRIME:
         case threeRw2:
-            switch (prev_move) {
+            switch (move) {
                 case threeRw:
                 case threeRw_PRIME:
                 case threeRw2:
@@ -795,7 +795,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case threeBw:
         case threeBw_PRIME:
         case threeBw2:
-            switch (prev_move) {
+            switch (move) {
                 case threeBw:
                 case threeBw_PRIME:
                 case threeBw2:
@@ -808,7 +808,7 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
         case threeDw:
         case threeDw_PRIME:
         case threeDw2:
-            switch (prev_move) {
+            switch (move) {
                 case threeDw:
                 case threeDw_PRIME:
                 case threeDw2:
@@ -835,8 +835,8 @@ unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) 
 }
 
 
-unsigned char steps_on_same_face(move_type move, move_type prev_move) {
-    switch (move) {
+unsigned char steps_on_same_face(move_type prev_move, move_type move) {
+    switch (prev_move) {
         case U:
         case U_PRIME:
         case U2:
@@ -846,7 +846,7 @@ unsigned char steps_on_same_face(move_type move, move_type prev_move) {
         case threeUw:
         case threeUw_PRIME:
         case threeUw2:
-            switch (prev_move) {
+            switch (move) {
                 case U:
                 case U_PRIME:
                 case U2:
@@ -871,7 +871,7 @@ unsigned char steps_on_same_face(move_type move, move_type prev_move) {
         case threeLw:
         case threeLw_PRIME:
         case threeLw2:
-            switch (prev_move) {
+            switch (move) {
                 case L:
                 case L_PRIME:
                 case L2:
@@ -896,7 +896,7 @@ unsigned char steps_on_same_face(move_type move, move_type prev_move) {
         case threeFw:
         case threeFw_PRIME:
         case threeFw2:
-            switch (prev_move) {
+            switch (move) {
                 case F:
                 case F_PRIME:
                 case F2:
@@ -921,7 +921,7 @@ unsigned char steps_on_same_face(move_type move, move_type prev_move) {
         case threeRw:
         case threeRw_PRIME:
         case threeRw2:
-            switch (prev_move) {
+            switch (move) {
                 case R:
                 case R_PRIME:
                 case R2:
@@ -946,7 +946,7 @@ unsigned char steps_on_same_face(move_type move, move_type prev_move) {
         case threeBw:
         case threeBw_PRIME:
         case threeBw2:
-            switch (prev_move) {
+            switch (move) {
                 case B:
                 case B_PRIME:
                 case B2:
@@ -971,7 +971,7 @@ unsigned char steps_on_same_face(move_type move, move_type prev_move) {
         case threeDw:
         case threeDw_PRIME:
         case threeDw2:
-            switch (prev_move) {
+            switch (move) {
                 case D:
                 case D_PRIME:
                 case D2:
@@ -1003,6 +1003,10 @@ unsigned char steps_on_same_face(move_type move, move_type prev_move) {
     return 0;
 }
 
-unsigned char steps_on_same_face_in_order(move_type move, move_type prev_move) {
+unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move) {
+    if (!steps_on_same_face(prev_move, move)) {
+        return 1;
+    }
+
     return 1;
 }

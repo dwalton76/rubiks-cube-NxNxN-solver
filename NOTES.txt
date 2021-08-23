@@ -15,7 +15,8 @@ python ./utils/test.py --size 5x5x5
 - 555 phase456 solution needs an option to take the 333 solution into account
 
 
-- 555 combine phase1+2..attempt #432
+555 combine phase1+2..attempt #432
+==================================
     - solve a few hundred of today's phase1 where we stage LR
     - use that to build a 2D heuristic matrix based on x-center cost and t-center cost. This
         will give us a way to get a heuristic that goes up to ~10.
@@ -27,28 +28,69 @@ python ./utils/test.py --size 5x5x5
         few hundred (maybe thousand) cubes and then we can build a 4D heuristic matrix where the
         heuristic goes up to ~16.
 
+./ida_search_via_graph \
+    --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 \
+    --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
+    --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 594026 \
+    --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.bin --prune-table-3-state 484064 \
+    --centers-only --uthash --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
 
-./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 118807 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 665499 --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-oente[2021-08-22T16:58:07.492] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-secles/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-onnter[2021-08-22T16:58:07.492] IDA threshold 11, explored 425 nodes, took 0.000s, 0 nodes-per-sec/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-onlters[2021-08-22T16:58:07.496] IDA threshold 12, explored 15,473 nodes, took 0.003s, 5,157,666 nodes-per-sece-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 323569 --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-onlyr-on[2021-08-22T16:58:07.689] IDA threshold 13, explored 554,626 nodes, took 0.193s, 2,873,710 nodes-per-secLw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
-[2021-08-22T16:58:07.492] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-22T16:58:07.492] IDA threshold 11, explored 425 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-22T16:58:07.496] IDA threshold 12, explored 15,473 nodes, took 0.003s, 5,157,666 nodes-per-sec
-[2021-08-22T16:58:07.689] IDA threshold 13, explored 554,626 nodes, took 0.193s, 2,873,710 nodes-per-sec
-[2021-08-22T16:58:12.952] IDA threshold 14, explored 16,187,952 nodes, took 5.262s, 3,076,387 nodes-per-sec
-[2021-08-22T17:01:57.521] IDA threshold 15, explored 950,464,374 nodes, took 224.569s, 4,232,393 nodes-per-sec
-[2021-08-22T18:57:44.981] IDA threshold 16, explored 39,132,251,332 nodes, took 6947.460s, 5,632,598 nodes-per-sec
+[2021-08-22T23:27:06.221] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-22T23:27:06.222] IDA threshold 11, explored 564 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-22T23:27:06.224] IDA threshold 12, explored 11,515 nodes, took 0.002s, 5,757,500 nodes-per-sec
+[2021-08-22T23:27:06.327] IDA threshold 13, explored 295,680 nodes, took 0.102s, 2,898,823 nodes-per-sec
+[2021-08-22T23:27:09.633] IDA threshold 14, explored 7,505,299 nodes, took 3.306s, 2,270,205 nodes-per-sec
+[2021-08-22T23:28:32.380] IDA threshold 15, explored 199,726,173 nodes, took 82.747s, 2,413,696 nodes-per-sec
+[2021-08-23T00:16:04.204] IDA threshold 16, explored 14,160,768,704 nodes, took 2851.825s, 4,965,511 nodes-per-sec
+[2021-08-23T11:32:44.674] IDA count 206,169,354,176, f_cost 16 vs threshold 17 (cost_to_here 16, cost_to_goal 0)
+SOLUTION: R2 F L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Rw2 Lw2 Dw' Bw' 
+[2021-08-23T11:32:44.674] IDA threshold 17, explored 206,169,354,176 nodes, took 40600.469s, 5,078,004 nodes-per-sec
+[2021-08-23T11:32:44.674] IDA found solution, explored 220,537,662,111 total nodes, took 43538.453s, 5,065,354 nodes-per-sec
 
+       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
+       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
+  INIT   6    7    6    6    0      0      0    0   16    0
+   R2    6    7    6    7    0      0      0    7   15    1
+    F    6    6    7    7    0      0      0    7   14    2
+   L2    6    5    7    7    0      0      0    7   13    3
+  Fw2    6    6    6    6    0      0      0    6   12    4
+   U2    6    5    6    5    0      0      0    6   11    5
+   Lw    7    6    6    5    0      0      0    7   10    6
+  Dw2    6    6    6    5    0      0      0    6    9    7
+   Lw    6    5    6    5    0      0      0    6    8    8
+    D    5    4    5    4    0      0      0    5    7    9
+  Fw'    4    3    4    3    0      0      0    4    6   10
+  Rw'    4    2    4    2    0      0      0    4    5   11
+  Dw2    4    2    4    2    0      0      0    4    4   12
+  Rw2    3    3    3    3    0      0      0    3    3   13
+  Lw2    2    2    2    2    0      0      0    2    2   14
+  Dw'    1    1    1    1    0      0      0    1    1   15
+  Bw'    0    0    0    0    0      0      0    0    0   16
 
+HOLY CRAP that is the first time I have ever been able to solve that phase!!
 
-./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" 
-[2021-08-22T22:57:14.506] IDA threshold 7, explored 0 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-22T22:57:14.507] IDA threshold 8, explored 582 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-22T22:57:14.508] IDA threshold 9, explored 18,093 nodes, took 0.001s, 18,093,000 nodes-per-sec
-[2021-08-22T22:57:14.565] IDA threshold 10, explored 512,412 nodes, took 0.056s, 9,150,214 nodes-per-sec
-[2021-08-22T22:57:16.046] IDA threshold 11, explored 15,009,185 nodes, took 1.482s, 10,127,655 nodes-per-sec
-[2021-08-22T22:57:16.188] IDA count 1,371,012, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+TODO - use threads. The solve above took 12 hours, with 8 threads that would be down to 1.5 hours.
+
+TODO - Today our IDA search has the --centers-only option which chops a ton of branches by avoiding multiple permutations
+of a series of outer layer moves.  For instance the moves "U F D" there is no need to do "F D U", "D U F", etc because
+they all end up in the same state as "U F D". We can expand on this concept:
+- the order does not matter for a series of moves that are all on the same face "U Uw2 and 3Uw2"...I think?
+- if two moves are on opposite faces then the order does not matter..."Lw Rw" and "Rw Lw" will put you in the same state.
+
+./ida_search_via_graph \
+    --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 \
+    --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
+    --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"  --centers-only
+
+[2021-08-23T12:04:31.768] IDA threshold 7, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T12:04:31.768] IDA threshold 8, explored 582 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T12:04:31.770] IDA threshold 9, explored 18,093 nodes, took 0.001s, 18,093,000 nodes-per-sec
+[2021-08-23T12:04:31.829] IDA threshold 10, explored 512,412 nodes, took 0.059s, 8,684,949 nodes-per-sec
+[2021-08-23T12:04:33.205] IDA threshold 11, explored 15,009,185 nodes, took 1.377s, 10,899,916 nodes-per-sec
+[2021-08-23T12:04:33.370] IDA count 1,371,012, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
 SOLUTION: Dw2 D U' Bw D Rw2 Dw2 B' Lw2 Bw Dw' 
-[2021-08-22T22:57:16.188] IDA threshold 12, explored 1,371,012 nodes, took 0.141s, 9,723,489 nodes-per-sec
-[2021-08-22T22:57:16.188] IDA found solution, explored 16,911,284 total nodes, took 1.682s, 10,054,271 nodes-per-sec
+[2021-08-23T12:04:33.370] IDA threshold 12, explored 1,371,012 nodes, took 0.164s, 8,359,829 nodes-per-sec
+[2021-08-23T12:04:33.370] IDA found solution, explored 16,911,284 total nodes, took 1.603s, 10,549,771 nodes-per-sec
 
        PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
        ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
@@ -64,3 +106,4 @@ SOLUTION: Dw2 D U' Bw D Rw2 Dw2 B' Lw2 Bw Dw'
   Lw2    2    2    0    0    0      0      0    2    2    9
    Bw    1    1    0    0    0      0      0    1    1   10
   Dw'    0    0    0    0    0      0      0    0    0   11
+  

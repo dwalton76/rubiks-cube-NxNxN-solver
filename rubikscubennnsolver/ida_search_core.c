@@ -221,9 +221,9 @@ void print_moves(move_type *moves, int max_i) {
     printf("\n");
 }
 
-unsigned int wide_turn_count(move_type *moves) {
-    int i = 0;
-    unsigned int count = 0;
+unsigned char wide_turn_count(move_type *moves) {
+    unsigned char i = 0;
+    unsigned char count = 0;
 
     while (moves[i] != MOVE_NONE) {
         switch (moves[i]) {
@@ -256,9 +256,9 @@ unsigned int wide_turn_count(move_type *moves) {
     return count;
 }
 
-unsigned int get_orbit0_wide_half_turn_count(move_type *moves) {
-    unsigned int i = 0;
-    unsigned int count = 0;
+unsigned char get_orbit0_wide_half_turn_count(move_type *moves) {
+    unsigned char i = 0;
+    unsigned char count = 0;
 
     while (moves[i] != MOVE_NONE) {
         switch (moves[i]) {
@@ -280,9 +280,9 @@ unsigned int get_orbit0_wide_half_turn_count(move_type *moves) {
     return count;
 }
 
-unsigned int get_orbit0_wide_quarter_turn_count(move_type *moves) {
-    unsigned int i = 0;
-    unsigned int count = 0;
+unsigned char get_orbit0_wide_quarter_turn_count(move_type *moves) {
+    unsigned char i = 0;
+    unsigned char count = 0;
 
     while (moves[i] != MOVE_NONE) {
         switch (moves[i]) {
@@ -310,9 +310,9 @@ unsigned int get_orbit0_wide_quarter_turn_count(move_type *moves) {
     return count;
 }
 
-unsigned int get_orbit1_wide_quarter_turn_count(move_type *moves) {
-    unsigned int i = 0;
-    unsigned int count = 0;
+unsigned char get_orbit1_wide_quarter_turn_count(move_type *moves) {
+    unsigned char i = 0;
+    unsigned char count = 0;
 
     while (moves[i] != MOVE_NONE) {
         switch (moves[i]) {
@@ -340,9 +340,9 @@ unsigned int get_orbit1_wide_quarter_turn_count(move_type *moves) {
     return count;
 }
 
-unsigned int get_outer_layer_quarter_turn_count(move_type *moves) {
-    unsigned int i = 0;
-    unsigned int count = 0;
+unsigned char get_outer_layer_quarter_turn_count(move_type *moves) {
+    unsigned char i = 0;
+    unsigned char count = 0;
 
     while (moves[i] != MOVE_NONE) {
         switch (moves[i]) {
@@ -382,7 +382,7 @@ unsigned int get_outer_layer_quarter_turn_count(move_type *moves) {
     return count;
 }
 
-int moves_cancel_out(move_type move, move_type prev_move) {
+unsigned char moves_cancel_out(move_type move, move_type prev_move) {
     switch (move) {
         case U:
             return (prev_move == U_PRIME);
@@ -464,7 +464,7 @@ int moves_cancel_out(move_type move, move_type prev_move) {
     return 0;
 }
 
-int outer_layer_move(move_type move) {
+unsigned char outer_layer_move(move_type move) {
     switch (move) {
         case U:
         case U_PRIME:
@@ -490,7 +490,7 @@ int outer_layer_move(move_type move) {
     }
 }
 
-int outer_layer_moves_in_order(move_type move, move_type prev_move) {
+unsigned char outer_layer_moves_in_order(move_type move, move_type prev_move) {
     if (!outer_layer_move(prev_move)) {
         return 1;
     }
@@ -580,7 +580,7 @@ int outer_layer_moves_in_order(move_type move, move_type prev_move) {
     }
 }
 
-int steps_on_same_face_and_layer(move_type move, move_type prev_move) {
+unsigned char steps_on_same_face_and_layer(move_type move, move_type prev_move) {
     switch (move) {
         case U:
         case U_PRIME:
@@ -739,6 +739,7 @@ int steps_on_same_face_and_layer(move_type move, move_type prev_move) {
             }
             break;
 
+        // 3-layer turns
         case threeUw:
         case threeUw_PRIME:
         case threeUw2:
@@ -831,4 +832,177 @@ int steps_on_same_face_and_layer(move_type move, move_type prev_move) {
     }
 
     return 0;
+}
+
+
+unsigned char steps_on_same_face(move_type move, move_type prev_move) {
+    switch (move) {
+        case U:
+        case U_PRIME:
+        case U2:
+        case Uw:
+        case Uw_PRIME:
+        case Uw2:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeUw2:
+            switch (prev_move) {
+                case U:
+                case U_PRIME:
+                case U2:
+                case Uw:
+                case Uw_PRIME:
+                case Uw2:
+                case threeUw:
+                case threeUw_PRIME:
+                case threeUw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+            break;
+
+        case L:
+        case L_PRIME:
+        case L2:
+        case Lw:
+        case Lw_PRIME:
+        case Lw2:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeLw2:
+            switch (prev_move) {
+                case L:
+                case L_PRIME:
+                case L2:
+                case Lw:
+                case Lw_PRIME:
+                case Lw2:
+                case threeLw:
+                case threeLw_PRIME:
+                case threeLw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+            break;
+
+        case F:
+        case F_PRIME:
+        case F2:
+        case Fw:
+        case Fw_PRIME:
+        case Fw2:
+        case threeFw:
+        case threeFw_PRIME:
+        case threeFw2:
+            switch (prev_move) {
+                case F:
+                case F_PRIME:
+                case F2:
+                case Fw:
+                case Fw_PRIME:
+                case Fw2:
+                case threeFw:
+                case threeFw_PRIME:
+                case threeFw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+            break;
+
+        case R:
+        case R_PRIME:
+        case R2:
+        case Rw:
+        case Rw_PRIME:
+        case Rw2:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeRw2:
+            switch (prev_move) {
+                case R:
+                case R_PRIME:
+                case R2:
+                case Rw:
+                case Rw_PRIME:
+                case Rw2:
+                case threeRw:
+                case threeRw_PRIME:
+                case threeRw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+            break;
+
+        case B:
+        case B_PRIME:
+        case B2:
+        case Bw:
+        case Bw_PRIME:
+        case Bw2:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeBw2:
+            switch (prev_move) {
+                case B:
+                case B_PRIME:
+                case B2:
+                case Bw:
+                case Bw_PRIME:
+                case Bw2:
+                case threeBw:
+                case threeBw_PRIME:
+                case threeBw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+            break;
+
+        case D:
+        case D_PRIME:
+        case D2:
+        case Dw:
+        case Dw_PRIME:
+        case Dw2:
+        case threeDw:
+        case threeDw_PRIME:
+        case threeDw2:
+            switch (prev_move) {
+                case D:
+                case D_PRIME:
+                case D2:
+                case Dw:
+                case Dw_PRIME:
+                case Dw2:
+                case threeDw:
+                case threeDw_PRIME:
+                case threeDw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+            break;
+
+        case X:
+        case X_PRIME:
+        case Y:
+        case Y_PRIME:
+        case Z:
+        case Z_PRIME:
+            return 0;
+
+        default:
+            printf("ERROR: steps_on_same_face add support for %d\n", move);
+            exit(1);
+    }
+
+    return 0;
+}
+
+unsigned char steps_on_same_face_in_order(move_type move, move_type prev_move) {
+    return 1;
 }

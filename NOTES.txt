@@ -133,3 +133,15 @@ steps_on_same_face_in_order
 [2021-08-23T13:44:38.135] IDA threshold 14, explored 10,484,098 nodes, took 2.894s, 3,622,701 nodes-per-sec
 [2021-08-23T13:46:10.448] IDA threshold 15, explored 323,465,632 nodes, took 92.312s, 3,504,047 nodes-per-sec
 
+
+uthash off
+--centers-only
+steps_on_same_face_in_order
+steps_on_opposite_faces_in_order
+--------------------------------
+[2021-08-23T14:28:05.196] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T14:28:05.196] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T14:28:05.198] IDA threshold 12, explored 9,819 nodes, took 0.002s, 4,909,500 nodes-per-sec
+[2021-08-23T14:28:05.273] IDA threshold 13, explored 255,646 nodes, took 0.074s, 3,454,675 nodes-per-sec
+[2021-08-23T14:28:07.096] IDA threshold 14, explored 6,603,614 nodes, took 1.824s, 3,620,402 nodes-per-sec
+[2021-08-23T14:28:58.538] IDA threshold 15, explored 180,077,748 nodes, took 51.442s, 3,500,597 nodes-per-sec

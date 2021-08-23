@@ -626,9 +626,14 @@ struct ida_search_result ida_search(unsigned int init_pt0_state, unsigned int in
 
         // The following works, it does reduce the number of nodes we explore but it does so at the cost
         // of the memory to remember all of the nodes and the CPU to do the hash search to see if the
-        // node is one that has already been explored.  In the end it does not provide a significant reduction
-        // in time (it reduces the overall solution time by 2% or 3%) so we will leave this here for a rainy day.
-        if (use_uthash && ida_count <= 200000000) {
+        // node is one that has already been explored.
+        if (use_uthash) {
+
+            // keep memory usage in check
+            if (ida_count % 1000000 == 0) {
+                hash_delete_all(&ida_explored);
+            }
+
             sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u", node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state,
                     node->pt4_state,
                     orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
@@ -1076,6 +1081,9 @@ int main(int argc, char *argv[]) {
                 move_matrix[i_move][j] = MOVE_NONE;
 
             } else if (!steps_on_same_face_in_order(i_move, j_move)) {
+                move_matrix[i_move][j] = MOVE_NONE;
+
+            } else if (!steps_on_opposite_faces_in_order(i_move, j_move)) {
                 move_matrix[i_move][j] = MOVE_NONE;
 
             } else {

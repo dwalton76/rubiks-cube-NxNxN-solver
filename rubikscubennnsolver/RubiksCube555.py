@@ -831,7 +831,6 @@ class LookupTable555CenterStageOnePhase(LookupTableIDAViaGraph):
                 parent.lt_UD_x_centers_stage,
             ],
             centers_only=True,
-            use_uthash=True,
         )
 
 

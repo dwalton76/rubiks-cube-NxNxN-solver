@@ -170,5 +170,7 @@ unsigned char steps_on_same_face(move_type prev_move, move_type move);
 unsigned char outer_layer_move(move_type move);
 unsigned char outer_layer_moves_in_order(move_type prev_move, move_type move);
 unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move);
+unsigned char steps_on_opposite_faces(move_type prev_move, move_type move);
+unsigned char steps_on_opposite_faces_in_order(move_type prev_move, move_type move);
 
 #endif /* _IDA_SEARCH_CORE_H */

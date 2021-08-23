@@ -1111,3 +1111,229 @@ unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move) {
             return 0;
     }
 }
+
+// dwalton
+unsigned char steps_on_opposite_faces(move_type prev_move, move_type move) {
+    switch (prev_move) {
+        case U:
+        case U_PRIME:
+        case U2:
+        case Uw:
+        case Uw_PRIME:
+        case Uw2:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeUw2:
+            switch (move) {
+                case D:
+                case D_PRIME:
+                case D2:
+                case Dw:
+                case Dw_PRIME:
+                case Dw2:
+                case threeDw:
+                case threeDw_PRIME:
+                case threeDw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case D:
+        case D_PRIME:
+        case D2:
+        case Dw:
+        case Dw_PRIME:
+        case Dw2:
+        case threeDw:
+        case threeDw_PRIME:
+        case threeDw2:
+            switch (move) {
+                case U:
+                case U_PRIME:
+                case U2:
+                case Uw:
+                case Uw_PRIME:
+                case Uw2:
+                case threeUw:
+                case threeUw_PRIME:
+                case threeUw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case L:
+        case L_PRIME:
+        case L2:
+        case Lw:
+        case Lw_PRIME:
+        case Lw2:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeLw2:
+            switch (move) {
+                case R:
+                case R_PRIME:
+                case R2:
+                case Rw:
+                case Rw_PRIME:
+                case Rw2:
+                case threeRw:
+                case threeRw_PRIME:
+                case threeRw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case R:
+        case R_PRIME:
+        case R2:
+        case Rw:
+        case Rw_PRIME:
+        case Rw2:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeRw2:
+            switch (move) {
+                case L:
+                case L_PRIME:
+                case L2:
+                case Lw:
+                case Lw_PRIME:
+                case Lw2:
+                case threeLw:
+                case threeLw_PRIME:
+                case threeLw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case F:
+        case F_PRIME:
+        case F2:
+        case Fw:
+        case Fw_PRIME:
+        case Fw2:
+        case threeFw:
+        case threeFw_PRIME:
+        case threeFw2:
+            switch (move) {
+                case B:
+                case B_PRIME:
+                case B2:
+                case Bw:
+                case Bw_PRIME:
+                case Bw2:
+                case threeBw:
+                case threeBw_PRIME:
+                case threeBw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case B:
+        case B_PRIME:
+        case B2:
+        case Bw:
+        case Bw_PRIME:
+        case Bw2:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeBw2:
+            switch (move) {
+                case F:
+                case F_PRIME:
+                case F2:
+                case Fw:
+                case Fw_PRIME:
+                case Fw2:
+                case threeFw:
+                case threeFw_PRIME:
+                case threeFw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+        default:
+            printf("ERROR: steps_on_opposite_layers add support for %d\n", move);
+            exit(1);
+    }
+}
+
+unsigned char steps_on_opposite_faces_in_order(move_type prev_move, move_type move) {
+    if (!steps_on_opposite_faces(prev_move, move)) {
+        return 1;
+    }
+    switch (prev_move) {
+        case U:
+        case U_PRIME:
+        case U2:
+        case Uw:
+        case Uw_PRIME:
+        case Uw2:
+        case threeUw:
+        case threeUw_PRIME:
+        case threeUw2:
+            return 1;
+        case D:
+        case D_PRIME:
+        case D2:
+        case Dw:
+        case Dw_PRIME:
+        case Dw2:
+        case threeDw:
+        case threeDw_PRIME:
+        case threeDw2:
+            return 0;
+
+        case L:
+        case L_PRIME:
+        case L2:
+        case Lw:
+        case Lw_PRIME:
+        case Lw2:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeLw2:
+            return 1;
+        case R:
+        case R_PRIME:
+        case R2:
+        case Rw:
+        case Rw_PRIME:
+        case Rw2:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeRw2:
+            return 0;
+
+        case F:
+        case F_PRIME:
+        case F2:
+        case Fw:
+        case Fw_PRIME:
+        case Fw2:
+        case threeFw:
+        case threeFw_PRIME:
+        case threeFw2:
+            return 1;
+        case B:
+        case B_PRIME:
+        case B2:
+        case Bw:
+        case Bw_PRIME:
+        case Bw2:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeBw2:
+            return 0;
+
+        default:
+            printf("ERROR: steps_on_opposite_faces_in_order add support for %d\n", move);
+            exit(1);
+    }
+}

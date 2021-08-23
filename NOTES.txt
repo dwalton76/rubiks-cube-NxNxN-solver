@@ -33,7 +33,7 @@ python ./utils/test.py --size 5x5x5
     --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
     --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 594026 \
     --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.bin --prune-table-3-state 484064 \
-    --centers-only --uthash --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+    --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" --uthash
 
 [2021-08-22T23:27:06.221] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
 [2021-08-22T23:27:06.222] IDA threshold 11, explored 564 nodes, took 0.000s, 0 nodes-per-sec
@@ -82,22 +82,22 @@ they all end up in the same state as "U F D". We can expand on this concept:
     --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
     --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"  --centers-only
 
-[2021-08-23T12:04:31.768] IDA threshold 7, explored 0 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-23T12:04:31.768] IDA threshold 8, explored 582 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-23T12:04:31.770] IDA threshold 9, explored 18,093 nodes, took 0.001s, 18,093,000 nodes-per-sec
-[2021-08-23T12:04:31.829] IDA threshold 10, explored 512,412 nodes, took 0.059s, 8,684,949 nodes-per-sec
-[2021-08-23T12:04:33.205] IDA threshold 11, explored 15,009,185 nodes, took 1.377s, 10,899,916 nodes-per-sec
-[2021-08-23T12:04:33.370] IDA count 1,371,012, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
-SOLUTION: Dw2 D U' Bw D Rw2 Dw2 B' Lw2 Bw Dw' 
-[2021-08-23T12:04:33.370] IDA threshold 12, explored 1,371,012 nodes, took 0.164s, 8,359,829 nodes-per-sec
-[2021-08-23T12:04:33.370] IDA found solution, explored 16,911,284 total nodes, took 1.603s, 10,549,771 nodes-per-sec
+[2021-08-23T13:15:03.056] IDA threshold 7, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T13:15:03.056] IDA threshold 8, explored 520 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T13:15:03.058] IDA threshold 9, explored 18,198 nodes, took 0.001s, 18,198,000 nodes-per-sec
+[2021-08-23T13:15:03.123] IDA threshold 10, explored 513,511 nodes, took 0.064s, 8,023,609 nodes-per-sec
+[2021-08-23T13:15:04.639] IDA threshold 11, explored 15,008,373 nodes, took 1.516s, 9,899,982 nodes-per-sec
+[2021-08-23T13:15:05.486] IDA count 7,980,673, f_cost 11 vs threshold 12 (cost_to_here 11, cost_to_goal 0)
+SOLUTION: Dw2 U' D Bw D Rw2 Dw2 B' Lw2 Bw Dw' 
+[2021-08-23T13:15:05.486] IDA threshold 12, explored 7,980,673 nodes, took 0.847s, 9,422,282 nodes-per-sec
+[2021-08-23T13:15:05.486] IDA found solution, explored 23,521,275 total nodes, took 2.429s, 9,683,522 nodes-per-sec
 
        PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
        ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
   INIT   6    7    0    0    0      0      0    0   11    0
   Dw2    7    6    0    0    0      0      0    7   10    1
-    D    7    7    0    0    0      0      0    7    9    2
-   U'    6    7    0    0    0      0      0    7    8    3
+   U'    6    6    0    0    0      0      0    6    9    2
+    D    6    7    0    0    0      0      0    7    8    3
    Bw    5    6    0    0    0      0      0    6    7    4
     D    4    6    0    0    0      0      0    6    6    5
   Rw2    4    5    0    0    0      0      0    5    5    6
@@ -106,4 +106,30 @@ SOLUTION: Dw2 D U' Bw D Rw2 Dw2 B' Lw2 Bw Dw'
   Lw2    2    2    0    0    0      0      0    2    2    9
    Bw    1    1    0    0    0      0      0    1    1   10
   Dw'    0    0    0    0    0      0      0    0    0   11
-  
+
+
+
+The following are for the search above where we are staging all centers in one phase
+
+uthash off
+--centers-only
+----------
+[2021-08-23T13:42:00.030] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T13:42:00.031] IDA threshold 11, explored 565 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T13:42:00.033] IDA threshold 12, explored 13,774 nodes, took 0.002s, 6,887,000 nodes-per-sec
+[2021-08-23T13:42:00.139] IDA threshold 13, explored 433,472 nodes, took 0.105s, 4,128,304 nodes-per-sec
+[2021-08-23T13:42:03.997] IDA threshold 14, explored 13,310,942 nodes, took 3.857s, 3,451,112 nodes-per-sec
+[2021-08-23T13:44:03.461] IDA threshold 15, explored 436,172,989 nodes, took 119.465s, 3,651,052 nodes-per-sec
+
+
+uthash off
+--centers-only
+steps_on_same_face_in_order
+----------------------------
+[2021-08-23T13:44:35.149] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T13:44:35.149] IDA threshold 11, explored 527 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-23T13:44:35.152] IDA threshold 12, explored 12,249 nodes, took 0.002s, 6,124,500 nodes-per-sec
+[2021-08-23T13:44:35.241] IDA threshold 13, explored 362,310 nodes, took 0.089s, 4,070,899 nodes-per-sec
+[2021-08-23T13:44:38.135] IDA threshold 14, explored 10,484,098 nodes, took 2.894s, 3,622,701 nodes-per-sec
+[2021-08-23T13:46:10.448] IDA threshold 15, explored 323,465,632 nodes, took 92.312s, 3,504,047 nodes-per-sec
+

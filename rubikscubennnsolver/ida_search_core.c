@@ -505,6 +505,7 @@ unsigned char outer_layer_moves_in_order(move_type prev_move, move_type move) {
         case U2:
             return 1;
 
+        // dwalton reference
         case L:
         case L_PRIME:
         case L2:
@@ -1008,5 +1009,105 @@ unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move) {
         return 1;
     }
 
-    return 1;
+    // dwalton here now
+    switch (prev_move) {
+        case U:
+        case U_PRIME:
+        case U2:
+            return 1;
+        case Uw:
+        case Uw_PRIME:
+        case Uw2:
+            switch (move) {
+                case threeUw:
+                case threeUw_PRIME:
+                case threeUw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case L:
+        case L_PRIME:
+        case L2:
+            return 1;
+        case Lw:
+        case Lw_PRIME:
+        case Lw2:
+            switch (move) {
+                case threeLw:
+                case threeLw_PRIME:
+                case threeLw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case F:
+        case F_PRIME:
+        case F2:
+            return 1;
+        case Fw:
+        case Fw_PRIME:
+        case Fw2:
+            switch (move) {
+                case threeFw:
+                case threeFw_PRIME:
+                case threeFw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case R:
+        case R_PRIME:
+        case R2:
+            return 1;
+        case Rw:
+        case Rw_PRIME:
+        case Rw2:
+            switch (move) {
+                case threeRw:
+                case threeRw_PRIME:
+                case threeRw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case B:
+        case B_PRIME:
+        case B2:
+            return 1;
+        case Bw:
+        case Bw_PRIME:
+        case Bw2:
+            switch (move) {
+                case threeBw:
+                case threeBw_PRIME:
+                case threeBw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        case D:
+        case D_PRIME:
+        case D2:
+            return 1;
+        case Dw:
+        case Dw_PRIME:
+        case Dw2:
+            switch (move) {
+                case threeDw:
+                case threeDw_PRIME:
+                case threeDw2:
+                    return 1;
+                default:
+                    return 0;
+            }
+
+        default:
+            return 0;
+    }
 }

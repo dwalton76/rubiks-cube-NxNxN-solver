@@ -3409,7 +3409,7 @@ class RubiksCube555(RubiksCube):
             self.rotate_F_to_F()
 
             # dwalton
-            if False:
+            if True:
                 # phase 1
                 self.group_centers_stage_LR()
 
@@ -3417,11 +3417,14 @@ class RubiksCube555(RubiksCube):
                 self.group_centers_stage_FB()
 
             else:
-                for step in "R2 F L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Rw2 Lw2 Dw' Bw'".split():
+                # for step in "R2 F L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Rw2 Lw2 Dw' Bw'".split():
+                for step in "L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'".split():
                     self.rotate(step)
                 self.solution.append(
                     "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
                 )
+                self.print_cube()
+
                 """
                 self.lt_centers_stage_experiment.solve_via_c()
                 self.print_cube()

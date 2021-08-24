@@ -505,7 +505,6 @@ unsigned char outer_layer_moves_in_order(move_type prev_move, move_type move) {
         case U2:
             return 1;
 
-        // dwalton reference
         case L:
         case L_PRIME:
         case L2:
@@ -1009,7 +1008,6 @@ unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move) {
         return 1;
     }
 
-    // dwalton here now
     switch (prev_move) {
         case U:
         case U_PRIME:
@@ -1112,7 +1110,6 @@ unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move) {
     }
 }
 
-// dwalton
 unsigned char steps_on_opposite_faces(move_type prev_move, move_type move) {
     switch (prev_move) {
         case U:

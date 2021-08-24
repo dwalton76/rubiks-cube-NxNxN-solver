@@ -408,6 +408,8 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;
     search_result.found_solution = 0;
+    move_type *prev_move_move_matrix = NULL;
+    size_t array_size_char = sizeof(char) * array_size;
 
     // Abort Searching
     if (f_cost >= threshold) {
@@ -441,9 +443,10 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     }
 
     hash_add(&ida_explored, heuristic_result.lt_state, 0);
+    prev_move_move_matrix = move_matrix[prev_move];
 
     for (unsigned char i = 0; i < legal_move_count; i++) {
-        move = move_matrix[prev_move][i];
+        move = prev_move_move_matrix[i];
 
         // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
         /*
@@ -469,7 +472,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         }
 
         char cube_copy[array_size];
-        memcpy(cube_copy, cube, sizeof(char) * array_size);
+        memcpy(cube_copy, cube, array_size_char);
 
         if (cube_size == 4) {
             rotate_444(cube_copy, cube_tmp, array_size, move);
@@ -480,6 +483,11 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         } else {
             printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
             exit(1);
+        }
+
+        // if the cube state did not change, continue
+        if (memcmp(cube, cube_copy, array_size_char) == 0) {
+            continue;
         }
         moves_to_here[cost_to_here] = move;
 
@@ -801,6 +809,13 @@ int main(int argc, char *argv[]) {
                 // if we are solving centers, we want to avoid doing permutations of outer layer moves as they
                 // will all result in the same cube state.  For instance there is no point in doing F U B, B U F,
                 // U B F, etc. We can do only one of those and that is enough.
+                move_matrix[i_move][j] = MOVE_NONE;
+
+            // this has a negative impact on some of the oblique edge pairing searches
+            // } else if (!steps_on_same_face_in_order(i_move, j_move)) {
+            //     move_matrix[i_move][j] = MOVE_NONE;
+
+            } else if (!steps_on_opposite_faces_in_order(i_move, j_move)) {
                 move_matrix[i_move][j] = MOVE_NONE;
 
             } else {

@@ -590,6 +590,10 @@ class LookupTable555LRTCenterStage(LookupTable):
     def state(self):
         parent_state = self.parent.state
         LR_colors = (parent_state[38], parent_state[88])
+
+        if LR_colors == (".", "."):
+            LR_colors = ("L", "R")
+
         state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.t_centers_555])
         return self.hex_format % int(state, 2)
 
@@ -649,6 +653,10 @@ class LookupTable555LRXCenterStage(LookupTable):
     def state(self):
         parent_state = self.parent.state
         LR_colors = (parent_state[38], parent_state[88])
+
+        if LR_colors == (".", "."):
+            LR_colors = ("L", "R")
+
         state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.x_centers_555])
         return self.hex_format % int(state, 2)
 

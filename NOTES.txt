@@ -34,11 +34,11 @@ of a series of outer layer moves.  For instance the moves "U F D" there is no ne
 they all end up in the same state as "U F D". We can expand on this concept:
 DONE - the order does not matter for a series of moves that are all on the same face "U Uw2 and 3Uw2"
 DONE - if two moves are on opposite faces then the order does not matter..."Lw Rw" and "Rw Lw" will put you in the same state.
-TODO - put these tricks to ida_search.c as well
+DONE - put these tricks to ida_search.c as well
 
 TODO - build a lookup-table 6 moves deep. This will be ~35 million entries and would take about 2G to load so you wouldn't want
 to run this on a pi. The lookup-table would use the same key that we use today for ida_explored and the value would be the move count.
-- say our IDA max_threshold is 16, we know the solution will be 16 steps
+- say our IDA max_threshold is 17, we know the solution will be 16 steps
 - when node->cost_to_here is 10 we check the lookup-table to see if the current state is in there.  If it isn't then we can prune
   this branch. If there is a hit then we could flip a boolean to start using the lookup-table as our heuristic...that should make
   the remaining IDA search lighting fast.
@@ -116,8 +116,7 @@ SOLUTION: L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
 This solve originally took 12 hours but is now down to 6 1/2 hours
 
 
-
-==============
+=============================================================================
 For this solve WITHOUT steps_on_same_face_in_order we find a 12 move solution
 ./ida_search --kociemba .........xxL...x...x..x...x..x...x...xLx..................xxL...x...L..x...x..x...x...xxx..................xxx...x...x..L...x..L...x...xLL..................LxL...L...L..x...x..L...x...xLx..................xxx...x...x..L...L..x...L...xLL..................xxx...L...x..L...x..x...L...LxL......... --type 7x7x7-LR-oblique-edges-stage --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,3Uw2,L,L',L2,Lw,Lw',Lw2,3Lw,3Lw',3Lw2,F,F',F2,Fw,Fw',Fw2,3Fw2,R,R',R2,Rw,Rw',Rw2,3Rw,3Rw',3Rw2,B,B',B2,Bw,Bw',Bw2,3Bw2,D,D',D2,Dw,Dw',Dw2,3Dw2"
 SOLUTION: 3Bw2 3Lw2 Uw' 3Lw 3Uw2 D 3Fw2 F 3Rw2 Uw' Fw 3Rw2 
@@ -131,4 +130,4 @@ our heuristic but in the latter solution that doesn't happen until step 8.
 
 So while the end result of "3Fw2 F" vs "F 3Fw2" is the same, it does change our heuristic which can impact when branches
 are pruned. This gotcha will apply to outer_layer_moves_in_order, steps_on_same_face_in_order and steps_on_opposite_faces_in_order.
-I need to think about this some more...maybe we only use these trick in extreme scenarios?
+I need to think about this some more...maybe we only use these tricks in extreme scenarios?

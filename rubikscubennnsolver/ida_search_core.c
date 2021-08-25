@@ -834,7 +834,6 @@ unsigned char steps_on_same_face_and_layer(move_type prev_move, move_type move) 
     return 0;
 }
 
-
 unsigned char steps_on_same_face(move_type prev_move, move_type move) {
     switch (prev_move) {
         case U:

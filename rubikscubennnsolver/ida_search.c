@@ -811,9 +811,9 @@ int main(int argc, char *argv[]) {
                 // U B F, etc. We can do only one of those and that is enough.
                 move_matrix[i_move][j] = MOVE_NONE;
 
-            // this has a negative impact on some of the oblique edge pairing searches
-            // } else if (!steps_on_same_face_in_order(i_move, j_move)) {
-            //     move_matrix[i_move][j] = MOVE_NONE;
+                // this has a negative impact on some of the oblique edge pairing searches
+                // } else if (!steps_on_same_face_in_order(i_move, j_move)) {
+                //     move_matrix[i_move][j] = MOVE_NONE;
 
             } else if (!steps_on_opposite_faces_in_order(i_move, j_move)) {
                 move_matrix[i_move][j] = MOVE_NONE;

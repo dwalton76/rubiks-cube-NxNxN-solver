@@ -170,6 +170,14 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned in
     unsigned char cost_to_goal = pt0_cost;
 
     switch (pt_max) {
+        case 1:
+            pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+
+            if (pt1_cost > cost_to_goal) {
+                cost_to_goal = pt1_cost;
+            }
+            break;
+
         case 3:
             pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
             pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
@@ -193,14 +201,18 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned in
                 if (centers_stage_555[pt2_cost][pt3_cost] > cost_to_goal) {
                     cost_to_goal = centers_stage_555[pt2_cost][pt3_cost];
                 }
-            }
-            break;
+                // dwalton
+                /*
+                Our end-goal-lookup-table (EGLT) is 6-deep (33 million entries).
+                If our max_ida_threshold is 17 then we know the solution is 16 steps long.
 
-        case 1:
-            pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+                If our cost_to_here < 10 there is no need to look for the current state in
+                    EGLT, we know it will not be there and therefore cost_to_goal
+                    has to be at least 7.
 
-            if (pt1_cost > cost_to_goal) {
-                cost_to_goal = pt1_cost;
+                If our cost_to_here >= 10 and our current state is not in EGLT then prune this branch. That
+                    should just happen when we return a cost_to_goal of 7.
+                */
             }
             break;
 
@@ -377,6 +389,7 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned int
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
             break;
+
         default:
             printf("ERROR: invalid pt_max %d\n", pt_max);
             exit(1);
@@ -723,6 +736,12 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             offset_i = offset[i];
 
             switch (pt_max) {
+                case 1:
+                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    state_changed = (pt0_state != node->pt0_state || pt1_state != node->pt1_state);
+                    break;
+
                 case 3:
                     pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
                     pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
@@ -730,12 +749,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                     pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
                     state_changed = (pt0_state != node->pt0_state || pt1_state != node->pt1_state ||
                                      pt2_state != node->pt2_state || pt3_state != node->pt3_state);
-                    break;
-
-                case 1:
-                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    state_changed = (pt0_state != node->pt0_state || pt1_state != node->pt1_state);
                     break;
 
                 case 2:

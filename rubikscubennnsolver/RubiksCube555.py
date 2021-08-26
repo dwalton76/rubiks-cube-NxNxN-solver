@@ -3416,7 +3416,6 @@ class RubiksCube555(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-            # dwalton
             if True:
                 # phase 1
                 self.group_centers_stage_LR()

@@ -40,10 +40,12 @@ move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
 move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
 struct key_value_pair *ida_explored = NULL;
+struct key_value_pair *eglt = NULL;
 
 // Supported IDA searches
 typedef enum {
     GENERIC,
+    LR_CENTERS_STAGE_555,
     CENTERS_STAGE_555,
 
 } lookup_table_type;
@@ -65,8 +67,15 @@ struct cost_to_goal_result {
     unsigned char perfect_hash02_cost;
 };
 
-// built from utils/build-555-LR-centers-stage-stats.py
-unsigned int centers_stage_555[9][9] = {
+unsigned int lr_centers_stage_555[9][9] = {
+    /*
+    The following is a 2D array that estimates the number of moves to stage LR centers based on the t-center cost
+    and x-center. This was created by staging the LR centers for 10k cubes and then crunching some stats (see
+    utils/build-555-LR-centers-stage-stats.py)
+
+    The columns are the x-center costs
+     0  1  2  3  4  5  6  7  8
+     */
     {0, 1, 2, 3, 4, 5, 6, 7, 8},     // t-center cost 0
     {1, 1, 2, 3, 4, 5, 6, 7, 8},     // t-center cost 1
     {2, 4, 2, 3, 4, 5, 8, 7, 8},     // t-center cost 2
@@ -155,19 +164,22 @@ struct StackNode *pop(struct StackNode **root) {
     return temp;
 }
 
-unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned int prev_pt0_state, unsigned int prev_pt1_state,
+unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned char cost_to_here,
+                                      unsigned int prev_pt0_state, unsigned int prev_pt1_state,
                                       unsigned int prev_pt2_state, unsigned int prev_pt3_state,
                                       unsigned int prev_pt4_state);
 
-inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned int prev_pt0_state,
-                                             unsigned int prev_pt1_state, unsigned int prev_pt2_state,
-                                             unsigned int prev_pt3_state, unsigned int prev_pt4_state) {
+inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned char cost_to_here,
+                                             unsigned int prev_pt0_state, unsigned int prev_pt1_state,
+                                             unsigned int prev_pt2_state, unsigned int prev_pt3_state,
+                                             unsigned int prev_pt4_state) {
     unsigned char pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
     unsigned char pt1_cost = 0;
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
     unsigned char cost_to_goal = pt0_cost;
+    unsigned char use_multiplier = 1;
 
     switch (pt_max) {
         case 1:
@@ -175,6 +187,9 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned in
 
             if (pt1_cost > cost_to_goal) {
                 cost_to_goal = pt1_cost;
+            }
+            if (type == LR_CENTERS_STAGE_555) {
+                cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
             }
             break;
 
@@ -196,14 +211,16 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned in
             }
 
             if (type == CENTERS_STAGE_555) {
-                cost_to_goal = centers_stage_555[pt0_cost][pt1_cost];
+                unsigned char eglt_max_depth = 6;
+                cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
 
-                if (centers_stage_555[pt2_cost][pt3_cost] > cost_to_goal) {
-                    cost_to_goal = centers_stage_555[pt2_cost][pt3_cost];
+                if (lr_centers_stage_555[pt2_cost][pt3_cost] > cost_to_goal) {
+                    cost_to_goal = lr_centers_stage_555[pt2_cost][pt3_cost];
                 }
-                // dwalton
+
+
                 /*
-                Our end-goal-lookup-table (EGLT) is 6-deep (33 million entries).
+                Our end-goal-lookup-table (EGLT) is 6-deep (34 million entries).
                 If our max_ida_threshold is 17 then we know the solution is 16 steps long.
 
                 If our cost_to_here < 10 there is no need to look for the current state in
@@ -212,6 +229,27 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned in
 
                 If our cost_to_here >= 10 and our current state is not in EGLT then prune this branch. That
                     should just happen when we return a cost_to_goal of 7.
+                 */
+                /*
+                if (cost_to_goal <= eglt_max_depth) {
+                    use_multiplier = 0;
+
+                    if (cost_to_here < threshold - 1 - eglt_max_depth) {
+                        cost_to_goal = eglt_max_depth + 1;
+                    } else {
+                        char key[64];
+                        struct key_value_pair *eglt_entry = NULL;
+
+                        sprintf(key, "%u-%u-%u-%u", prev_pt0_state, prev_pt1_state, prev_pt2_state, prev_pt3_state);
+                        eglt_entry = hash_find(&eglt, key);
+        
+                        if (eglt_entry) {
+                            cost_to_goal = eglt_entry->value;
+                        } else {
+                            cost_to_goal = eglt_max_depth + 1;
+                        }
+                    }
+                }
                 */
             }
             break;
@@ -284,17 +322,18 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned in
         }
     }
 
-    if (cost_to_goal_multiplier) {
+    if (use_multiplier && cost_to_goal_multiplier) {
         cost_to_goal = (unsigned char)round(cost_to_goal * cost_to_goal_multiplier);
     }
 
     return cost_to_goal;
 }
 
-struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned int prev_pt0_state,
+struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned char cost_to_here, unsigned int prev_pt0_state,
                                             unsigned int prev_pt1_state, unsigned int prev_pt2_state,
                                             unsigned int prev_pt3_state, unsigned int prev_pt4_state) {
     struct cost_to_goal_result result;
+    unsigned char use_multiplier = 1;
 
     switch (pt_max) {
         case 1:
@@ -307,6 +346,10 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned int
 
             if (result.pt1_cost > result.cost_to_goal) {
                 result.cost_to_goal = result.pt1_cost;
+            }
+
+            if (type == LR_CENTERS_STAGE_555) {
+                result.cost_to_goal = lr_centers_stage_555[result.pt0_cost][result.pt1_cost];
             }
             break;
 
@@ -348,11 +391,34 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned int
             }
 
             if (type == CENTERS_STAGE_555) {
-                result.cost_to_goal = centers_stage_555[result.pt0_cost][result.pt1_cost];
+                unsigned char eglt_max_depth = 6;
+                result.cost_to_goal = lr_centers_stage_555[result.pt0_cost][result.pt1_cost];
 
-                if (centers_stage_555[result.pt2_cost][result.pt3_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = centers_stage_555[result.pt2_cost][result.pt3_cost];
+                if (lr_centers_stage_555[result.pt2_cost][result.pt3_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = lr_centers_stage_555[result.pt2_cost][result.pt3_cost];
                 }
+
+                /*
+                if (result.cost_to_goal <= eglt_max_depth) {
+                    use_multiplier = 0;
+
+                    if (cost_to_here < threshold - 1 - eglt_max_depth) {
+                        result.cost_to_goal = eglt_max_depth + 1;
+                    } else {
+                        char key[64];
+                        struct key_value_pair *eglt_entry = NULL;
+
+                        sprintf(key, "%u-%u-%u-%u", prev_pt0_state, prev_pt1_state, prev_pt2_state, prev_pt3_state);
+                        eglt_entry = hash_find(&eglt, key);
+        
+                        if (eglt_entry) {
+                            result.cost_to_goal = eglt_entry->value;
+                        } else {
+                            result.cost_to_goal = eglt_max_depth + 1;
+                        }
+                    }
+                }
+                */
             }
             break;
 
@@ -462,7 +528,7 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
     unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
 
-    ctg = get_cost_to_goal(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    ctg = get_cost_to_goal(type, 0, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     pt0_cost = ctg.pt0_cost;
     pt1_cost = ctg.pt1_cost;
     pt2_cost = ctg.pt2_cost;
@@ -512,7 +578,7 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
         }
 
-        ctg = get_cost_to_goal(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+        ctg = get_cost_to_goal(type, i + 1, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         cost_to_goal = ctg.cost_to_goal;
         pt0_cost = ctg.pt0_cost;
         pt1_cost = ctg.pt1_cost;
@@ -629,8 +695,9 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
 
     struct StackNode *root = NULL;
     struct StackNode *node = NULL;
+    struct cost_to_goal_result ctg;
     cost_to_goal =
-        get_cost_to_goal_simple(type, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
+        get_cost_to_goal_simple(type, 0, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
     push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
          init_pt3_state, init_pt4_state);
 
@@ -784,7 +851,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                 continue;
             }
 
-            cost_to_goal = get_cost_to_goal_simple(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+            cost_to_goal = get_cost_to_goal_simple(type, node->cost_to_here + 1, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
             ida_count++;
 
             if ((node->cost_to_here + 1 + cost_to_goal) > threshold) {
@@ -814,7 +881,7 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
     // For printing commas via %'d
     setlocale(LC_NUMERIC, "");
 
-    min_ida_threshold = get_cost_to_goal_simple(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    min_ida_threshold = get_cost_to_goal_simple(type, 0, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     search_result.found_solution = 0;
 
     // LOG("min_ida_threshold %d\n", min_ida_threshold);
@@ -918,6 +985,9 @@ int main(int argc, char *argv[]) {
 
             if (strmatch(argv[i], "5x5x5-centers-stage")) {
                 type = CENTERS_STAGE_555;
+
+            } else if (strmatch(argv[i], "5x5x5-lr-centers-stage")) {
+                type = LR_CENTERS_STAGE_555;
 
             } else {
                 printf("ERROR: %s is an invalid --type\n", argv[i]);
@@ -1203,6 +1273,41 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+
+    /*
+    if (type == CENTERS_STAGE_555) {
+        FILE * fp;
+        char * line = NULL;
+        size_t len = 0;
+        ssize_t read;
+        char *key = NULL;
+        int value = 0;
+    
+        fp = fopen("lookup-tables/lookup-table-5x5x5-step14-centers-stage-eglt.txt.6-deep", "r");
+
+        if (fp == NULL) {
+            exit(EXIT_FAILURE);
+        }
+    
+        // read the file into the eglt hash
+        while ((read = getline(&line, &len, fp)) != -1) {
+            // state
+            key = strtok(line, ":");
+
+            // solution length
+            value = atoi(strtok(NULL, ":"));
+
+            hash_add(&eglt, key, value);
+        }
+    
+        fclose(fp);
+
+        if (line) {
+            free(line);
+            line = NULL;
+        }
+    }
+    */
 
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
     // printf("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);

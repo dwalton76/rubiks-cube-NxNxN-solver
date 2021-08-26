@@ -43,6 +43,9 @@ to run this on a pi. The lookup-table would use the same key that we use today f
   this branch. If there is a hit then we could flip a boolean to start using the lookup-table as our heuristic...that should make
   the remaining IDA search lighting fast.
 
+Long story short I tried this but it does not prune nearly enough branches and the overhead of the hash lookup to see if we have
+an entry kills any gains of the branches that were pruned.
+
 
 The following are for:
 
@@ -51,7 +54,7 @@ The following are for:
     --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
     --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 594026 \
     --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.bin --prune-table-3-state 484064 \
-    --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" --uthash
+    --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" --type 5x5x5-centers-stage
 
 uthash off
 --centers-only
@@ -115,19 +118,109 @@ SOLUTION: L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
 
 This solve originally took 12 hours but is now down to 6 1/2 hours
 
+uthash off
+--centers-only
+steps_on_same_face_in_order
+steps_on_opposite_faces_in_order
+eglt 4-deep
+--------------------------------
+[2021-08-25T12:31:12.068] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T12:31:12.069] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T12:31:12.072] IDA threshold 12, explored 9,817 nodes, took 0.003s, 3,272,333 nodes-per-sec
+[2021-08-25T12:31:12.158] IDA threshold 13, explored 253,342 nodes, took 0.086s, 2,945,837 nodes-per-sec
+[2021-08-25T12:31:14.840] IDA threshold 14, explored 6,547,918 nodes, took 2.681s, 2,442,341 nodes-per-sec
+[2021-08-25T12:32:16.981] IDA threshold 15, explored 178,460,846 nodes, took 62.141s, 2,871,869 nodes-per-sec
 
-=============================================================================
-For this solve WITHOUT steps_on_same_face_in_order we find a 12 move solution
-./ida_search --kociemba .........xxL...x...x..x...x..x...x...xLx..................xxL...x...L..x...x..x...x...xxx..................xxx...x...x..L...x..L...x...xLL..................LxL...L...L..x...x..L...x...xLx..................xxx...x...x..L...L..x...L...xLL..................xxx...L...x..L...x..x...L...LxL......... --type 7x7x7-LR-oblique-edges-stage --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,3Uw2,L,L',L2,Lw,Lw',Lw2,3Lw,3Lw',3Lw2,F,F',F2,Fw,Fw',Fw2,3Fw2,R,R',R2,Rw,Rw',Rw2,3Rw,3Rw',3Rw2,B,B',B2,Bw,Bw',Bw2,3Bw2,D,D',D2,Dw,Dw',Dw2,3Dw2"
-SOLUTION: 3Bw2 3Lw2 Uw' 3Lw 3Uw2 D 3Fw2 F 3Rw2 Uw' Fw 3Rw2 
 
-but WITH steps_on_same_face_in_order we find a 13 move solution
-SOLUTION: 3Uw2 Fw2 3Rw2 F 3Lw Uw' 3Lw Uw' 3Bw2 3Rw' F' Fw2 3Rw 
+uthash off
+--centers-only
+steps_on_same_face_in_order
+steps_on_opposite_faces_in_order
+eglt 5-deep
+--------------------------------
+[2021-08-25T12:36:33.540] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T12:36:33.540] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T12:36:33.542] IDA threshold 12, explored 9,817 nodes, took 0.002s, 4,908,500 nodes-per-sec
+[2021-08-25T12:36:33.610] IDA threshold 13, explored 250,872 nodes, took 0.067s, 3,744,358 nodes-per-sec
+[2021-08-25T12:36:35.327] IDA threshold 14, explored 6,481,387 nodes, took 1.717s, 3,774,832 nodes-per-sec
+[2021-08-25T12:37:22.992] IDA threshold 15, explored 176,565,876 nodes, took 47.665s, 3,704,308 nodes-per-sec
 
-the key is the 7th/8th step "3Fw2 F" sequence in the 12 move solution...when we are running WITH steps_on_same_face_in_order
-this gets reversed to "F 3Fw2".  So in the original solution at step 7 we do 3Fw2 which pairs some oblique edges and reduces
-our heuristic but in the latter solution that doesn't happen until step 8.
 
-So while the end result of "3Fw2 F" vs "F 3Fw2" is the same, it does change our heuristic which can impact when branches
-are pruned. This gotcha will apply to outer_layer_moves_in_order, steps_on_same_face_in_order and steps_on_opposite_faces_in_order.
-I need to think about this some more...maybe we only use these tricks in extreme scenarios?
+uthash off
+--centers-only
+steps_on_same_face_in_order
+steps_on_opposite_faces_in_order
+eglt 5-deep
+--multiplier 1.10 (round 5 to 6, etc)
+--------------------------------
+[2021-08-25T13:43:51.505] IDA threshold 11, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T13:43:51.505] IDA threshold 12, explored 466 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T13:43:51.508] IDA threshold 13, explored 9,817 nodes, took 0.002s, 4,908,500 nodes-per-sec
+[2021-08-25T13:43:51.575] IDA threshold 14, explored 253,342 nodes, took 0.067s, 3,781,224 nodes-per-sec
+[2021-08-25T13:43:53.767] IDA threshold 15, explored 6,547,918 nodes, took 2.191s, 2,988,552 nodes-per-sec
+[2021-08-25T13:44:54.042] IDA threshold 16, explored 178,460,846 nodes, took 60.276s, 2,960,728 nodes-per-sec
+[2021-08-25T14:06:05.280] IDA threshold 17, explored 4,899,774,985 nodes, took 1271.237s, 3,854,336 nodes-per-sec
+[2021-08-25T14:33:43.409] IDA count 7,341,784,515, f_cost 17 vs threshold 18 (cost_to_here 17, cost_to_goal 0)
+SOLUTION: D2 Rw2 U' Bw D2 Rw' D Fw U2 Bw2 Dw' R' Dw' R' Uw' B Rw' 
+[2021-08-25T14:33:43.410] IDA threshold 18, explored 7,341,784,515 nodes, took 1658.129s, 4,427,752 nodes-per-sec
+[2021-08-25T14:33:43.410] IDA found solution, explored 12,426,831,889 total nodes, took 2991.905s, 4,153,484 nodes-per-sec
+
+       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
+       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
+  INIT   6    7    6    6    0      0      0    0   17    0
+   D2    6    6    6    6    0      0      0   10   16    1
+  Rw2    6    6    7    6    0      0      0   11   15    2
+   U'    6    7    6    7    0      0      0   11   14    3
+   Bw    5    7    6    7    0      0      0   11   13    4
+   D2    5    6    6    7    0      0      0   11   12    5
+  Rw'    5    5    6    7    0      0      0   11   11    6
+    D    4    5    5    6    0      0      0    9   10    7
+   Fw    3    5    4    5    0      0      0    7    9    8
+   U2    3    5    4    5    0      0      0    7    8    9
+  Bw2    2    4    4    4    0      0      0    4    7   10
+  Dw'    3    4    4    4    0      0      0    4    6   11
+   R'    3    3    4    3    0      0      0    4    5   12
+  Dw'    2    2    3    3    0      0      0    3    4   13
+   R'    1    1    3    3    0      0      0    3    3   14
+  Uw'    0    0    2    2    0      0      0    2    2   15
+    B    0    0    1    1    0      0      0    1    1   16
+  Rw'    0    0    0    0    0      0      0    0    0   17
+
+
+uthash off
+--centers-only
+steps_on_same_face_in_order
+steps_on_opposite_faces_in_order
+eglt 5-deep
+--------------------------------
+[2021-08-25T15:10:12.855] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T15:10:12.856] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-25T15:10:12.858] IDA threshold 12, explored 9,817 nodes, took 0.002s, 4,908,500 nodes-per-sec
+[2021-08-25T15:10:12.924] IDA threshold 13, explored 250,872 nodes, took 0.065s, 3,859,569 nodes-per-sec
+[2021-08-25T15:10:14.384] IDA threshold 14, explored 6,481,387 nodes, took 1.461s, 4,436,267 nodes-per-sec
+[2021-08-25T15:10:57.490] IDA threshold 15, explored 176,565,876 nodes, took 43.105s, 4,096,180 nodes-per-sec
+[2021-08-25T15:33:04.936] IDA threshold 16, explored 4,845,175,847 nodes, took 1327.445s, 3,650,001 nodes-per-sec
+[2021-08-25T21:37:12.936] IDA count 87,413,407,395, f_cost 16 vs threshold 17 (cost_to_here 16, cost_to_goal 0)
+SOLUTION: L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw' 
+[2021-08-25T21:37:12.936] IDA threshold 17, explored 87,413,407,395 nodes, took 21847.992s, 4,000,981 nodes-per-sec
+[2021-08-25T21:37:12.936] IDA found solution, explored 92,441,891,660 total nodes, took 23220.080s, 3,981,118 nodes-per-sec
+
+       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
+       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
+  INIT   6    7    6    6    0      0      0    0   16    0
+   L2    5    6    6    6    0      0      0    9   15    1
+   R2    6    6    6    7    0      0      0   10   14    2
+  Fw2    6    7    6    6    0      0      0   10   13    3
+   U2    6    6    7    6    0      0      0   10   12    4
+    F    6    5    6    5    0      0      0    8   11    5
+   Lw    7    6    6    5    0      0      0   10   10    6
+  Dw2    6    6    6    5    0      0      0    9    9    7
+   Lw    6    5    6    5    0      0      0    8    8    8
+    D    5    4    5    4    0      0      0    6    7    9
+  Fw'    4    3    4    3    0      0      0    6    6   10
+  Rw'    4    2    4    2    0      0      0    5    5   11
+  Dw2    4    2    4    2    0      0      0    4    4   12
+  Lw2    3    3    3    3    0      0      0    3    3   13
+  Rw2    2    2    2    2    0      0      0    2    2   14
+  Dw'    1    1    1    1    0      0      0    1    1   15
+  Bw'    0    0    0    0    0      0      0    0    0   16

@@ -3417,14 +3417,85 @@ class RubiksCube555(RubiksCube):
     def group_centers_phase1_and_2(self) -> None:
         if self.LR_centers_staged() and self.FB_centers_staged():
             return
+
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=500)
+        min_phase1_2_len = None
+        phase1_solution = []
+        phase2_solution = []
+
+        # disable INFO messages as we try all phase1 solutions to see which leads to the shortest phase2 solution
+        logging.getLogger().setLevel(logging.WARNING)
+
+        for steps in solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in steps:
+                self.rotate(step)
+
+            phase1_steps_str = " ".join(steps)
+            phase1_len = len(steps)
+            original_and_phase1_len = len(self.solution)
+
+            # If we already have a candidate solution for phase1_2 then we can put a cap on how deep
+            # into phase2 should look. This can save some cycles by aborting a phase2 once we know
+            # the phase1_2 solution will not be shorter than our current min_phase1_2_len.
+            if min_phase1_2_len is not None:
+                max_ida_threshold = min_phase1_2_len - phase1_len
+            else:
+                max_ida_threshold = None
+
+            try:
+                self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
+                found_phase2_solution = True
+            except subprocess.CalledProcessError:
+                logger.warning(
+                    f"phase1 {phase1_steps_str} ({phase1_len} steps), phase2 max_ida_threshold {max_ida_threshold} (NO SOLUTION)"
+                )
+                found_phase2_solution = False
+
+            if found_phase2_solution:
+                phase2_steps = self.solution[original_and_phase1_len:]
+                phase2_steps_str = " ".join([step for step in phase2_steps if not step.startswith("COMMENT")])
+                phase2_len = self.get_solution_len_minus_rotates(phase2_steps)
+
+                phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
+                desc = f"phase1 {phase1_steps_str} ({phase1_len} steps), phase2 {phase2_steps_str} ({phase2_len} steps), phase1+2 len {phase1_2_solution_len}"
+
+                if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
+                    logger.warning(f"{desc} (NEW MIN)")
+                    min_phase1_2_len = phase1_2_solution_len
+                    phase1_solution = steps
+                    phase2_solution = self.solution[original_and_phase1_len:]
+                else:
+                    logger.warning(desc)
+
         # dwalton
-        tmp_solution_len = len(self.solution)
-        self.lt_LR_centers_stage.solve_via_c()
+        logging.getLogger().setLevel(logging.INFO)
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in phase1_solution:
+            self.rotate(step)
+
         self.print_cube()
         self.solution.append(
             "COMMENT_%d_steps_555_two_centers_staged"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+            % self.get_solution_len_minus_rotates(self.solution[len(original_solution) :])
         )
+        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        for step in phase2_solution:
+            self.rotate(step)
+
+        self.print_cube()
+        self.solution.append(
+            "COMMENT_%d_steps_555_centers_staged"
+            % self.get_solution_len_minus_rotates(self.solution[len(original_solution) :])
+        )
+        logger.info("%s: FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def reduce_333(self):
         self.lt_init()
@@ -3436,7 +3507,7 @@ class RubiksCube555(RubiksCube):
             if False:
                 self.group_centers_phase1_and_2_multi_axis()
 
-            elif False:
+            elif True:
                 self.group_centers_phase1_and_2()
 
             elif True:

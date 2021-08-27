@@ -239,7 +239,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 fh_pt_state.write("\n".join(to_write) + "\n")
                 to_write = []
 
-    def solution_via_c(
+    def solutions_via_c(
         self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
@@ -318,7 +318,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
         if solution_count is not None:
             cmd.append("--solution-count")
-            cmd.append(solution_count)
+            cmd.append(str(solution_count))
 
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
@@ -351,7 +351,7 @@ class LookupTableIDAViaGraph(LookupTable):
             raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % "\n".join(output))
 
     def solve_via_c(self, pt_states=[], max_ida_threshold: int = None) -> None:
-        solution = self.solution_via_c(pt_states=pt_states, max_ida_threshold=max_ida_threshold, solution_count=1)[0]
+        solution = self.solutions_via_c(pt_states=pt_states, max_ida_threshold=max_ida_threshold, solution_count=1)[0]
 
         for step in solution:
             self.parent.rotate(step)

@@ -49,9 +49,9 @@ an entry kills any gains of the branches that were pruned.
 
 TODO section
 ------------
-TODO - run today's phase1 with "--solution-count 500" and use each of those solutions to do a my-pt-states.txt solve of phase2
-
 TODY - for all of the TIE phase4 wing_strs, do a my-pt-states.txt solve of phase5
+
+TODO - run today's phase1 with "--solution-count 500" and use each of those solutions to do a my-pt-states.txt solve of phase2
 
 TODO - reduce duplicate code in ida_search.c and ida_search_via_graph.c 
 

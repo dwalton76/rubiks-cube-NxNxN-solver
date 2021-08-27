@@ -2,7 +2,6 @@
 import itertools
 import logging
 import subprocess
-import sys
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -3398,13 +3397,15 @@ class RubiksCube555(RubiksCube):
                 desc = f"phase1 {phase1_steps_str} ({phase1_len} steps), phase2 {phase2_steps_str} ({phase2_len} steps), phase1+2 len {phase1_2_solution_len}"
 
                 if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
-                    logger.warning(f"{desc} (NEW MIN)")
+                    if not via_multi_axis:
+                        logger.warning(f"{desc} (NEW MIN)")
                     min_phase1_2_len = phase1_2_solution_len
                     phase1_solution = steps
                     phase2_solution = self.solution[original_and_phase1_len:]
                     phase2_output = self.solve_via_c_output
                 else:
-                    logger.warning(desc)
+                    if not via_multi_axis:
+                        logger.warning(desc)
 
         if not via_multi_axis:
             logging.getLogger().setLevel(logging.INFO)
@@ -3427,10 +3428,6 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube()
-        self.solution.append(
-            "COMMENT_%d_steps_555_centers_staged"
-            % self.get_solution_len_minus_rotates(self.solution[len(original_solution) :])
-        )
         logger.info("%s: FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_phase1_and_2_multi_axis(self) -> None:
@@ -3459,13 +3456,16 @@ class RubiksCube555(RubiksCube):
             self.group_centers_phase1_and_2(via_multi_axis=True)
 
             phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
+            desc = f"pre_step {pre_step}, phase1+2 len {phase1_2_solution_len}"
 
             if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
-                logger.warning(f"pre_step {pre_step}, phase1_2 len {phase1_2_solution_len} (NEW MIN)")
+                logger.warning(f"{desc} (NEW MIN)")
                 min_phase1_2_len = phase1_2_solution_len
                 min_phase1_2_pre_step = pre_step
+            elif phase1_2_solution_len == min_phase1_2_len:
+                logger.warning(f"{desc} (TIE)")
             else:
-                logger.warning(f"pre_step {pre_step}, phase1_2 len {phase1_2_solution_len}")
+                logger.warning(desc)
 
             self.solution = original_solution[:]
             self.state = original_state[:]
@@ -3490,7 +3490,7 @@ class RubiksCube555(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-            if False:
+            if True:
                 self.group_centers_phase1_and_2_multi_axis()
 
             elif True:
@@ -3530,8 +3530,6 @@ class RubiksCube555(RubiksCube):
                 logger.info(
                     "%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
                 )
-
-            sys.exit(0)
 
             # phase 3
             self.eo_edges()

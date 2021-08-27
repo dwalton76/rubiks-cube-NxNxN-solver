@@ -21,13 +21,13 @@ python ./utils/test.py --size 5x5x5
 
 555 combine phase1+2..attempt #432
 ==================================
+DONE section
+------------
 DONE - solve a few hundred of today's phase1 where we stage LR
 DONE - use that to build a 2D heuristic matrix based on x-center cost and t-center cost. This
         will give us a way to get a heuristic that goes up to ~10.
 DONE - we can use that same matrix for the UD x-center and t-centers
 DONE - use multiplier 1.10, that will round 5 to 6, 6 to 7, etc
-
-TODO - use threads. The solve above took 12 hours, with 8 threads that would be down to 1.5 hours.
 
 Today our IDA search has the --centers-only option which chops a ton of branches by avoiding multiple permutations
 of a series of outer layer moves.  For instance the moves "U F D" there is no need to do "F D U", "D U F", etc because
@@ -36,7 +36,7 @@ DONE - the order does not matter for a series of moves that are all on the same 
 DONE - if two moves are on opposite faces then the order does not matter..."Lw Rw" and "Rw Lw" will put you in the same state.
 DONE - put these tricks to ida_search.c as well
 
-TODO - build a lookup-table 6 moves deep. This will be ~35 million entries and would take about 2G to load so you wouldn't want
+DONE - build a lookup-table 6 moves deep. This will be ~35 million entries and would take about 2G to load so you wouldn't want
 to run this on a pi. The lookup-table would use the same key that we use today for ida_explored and the value would be the move count.
 - say our IDA max_threshold is 17, we know the solution will be 16 steps
 - when node->cost_to_here is 10 we check the lookup-table to see if the current state is in there.  If it isn't then we can prune
@@ -47,6 +47,66 @@ Long story short I tried this but it does not prune nearly enough branches and t
 an entry kills any gains of the branches that were pruned.
 
 
+TODO section
+------------
+TODO - run today's phase1 with "--solution-count 500" and use each of those solutions to do a my-pt-states.txt solve of phase2
+
+TODY - for all of the TIE phase4 wing_strs, do a my-pt-states.txt solve of phase5
+
+TODO - reduce duplicate code in ida_search.c and ida_search_via_graph.c 
+
+TODO - use threads. The solve below took 6 hours, with 8 threads that would be down to 45 minutes.
+
+TODO - today we have a lr_centers_stage_555 table which is a 2D array of the LR t-centers and x-centers costs. This gives
+  us heuristics that go as high as 11 (vs 7 for the standalone t-center/x-center tables). This ends up making a big difference
+  in the number of branches explored. It takes us from this
+
+[2021-08-26T12:22:09.427] IDA threshold 7, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:22:09.427] IDA threshold 8, explored 138 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:22:09.428] IDA threshold 9, explored 3,278 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:22:09.440] IDA threshold 10, explored 70,910 nodes, took 0.012s, 5,909,166 nodes-per-sec
+[2021-08-26T12:22:09.851] IDA threshold 11, explored 1,705,496 nodes, took 0.410s, 4,159,746 nodes-per-sec
+[2021-08-26T12:22:19.530] IDA threshold 12, explored 42,864,450 nodes, took 9.680s, 4,428,145 nodes-per-sec
+
+to this
+
+[2021-08-26T12:23:00.427] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:23:00.427] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:23:00.429] IDA threshold 12, explored 9,817 nodes, took 0.001s, 9,817,000 nodes-per-sec
+[2021-08-26T12:23:00.484] IDA threshold 13, explored 255,287 nodes, took 0.055s, 4,641,582 nodes-per-sec
+[2021-08-26T12:23:02.112] IDA threshold 14, explored 6,591,154 nodes, took 1.628s, 4,048,620 nodes-per-sec
+[2021-08-26T12:23:42.742] IDA threshold 15, explored 179,607,639 nodes, took 40.629s, 4,420,676 nodes-per-sec
+
+There are other similar 2D arrays we could make:
+- LR x-centers and UD x-centers.  We built the 9 billion entry lookup-table for this on LJ's machine. Use that to create this 2D array.
+- LR t-centers and UD t-centers.  We built the 9 billion entry lookup-table for this on LJ's machine. Use that to create this 2D array.
+- LR t-centers and UD x-centers.  Would this be drastically different from LR x-centers and LR t-centers?
+- LR x-centers and UD t-centers.  Would this be drastically different from LR x-centers and LR t-centers?
+
+The bottom two bullet points were easy so here are the counts with those in place...I'm not sure on this though I need
+to think about this some more.
+[2021-08-26T12:33:04.244] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:33:04.244] IDA threshold 11, explored 307 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:33:04.246] IDA threshold 12, explored 6,344 nodes, took 0.001s, 6,344,000 nodes-per-sec
+[2021-08-26T12:33:04.282] IDA threshold 13, explored 158,056 nodes, took 0.036s, 4,390,444 nodes-per-sec
+[2021-08-26T12:33:05.309] IDA threshold 14, explored 4,096,236 nodes, took 1.026s, 3,992,432 nodes-per-sec
+[2021-08-26T12:33:31.454] IDA threshold 15, explored 109,929,923 nodes, took 26.145s, 4,204,625 nodes-per-sec
+[2021-08-26T12:45:58.345] IDA threshold 16, explored 2,984,653,452 nodes, took 746.891s, 3,996,103 nodes-per-sec
+
+With the top two bullets hacked to use lr_centers_stage_555
+[2021-08-26T12:59:41.816] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:59:41.816] IDA threshold 11, explored 188 nodes, took 0.000s, 0 nodes-per-sec
+[2021-08-26T12:59:41.818] IDA threshold 12, explored 4,785 nodes, took 0.001s, 4,785,000 nodes-per-sec
+[2021-08-26T12:59:41.840] IDA threshold 13, explored 109,716 nodes, took 0.022s, 4,987,091 nodes-per-sec
+[2021-08-26T12:59:42.563] IDA threshold 14, explored 2,824,140 nodes, took 0.723s, 3,906,141 nodes-per-sec
+[2021-08-26T13:00:03.298] IDA threshold 15, explored 75,082,189 nodes, took 20.735s, 3,621,036 nodes-per-sec
+[2021-08-26T13:10:42.602] IDA threshold 16, explored 2,024,019,274 nodes, took 592.213s, 3,417,722 nodes-per-sec
+
+so if I built those properly I am sure it would help but not enough to make this combined phase1+2 really feasible
+
+
+stats
+-----
 The following are for:
 
 ./ida_search_via_graph \
@@ -118,109 +178,41 @@ SOLUTION: L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
 
 This solve originally took 12 hours but is now down to 6 1/2 hours
 
-uthash off
---centers-only
-steps_on_same_face_in_order
-steps_on_opposite_faces_in_order
-eglt 4-deep
---------------------------------
-[2021-08-25T12:31:12.068] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T12:31:12.069] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T12:31:12.072] IDA threshold 12, explored 9,817 nodes, took 0.003s, 3,272,333 nodes-per-sec
-[2021-08-25T12:31:12.158] IDA threshold 13, explored 253,342 nodes, took 0.086s, 2,945,837 nodes-per-sec
-[2021-08-25T12:31:14.840] IDA threshold 14, explored 6,547,918 nodes, took 2.681s, 2,442,341 nodes-per-sec
-[2021-08-25T12:32:16.981] IDA threshold 15, explored 178,460,846 nodes, took 62.141s, 2,871,869 nodes-per-sec
 
 
-uthash off
---centers-only
-steps_on_same_face_in_order
-steps_on_opposite_faces_in_order
-eglt 5-deep
---------------------------------
-[2021-08-25T12:36:33.540] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T12:36:33.540] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T12:36:33.542] IDA threshold 12, explored 9,817 nodes, took 0.002s, 4,908,500 nodes-per-sec
-[2021-08-25T12:36:33.610] IDA threshold 13, explored 250,872 nodes, took 0.067s, 3,744,358 nodes-per-sec
-[2021-08-25T12:36:35.327] IDA threshold 14, explored 6,481,387 nodes, took 1.717s, 3,774,832 nodes-per-sec
-[2021-08-25T12:37:22.992] IDA threshold 15, explored 176,565,876 nodes, took 47.665s, 3,704,308 nodes-per-sec
+side brainstorm
+===============
+These are phase1 solutions for cube
+LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
 
+R2  F  L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+L2 R2 Fw2  U2  F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
 
-uthash off
---centers-only
-steps_on_same_face_in_order
-steps_on_opposite_faces_in_order
-eglt 5-deep
---multiplier 1.10 (round 5 to 6, etc)
---------------------------------
-[2021-08-25T13:43:51.505] IDA threshold 11, explored 0 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T13:43:51.505] IDA threshold 12, explored 466 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T13:43:51.508] IDA threshold 13, explored 9,817 nodes, took 0.002s, 4,908,500 nodes-per-sec
-[2021-08-25T13:43:51.575] IDA threshold 14, explored 253,342 nodes, took 0.067s, 3,781,224 nodes-per-sec
-[2021-08-25T13:43:53.767] IDA threshold 15, explored 6,547,918 nodes, took 2.191s, 2,988,552 nodes-per-sec
-[2021-08-25T13:44:54.042] IDA threshold 16, explored 178,460,846 nodes, took 60.276s, 2,960,728 nodes-per-sec
-[2021-08-25T14:06:05.280] IDA threshold 17, explored 4,899,774,985 nodes, took 1271.237s, 3,854,336 nodes-per-sec
-[2021-08-25T14:33:43.409] IDA count 7,341,784,515, f_cost 17 vs threshold 18 (cost_to_here 17, cost_to_goal 0)
-SOLUTION: D2 Rw2 U' Bw D2 Rw' D Fw U2 Bw2 Dw' R' Dw' R' Uw' B Rw' 
-[2021-08-25T14:33:43.410] IDA threshold 18, explored 7,341,784,515 nodes, took 1658.129s, 4,427,752 nodes-per-sec
-[2021-08-25T14:33:43.410] IDA found solution, explored 12,426,831,889 total nodes, took 2991.905s, 4,153,484 nodes-per-sec
+What jumps out to me is that the last 7-steps are all w moves...so maybe we could split this up into two phases where
+the first phase is putting all centers into a state that can be solved without outer layer moves? In that case the 2nd
+phase would be
 
-       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
-       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
-  INIT   6    7    6    6    0      0      0    0   17    0
-   D2    6    6    6    6    0      0      0   10   16    1
-  Rw2    6    6    7    6    0      0      0   11   15    2
-   U'    6    7    6    7    0      0      0   11   14    3
-   Bw    5    7    6    7    0      0      0   11   13    4
-   D2    5    6    6    7    0      0      0   11   12    5
-  Rw'    5    5    6    7    0      0      0   11   11    6
-    D    4    5    5    6    0      0      0    9   10    7
-   Fw    3    5    4    5    0      0      0    7    9    8
-   U2    3    5    4    5    0      0      0    7    8    9
-  Bw2    2    4    4    4    0      0      0    4    7   10
-  Dw'    3    4    4    4    0      0      0    4    6   11
-   R'    3    3    4    3    0      0      0    4    5   12
-  Dw'    2    2    3    3    0      0      0    3    4   13
-   R'    1    1    3    3    0      0      0    3    3   14
-  Uw'    0    0    2    2    0      0      0    2    2   15
-    B    0    0    1    1    0      0      0    1    1   16
-  Rw'    0    0    0    0    0      0      0    0    0   17
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 75 entries (0 percent, 10.71x previous step)
+    3 steps has 888 entries (0 percent, 11.84x previous step)
+    4 steps has 11,082 entries (0 percent, 12.48x previous step)
+    5 steps has 142,230 entries (0 percent, 12.83x previous step)
+    6 steps has 1,828,443 entries (7 percent, 12.86x previous step)
+    7 steps has 23,404,284 entries (92 percent, 12.80x previous step)
+    
+    # extrapolate from here
+    8 steps has 297,234,406 entries (12.70x previous step)
+    9 steps has 3,745,153,515 entries (12.60x previous step)
+    10 steps has 46,814,418,937 entries (12.50x previous step)
+    11 steps has 580,498,794,818 entries (12.40x previous step)
+    12 steps has 7,140,135,176,261 entries (12.30x previous step)
+    13 steps has 87,109,649,150,384 entries (12.20x previous step)
+    14 steps has 1,054,026,754,719,646 entries (12.10x previous step)
+    15 steps has 12,648,321,056,635,756 entries (12.00x previous step)
+    16 steps has 63,007,488,253,818,868 entries (4.98x previous step)
 
+    Average: 15.804055310955736
+    Total  : 76,804,717,230,489,600
 
-uthash off
---centers-only
-steps_on_same_face_in_order
-steps_on_opposite_faces_in_order
-eglt 5-deep
---------------------------------
-[2021-08-25T15:10:12.855] IDA threshold 10, explored 0 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T15:10:12.856] IDA threshold 11, explored 466 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-25T15:10:12.858] IDA threshold 12, explored 9,817 nodes, took 0.002s, 4,908,500 nodes-per-sec
-[2021-08-25T15:10:12.924] IDA threshold 13, explored 250,872 nodes, took 0.065s, 3,859,569 nodes-per-sec
-[2021-08-25T15:10:14.384] IDA threshold 14, explored 6,481,387 nodes, took 1.461s, 4,436,267 nodes-per-sec
-[2021-08-25T15:10:57.490] IDA threshold 15, explored 176,565,876 nodes, took 43.105s, 4,096,180 nodes-per-sec
-[2021-08-25T15:33:04.936] IDA threshold 16, explored 4,845,175,847 nodes, took 1327.445s, 3,650,001 nodes-per-sec
-[2021-08-25T21:37:12.936] IDA count 87,413,407,395, f_cost 16 vs threshold 17 (cost_to_here 16, cost_to_goal 0)
-SOLUTION: L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw' 
-[2021-08-25T21:37:12.936] IDA threshold 17, explored 87,413,407,395 nodes, took 21847.992s, 4,000,981 nodes-per-sec
-[2021-08-25T21:37:12.936] IDA found solution, explored 92,441,891,660 total nodes, took 23220.080s, 3,981,118 nodes-per-sec
+so really no gain since there would be a first phase before this which would put us back close to the ~20 move phase1+2 that we have today
 
-       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
-       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
-  INIT   6    7    6    6    0      0      0    0   16    0
-   L2    5    6    6    6    0      0      0    9   15    1
-   R2    6    6    6    7    0      0      0   10   14    2
-  Fw2    6    7    6    6    0      0      0   10   13    3
-   U2    6    6    7    6    0      0      0   10   12    4
-    F    6    5    6    5    0      0      0    8   11    5
-   Lw    7    6    6    5    0      0      0   10   10    6
-  Dw2    6    6    6    5    0      0      0    9    9    7
-   Lw    6    5    6    5    0      0      0    8    8    8
-    D    5    4    5    4    0      0      0    6    7    9
-  Fw'    4    3    4    3    0      0      0    6    6   10
-  Rw'    4    2    4    2    0      0      0    5    5   11
-  Dw2    4    2    4    2    0      0      0    4    4   12
-  Lw2    3    3    3    3    0      0      0    3    3   13
-  Rw2    2    2    2    2    0      0      0    2    2   14
-  Dw'    1    1    1    1    0      0      0    1    1   15
-  Bw'    0    0    0    0    0      0      0    0    0   16

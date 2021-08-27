@@ -678,8 +678,8 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
-            multiplier=1.09,
             centers_only=True,
+            C_ida_type="5x5x5-lr-centers-stage",
         )
 
 
@@ -839,6 +839,7 @@ class LookupTable555CenterStageOnePhase(LookupTableIDAViaGraph):
                 parent.lt_UD_x_centers_stage,
             ],
             centers_only=True,
+            C_ida_type="5x5x5-centers-stage",
         )
 
 
@@ -3048,6 +3049,7 @@ class RubiksCube555(RubiksCube):
         Stage LR centers
         """
 
+        # dwalton
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_LR_centers_stage.solve_via_c()
@@ -3342,7 +3344,7 @@ class RubiksCube555(RubiksCube):
 
         logger.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def group_centers_phase1_and_2(self) -> None:
+    def group_centers_phase1_and_2_multi_axis(self) -> None:
         """
         phase1 stages the centers on sides L and R
         phase2 stages the centers on sides F and B
@@ -3350,6 +3352,9 @@ class RubiksCube555(RubiksCube):
         There are three different combinations of colors we can put on sides LR (colors LR, UD or FB).
         Try all three combinations and see which leads to the shortest phase1 + phase2 solution length.
         """
+        if self.LR_centers_staged() and self.FB_centers_staged():
+            return
+
         original_state = self.state[:]
         original_solution = self.solution[:]
         min_phase1_2_len = None
@@ -3409,6 +3414,18 @@ class RubiksCube555(RubiksCube):
             self.print_cube()
             logger.info("rotated cube so sides U and F are where they should be")
 
+    def group_centers_phase1_and_2(self) -> None:
+        if self.LR_centers_staged() and self.FB_centers_staged():
+            return
+        # dwalton
+        tmp_solution_len = len(self.solution)
+        self.lt_LR_centers_stage.solve_via_c()
+        self.print_cube()
+        self.solution.append(
+            "COMMENT_%d_steps_555_two_centers_staged"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+
     def reduce_333(self):
         self.lt_init()
 
@@ -3416,7 +3433,13 @@ class RubiksCube555(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-            if True:
+            if False:
+                self.group_centers_phase1_and_2_multi_axis()
+
+            elif False:
+                self.group_centers_phase1_and_2()
+
+            elif True:
                 # phase 1
                 self.group_centers_stage_LR()
 
@@ -3424,15 +3447,24 @@ class RubiksCube555(RubiksCube):
                 self.group_centers_stage_FB()
 
             else:
-                # for step in "R2 F L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Rw2 Lw2 Dw' Bw'".split():
+                """
+                These are phase1 solutions for cube
+                LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
+
+                R2  F  L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+                L2 R2 Fw2  U2  F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+                """
+
+                """
                 for step in "L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'".split():
                     self.rotate(step)
                 self.solution.append(
                     "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
                 )
                 self.print_cube()
-
                 """
+
+                # this works but takes 7+ hours to run!
                 self.lt_centers_stage_experiment.solve_via_c()
                 self.print_cube()
                 self.solution.append(
@@ -3441,10 +3473,7 @@ class RubiksCube555(RubiksCube):
                 logger.info(
                     "%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
                 )
-                # standard libraries
-                import sys
-                sys.exit(0)
-                """
+
             # phase 3
             self.eo_edges()
 

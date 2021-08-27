@@ -40,7 +40,6 @@ move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
 move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
 struct key_value_pair *ida_explored = NULL;
-struct key_value_pair *eglt = NULL;
 
 // Supported IDA searches
 typedef enum {
@@ -211,46 +210,18 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
             }
 
             if (type == CENTERS_STAGE_555) {
-                unsigned char eglt_max_depth = 6;
-                cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
+                unsigned char lr_t_centers_cost = pt0_cost;
+                unsigned char lr_x_centers_cost = pt1_cost;
+                unsigned char ud_t_centers_cost = pt2_cost;
+                unsigned char ud_x_centers_cost = pt3_cost;
 
-                if (lr_centers_stage_555[pt2_cost][pt3_cost] > cost_to_goal) {
-                    cost_to_goal = lr_centers_stage_555[pt2_cost][pt3_cost];
+                if (lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
+                    cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost];
                 }
 
-
-                /*
-                Our end-goal-lookup-table (EGLT) is 6-deep (34 million entries).
-                If our max_ida_threshold is 17 then we know the solution is 16 steps long.
-
-                If our cost_to_here < 10 there is no need to look for the current state in
-                    EGLT, we know it will not be there and therefore cost_to_goal
-                    has to be at least 7.
-
-                If our cost_to_here >= 10 and our current state is not in EGLT then prune this branch. That
-                    should just happen when we return a cost_to_goal of 7.
-                 */
-                /*
-                if (cost_to_goal <= eglt_max_depth) {
-                    use_multiplier = 0;
-
-                    if (cost_to_here < threshold - 1 - eglt_max_depth) {
-                        cost_to_goal = eglt_max_depth + 1;
-                    } else {
-                        char key[64];
-                        struct key_value_pair *eglt_entry = NULL;
-
-                        sprintf(key, "%u-%u-%u-%u", prev_pt0_state, prev_pt1_state, prev_pt2_state, prev_pt3_state);
-                        eglt_entry = hash_find(&eglt, key);
-        
-                        if (eglt_entry) {
-                            cost_to_goal = eglt_entry->value;
-                        } else {
-                            cost_to_goal = eglt_max_depth + 1;
-                        }
-                    }
+                if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
+                    cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
                 }
-                */
             }
             break;
 
@@ -391,34 +362,18 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned cha
             }
 
             if (type == CENTERS_STAGE_555) {
-                unsigned char eglt_max_depth = 6;
-                result.cost_to_goal = lr_centers_stage_555[result.pt0_cost][result.pt1_cost];
+                unsigned char lr_t_centers_cost = result.pt0_cost;
+                unsigned char lr_x_centers_cost = result.pt1_cost;
+                unsigned char ud_t_centers_cost = result.pt2_cost;
+                unsigned char ud_x_centers_cost = result.pt3_cost;
 
-                if (lr_centers_stage_555[result.pt2_cost][result.pt3_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = lr_centers_stage_555[result.pt2_cost][result.pt3_cost];
+                if (lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost];
                 }
 
-                /*
-                if (result.cost_to_goal <= eglt_max_depth) {
-                    use_multiplier = 0;
-
-                    if (cost_to_here < threshold - 1 - eglt_max_depth) {
-                        result.cost_to_goal = eglt_max_depth + 1;
-                    } else {
-                        char key[64];
-                        struct key_value_pair *eglt_entry = NULL;
-
-                        sprintf(key, "%u-%u-%u-%u", prev_pt0_state, prev_pt1_state, prev_pt2_state, prev_pt3_state);
-                        eglt_entry = hash_find(&eglt, key);
-        
-                        if (eglt_entry) {
-                            result.cost_to_goal = eglt_entry->value;
-                        } else {
-                            result.cost_to_goal = eglt_max_depth + 1;
-                        }
-                    }
+                if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
                 }
-                */
             }
             break;
 
@@ -1273,41 +1228,6 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-
-    /*
-    if (type == CENTERS_STAGE_555) {
-        FILE * fp;
-        char * line = NULL;
-        size_t len = 0;
-        ssize_t read;
-        char *key = NULL;
-        int value = 0;
-    
-        fp = fopen("lookup-tables/lookup-table-5x5x5-step14-centers-stage-eglt.txt.6-deep", "r");
-
-        if (fp == NULL) {
-            exit(EXIT_FAILURE);
-        }
-    
-        // read the file into the eglt hash
-        while ((read = getline(&line, &len, fp)) != -1) {
-            // state
-            key = strtok(line, ":");
-
-            // solution length
-            value = atoi(strtok(NULL, ":"));
-
-            hash_add(&eglt, key, value);
-        }
-    
-        fclose(fp);
-
-        if (line) {
-            free(line);
-            line = NULL;
-        }
-    }
-    */
 
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
     // printf("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);

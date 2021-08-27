@@ -333,10 +333,8 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        logger.info("solve_via_c:\n    %s\n" % cmd_string)
-
         output = subprocess.check_output(cmd).decode("utf-8").splitlines()
-        self.parent.solve_via_c_output = "\n" + "\n".join(remove_failed_ida_output(output)) + "\n"
+        self.parent.solve_via_c_output = f"\n{cmd_string}\n" + "\n".join(remove_failed_ida_output(output)) + "\n"
         logger.info(self.parent.solve_via_c_output)
         solutions = []
 

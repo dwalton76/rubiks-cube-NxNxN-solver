@@ -3118,44 +3118,35 @@ class RubiksCube(object):
 
         return True
 
+    def _opposite_centers_staged(self, sides: List) -> bool:
+        colors = set()
+
+        for side in sides:
+            for pos in side.center_pos:
+                colors.add(self.state[pos])
+
+        return bool(len(colors) == 2)
+
     def UD_centers_staged(self) -> bool:
         """
         Returns:
             True if UD centers are staged
         """
-        UD = ("U", "D")
-
-        for side in (self.sideU, self.sideD):
-            for pos in side.center_pos:
-                if self.state[pos] not in UD:
-                    return False
-        return True
+        return self._opposite_centers_staged([self.sideU, self.sideD])
 
     def LR_centers_staged(self) -> bool:
         """
         Returns:
             True if LR centers are staged
         """
-        LR = ("L", "R")
-
-        for side in (self.sideL, self.sideR):
-            for pos in side.center_pos:
-                if self.state[pos] not in LR:
-                    return False
-        return True
+        return self._opposite_centers_staged([self.sideL, self.sideR])
 
     def FB_centers_staged(self) -> bool:
         """
         Returns:
             True if FB centers are staged
         """
-        FB = ("F", "B")
-
-        for side in (self.sideF, self.sideB):
-            for pos in side.center_pos:
-                if self.state[pos] not in FB:
-                    return False
-        return True
+        return self._opposite_centers_staged([self.sideF, self.sideB])
 
     def centers_staged(self) -> bool:
         """

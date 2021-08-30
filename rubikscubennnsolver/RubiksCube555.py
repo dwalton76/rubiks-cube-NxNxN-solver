@@ -1598,7 +1598,6 @@ class LookupTable555Phase4(LookupTable):
     Average: 4.01 moves
     """
 
-    # dwalton
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -2145,7 +2144,6 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             perfect_hash02_filename="lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.pt-state-perfect-hash",
             pt1_state_max=117600,
             pt2_state_max=117600,
-            multiplier=1.05,
         )
 
 
@@ -2435,7 +2433,6 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             # compute the lookup index in the perfect hash file
             perfect_hash01_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
             pt1_state_max=40320,
-            multiplier=1.04,
         )
 
 
@@ -2579,7 +2576,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
-            multiplier=1.09,
         )
 
 
@@ -3486,122 +3482,154 @@ class RubiksCube555(RubiksCube):
     def reduce_333(self):
         self.lt_init()
 
-        if not self.centers_solved() or not self.edges_paired():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
+        if self.centers_solved():
+            self.solution.append("CENTERS_SOLVED")
 
-            if True:
-                self.group_centers_phase1_and_2_multi_axis()
+        if self.edges_paired():
+            self.solution.append("EDGES_GROUPED")
 
-            elif True:
-                self.group_centers_phase1_and_2()
+        if self.centers_solved() and self.edge_paired():
+            return
 
-            elif True:
-                # phase 1
-                self.group_centers_stage_LR()
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
 
-                # phase 2
-                self.group_centers_stage_FB()
+        if True:
+            self.group_centers_phase1_and_2_multi_axis()
 
-            else:
-                """
-                These are phase1 solutions for cube
-                LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
+        elif True:
+            self.group_centers_phase1_and_2()
 
-                R2  F  L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
-                L2 R2 Fw2  U2  F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
-                """
+        elif True:
+            # phase 1
+            self.group_centers_stage_LR()
 
-                """
-                for step in "L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'".split():
-                    self.rotate(step)
-                self.solution.append(
-                    "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
-                )
-                self.print_cube()
-                """
+            # phase 2
+            self.group_centers_stage_FB()
 
-                # this works but takes 7+ hours to run!
-                self.lt_centers_stage_experiment.solve_via_c()
-                self.print_cube()
-                self.solution.append(
-                    "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
-                )
-                logger.info(
-                    "%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
-                )
+        else:
+            """
+            These are phase1 solutions for cube
+            LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
 
-            # phase 3
-            self.eo_edges()
+            R2  F  L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+            L2 R2 Fw2  U2  F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+            """
 
-            # phase 4
-            # phase 5
-            # phase 6
-            original_state = self.state[:]
-            original_solution = self.solution[:]
-            original_solution_len = len(original_solution)
-
-            min_phase456_solution_len = None
-            min_phase456_solution = []
-            edge_messages = []
-
-            # disable INFO messages as we try all three combinations
-            logging.getLogger().setLevel(logging.WARNING)
-
-            # controls how many first four wing_str combos we evaluate.  Make this number 495 to evaluate all of them, you
-            # would only do so for a FMC as this will take a long time.
-            MAX_INDEX = 2
-            # dwalton
-
-            for (index, (phase4_solution_len, wing_str_combo)) in enumerate(self.find_first_four_edges_to_pair()):
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                if min_phase456_solution_len and phase4_solution_len >= 3:
-                    break
-
-                # phase 4+5 (pair first four edges)
-                self.pair_first_four_edges(wing_str_combo)
-                phase45_solution = self.solution[original_solution_len:]
-                phase45_solution_len = len(phase45_solution)
-                phase5_solution = phase45_solution[phase4_solution_len:]
-
-                # phase 6 (pair last eight edges)
-                self.pair_last_eight_edges()
-                phase456_solution = self.solution[original_solution_len:]
-                phase456_solution_len = len(phase456_solution)
-                phase6_solution = phase456_solution[phase45_solution_len:]
-                phase456_solution_len = self.get_solution_len_minus_rotates(phase456_solution)
-
-                desc = (
-                    f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps ("
-                    f"{phase4_solution_len} + "
-                    f"{self.get_solution_len_minus_rotates(phase5_solution)} + "
-                    f"{self.get_solution_len_minus_rotates(phase6_solution)}"
-                    ")"
-                )
-
-                if min_phase456_solution_len is None or phase456_solution_len < min_phase456_solution_len:
-                    min_phase456_solution_len = phase456_solution_len
-                    min_phase456_solution = phase456_solution[:]
-                    msg = f"{desc} (NEW MIN)"
-                elif phase456_solution_len == min_phase456_solution_len:
-                    msg = f"{desc} (TIE)"
-                else:
-                    msg = desc
-
-                logger.warning(msg)
-                edge_messages.append(msg)
-
-                if index >= MAX_INDEX:
-                    break
-
-            logging.getLogger().setLevel(logging.INFO)
-            self.state = self.post_eo_state
-            self.solution = self.post_eo_solution[:]
-
-            for step in min_phase456_solution:
+            """
+            for step in "L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'".split():
                 self.rotate(step)
+            self.solution.append(
+                "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
+            )
+            self.print_cube()
+            """
+
+            # this works but takes 7+ hours to run!
+            self.lt_centers_stage_experiment.solve_via_c()
+            self.print_cube()
+            self.solution.append(
+                "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
+            )
+            logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # phase 3
+        self.eo_edges()
+
+        # phase 4
+        # phase 5
+        # phase 6
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
+
+        min_phase4567_solution_len = None
+        min_phase456_solution = []
+        min_phase45_output = None
+        min_phase6_output = None
+        edge_messages = []
+
+        # disable INFO messages as we try all three combinations
+        logging.getLogger().setLevel(logging.WARNING)
+
+        # controls how many first four wing_str combos we evaluate.  Make this number 495 to evaluate all of them, you
+        # would only do so for a FMC as this will take a long time.
+        MAX_INDEX = 0
+
+        for (index, (phase4_solution_len, wing_str_combo)) in enumerate(self.find_first_four_edges_to_pair()):
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            if min_phase4567_solution_len and phase4_solution_len >= 3:
+                break
+
+            # phase 4+5 (pair first four edges)
+            self.pair_first_four_edges(wing_str_combo)
+            phase45_solution = self.solution[original_solution_len:]
+            phase45_solution_len = len(phase45_solution)
+            phase5_solution = phase45_solution[phase4_solution_len:]
+            phase45_output = self.solve_via_c_output
+
+            # phase 6 (pair last eight edges)
+            self.pair_last_eight_edges()
+            phase456_solution = self.solution[original_solution_len:]
+            phase456_solution_len = len(phase456_solution)
+            phase6_solution = phase456_solution[phase45_solution_len:]
+            phase6_output = self.solve_via_c_output
+
+            # phase 7 (solve 3x3x3)
+            if MAX_INDEX > 0:
+                self.state = self.post_eo_state
+                self.solution = self.post_eo_solution[:]
+
+                for step in phase456_solution:
+                    self.rotate(step)
+                self.solve_333()
+
+            phase4567_solution = self.solution[original_solution_len:]
+            phase4567_solution_len = len(phase4567_solution)
+            phase7_solution = phase4567_solution[phase456_solution_len:]
+            phase4567_solution_len = self.get_solution_len_minus_rotates(phase4567_solution)
+
+            desc = (
+                f"first 4-edges {wing_str_combo} phase-4-5-6-7 solution is {phase4567_solution_len} steps ("
+                f"{phase4_solution_len} + "
+                f"{self.get_solution_len_minus_rotates(phase5_solution)} + "
+                f"{self.get_solution_len_minus_rotates(phase6_solution)} + "
+                f"{self.get_solution_len_minus_rotates(phase7_solution)}"
+                ")"
+            )
+
+            if min_phase4567_solution_len is None or phase4567_solution_len < min_phase4567_solution_len:
+                min_phase4567_solution_len = phase4567_solution_len
+                min_phase456_solution = phase456_solution[:]
+                min_phase45_output = phase45_output
+                min_phase6_output = phase6_output
+                msg = f"{desc} (NEW MIN)"
+            elif phase4567_solution_len == min_phase4567_solution_len:
+                msg = f"{desc} (TIE)"
+            else:
+                msg = desc
+
+            logger.warning(msg)
+            edge_messages.append(msg)
+
+            if index >= MAX_INDEX:
+                break
+
+        logging.getLogger().setLevel(logging.INFO)
+        self.state = self.post_eo_state
+        self.solution = self.post_eo_solution[:]
+
+        for step in min_phase456_solution:
+            self.rotate(step)
+
+            if step.endswith("first_four_edges_paired"):
+                logger.info(min_phase45_output)
+                self.print_cube()
+            elif step.endswith("last_eight_edges_paired"):
+                logger.info(min_phase6_output)
+                self.print_cube()
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

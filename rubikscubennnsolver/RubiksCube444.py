@@ -793,9 +793,9 @@ class RubiksCube444(RubiksCube):
             # us to NOT load this file into memory.
             high_low_states_to_find = []
             edge_mapping_for_phase2_state = {}
-            count = 0
 
-            for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
+            # for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
+            for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
                 for edge_mapping in edges_to_flip_sets:
                     self.state[:] = tmp_state[:]
                     self.solution[:] = tmp_solution[:]
@@ -804,13 +804,6 @@ class RubiksCube444(RubiksCube):
                     phase2_state = self.lt_highlow_edges.state()
                     edge_mapping_for_phase2_state[phase2_state] = edge_mapping
                     high_low_states_to_find.append(phase2_state)
-                    count += 1
-
-                    # If we evaluate all 2048 of them on a pi3 it takes about 1500ms which ends
-                    # up being a huge chunk of the total solve time.  Checking the first 25% will
-                    # get us a reasonably short solution.
-                    if count >= 512:
-                        break
 
             logger.info(
                 f"{self}: edge_mapping binary_search_multiple {len(high_low_states_to_find)} high_low_states_to_find begin"
@@ -828,12 +821,15 @@ class RubiksCube444(RubiksCube):
                 self.solution = tmp_solution[:]
                 phase2_steps = phase2_steps.split()
                 phase2_cost = len(phase2_steps)
+                desc = f"{self}: edge_mapping {min_edge_mapping}, phase2 cost {phase2_cost}"
 
                 if min_phase2_cost is None or phase2_cost < min_phase2_cost:
                     min_phase2_cost = phase2_cost
                     min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
                     min_phase2_steps = list(pre_steps) + phase2_steps[:]
-                    logger.info(f"{self}: using edge_mapping {min_edge_mapping}, phase2 cost {phase2_cost}")
+                    logger.info(f"{desc} (NEW MIN)")
+                elif phase2_cost == min_phase2_cost:
+                    logger.info(f"{desc} (TIE)")
 
             if min_edge_mapping:
                 if pre_steps:
@@ -875,6 +871,7 @@ class RubiksCube444(RubiksCube):
 
         logger.info(f"{self}: Start of Phase1")
 
+        # dwalton
         if not self.centers_staged():
             self.print_cube()
             self.lt_ULFRBD_centers_stage.solve_via_c()

@@ -208,7 +208,13 @@ int strmatch(char *str1, char *str2) {
 
 void print_moves(move_type *moves, int max_i) {
     int i = 0;
-    printf("SOLUTION: ");
+    int count = 0;
+
+    while (moves[count] != MOVE_NONE) {
+        count++;
+    }
+
+    printf("SOLUTION (%d steps): ", count);
 
     while (moves[i] != MOVE_NONE) {
         printf("%s ", move2str[moves[i]]);

@@ -386,6 +386,7 @@ unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned i
 struct ida_search_result {
     unsigned int f_cost;
     unsigned int found_solution;
+    move_type solution[MOVE_MAX];
 };
 
 struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_to_here, unsigned int threshold,
@@ -427,12 +428,15 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count, f_cost,
             threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
-        search_result.found_solution = 1;
+
+        if (!search_result.found_solution) {
+            search_result.f_cost = f_cost;
+            search_result.found_solution = 1;
+            memcpy(search_result.solution, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+        }
 
         // print the solved cube
         print_cube(cube, cube_size);
-
-        return search_result;
     }
 
     sprintf(cost_to_here_str, "%d", cost_to_here);

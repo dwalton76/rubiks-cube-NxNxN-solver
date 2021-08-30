@@ -1480,14 +1480,19 @@ class LookupTableIDAViaC(object):
         logger.info("%s: solving via C ida_search\n\n%s" % (self, cmd_string))
         output = subprocess.check_output(cmd).decode("ascii")
         logger.info("\n\n" + output + "\n\n")
+        solutions = []
 
         for line in output.splitlines():
             if line.startswith("SOLUTION"):
-                steps = line.split(":")[1].strip().split()
-                break
-        else:
-            raise NoIDASolution("%s" % self)
+                solution = line.split(":")[1].strip().split()
+                solutions.append((len(solution), solution))
 
+        if not solutions:
+            raise NoIDASolution(str(self))
+
+        # apply the shortest solution
+        solutions.sort()
+        steps = solutions[0][1]
         logger.info("%s: ida_search found solution %s" % (self, " ".join(steps)))
         self.parent.state = self.pre_recolor_state[:]
         self.parent.solution = self.pre_recolor_solution[:]

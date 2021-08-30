@@ -1,9 +1,8 @@
-
-#include "ida_search_444.h"
-
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "ida_search_444.h"
 #include "ida_search_core.h"
 #include "xxhash.h"
 
@@ -177,7 +176,7 @@ wings_for_edges_recolor_pattern_444 = (
 struct ida_heuristic_result ida_heuristic_reduce_333_444(
     char *cube, unsigned int max_cost_to_goal, struct key_value_pair **reduce_333_444, char *reduce_333_edges_only,
     char *reduce_333_centers_only, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
-    int cost_to_goal = 0;
+    unsigned int cost_to_goal = 0;
     unsigned long edges_state_bucket = 0;
     unsigned long centers_state_bucket = 0;
     unsigned int edges_cost = 0;
@@ -191,6 +190,8 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
     struct wings_for_edges_recolor_pattern_444 *i_wings_for_recolor = wings_for_recolor;
     struct wings_for_edges_recolor_pattern_444 *j_wings_for_recolor = wings_for_recolor;
     struct ida_heuristic_result result;
+    int MAX_DEPTH = 6; // The table we loaded is 6-deep
+    struct key_value_pair *hash_entry = NULL;
     memset(&result, 0, sizeof(struct ida_heuristic_result));
 
     centers_state[NUM_EDGES_444] = '\0';
@@ -286,347 +287,208 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
     // LOG("edges_state %s, edges_cost %d\n", edges_state, edges_cost);
     // LOG("centers_state %s, centers_cost %d\n", centers_state, centers_cost);
     // LOG("lt_state %s\n", result.lt_state);
-    int original_cost_to_goal = max(edges_cost, centers_cost);
+    cost_to_goal = max(edges_cost, centers_cost);
 
-    if (original_cost_to_goal > 0) {
-        struct key_value_pair *hash_entry = NULL;
+    if (cost_to_goal == 0) {
+        // we found a solution
+        result.cost_to_goal = cost_to_goal;
+        return result;
+    }
+
+    // If the edges_count or centers_cost is greater than MAX_DEPTH then there is no need to do call hash_find, we know
+    // it will not find a match
+    if (cost_to_goal <= MAX_DEPTH) {
         hash_entry = hash_find(reduce_333_444, result.lt_state);
+    }
 
-        if (hash_entry) {
-            cost_to_goal = hash_entry->value;
-        } else {
-            // The higher this number the less you honor the heuristic_stats
-            // -  0 uses the heuristic_stats exactly as reported
-            // -  1 subtracts 1 from the heuristic_stats value
-            // - 99 disables heuristic_stats
-            //
-            // You want to put this as high as you can but low enough
-            // to still speed up the slow IDA searches.
-            //
-            // For cube RLLLBDUURUDLBDRULDLBFRRFLLLFFBBFDBUBFBBULFBBLDDUFLRLRDDDRUURFDFDUUDRLLLDBRRURBUDDBFBUFFFRFBURRFU
-            // 99 : I let it run for an hour and gave up
-            //  3 : gave up after a few minutes
-            //  2 : 15 moves, 16s
-            //  1 : 15 moves, 7s
-            //  0 : 16 moves, 2.3s
+    if (hash_entry) {
+        // if we found a match then we know the exact cost to the goal
+        cost_to_goal = hash_entry->value;
 
-            // For cube LRRFDDDULDUFFRFFRDLLULRDDLRLRFLULULDDBBBFFBBBFDDLULBFUDRUUUUBDRFBBDURRLFLRLUUBLDDFUURBFBBFFBRBRR
-            //  2 : 15 moves, 4.5s
-            //  1 : 15 moves, 7.4s
-            //  0 : 15 moves, 13s
-            unsigned int heuristic_stats_error = 1;
-            cost_to_goal = original_cost_to_goal + heuristic_stats_error;
-
-            // These stats come from back when I was using python IDA here. These are not
-            // admissible but it DRASTICALLY speeds up this search.
-            switch (centers_cost) {
-                case 0:
-                    switch (edges_cost) {
-                        case 0:
-                            cost_to_goal = 1;
-                            break;
-                        case 2:
-                            cost_to_goal = 7;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 1:
-                    switch (edges_cost) {
-                        case 1:
-                            cost_to_goal = 2;
-                            break;
-                        case 2:
-                            cost_to_goal = 9;
-                            break;
-                        case 3:
-                            cost_to_goal = 8;
-                            break;
-                        case 4:
-                            cost_to_goal = 6;
-                            break;
-                        default:
-                            break;
-                    }
-                case 2:
-                    switch (edges_cost) {
-                        case 1:
-                            cost_to_goal = 7;
-                            break;
-                        case 2:
-                            cost_to_goal = 3;
-                            break;
-                        case 3:
-                            cost_to_goal = 4;
-                            break;
-                        case 4:
-                            cost_to_goal = 5;
-                            break;
-                        case 5:
-                            cost_to_goal = 7;
-                            break;
-                        case 6:
-                            cost_to_goal = 9;
-                            break;
-                        case 10:
-                            cost_to_goal = 14;
-                            break;
-                        case 11:
-                            cost_to_goal = 14;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 3:
-                    switch (edges_cost) {
-                        case 1:
-                            cost_to_goal = 4;
-                            break;
-                        case 2:
-                            cost_to_goal = 4;
-                            break;
-                        case 3:
-                            cost_to_goal = 4;
-                            break;
-                        case 4:
-                            cost_to_goal = 6;
-                            break;
-                        case 5:
-                            cost_to_goal = 7;
-                            break;
-                        case 6:
-                            cost_to_goal = 10;
-                            break;
-                        case 7:
-                            cost_to_goal = 11;
-                            break;
-                        case 8:
-                            cost_to_goal = 12;
-                            break;
-                        case 9:
-                            cost_to_goal = 12;
-                            break;
-                        case 10:
-                            cost_to_goal = 13;
-                            break;
-                        case 11:
-                            cost_to_goal = 15;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 4:
-                    switch (edges_cost) {
-                        case 1:
-                            cost_to_goal = 5;
-                            break;
-                        case 2:
-                            cost_to_goal = 6;
-                            break;
-                        case 3:
-                            cost_to_goal = 6;
-                            break;
-                        case 4:
-                            cost_to_goal = 6;
-                            break;
-                        case 5:
-                            cost_to_goal = 7;
-                            break;
-                        case 6:
-                            cost_to_goal = 10;
-                            break;
-                        case 7:
-                            cost_to_goal = 11;
-                            break;
-                        case 8:
-                            cost_to_goal = 12;
-                            break;
-                        case 9:
-                            cost_to_goal = 13;
-                            break;
-                        case 10:
-                            cost_to_goal = 14;
-                            break;
-                        case 11:
-                            cost_to_goal = 15;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 5:
-                    switch (edges_cost) {
-                        case 2:
-                            cost_to_goal = 6;
-                            break;
-                        case 3:
-                            cost_to_goal = 6;
-                            break;
-                        case 4:
-                            cost_to_goal = 7;
-                            break;
-                        case 5:
-                            cost_to_goal = 8;
-                            break;
-                        case 6:
-                            cost_to_goal = 9;
-                            break;
-                        case 7:
-                            cost_to_goal = 11;
-                            break;
-                        case 8:
-                            cost_to_goal = 12;
-                            break;
-                        case 9:
-                            cost_to_goal = 13;
-                            break;
-                        case 10:
-                            cost_to_goal = 14;
-                            break;
-                        case 11:
-                            cost_to_goal = 15;
-                            break;
-                        case 12:
-                            cost_to_goal = 14;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 6:
-                    switch (edges_cost) {
-                        case 3:
-                            cost_to_goal = 7;
-                            break;
-                        case 4:
-                            cost_to_goal = 10;
-                            break;
-                        case 5:
-                            cost_to_goal = 9;
-                            break;
-                        case 6:
-                            cost_to_goal = 9;
-                            break;
-                        case 7:
-                            cost_to_goal = 10;
-                            break;
-                        case 8:
-                            cost_to_goal = 11;
-                            break;
-                        case 9:
-                            cost_to_goal = 13;
-                            break;
-                        case 10:
-                            cost_to_goal = 14;
-                            break;
-                        case 11:
-                            cost_to_goal = 15;
-                            break;
-                        case 12:
-                            cost_to_goal = 16;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 7:
-                    switch (edges_cost) {
-                        case 5:
-                            cost_to_goal = 12;
-                            break;
-                        case 6:
-                            cost_to_goal = 11;
-                            break;
-                        case 7:
-                            cost_to_goal = 11;
-                            break;
-                        case 8:
-                            cost_to_goal = 12;
-                            break;
-                        case 9:
-                            cost_to_goal = 13;
-                            break;
-                        case 10:
-                            cost_to_goal = 14;
-                            break;
-                        case 11:
-                            cost_to_goal = 14;
-                            break;
-                        case 12:
-                            cost_to_goal = 15;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 8:
-                    switch (edges_cost) {
-                        case 6:
-                            cost_to_goal = 13;
-                            break;
-                        case 7:
-                            cost_to_goal = 13;
-                            break;
-                        case 8:
-                            cost_to_goal = 13;
-                            break;
-                        case 9:
-                            cost_to_goal = 13;
-                            break;
-                        case 10:
-                            cost_to_goal = 14;
-                            break;
-                        case 11:
-                            cost_to_goal = 15;
-                            break;
-                        case 12:
-                            cost_to_goal = 14;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case 9:
-                    switch (edges_cost) {
-                        case 8:
-                            cost_to_goal = 13;
-                            break;
-                        case 9:
-                            cost_to_goal = 13;
-                            break;
-                        case 10:
-                            cost_to_goal = 14;
-                            break;
-                        case 11:
-                            cost_to_goal = 15;
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                default:
-                    break;
-            }
-
-            cost_to_goal -= heuristic_stats_error;
-
-            // If the heuristic_error is set too high and it gives us a cost_to_goal
-            // that is below both the centers_cost and edges_cost then we know we
-            // have subtracted too much in this scenario.  Go back to using the max
-            // among centers_cost and edges_cost.
-            if (cost_to_goal < original_cost_to_goal) {
-                cost_to_goal = original_cost_to_goal;
-            }
-
-            // The table we loaded is 6-deep
-            int MAX_DEPTH = 6;
-            cost_to_goal = max(cost_to_goal, MAX_DEPTH + 1);
-        }
     } else {
-        cost_to_goal = 0;
+        // float cost_to_goal_multiplier = 1.08;
+        // cost_to_goal = (unsigned int)round(cost_to_goal * cost_to_goal_multiplier);
+
+        // These stats come from back when I was using python IDA here. These are not
+        // admissible but it DRASTICALLY speeds up this search.
+        switch (centers_cost) {
+            case 2:
+                switch (edges_cost) {
+                    case 10:
+                        cost_to_goal = 14;
+                        break;
+                    case 11:
+                        cost_to_goal = 14;
+                        break;
+                }
+                break;
+            case 3:
+                switch (edges_cost) {
+                    case 6:
+                        cost_to_goal = 10;
+                        break;
+                    case 7:
+                        cost_to_goal = 11;
+                        break;
+                    case 8:
+                        cost_to_goal = 12;
+                        break;
+                    case 9:
+                        cost_to_goal = 12;
+                        break;
+                    case 10:
+                        cost_to_goal = 13;
+                        break;
+                    case 11:
+                        cost_to_goal = 15;
+                        break;
+                }
+                break;
+            case 4:
+                switch (edges_cost) {
+                    case 6:
+                        cost_to_goal = 10;
+                        break;
+                    case 7:
+                        cost_to_goal = 11;
+                        break;
+                    case 8:
+                        cost_to_goal = 12;
+                        break;
+                    case 9:
+                        cost_to_goal = 13;
+                        break;
+                    case 10:
+                        cost_to_goal = 14;
+                        break;
+                    case 11:
+                        cost_to_goal = 15;
+                        break;
+                }
+                break;
+            case 5:
+                switch (edges_cost) {
+                    case 6:
+                        cost_to_goal = 9;
+                        break;
+                    case 7:
+                        cost_to_goal = 11;
+                        break;
+                    case 8:
+                        cost_to_goal = 12;
+                        break;
+                    case 9:
+                        cost_to_goal = 13;
+                        break;
+                    case 10:
+                        cost_to_goal = 14;
+                        break;
+                    case 11:
+                        cost_to_goal = 15;
+                        break;
+                    case 12:
+                        cost_to_goal = 14;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case 6:
+                switch (edges_cost) {
+                    case 6:
+                        cost_to_goal = 9;
+                        break;
+                    case 7:
+                        cost_to_goal = 10;
+                        break;
+                    case 8:
+                        cost_to_goal = 11;
+                        break;
+                    case 9:
+                        cost_to_goal = 13;
+                        break;
+                    case 10:
+                        cost_to_goal = 14;
+                        break;
+                    case 11:
+                        cost_to_goal = 15;
+                        break;
+                    case 12:
+                        cost_to_goal = 16;
+                        break;
+                }
+                break;
+            case 7:
+                switch (edges_cost) {
+                    case 6:
+                        cost_to_goal = 11;
+                        break;
+                    case 7:
+                        cost_to_goal = 11;
+                        break;
+                    case 8:
+                        cost_to_goal = 12;
+                        break;
+                    case 9:
+                        cost_to_goal = 13;
+                        break;
+                    case 10:
+                        cost_to_goal = 14;
+                        break;
+                    case 11:
+                        cost_to_goal = 14;
+                        break;
+                    case 12:
+                        cost_to_goal = 15;
+                        break;
+                }
+                break;
+            case 8:
+                switch (edges_cost) {
+                    case 6:
+                        cost_to_goal = 13;
+                        break;
+                    case 7:
+                        cost_to_goal = 13;
+                        break;
+                    case 8:
+                        cost_to_goal = 13;
+                        break;
+                    case 9:
+                        cost_to_goal = 13;
+                        break;
+                    case 10:
+                        cost_to_goal = 14;
+                        break;
+                    case 11:
+                        cost_to_goal = 15;
+                        break;
+                    case 12:
+                        cost_to_goal = 14;
+                        break;
+                }
+                break;
+            case 9:
+                switch (edges_cost) {
+                    case 8:
+                        cost_to_goal = 13;
+                        break;
+                    case 9:
+                        cost_to_goal = 13;
+                        break;
+                    case 10:
+                        cost_to_goal = 14;
+                        break;
+                    case 11:
+                        cost_to_goal = 15;
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
+
+        cost_to_goal = max(cost_to_goal, MAX_DEPTH + 1);
     }
 
     result.cost_to_goal = cost_to_goal;

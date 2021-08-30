@@ -3387,12 +3387,12 @@ class RubiksCube555(RubiksCube):
         if pre_step is not None:
             self.rotate(pre_step)
 
-        solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=5000)
+        solutions = self.lt_LR_centers_stage.solutions_via_c()
         phase1_output = self.solve_via_c_output
         min_phase1_2_solutions = []
         min_phase1_2_len = None
 
-        for phase1_steps in solutions:
+        for solution_len, phase1_steps in solutions:
             self.state = original_state[:]
             self.solution = original_solution[:]
 

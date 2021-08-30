@@ -34,7 +34,6 @@ unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 unsigned char orbit0_wide_quarter_turns = 0;
 unsigned char orbit1_wide_quarter_turns = 0;
-unsigned int min_solution_count = 1;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
@@ -677,11 +676,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                     search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
             }
             print_moves(node->moves_to_here, node->cost_to_here);
-
-            if (solution_count >= min_solution_count) {
-                // We are finished
-                return search_result;
-            }
         }
 
         // Stop searching down this path
@@ -1022,10 +1016,6 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--multiplier")) {
             i++;
             cost_to_goal_multiplier = atof(argv[i]);
-
-        } else if (strmatch(argv[i], "--solution-count")) {
-            i++;
-            min_solution_count = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--max-ida-threshold")) {
             i++;

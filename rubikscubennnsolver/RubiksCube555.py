@@ -1598,6 +1598,7 @@ class LookupTable555Phase4(LookupTable):
     Average: 4.01 moves
     """
 
+    # dwalton
     def __init__(self, parent):
         LookupTable.__init__(
             self,
@@ -3143,21 +3144,21 @@ class RubiksCube555(RubiksCube):
         # When solve_via_c is passed pt_states (2048 lines of states in this case), it will try all 2048 of them
         # to find the state that has the shortest solution.
         self.lt_phase3.solve_via_c(pt_states=pt_states)
+        self.solution.append(
+            "COMMENT_%d_steps_555_edges_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+        self.post_eo_state = self.state[:]
+        self.post_eo_solution = self.solution[:]
 
         # re-color the cube so that the edges are oriented correctly so we can
         # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
         # the cube and re-apply the solution.
-        self.post_eo_state = self.state[:]
-        self.post_eo_solution = self.solution[:]
         self.edges_flip_orientation(wing_strs, [])
 
         self.highlow_edges_print()
         self.print_cube()
         logger.info(
             "%s: end of phase 3, edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_555_edges_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
     def high_edge_midge_pair_count(self, target_wing_str=[]):
@@ -3246,7 +3247,7 @@ class RubiksCube555(RubiksCube):
                         f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len} (TIE)"
                     )
                 else:
-                    logger.debug(
+                    logger.info(
                         f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
                     )
             else:
@@ -3256,7 +3257,6 @@ class RubiksCube555(RubiksCube):
         self.solution = original_solution[:]
         results.sort()
         # logger.info("\n" + "\n".join(map(str, results)))
-        results = [x[1] for x in results]
         return results
 
     def pair_first_four_edges(self, phase4_wing_str_combo):
@@ -3539,60 +3539,69 @@ class RubiksCube555(RubiksCube):
             # phase 6
             original_state = self.state[:]
             original_solution = self.solution[:]
-            original_solution_len = len(self.solution)
+            original_solution_len = len(original_solution)
 
             min_phase456_solution_len = None
             min_phase456_solution = []
-            min_phase456_state = []
             edge_messages = []
+
+            # disable INFO messages as we try all three combinations
+            logging.getLogger().setLevel(logging.WARNING)
 
             # controls how many first four wing_str combos we evaluate.  Make this number 495 to evaluate all of them, you
             # would only do so for a FMC as this will take a long time.
-            MAX_INDEX = 0
+            MAX_INDEX = 2
+            # dwalton
 
-            for (index, wing_str_combo) in enumerate(self.find_first_four_edges_to_pair()):
+            for (index, (phase4_solution_len, wing_str_combo)) in enumerate(self.find_first_four_edges_to_pair()):
                 self.state = original_state[:]
                 self.solution = original_solution[:]
-                self.pair_first_four_edges(wing_str_combo)
-                self.pair_last_eight_edges()
 
+                if min_phase456_solution_len and phase4_solution_len >= 3:
+                    break
+
+                # phase 4+5 (pair first four edges)
+                self.pair_first_four_edges(wing_str_combo)
+                phase45_solution = self.solution[original_solution_len:]
+                phase45_solution_len = len(phase45_solution)
+                phase5_solution = phase45_solution[phase4_solution_len:]
+
+                # phase 6 (pair last eight edges)
+                self.pair_last_eight_edges()
                 phase456_solution = self.solution[original_solution_len:]
+                phase456_solution_len = len(phase456_solution)
+                phase6_solution = phase456_solution[phase45_solution_len:]
                 phase456_solution_len = self.get_solution_len_minus_rotates(phase456_solution)
+
+                desc = (
+                    f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps ("
+                    f"{phase4_solution_len} + "
+                    f"{self.get_solution_len_minus_rotates(phase5_solution)} + "
+                    f"{self.get_solution_len_minus_rotates(phase6_solution)}"
+                    ")"
+                )
 
                 if min_phase456_solution_len is None or phase456_solution_len < min_phase456_solution_len:
                     min_phase456_solution_len = phase456_solution_len
-                    min_phase456_state = self.state[:]
-                    min_phase456_solution = self.solution[:]
-                    msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps (NEW MIN)"
+                    min_phase456_solution = phase456_solution[:]
+                    msg = f"{desc} (NEW MIN)"
                 elif phase456_solution_len == min_phase456_solution_len:
-                    msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps (TIE)"
+                    msg = f"{desc} (TIE)"
                 else:
-                    msg = f"first 4-edges {wing_str_combo} phase-4-5-6 solution is {phase456_solution_len} steps"
+                    msg = desc
 
-                logger.info(msg)
+                logger.warning(msg)
                 edge_messages.append(msg)
 
                 if index >= MAX_INDEX:
                     break
 
-            if len(edge_messages) > 1:
-                logger.info("")
-                logger.info("first 4-edges summary")
-                for msg in edge_messages:
-                    logger.info(msg)
-
-            self.state = min_phase456_state
-            self.solution = min_phase456_solution
-
-            edges_solution = self.solution[len(self.post_eo_solution) :]
+            logging.getLogger().setLevel(logging.INFO)
             self.state = self.post_eo_state
-            self.solution = self.post_eo_solution[: len(self.post_eo_solution)]
+            self.solution = self.post_eo_solution[:]
 
-            for step in edges_solution:
-                if step.startswith("COMMENT"):
-                    self.solution.append(step)
-                else:
-                    self.rotate(step)
+            for step in min_phase456_solution:
+                self.rotate(step)
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

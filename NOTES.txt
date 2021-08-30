@@ -216,3 +216,6 @@ phase would be
 
 so really no gain since there would be a first phase before this which would put us back close to the ~20 move phase1+2 that we have today
 
+
+
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 175686 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 537770 --centers-only --type 5x5x5-lr-centers-stage  --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"

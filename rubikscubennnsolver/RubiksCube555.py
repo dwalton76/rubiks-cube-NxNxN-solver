@@ -2,6 +2,7 @@
 import itertools
 import logging
 import subprocess
+from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -3339,92 +3340,151 @@ class RubiksCube555(RubiksCube):
 
         logger.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def group_centers_phase1_and_2(self, via_multi_axis: bool = False) -> None:
-        if self.LR_centers_staged() and self.FB_centers_staged():
-            return
+    def best_phase1_2_for_eo_edges(
+        self, original_state: List[str], original_solution: List[str], phase1_2_solutions: List[List[str]]
+    ):
+        min_eo_edges_len = None
+        min_phase1_2 = None
 
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=5000)
-        min_phase1_2_len = None
-        phase2_output = None
-        phase1_solution = []
-        phase2_solution = []
-
-        if not via_multi_axis:
-            # disable INFO messages as we try all phase1 solutions to see which leads to the shortest phase2 solution
-            logging.getLogger().setLevel(logging.WARNING)
-
-        for steps in solutions:
+        for phase1_2_steps in phase1_2_solutions:
+            logger.warning(f"best_phase1_2_for_eo_edges {phase1_2_steps}")
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            for step in steps:
+            for step in phase1_2_steps:
+                self.rotate(step)
+            logging.getLogger().setLevel(logging.INFO)
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+            self.print_cube()
+            logging.getLogger().setLevel(logging.WARNING)
+            phase1_2_solution_len = len(self.solution)
+
+            self.eo_edges()
+            eo_edges_len = len(self.solution[phase1_2_solution_len:])
+            desc = f"EO edges is {eo_edges_len} steps"
+
+            if min_eo_edges_len is None or eo_edges_len < min_eo_edges_len:
+                logger.warning(f"{desc} (NEW MIN)")
+                min_phase1_2 = phase1_2_steps[:]
+
+            elif eo_edges_len == min_eo_edges_len:
+                logger.warning(f"{desc} (TIE)")
+            else:
+                logger.warning(desc)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        return min_phase1_2
+
+    def phase1_2_solutions(self, pre_step: str = None) -> List[Tuple]:
+        if self.LR_centers_staged() and self.FB_centers_staged():
+            return [()]
+
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        if pre_step is not None:
+            self.rotate(pre_step)
+
+        solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=5000)
+        phase1_output = self.solve_via_c_output
+        min_phase1_2_solutions = []
+        min_phase1_2_len = None
+
+        for phase1_steps in solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            if pre_step is not None:
+                self.rotate(pre_step)
+                pre_and_phase1_steps = [pre_step] + phase1_steps
+            else:
+                pre_and_phase1_steps = phase1_steps
+
+            for step in phase1_steps:
                 self.rotate(step)
 
-            phase1_steps_str = " ".join(steps)
-            phase1_len = len(steps)
+            phase1_steps_str = " ".join(phase1_steps)
+            phase1_len = len(phase1_steps)
             original_and_phase1_len = len(self.solution)
 
             # If we already have a candidate solution for phase1_2 then we can put a cap on how deep
             # into phase2 we should look. This can save some cycles by aborting phase2 once we know
             # the phase1_2 solution will not be shorter than our current min_phase1_2_len.
             if min_phase1_2_len is not None:
-                max_ida_threshold = min_phase1_2_len - phase1_len
+                max_ida_threshold = min_phase1_2_len - phase1_len + 1
             else:
                 max_ida_threshold = None
 
             try:
                 self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
-                found_phase2_solution = True
+                phase2_output = self.solve_via_c_output
             except subprocess.CalledProcessError:
-                if not via_multi_axis:
-                    logger.warning(
-                        f"phase1 {phase1_steps_str} ({phase1_len} steps), phase2 max_ida_threshold {max_ida_threshold} (NO SOLUTION)"
-                    )
-                found_phase2_solution = False
+                # logger.warning(
+                #    f"pre_step {pre_step}, phase1 {phase1_steps_str} ({phase1_len} steps), phase2 max_ida_threshold {max_ida_threshold} (NO SOLUTION)"
+                # )
+                continue
 
-            if found_phase2_solution:
-                phase2_steps = self.solution[original_and_phase1_len:]
-                phase2_steps_str = " ".join([step for step in phase2_steps if not step.startswith("COMMENT")])
-                phase2_len = self.get_solution_len_minus_rotates(phase2_steps)
+            phase2_steps = self.solution[original_and_phase1_len:]
+            phase2_steps_str = " ".join([step for step in phase2_steps if not step.startswith("COMMENT")])
+            phase2_len = self.get_solution_len_minus_rotates(phase2_steps)
 
-                phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
-                desc = f"phase1 {phase1_steps_str} ({phase1_len} steps), phase2 {phase2_steps_str} ({phase2_len} steps), phase1+2 len {phase1_2_solution_len}"
+            phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
+            desc = f"pre_step {pre_step}, phase1 {phase1_steps_str} ({phase1_len} steps), phase2 {phase2_steps_str} ({phase2_len} steps), phase1+2 len {phase1_2_solution_len}"
 
-                if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
-                    if not via_multi_axis:
-                        logger.warning(f"{desc} (NEW MIN)")
-                    min_phase1_2_len = phase1_2_solution_len
-                    phase1_solution = steps
-                    phase2_solution = self.solution[original_and_phase1_len:]
-                    phase2_output = self.solve_via_c_output
-                else:
-                    if not via_multi_axis:
-                        logger.warning(desc)
+            if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
+                logger.warning(f"{desc} (NEW MIN)")
+                min_phase1_2_solutions = []
+                min_phase1_2_solutions.append(
+                    (phase1_2_solution_len, phase1_output, pre_and_phase1_steps, phase2_output, phase2_steps)
+                )
+                min_phase1_2_len = phase1_2_solution_len
+                phase2_output = self.solve_via_c_output
 
-        if not via_multi_axis:
-            logging.getLogger().setLevel(logging.INFO)
+            elif phase1_2_solution_len == min_phase1_2_len:
+                logger.warning(f"{desc} (TIE)")
+                min_phase1_2_solutions.append(
+                    (phase1_2_solution_len, phase1_output, pre_and_phase1_steps, phase2_output, phase2_steps)
+                )
+
+            # else:
+            #     logger.warning(desc)
 
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        for step in phase1_solution:
-            self.rotate(step)
+        min_phase1_2_solutions.sort()
+        return min_phase1_2_solutions
 
+    def group_centers_phase1_and_2(self) -> None:
+        if self.LR_centers_staged() and self.FB_centers_staged():
+            return
+
+        # disable INFO messages as we try all phase1 solutions to see which leads to the shortest phase2 solution
+        logging.getLogger().setLevel(logging.WARNING)
+        phase1_2_solution_len, phase1_output, phase1_steps, phase2_output, phase2_steps = self.phase1_2_solutions()[0]
+        phase1_steps_str = " ".join([x for x in phase1_steps if not x.startswith("COMMENT")])
+        phase2_steps_str = " ".join([x for x in phase2_steps if not x.startswith("COMMENT")])
+        logging.getLogger().setLevel(logging.INFO)
+
+        logger.info(phase1_output)
+        for step in phase1_steps:
+            self.rotate(step)
         self.print_cube()
-        self.solution.append(
-            "COMMENT_%d_steps_555_two_centers_staged"
-            % self.get_solution_len_minus_rotates(self.solution[len(original_solution) :])
+        logger.info(
+            "%s: LR centers staged via %s, %d steps in"
+            % (self, phase1_steps_str, self.get_solution_len_minus_rotates(self.solution))
         )
-        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         logger.info(phase2_output)
-        for step in phase2_solution:
+        for step in phase2_steps:
             self.rotate(step)
-
         self.print_cube()
-        logger.info("%s: FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        logger.info(
+            "%s: FB centers staged via %s, %d steps in"
+            % (self, phase2_steps_str, self.get_solution_len_minus_rotates(self.solution))
+        )
 
     def group_centers_phase1_and_2_multi_axis(self) -> None:
         """
@@ -3439,8 +3499,7 @@ class RubiksCube555(RubiksCube):
 
         original_state = self.state[:]
         original_solution = self.solution[:]
-        min_phase1_2_len = None
-        min_phase1_2_pre_step = None
+        multi_axis_phase1_2_solutions = []
 
         # disable INFO messages as we try all three combinations
         logging.getLogger().setLevel(logging.WARNING)
@@ -3448,36 +3507,44 @@ class RubiksCube555(RubiksCube):
         # z will move LR to UD and vice versa
         # y will move LR to FB and vice versa
         for pre_step in (None, "z", "y"):
-            self.rotate(pre_step)
-            self.group_centers_phase1_and_2(via_multi_axis=True)
-
-            phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            desc = f"pre_step {pre_step}, phase1+2 len {phase1_2_solution_len}"
-
-            if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
-                logger.warning(f"{desc} (NEW MIN)")
-                min_phase1_2_len = phase1_2_solution_len
-                min_phase1_2_pre_step = pre_step
-            elif phase1_2_solution_len == min_phase1_2_len:
-                logger.warning(f"{desc} (TIE)")
-            else:
-                logger.warning(desc)
-
+            multi_axis_phase1_2_solutions.extend(self.phase1_2_solutions(pre_step=pre_step))
             self.solution = original_solution[:]
             self.state = original_state[:]
 
+        multi_axis_phase1_2_solutions.sort()
+        phase1_2_solution_len, phase1_output, phase1_steps, phase2_output, phase2_steps = multi_axis_phase1_2_solutions[
+            0
+        ]
+        phase1_steps_str = " ".join([x for x in phase1_steps if not x.startswith("COMMENT")])
+        phase2_steps_str = " ".join([x for x in phase2_steps if not x.startswith("COMMENT")])
         logging.getLogger().setLevel(logging.INFO)
-        self.rotate(min_phase1_2_pre_step)
-        self.group_centers_phase1_and_2()
 
-        # rotate cube so sides U and F are where they should be
+        logger.info(phase1_output)
+        for step in phase1_steps:
+            self.rotate(step)
+        self.print_cube()
+        logger.info(
+            "%s: LR centers staged via %s, %d steps in"
+            % (self, phase1_steps_str, self.get_solution_len_minus_rotates(self.solution))
+        )
+
+        logger.info(phase2_output)
+        for step in phase2_steps:
+            self.rotate(step)
+        self.print_cube()
+        logger.info(
+            "%s: FB centers staged via %s, %d steps in"
+            % (self, phase2_steps_str, self.get_solution_len_minus_rotates(self.solution))
+        )
+
+        # rotate U to U and F to F
         pre_rotate_state = self.state[:]
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
         if self.state != pre_rotate_state:
             self.print_cube()
-            logger.info("rotated cube so sides U and F are where they should be")
+            logger.info("%s: post rotate U to U and F to F", self)
 
     def reduce_333(self):
         self.lt_init()
@@ -3488,7 +3555,7 @@ class RubiksCube555(RubiksCube):
         if self.edges_paired():
             self.solution.append("EDGES_GROUPED")
 
-        if self.centers_solved() and self.edge_paired():
+        if self.centers_solved() and self.edges_paired():
             return
 
         self.rotate_U_to_U()
@@ -3532,6 +3599,9 @@ class RubiksCube555(RubiksCube):
                 "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
             )
             logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # import sys
+        # sys.exit(0)
 
         # phase 3
         self.eo_edges()

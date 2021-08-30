@@ -190,7 +190,7 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
     struct wings_for_edges_recolor_pattern_444 *i_wings_for_recolor = wings_for_recolor;
     struct wings_for_edges_recolor_pattern_444 *j_wings_for_recolor = wings_for_recolor;
     struct ida_heuristic_result result;
-    int MAX_DEPTH = 6; // The table we loaded is 6-deep
+    int MAX_DEPTH = 6;  // The table we loaded is 6-deep
     struct key_value_pair *hash_entry = NULL;
     memset(&result, 0, sizeof(struct ida_heuristic_result));
 

@@ -162,10 +162,9 @@ struct StackNode *pop(struct StackNode **root) {
     return temp;
 }
 
-unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned char cost_to_here,
-                                      unsigned int prev_pt0_state, unsigned int prev_pt1_state,
-                                      unsigned int prev_pt2_state, unsigned int prev_pt3_state,
-                                      unsigned int prev_pt4_state);
+unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned char cost_to_here, unsigned int prev_pt0_state,
+                                      unsigned int prev_pt1_state, unsigned int prev_pt2_state,
+                                      unsigned int prev_pt3_state, unsigned int prev_pt4_state);
 
 inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned char cost_to_here,
                                              unsigned int prev_pt0_state, unsigned int prev_pt1_state,
@@ -299,9 +298,10 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
     return cost_to_goal;
 }
 
-struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned char cost_to_here, unsigned int prev_pt0_state,
-                                            unsigned int prev_pt1_state, unsigned int prev_pt2_state,
-                                            unsigned int prev_pt3_state, unsigned int prev_pt4_state) {
+struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned char cost_to_here,
+                                            unsigned int prev_pt0_state, unsigned int prev_pt1_state,
+                                            unsigned int prev_pt2_state, unsigned int prev_pt3_state,
+                                            unsigned int prev_pt4_state) {
     struct cost_to_goal_result result;
     unsigned char use_multiplier = 1;
 
@@ -650,8 +650,8 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
     struct StackNode *root = NULL;
     struct StackNode *node = NULL;
     struct cost_to_goal_result ctg;
-    cost_to_goal =
-        get_cost_to_goal_simple(type, 0, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
+    cost_to_goal = get_cost_to_goal_simple(type, 0, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state,
+                                           init_pt4_state);
     push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
          init_pt3_state, init_pt4_state);
 
@@ -800,7 +800,8 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                 continue;
             }
 
-            cost_to_goal = get_cost_to_goal_simple(type, node->cost_to_here + 1, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+            cost_to_goal = get_cost_to_goal_simple(type, node->cost_to_here + 1, pt0_state, pt1_state, pt2_state,
+                                                   pt3_state, pt4_state);
             ida_count++;
 
             if ((node->cost_to_here + 1 + cost_to_goal) > threshold) {

@@ -1479,7 +1479,8 @@ class LookupTableIDAViaC(object):
 
         logger.info("%s: solving via C ida_search\n\n%s" % (self, cmd_string))
         output = subprocess.check_output(cmd).decode("ascii")
-        logger.info("\n\n" + output + "\n\n")
+        self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
+        logger.info(self.parent.solve_via_c_output)
         solutions = []
 
         for line in output.splitlines():

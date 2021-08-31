@@ -3377,7 +3377,7 @@ class RubiksCube555(RubiksCube):
         self.solution = original_solution[:]
         return min_phase1_2
 
-    def phase1_2_solutions(self, pre_step: str = None) -> List[Tuple]:
+    def phase1_2_solutions(self, pre_step: str = None, min_phase1_2_len: int = None) -> List[Tuple]:
         if self.LR_centers_staged() and self.FB_centers_staged():
             return [()]
 
@@ -3390,7 +3390,6 @@ class RubiksCube555(RubiksCube):
         solutions = self.lt_LR_centers_stage.solutions_via_c()
         phase1_output = self.solve_via_c_output
         min_phase1_2_solutions = []
-        min_phase1_2_len = None
 
         for solution_len, phase1_steps in solutions:
             self.state = original_state[:]
@@ -3507,7 +3506,15 @@ class RubiksCube555(RubiksCube):
         # z will move LR to UD and vice versa
         # y will move LR to FB and vice versa
         for pre_step in (None, "z", "y"):
-            multi_axis_phase1_2_solutions.extend(self.phase1_2_solutions(pre_step=pre_step))
+            if multi_axis_phase1_2_solutions:
+                multi_axis_phase1_2_solutions.sort()
+                min_phase1_2_len = multi_axis_phase1_2_solutions[0][0]
+            else:
+                min_phase1_2_len = None
+
+            multi_axis_phase1_2_solutions.extend(
+                self.phase1_2_solutions(pre_step=pre_step, min_phase1_2_len=min_phase1_2_len)
+            )
             self.solution = original_solution[:]
             self.state = original_state[:]
 

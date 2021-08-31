@@ -77,6 +77,7 @@ def main():
                 data[(pt0_cost, pt1_cost)].append(int(true_cost))
 
         if (index + 1) % 100 == 0:
+            logger.info(index)
             print_stats(data)
 
     print_stats(data)

@@ -74,15 +74,15 @@ unsigned int lr_centers_stage_555[9][9] = {
     The columns are the x-center costs
      0  1  2  3  4  5  6  7  8
      */
-    {0, 1, 2, 3, 4, 5, 6, 7, 8},     // t-center cost 0
-    {1, 1, 2, 3, 4, 5, 6, 7, 8},     // t-center cost 1
-    {2, 4, 2, 3, 4, 5, 8, 7, 8},     // t-center cost 2
-    {3, 3, 3, 3, 4, 5, 7, 8, 8},     // t-center cost 3
-    {4, 4, 4, 4, 4, 6, 7, 9, 9},     // t-center cost 4
-    {5, 5, 5, 6, 6, 6, 8, 9, 10},    // t-center cost 5
-    {6, 7, 8, 8, 8, 8, 9, 10, 11},   // t-center cost 6
-    {7, 7, 9, 9, 9, 9, 10, 10, 11},  // t-center cost 7
-    {8, 8, 8, 8, 8, 10, 11, 10, 8},  // t-center cost 8
+    {0, 1, 2, 3, 4, 5, 6, 7, 8},    // t-center cost 0
+    {1, 1, 5, 3, 4, 5, 6, 7, 8},    // t-center cost 1
+    {2, 2, 2, 3, 4, 5, 7, 8, 8},    // t-center cost 2
+    {3, 3, 3, 3, 4, 5, 7, 8, 8},    // t-center cost 3
+    {4, 4, 4, 4, 4, 5, 7, 8, 8},    // t-center cost 4
+    {5, 5, 5, 5, 6, 6, 8, 9, 8},    // t-center cost 5
+    {6, 6, 7, 7, 7, 8, 8, 9, 10},   // t-center cost 6
+    {7, 7, 9, 8, 9, 9, 9, 10, 11},  // t-center cost 7
+    {8, 8, 8, 8, 9, 9, 10, 10, 8},  // t-center cost 8
 };
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
@@ -182,11 +182,14 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
         case 1:
             pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
 
-            if (pt1_cost > cost_to_goal) {
-                cost_to_goal = pt1_cost;
-            }
             if (type == LR_CENTERS_STAGE_555) {
+                // This is not admissible but speeds up the search a ton. Maybe add a command line switch to
+                // toggle this off/on for the next FMC.
                 cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
+            } else {
+                if (pt1_cost > cost_to_goal) {
+                    cost_to_goal = pt1_cost;
+                }
             }
             break;
 
@@ -314,12 +317,12 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned cha
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
-            if (result.pt1_cost > result.cost_to_goal) {
-                result.cost_to_goal = result.pt1_cost;
-            }
-
             if (type == LR_CENTERS_STAGE_555) {
                 result.cost_to_goal = lr_centers_stage_555[result.pt0_cost][result.pt1_cost];
+            } else {
+                if (result.pt1_cost > result.cost_to_goal) {
+                    result.cost_to_goal = result.pt1_cost;
+                }
             }
             break;
 

@@ -562,11 +562,8 @@ void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_res
         }
         printf("\n");
 
-    } else if (
-        type == LR_OBLIQUE_EDGES_STAGE_666 ||
-        type == LR_OBLIQUE_EDGES_STAGE_777 ||
-        type == UD_OBLIQUE_EDGES_STAGE_777
-    ) {
+    } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_STAGE_777 ||
+               type == UD_OBLIQUE_EDGES_STAGE_777) {
         struct ida_heuristic_result heuristic;
 
         if (type == LR_OBLIQUE_EDGES_STAGE_666) {
@@ -586,7 +583,6 @@ void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_res
 
         // dwalton
         for (unsigned char i = 0; i < solution_len; i++) {
-
             if (type == LR_OBLIQUE_EDGES_STAGE_666) {
                 rotate_666(cube, cube_tmp, array_size, search_result.solution[i]);
                 heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);

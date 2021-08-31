@@ -646,7 +646,8 @@ class RubiksCube444(RubiksCube):
         self.edge_mapping = {}
 
         if RubiksCube444.instantiated:
-            logger.warning("Another 4x4x4 instance is being created")
+            # logger.warning("Another 4x4x4 instance is being created")
+            pass
         else:
             RubiksCube444.instantiated = True
 

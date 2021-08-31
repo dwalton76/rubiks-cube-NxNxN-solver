@@ -141,8 +141,7 @@ struct wings_for_edges_recolor_pattern_444 *init_wings_for_edges_recolor_pattern
 // ===========================================================================
 // step 10
 // ===========================================================================
-void
-edges_state_444(char *cube, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor, char *edges_state) {
+void edges_state_444(char *cube, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor, char *edges_state) {
     struct wings_for_edges_recolor_pattern_444 *i_wings_for_recolor = wings_for_recolor;
     struct wings_for_edges_recolor_pattern_444 *j_wings_for_recolor = wings_for_recolor;
     unsigned int flip_wing_str = 0;
@@ -153,7 +152,6 @@ edges_state_444(char *cube, struct wings_for_edges_recolor_pattern_444 *wings_fo
 
     // Record the two edge_indexes for each of the 12 edges
     for (int i = 0; i < NUM_EDGES_444; i++) {
-
         // If we already populated this one move on
         if (edges_state[i] != '\0') {
             i_wings_for_recolor++;
@@ -187,7 +185,6 @@ edges_state_444(char *cube, struct wings_for_edges_recolor_pattern_444 *wings_fo
         j_wings_for_recolor++;
 
         for (int j = i + 1; j < NUM_EDGES_444; j++) {
-
             // If we already populated this one move on
             if (i == j || edges_state[j] != '\0') {
                 j_wings_for_recolor++;
@@ -230,8 +227,7 @@ edges_state_444(char *cube, struct wings_for_edges_recolor_pattern_444 *wings_fo
     }
 }
 
-void
-centers_state_444(char *cube, char *centers_state) {
+void centers_state_444(char *cube, char *centers_state) {
     centers_state[NUM_CENTERS_444] = '\0';
 
     for (int i = 0; i < NUM_CENTERS_444; i++) {
@@ -242,7 +238,6 @@ centers_state_444(char *cube, char *centers_state) {
 struct ida_heuristic_result ida_heuristic_reduce_333_444(
     char *cube, unsigned int max_cost_to_goal, struct key_value_pair **reduce_333_444, char *reduce_333_edges_only,
     char *reduce_333_centers_only, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
-
     unsigned long edges_state_bucket = 0;
     unsigned long centers_state_bucket = 0;
     unsigned int edges_cost = 0;
@@ -306,13 +301,15 @@ unsigned char ida_search_complete_reduce_333_444(char *cube) {
         cube[38] == cube[42] && cube[54] == cube[55] && cube[58] == cube[59] && cube[54] == cube[58] &&
         cube[70] == cube[71] && cube[74] == cube[75] && cube[70] == cube[74] && cube[86] == cube[87] &&
         cube[90] == cube[91] && cube[86] == cube[90]) {
-
         // Are the centers valid? U and D must be on opposite sides, etc
-        if ((cube[6] == 'U' && cube[22] == 'L' && cube[38] == 'F' && cube[54] == 'R' && cube[70] == 'B' && cube[86] == 'D') ||
-            (cube[6] == 'U' && cube[22] == 'R' && cube[38] == 'B' && cube[54] == 'L' && cube[70] == 'F' && cube[86] == 'D') ||
-            (cube[6] == 'D' && cube[22] == 'L' && cube[38] == 'B' && cube[54] == 'R' && cube[70] == 'F' && cube[86] == 'U') ||
-            (cube[6] == 'D' && cube[22] == 'R' && cube[38] == 'F' && cube[54] == 'L' && cube[70] == 'B' && cube[86] == 'U')) {
-
+        if ((cube[6] == 'U' && cube[22] == 'L' && cube[38] == 'F' && cube[54] == 'R' && cube[70] == 'B' &&
+             cube[86] == 'D') ||
+            (cube[6] == 'U' && cube[22] == 'R' && cube[38] == 'B' && cube[54] == 'L' && cube[70] == 'F' &&
+             cube[86] == 'D') ||
+            (cube[6] == 'D' && cube[22] == 'L' && cube[38] == 'B' && cube[54] == 'R' && cube[70] == 'F' &&
+             cube[86] == 'U') ||
+            (cube[6] == 'D' && cube[22] == 'R' && cube[38] == 'F' && cube[54] == 'L' && cube[70] == 'B' &&
+             cube[86] == 'U')) {
             // Are all edges paired?
             if (cube[2] == cube[3] && cube[5] == cube[9] && cube[8] == cube[12] && cube[14] == cube[15] &&
                 cube[18] == cube[19] && cube[21] == cube[25] && cube[24] == cube[28] && cube[30] == cube[31] &&

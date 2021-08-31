@@ -515,7 +515,6 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     return search_result;
 }
 
-
 void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_result search_result) {
     unsigned int solution_len = search_result.f_cost;
     char cube_tmp[array_size];
@@ -558,26 +557,58 @@ void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_res
             edges_cost = hex_to_int(reduce_333_edges_only[edges_state_bucket]);
             cost_to_goal = max(centers_cost, edges_cost);
 
-            printf("%5s  %7d  %5d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], centers_cost, edges_cost, cost_to_goal, search_result.f_cost - i - 1, i+1);
+            printf("%5s  %7d  %5d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], centers_cost, edges_cost,
+                   cost_to_goal, search_result.f_cost - i - 1, i + 1);
         }
         printf("\n");
 
-    } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
-        struct ida_heuristic_result heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
+    } else if (
+        type == LR_OBLIQUE_EDGES_STAGE_666 ||
+        type == LR_OBLIQUE_EDGES_STAGE_777 ||
+        type == UD_OBLIQUE_EDGES_STAGE_777
+    ) {
+        struct ida_heuristic_result heuristic;
+
+        if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+            heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
+        } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
+            heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
+        } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
+            heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
+        }
 
         printf("\n\n");
         printf("       UNPAIRED\n");
         printf("          COUNT  CTG  TRU  IDX\n");
         printf("       ========  ===  ===  ===\n");
-        printf(" INIT  %8d  %3d  %3d  %3d\n", heuristic.unpaired_count, heuristic.cost_to_goal, search_result.f_cost, 0);
+        printf(" INIT  %8d  %3d  %3d  %3d\n", heuristic.unpaired_count, heuristic.cost_to_goal, search_result.f_cost,
+               0);
 
         // dwalton
         for (unsigned char i = 0; i < solution_len; i++) {
-            rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
-            heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
-            printf("%5s  %8d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], heuristic.unpaired_count, heuristic.cost_to_goal, search_result.f_cost - i - 1, i+1);
+
+            if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+                rotate_666(cube, cube_tmp, array_size, search_result.solution[i]);
+                heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
+            } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
+                rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
+                heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
+            } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
+                rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
+                heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
+            } else {
+                printf("ERROR: print_ida_summary %s is an invalid --type\n", type);
+                exit(1);
+            }
+
+            printf("%5s  %8d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], heuristic.unpaired_count,
+                   heuristic.cost_to_goal, search_result.f_cost - i - 1, i + 1);
         }
         printf("\n");
+
+    } else {
+        printf("ERROR: print_ida_summary %s is an invalid --type\n", type);
+        exit(1);
     }
 }
 

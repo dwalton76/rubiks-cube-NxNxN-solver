@@ -56,6 +56,8 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube)
     struct ida_heuristic_result result;
     unsigned long long state = 0;
 
+    result.unpaired_count = unpaired_count;
+
     // Get the state of the oblique edges
     for (int i = 0; i < NUM_OBLIQUE_EDGES_666; i++) {
         if (cube[oblique_edges_666[i]] == '1') {

@@ -51,7 +51,7 @@ unsigned int get_unpaired_obliques_count_666(char *cube) {
 // ============================================================================
 // step20
 // ============================================================================
-struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube, unsigned int max_cost_to_goal) {
+struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube) {
     int unpaired_count = get_unpaired_obliques_count_666(cube);
     struct ida_heuristic_result result;
     unsigned long long state = 0;

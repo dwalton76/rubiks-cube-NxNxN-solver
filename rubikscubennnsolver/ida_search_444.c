@@ -15,38 +15,6 @@ struct wings_for_edges_recolor_pattern_444 *init_wings_for_edges_recolor_pattern
     result = malloc(sizeof(struct wings_for_edges_recolor_pattern_444) * NUM_EDGES_444);
     curr = result;
 
-    /*
-wings_for_edges_recolor_pattern_444 = (
-    ('0', 2, 67),  # upper
-    ('1', 3, 66),
-    ('2', 5, 18),
-    ('3', 8, 51),
-    ('4', 9, 19),
-    ('5', 12, 50),
-    ('6', 14, 34),
-    ('7', 15, 35),
-
-    ('8', 21, 72), # left
-    ('9', 24, 37),
-    ('a', 25, 76),
-    ('b', 28, 41),
-
-    ('c', 53, 40), # right
-    ('d', 56, 69),
-    ('e', 57, 44),
-    ('f', 60, 73),
-
-    ('g', 82, 46), # down
-    ('h', 83, 47),
-    ('i', 85, 31),
-    ('j', 88, 62),
-    ('k', 89, 30),
-    ('l', 92, 63),
-    ('m', 94, 79),
-    ('n', 95, 78)
-)
-    */
-
     curr->edge_index[0] = '0';
     curr->square_index = 2;
     curr->partner_index = 67;
@@ -173,34 +141,19 @@ wings_for_edges_recolor_pattern_444 = (
 // ===========================================================================
 // step 10
 // ===========================================================================
-struct ida_heuristic_result ida_heuristic_reduce_333_444(
-    char *cube, unsigned int max_cost_to_goal, struct key_value_pair **reduce_333_444, char *reduce_333_edges_only,
-    char *reduce_333_centers_only, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
-    unsigned int cost_to_goal = 0;
-    unsigned long edges_state_bucket = 0;
-    unsigned long centers_state_bucket = 0;
-    unsigned int edges_cost = 0;
-    unsigned int centers_cost = 0;
-    char lt_state[NUM_EDGES_AND_CENTERS_444 + 2];
-    char edges_state[NUM_EDGES_444 + 1];
-    char centers_state[NUM_CENTERS_444 + 1];
+void
+edges_state_444(char *cube, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor, char *edges_state) {
+    struct wings_for_edges_recolor_pattern_444 *i_wings_for_recolor = wings_for_recolor;
+    struct wings_for_edges_recolor_pattern_444 *j_wings_for_recolor = wings_for_recolor;
+    unsigned int flip_wing_str = 0;
     char i_wing_str[2];
     char j_wing_str[2];
     char tmp_char;
-    struct wings_for_edges_recolor_pattern_444 *i_wings_for_recolor = wings_for_recolor;
-    struct wings_for_edges_recolor_pattern_444 *j_wings_for_recolor = wings_for_recolor;
-    struct ida_heuristic_result result;
-    int MAX_DEPTH = 6;  // The table we loaded is 6-deep
-    struct key_value_pair *hash_entry = NULL;
-    memset(&result, 0, sizeof(struct ida_heuristic_result));
-
-    centers_state[NUM_EDGES_444] = '\0';
     memset(edges_state, '\0', NUM_EDGES_444 + 1);
-
-    unsigned int flip_wing_str = 0;
 
     // Record the two edge_indexes for each of the 12 edges
     for (int i = 0; i < NUM_EDGES_444; i++) {
+
         // If we already populated this one move on
         if (edges_state[i] != '\0') {
             i_wings_for_recolor++;
@@ -232,7 +185,9 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
 
         j_wings_for_recolor = i_wings_for_recolor;
         j_wings_for_recolor++;
+
         for (int j = i + 1; j < NUM_EDGES_444; j++) {
+
             // If we already populated this one move on
             if (i == j || edges_state[j] != '\0') {
                 j_wings_for_recolor++;
@@ -273,20 +228,49 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
 
         i_wings_for_recolor++;
     }
-    edges_state_bucket = XXH32(edges_state, NUM_EDGES_444, 0) % BUCKETSIZE_EDGES_444;
-    edges_cost = hex_to_int(reduce_333_edges_only[edges_state_bucket]);
+}
 
-    // centers cost
+void
+centers_state_444(char *cube, char *centers_state) {
+    centers_state[NUM_CENTERS_444] = '\0';
+
     for (int i = 0; i < NUM_CENTERS_444; i++) {
         centers_state[i] = cube[centers_444[i]];
     }
+}
+
+struct ida_heuristic_result ida_heuristic_reduce_333_444(
+    char *cube, unsigned int max_cost_to_goal, struct key_value_pair **reduce_333_444, char *reduce_333_edges_only,
+    char *reduce_333_centers_only, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
+
+    unsigned long edges_state_bucket = 0;
+    unsigned long centers_state_bucket = 0;
+    unsigned int edges_cost = 0;
+    unsigned int centers_cost = 0;
+    unsigned int cost_to_goal = 0;
+    char lt_state[NUM_EDGES_AND_CENTERS_444 + 2];
+    char edges_state[NUM_EDGES_444 + 1];
+    char centers_state[NUM_CENTERS_444 + 1];
+    struct ida_heuristic_result result;
+    int MAX_DEPTH = 6;  // The table we loaded is 6-deep
+    struct key_value_pair *hash_entry = NULL;
+    memset(&result, 0, sizeof(struct ida_heuristic_result));
+
+    // edges cost
+    edges_state_444(cube, wings_for_recolor, edges_state);
+    edges_state_bucket = XXH32(edges_state, NUM_EDGES_444, 0) % BUCKETSIZE_EDGES_444;
+    edges_cost = hex_to_int(reduce_333_edges_only[edges_state_bucket]);
+    // LOG("edges_state %s, edges_cost %d\n", edges_state, edges_cost);
+
+    // centers cost
+    centers_state_444(cube, centers_state);
     centers_state_bucket = XXH32(centers_state, NUM_CENTERS_444, 0) % BUCKETSIZE_CENTERS_444;
     centers_cost = hex_to_int(reduce_333_centers_only[centers_state_bucket]);
+    // LOG("centers_state %s, centers_cost %d\n", centers_state, centers_cost);
 
     sprintf(result.lt_state, "%s%s", centers_state, edges_state);
-    // LOG("edges_state %s, edges_cost %d\n", edges_state, edges_cost);
-    // LOG("centers_state %s, centers_cost %d\n", centers_state, centers_cost);
     // LOG("lt_state %s\n", result.lt_state);
+
     cost_to_goal = max(edges_cost, centers_cost);
 
     if (cost_to_goal == 0) {
@@ -306,189 +290,9 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
         cost_to_goal = hash_entry->value;
 
     } else {
-        // float cost_to_goal_multiplier = 1.08;
+        // dwalton
+        // float cost_to_goal_multiplier = 1.04;
         // cost_to_goal = (unsigned int)round(cost_to_goal * cost_to_goal_multiplier);
-
-        // These stats come from back when I was using python IDA here. These are not
-        // admissible but it DRASTICALLY speeds up this search.
-        switch (centers_cost) {
-            case 2:
-                switch (edges_cost) {
-                    case 10:
-                        cost_to_goal = 14;
-                        break;
-                    case 11:
-                        cost_to_goal = 14;
-                        break;
-                }
-                break;
-            case 3:
-                switch (edges_cost) {
-                    case 6:
-                        cost_to_goal = 10;
-                        break;
-                    case 7:
-                        cost_to_goal = 11;
-                        break;
-                    case 8:
-                        cost_to_goal = 12;
-                        break;
-                    case 9:
-                        cost_to_goal = 12;
-                        break;
-                    case 10:
-                        cost_to_goal = 13;
-                        break;
-                    case 11:
-                        cost_to_goal = 15;
-                        break;
-                }
-                break;
-            case 4:
-                switch (edges_cost) {
-                    case 6:
-                        cost_to_goal = 10;
-                        break;
-                    case 7:
-                        cost_to_goal = 11;
-                        break;
-                    case 8:
-                        cost_to_goal = 12;
-                        break;
-                    case 9:
-                        cost_to_goal = 13;
-                        break;
-                    case 10:
-                        cost_to_goal = 14;
-                        break;
-                    case 11:
-                        cost_to_goal = 15;
-                        break;
-                }
-                break;
-            case 5:
-                switch (edges_cost) {
-                    case 6:
-                        cost_to_goal = 9;
-                        break;
-                    case 7:
-                        cost_to_goal = 11;
-                        break;
-                    case 8:
-                        cost_to_goal = 12;
-                        break;
-                    case 9:
-                        cost_to_goal = 13;
-                        break;
-                    case 10:
-                        cost_to_goal = 14;
-                        break;
-                    case 11:
-                        cost_to_goal = 15;
-                        break;
-                    case 12:
-                        cost_to_goal = 14;
-                        break;
-                    default:
-                        break;
-                }
-                break;
-            case 6:
-                switch (edges_cost) {
-                    case 6:
-                        cost_to_goal = 9;
-                        break;
-                    case 7:
-                        cost_to_goal = 10;
-                        break;
-                    case 8:
-                        cost_to_goal = 11;
-                        break;
-                    case 9:
-                        cost_to_goal = 13;
-                        break;
-                    case 10:
-                        cost_to_goal = 14;
-                        break;
-                    case 11:
-                        cost_to_goal = 15;
-                        break;
-                    case 12:
-                        cost_to_goal = 16;
-                        break;
-                }
-                break;
-            case 7:
-                switch (edges_cost) {
-                    case 6:
-                        cost_to_goal = 11;
-                        break;
-                    case 7:
-                        cost_to_goal = 11;
-                        break;
-                    case 8:
-                        cost_to_goal = 12;
-                        break;
-                    case 9:
-                        cost_to_goal = 13;
-                        break;
-                    case 10:
-                        cost_to_goal = 14;
-                        break;
-                    case 11:
-                        cost_to_goal = 14;
-                        break;
-                    case 12:
-                        cost_to_goal = 15;
-                        break;
-                }
-                break;
-            case 8:
-                switch (edges_cost) {
-                    case 6:
-                        cost_to_goal = 13;
-                        break;
-                    case 7:
-                        cost_to_goal = 13;
-                        break;
-                    case 8:
-                        cost_to_goal = 13;
-                        break;
-                    case 9:
-                        cost_to_goal = 13;
-                        break;
-                    case 10:
-                        cost_to_goal = 14;
-                        break;
-                    case 11:
-                        cost_to_goal = 15;
-                        break;
-                    case 12:
-                        cost_to_goal = 14;
-                        break;
-                }
-                break;
-            case 9:
-                switch (edges_cost) {
-                    case 8:
-                        cost_to_goal = 13;
-                        break;
-                    case 9:
-                        cost_to_goal = 13;
-                        break;
-                    case 10:
-                        cost_to_goal = 14;
-                        break;
-                    case 11:
-                        cost_to_goal = 15;
-                        break;
-                }
-                break;
-            default:
-                break;
-        }
-
-        cost_to_goal = max(cost_to_goal, MAX_DEPTH + 1);
     }
 
     result.cost_to_goal = cost_to_goal;
@@ -502,15 +306,13 @@ unsigned char ida_search_complete_reduce_333_444(char *cube) {
         cube[38] == cube[42] && cube[54] == cube[55] && cube[58] == cube[59] && cube[54] == cube[58] &&
         cube[70] == cube[71] && cube[74] == cube[75] && cube[70] == cube[74] && cube[86] == cube[87] &&
         cube[90] == cube[91] && cube[86] == cube[90]) {
+
         // Are the centers valid? U and D must be on opposite sides, etc
-        if ((cube[6] == 'U' && cube[22] == 'L' && cube[38] == 'F' && cube[54] == 'R' && cube[70] == 'B' &&
-             cube[86] == 'D') ||
-            (cube[6] == 'U' && cube[22] == 'R' && cube[38] == 'B' && cube[54] == 'L' && cube[70] == 'F' &&
-             cube[86] == 'D') ||
-            (cube[6] == 'D' && cube[22] == 'L' && cube[38] == 'B' && cube[54] == 'R' && cube[70] == 'F' &&
-             cube[86] == 'U') ||
-            (cube[6] == 'D' && cube[22] == 'R' && cube[38] == 'F' && cube[54] == 'L' && cube[70] == 'B' &&
-             cube[86] == 'U')) {
+        if ((cube[6] == 'U' && cube[22] == 'L' && cube[38] == 'F' && cube[54] == 'R' && cube[70] == 'B' && cube[86] == 'D') ||
+            (cube[6] == 'U' && cube[22] == 'R' && cube[38] == 'B' && cube[54] == 'L' && cube[70] == 'F' && cube[86] == 'D') ||
+            (cube[6] == 'D' && cube[22] == 'L' && cube[38] == 'B' && cube[54] == 'R' && cube[70] == 'F' && cube[86] == 'U') ||
+            (cube[6] == 'D' && cube[22] == 'R' && cube[38] == 'F' && cube[54] == 'L' && cube[70] == 'B' && cube[86] == 'U')) {
+
             // Are all edges paired?
             if (cube[2] == cube[3] && cube[5] == cube[9] && cube[8] == cube[12] && cube[14] == cube[15] &&
                 cube[18] == cube[19] && cube[21] == cube[25] && cube[24] == cube[28] && cube[30] == cube[31] &&

@@ -136,6 +136,7 @@ unsigned long max(unsigned long a, unsigned long b);
 struct ida_heuristic_result {
     char lt_state[64];
     unsigned int cost_to_goal;
+    unsigned int unpaired_count;
 };
 
 // uthash references

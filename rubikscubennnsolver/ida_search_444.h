@@ -25,4 +25,7 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(char *cube, unsigned in
                                                          struct wings_for_edges_recolor_pattern_444 *wings_for_recolor);
 unsigned char ida_search_complete_reduce_333_444(char *cube);
 
+void edges_state_444(char *cube, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor, char *edges_state);
+void centers_state_444(char *cube, char *centers_state);
+
 #endif /* _IDA_SEARCH_444_H */

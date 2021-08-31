@@ -78,10 +78,12 @@ unsigned char get_unpaired_obliques_count_777(char *cube) {
     return (left_unpaired_obliques + right_unpaired_obliques);
 }
 
-struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube, unsigned int max_cost_to_goal) {
+struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube) {
     unsigned char unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
     unsigned long long state = 0;
+
+    result.unpaired_count = unpaired_count;
 
     // Get the state of the oblique edges
     for (int i = 0; i < NUM_OBLIQUE_EDGES_777; i++) {
@@ -227,10 +229,12 @@ unsigned int get_UFBD_unpaired_obliques_count_777(char *cube) {
     return (left_unpaired_obliques + right_unpaired_obliques);
 }
 
-struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube, unsigned int max_cost_to_goal) {
+struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube) {
     unsigned char unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
     unsigned long long state = 0;
+
+    result.unpaired_count = unpaired_count;
 
     // Get the state of the oblique edges
     for (int i = 0; i < UFBD_NUM_OBLIQUE_EDGES_777; i++) {

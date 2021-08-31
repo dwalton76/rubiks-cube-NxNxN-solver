@@ -667,7 +667,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             // We found a solution!!
             solution_count++;
 
-            if (!search_result.found_solution) {
+            if (!search_result.found_solution || f_cost < search_result.f_cost) {
                 search_result.f_cost = f_cost;
                 search_result.found_solution = 1;
                 memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);

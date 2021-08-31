@@ -1,22 +1,23 @@
-python ./utils/test.py --size 5x5x5
 
-- 555 phase1+2 could be faster by
-    - have phase1 return all solutions of the shortest length
-    - could build a lookup table of phase2 costs...there are only 165 million states in phase2
-    - could also have phase2 return all solutions of the shortest length
-    - could phase3 then work for multiple phase1+2 solutions?  This would give us a way to find the
-      shortest phase1+2+3 solution.
-
-- 555 phase456 solution could be faster by
-    - solve a bunch of cubes and find average solution lengths for phase5 and phase6
-    - try all wing_str combos but put IDA max thresholds based on average solution lengths for phase5 and phase6
-    - that would give us a much much faster way to try many wing_str combos
-
-- 555 phase456 solution needs an option to take the 333 solution into account
-
-- 555 phase45 use my-pt-states.txt to IDA search multiple wing_str combos as once?
-
+TODO section
+------------
 - do we really need multipliers?
+
+- reduce duplicate code in ida_search.c and ida_search_via_graph.c 
+
+- 444 ida_heuristic_reduce_333_444 replace that switch statement with a 2D array
+
+- 444 ida_heuristic_reduce_333_444 needs some work
+  ./ida_search --kociemba FRBRBUUBUUUBBRFDRRDFURRRFRRLDFLFRULBUFFFRFFDFBDLULFBRDDUBDDDUFDUDULUULLBDLLDBRFRDDULFBBLBBBRLLLL --type 4x4x4-reduce-333 --avoid-pll --legal-moves "U,U',U2,Uw2,L2,Lw2,F,F',F2,Fw2,R2,Rw2,B,B',B2,Bw2,D,D',D2,Dw2"
+
+- 555 re-run utils/build-555-LR-centers-stage-stats.py
+
+- 555 can we do away with phase4 so that we could solve all 495 first-four-edges?
+
+- 555 use this cube to test phase1+2+3, its phase 1 goes to depth 12 which produces a ton of solutions
+reset; ./rubiks-cube-solver.py --state BBURBBRUDFRFUBLDDLDDRBLLDBBFDURBBLURRRUBRBDUDLBDFFFDBFLLRDFFBRFBUFFUUFDUDDUFRLFBUBDRLDDDURUFFUUFLBUUDRFRURFBLBFLLRDRLRULLBFLRRBLURLRLDUULBFULBFLDLFRDD
+
+
 
 
 555 combine phase1+2..attempt #432
@@ -45,63 +46,6 @@ to run this on a pi. The lookup-table would use the same key that we use today f
 
 Long story short I tried this but it does not prune nearly enough branches and the overhead of the hash lookup to see if we have
 an entry kills any gains of the branches that were pruned.
-
-
-TODO section
-------------
-TODO - 444 ida_heuristic_reduce_333_444 replace that switch statement with a 2D array
-TDOD - 444 ida_heuristic_reduce_333_444 needs some work
-fast
-./ida_search --kociemba DDDFDUUDLDDUDBFDRRRULRLDBRLFRRDLLRRBLBFBUFBRRUBFUFUDFDUUUDULFDLUBBUFFRLFLRLLRBRBLRFLBFBLUBFBBDFU --type 4x4x4-reduce-333 --avoid-pll --legal-moves "U,U',U2,Uw2,L2,Lw2,F,F',F2,Fw2,R2,Rw2,B,B',B2,Bw2,D,D',D2,Dw2"
-
-slow
-./ida_search --kociemba FRBRBUUBUUUBBRFDRRDFURRRFRRLDFLFRULBUFFFRFFDFBDLULFBRDDUBDDDUFDUDULUULLBDLLDBRFRDDULFBBLBBBRLLLL --type 4x4x4-reduce-333 --avoid-pll --legal-moves "U,U',U2,Uw2,L2,Lw2,F,F',F2,Fw2,R2,Rw2,B,B',B2,Bw2,D,D',D2,Dw2"
-[2021-08-30T22:32:58.287] ida_prune_table_preload lookup-tables/lookup-table-4x4x4-step30-reduce333.txt: start
-[2021-08-30T22:32:59.497] ida_prune_table_preload lookup-tables/lookup-table-4x4x4-step30-reduce333.txt: end
-[2021-08-30T22:32:59.497] ida_cost_only_preload: begin lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt, 239500848 entries, ptr 0xbca3a010
-[2021-08-30T22:32:59.674] ida_cost_only_preload: end   lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt, ptr 0xbca3a010
-[2021-08-30T22:32:59.674] ida_cost_only_preload: begin lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt, 58832 entries, ptr 0xe3ae5270
-[2021-08-30T22:32:59.675] ida_cost_only_preload: end   lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt, ptr 0xe3ae5270
-[2021-08-30T22:32:59.675] min_ida_threshold 12
-[2021-08-30T22:32:59.675] IDA threshold 12, explored 1 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-30T22:32:59.675] IDA threshold 13, explored 170 nodes, took 0.000s, 0 nodes-per-sec
-[2021-08-30T22:32:59.685] IDA threshold 14, explored 5,718 nodes, took 0.009s, 635,333 nodes-per-sec
-[2021-08-30T22:32:59.919] IDA threshold 15, explored 123,285 nodes, took 0.234s, 526,858 nodes-per-sec
-[2021-08-30T22:33:09.137] IDA threshold 16, explored 2,562,121 nodes, took 9.218s, 277,947 nodes-per-sec
-[2021-08-30T22:33:33.414] Found solution without PLL
-[2021-08-30T22:33:33.424] IDA count 10,033,275, f_cost 15 vs threshold 17 (cost_to_here 15, cost_to_goal 0)
-SOLUTION (15 steps): Uw2 B' D' Lw2 B Lw2 Fw2 U' B D Fw2 Lw2 B' R2 Uw2 
-
-        F L L F 
-        D D D D 
-        D D D D 
-        B U U L 
-
-R R R L U F F D F L L R U B B D 
-B R R F D F F U B L L U L B B D 
-B R R F D F F U B L L U L B B D 
-L U U D R R R R U L L F L F F B 
-
-        B B B B 
-        R U U F 
-        R U U F 
-        D R R U 
-
-[2021-08-30T22:33:33.424] IDA threshold 17, explored 10,033,275 nodes, took 24.287s, 413,112 nodes-per-sec
-[2021-08-30T22:33:33.424] IDA found solution, explored 12,724,570 total nodes, took 33.750s, 377,024 nodes-per-sec
-
-
-
-
-
-
-TODO - 555 can we do away with phase4 so that we could solve all 495 first-four-edges?
-
-TODY - for all of the TIE phase4 wing_strs, do a my-pt-states.txt solve of phase5
-
-TODO - run today's phase1 with "--solution-count 500" and use each of those solutions to do a my-pt-states.txt solve of phase2
-
-TODO - reduce duplicate code in ida_search.c and ida_search_via_graph.c 
 
 TODO - use threads. The solve below took 6 hours, with 8 threads that would be down to 45 minutes.
 
@@ -263,19 +207,3 @@ phase would be
     Total  : 76,804,717,230,489,600
 
 so really no gain since there would be a first phase before this which would put us back close to the ~20 move phase1+2 that we have today
-
-
-
-This is interesting, this find a solution of lenth 10
-./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 175686 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 537770 --centers-only --type 5x5x5-lr-centers-stage  --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
-
-but if you run it with --solution-count it finds a solution of length 9
-
-
-
-Use this cube to test phase1+2+3, its phase 1 goes to depth 12 which produces a ton of solutions
-reset; ./rubiks-cube-solver.py --state BBURBBRUDFRFUBLDDLDDRBLLDBBFDURBBLURRRUBRBDUDLBDFFFDBFLLRDFFBRFBUFFUUFDUDDUFRLFBUBDRLDDDURUFFUUFLBUUDRFRURFBLBFLLRDRLRULLBFLRRBLURLRLDUULBFULBFLDLFRDD
-
-
-./ida_search --kociemba .........xxL...x...x..L...x..x...x...xLx..................Lxx...L...x..x...x..x...x...xxx..................LxL...L...x..x...x..L...x...xLx..................xLx...x...x..x...x..L...x...xLL..................xxL...x...L..L...L..x...x...xLx..................xxL...x...x..x...x..L...L...LxL......... --type 7x7x7-LR-oblique-edges-stage --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,3Uw2,L,L',L2,Lw,Lw',Lw2,3Lw,3Lw',3Lw2,F,F',F2,Fw,Fw',Fw2,3Fw2,R,R',R2,Rw,Rw',Rw2,3Rw,3Rw',3Rw2,B,B',B2,Bw,Bw',Bw2,3Bw2,D,D',D2,Dw,Dw',Dw2,3Dw2"
-

@@ -430,7 +430,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
             threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
 
-        if (!search_result.found_solution) {
+        if (!search_result.found_solution || f_cost < search_result.f_cost) {
             search_result.f_cost = f_cost;
             search_result.found_solution = 1;
             memcpy(search_result.solution, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);

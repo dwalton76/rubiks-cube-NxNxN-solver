@@ -333,7 +333,7 @@ class LookupTableIDAViaGraph(LookupTable):
         solutions = []
 
         for line in output:
-            if line.startswith("SOLUTION:"):
+            if line.startswith("SOLUTION"):
                 solution = line.split(":")[1].strip().split()
                 solutions.append((len(solution), solution))
 

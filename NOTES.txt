@@ -52,4 +52,17 @@ The bottom two bullet points were easy (am using the lr_centers_555 cost table) 
 [2021-09-01T09:56:36.208] IDA threshold 13, explored 8,395,238 nodes, took 3.172s, 2,646,670 nodes-per-sec
 [2021-09-01T09:57:47.618] IDA threshold 14, explored 229,228,515 nodes, took 71.410s, 3,210,033 nodes-per-sec
 
+after a few more tweaks we are at
+
+[2021-09-01T12:45:54.185] IDA threshold 9, explored 654 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-01T12:45:54.188] IDA threshold 10, explored 12,672 nodes, took 0.002s, 6,336,000 nodes-per-sec
+[2021-09-01T12:45:54.250] IDA threshold 11, explored 215,766 nodes, took 0.062s, 3,480,096 nodes-per-sec
+[2021-09-01T12:45:55.430] IDA threshold 12, explored 4,906,673 nodes, took 1.179s, 4,161,724 nodes-per-sec
+[2021-09-01T12:46:22.877] IDA threshold 13, explored 123,013,990 nodes, took 27.446s, 4,482,037 nodes-per-sec
+[2021-09-01T12:58:57.887] IDA threshold 14, explored 3,184,180,229 nodes, took 755.009s, 4,217,406 nodes-per-sec
+
+This will likely have to go do depth 16 to find a solution and the time is increasing by ~28x with each depth
+depth 15 will take ~5.87 hours
+depth 16 will take ~164 hours...that is almost a week!!
+
 

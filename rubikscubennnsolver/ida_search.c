@@ -423,7 +423,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     }
 
     // Stop searching down this branch
-    if (f_cost >= threshold) {
+    if (f_cost > threshold) {
         // uncomment this to troubleshoot when the correct solution is incorrectly pruned
         /*
         if (invalid_prune(cost_to_here, moves_to_here, threshold)) {

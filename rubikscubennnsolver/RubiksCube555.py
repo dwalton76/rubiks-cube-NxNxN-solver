@@ -3414,7 +3414,7 @@ class RubiksCube555(RubiksCube):
             # into phase2 we should look. This can save some cycles by aborting phase2 once we know
             # the phase1_2 solution will not be shorter than our current min_phase1_2_len.
             if min_phase1_2_len is not None:
-                max_ida_threshold = min_phase1_2_len - phase1_len
+                max_ida_threshold = min_phase1_2_len - phase1_len - 1
             else:
                 max_ida_threshold = None
 
@@ -3476,6 +3476,9 @@ class RubiksCube555(RubiksCube):
         logger.info(
             "%s: LR centers staged via %s, %d steps in"
             % (self, phase1_steps_str, self.get_solution_len_minus_rotates(self.solution))
+        )
+        self.solution.append(
+            "COMMENT_%d_steps_555_two_centers_staged" % self.get_solution_len_minus_rotates(phase1_steps)
         )
 
         logger.info(phase2_output)

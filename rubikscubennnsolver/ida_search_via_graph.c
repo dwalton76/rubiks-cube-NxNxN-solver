@@ -79,6 +79,7 @@ unsigned int lr_centers_stage_555[9][9] = {
     {8, 8, 8, 8, 8, 9, 10, 10, 8},  // t-center cost 8
 };
 
+
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
     switch (perfect_hash_cost) {
         case '0':
@@ -137,6 +138,8 @@ void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cos
           move_type prev_move, unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
           unsigned int pt3_state, unsigned int pt4_state) {
     struct StackNode *node = (struct StackNode *)malloc(sizeof(struct StackNode));
+    struct StackNode *curr_node = *root;
+    struct StackNode *prev_node = NULL;
     node->cost_to_here = cost_to_here;
     node->cost_to_goal = cost_to_goal;
     memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
@@ -146,8 +149,36 @@ void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cos
     node->pt2_state = pt2_state;
     node->pt3_state = pt3_state;
     node->pt4_state = pt4_state;
-    node->next = *root;
-    *root = node;
+
+    if (!curr_node) {
+        // the stack is empty
+        node->next = *root;
+        *root = node;
+
+    } else {
+        /*
+         * Go down the stack looking at all of the nodes on top with the same cost_to_here
+         * Insert the new node so that nodes with lower cost_to_goal are closer to the top of the stack
+         *
+         * We do this so that when we are at an IDA threshold that is large enough to find a solution, we priortize
+         * the branches that are headed in the right direction. In other words this only has benefit for the IDA
+         * threshold where we actually find a solution.
+         */
+        while (curr_node) {
+            if (curr_node->cost_to_here < node->cost_to_here || curr_node->cost_to_goal >= cost_to_goal) {
+                if (prev_node) {
+                    prev_node->next = node;
+                } else {
+                    *root = node;
+                }
+                node->next = curr_node;
+                return;
+            }
+
+            prev_node = curr_node;
+            curr_node = curr_node->next;
+        }
+    }
 }
 
 struct StackNode *pop(struct StackNode **root) {
@@ -156,11 +187,11 @@ struct StackNode *pop(struct StackNode **root) {
     return temp;
 }
 
-unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned char cost_to_here, unsigned int prev_pt0_state,
+unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned int prev_pt0_state,
                                       unsigned int prev_pt1_state, unsigned int prev_pt2_state,
                                       unsigned int prev_pt3_state, unsigned int prev_pt4_state);
 
-inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned char cost_to_here,
+inline unsigned char get_cost_to_goal_simple(lookup_table_type type,
                                              unsigned int prev_pt0_state, unsigned int prev_pt1_state,
                                              unsigned int prev_pt2_state, unsigned int prev_pt3_state,
                                              unsigned int prev_pt4_state) {
@@ -211,6 +242,17 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
                 if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
                     cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
                 }
+
+                // dwalton experiment
+                /*
+                if (t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost] > cost_to_goal) {
+                    cost_to_goal = t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost];
+                }
+
+                if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > cost_to_goal) {
+                    cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
+                }
+                */
 
             } else {
                 if (pt1_cost > cost_to_goal) {
@@ -302,7 +344,7 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
     return cost_to_goal;
 }
 
-struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned char cost_to_here,
+struct cost_to_goal_result get_cost_to_goal(lookup_table_type type,
                                             unsigned int prev_pt0_state, unsigned int prev_pt1_state,
                                             unsigned int prev_pt2_state, unsigned int prev_pt3_state,
                                             unsigned int prev_pt4_state) {
@@ -495,7 +537,7 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
     unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
 
-    ctg = get_cost_to_goal(type, 0, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    ctg = get_cost_to_goal(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     pt0_cost = ctg.pt0_cost;
     pt1_cost = ctg.pt1_cost;
     pt2_cost = ctg.pt2_cost;
@@ -545,7 +587,7 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
         }
 
-        ctg = get_cost_to_goal(type, i + 1, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+        ctg = get_cost_to_goal(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         cost_to_goal = ctg.cost_to_goal;
         pt0_cost = ctg.pt0_cost;
         pt1_cost = ctg.pt1_cost;
@@ -634,8 +676,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
     struct StackNode *root = NULL;
     struct StackNode *node = NULL;
     struct cost_to_goal_result ctg;
-    cost_to_goal = get_cost_to_goal_simple(type, 0, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state,
-                                           init_pt4_state);
+    cost_to_goal = get_cost_to_goal_simple(type, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
     push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
          init_pt3_state, init_pt4_state);
 
@@ -753,12 +794,11 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                 continue;
             }
 
-            cost_to_goal = get_cost_to_goal_simple(type, node->cost_to_here + 1, pt0_state, pt1_state, pt2_state,
-                                                   pt3_state, pt4_state);
+            cost_to_goal = get_cost_to_goal_simple(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
             ida_count++;
             moves_to_here[node->cost_to_here] = move;
 
-            if (!cost_to_goal || node->cost_to_here + 1 + cost_to_goal < threshold) {
+            if (!cost_to_goal || node->cost_to_here + 1 + cost_to_goal <= threshold) {
                 push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
                     pt3_state, pt4_state);
             }
@@ -780,7 +820,7 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
     // For printing commas via %'d
     setlocale(LC_NUMERIC, "");
 
-    min_ida_threshold = get_cost_to_goal_simple(type, 0, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    min_ida_threshold = get_cost_to_goal_simple(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     search_result.found_solution = 0;
 
     // LOG("min_ida_threshold %d\n", min_ida_threshold);

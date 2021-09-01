@@ -26,7 +26,6 @@ unsigned char centers_only = 0;
 unsigned char legal_move_count = 0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
-move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
 #define MAX_IDA_THRESHOLD 20
 
 // Supported IDA searches
@@ -672,7 +671,6 @@ int main(int argc, char *argv[]) {
     memset(kociemba, 0, sizeof(char) * 300);
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
-    memset(same_face_and_layer_matrix, 0, MOVE_MAX * MOVE_MAX);
 
     for (int i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
@@ -913,18 +911,6 @@ int main(int argc, char *argv[]) {
     move_type i_move = MOVE_NONE;
     for (unsigned char j = 0; j < legal_move_count; j++) {
         move_matrix[i_move][j] = legal_moves[j];
-    }
-
-    // build the same_face_and_layer_matrix, we do this to avoid tons of
-    // steps_on_same_face_and_layer() during the IDA search
-    for (unsigned char i = 1; i < MOVE_MAX; i++) {
-        for (unsigned char j = 1; j < MOVE_MAX; j++) {
-            if (steps_on_same_face_and_layer(i, j)) {
-                same_face_and_layer_matrix[i][j] = 1;
-            } else {
-                same_face_and_layer_matrix[i][j] = 0;
-            }
-        }
     }
 
     unsigned int cube_size = cube_size_kociemba;

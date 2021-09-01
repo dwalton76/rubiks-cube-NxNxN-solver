@@ -38,7 +38,6 @@ unsigned int min_solution_count = 1;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
-move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
 struct key_value_pair *ida_explored = NULL;
 
 // Supported IDA searches
@@ -893,7 +892,6 @@ int main(int argc, char *argv[]) {
 
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
-    memset(same_face_and_layer_matrix, 0, MOVE_MAX * MOVE_MAX);
 
     for (unsigned char i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
@@ -1178,20 +1176,7 @@ int main(int argc, char *argv[]) {
         move_matrix[i_move][j] = legal_moves[j];
     }
 
-    // build the same_face_and_layer_matrix, we do this to avoid tons of
-    // steps_on_same_face_and_layer() during the IDA search
-    for (unsigned char i = 1; i < MOVE_MAX; i++) {
-        for (unsigned char j = 1; j < MOVE_MAX; j++) {
-            if (steps_on_same_face_and_layer(i, j)) {
-                same_face_and_layer_matrix[i][j] = 1;
-            } else {
-                same_face_and_layer_matrix[i][j] = 0;
-            }
-        }
-    }
-
     ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
-    // printf("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);
     struct ida_search_result search_result;
     search_result.found_solution = 0;
     search_result.f_cost = 99;

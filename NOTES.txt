@@ -30,7 +30,6 @@ TODO - today we have a lr_centers_stage_555 table which is a 2D array of the LR 
 [2021-09-01T09:52:34.567] IDA threshold 12, explored 62,496,234 nodes, took 22.678s, 2,755,808 nodes-per-sec
 
 to this
-
 [2021-09-01T09:53:36.829] IDA threshold 9, explored 0 nodes, took 0.000s, 0 nodes-per-sec
 [2021-09-01T09:53:36.829] IDA threshold 10, explored 954 nodes, took 0.000s, 0 nodes-per-sec
 [2021-09-01T09:53:36.835] IDA threshold 11, explored 19,890 nodes, took 0.006s, 3,315,000 nodes-per-sec
@@ -42,12 +41,10 @@ to this
 There are other similar 2D arrays we could make:
 - LR x-centers and UD x-centers.  We built the 9 billion entry lookup-table for this on LJ's machine. Use that to create this 2D array.
 - LR t-centers and UD t-centers.  We built the 9 billion entry lookup-table for this on LJ's machine. Use that to create this 2D array.
-- LR t-centers and UD x-centers.  Would this be drastically different from LR x-centers and LR t-centers?
-- LR x-centers and UD t-centers.  Would this be drastically different from LR x-centers and LR t-centers?
+- LR t-centers and UD x-centers
+- LR x-centers and UD t-centers
 
-The bottom two bullet points were easy so here are the counts with those in place...I'm not sure on this though I need
-to think about this some more.
-
+The bottom two bullet points were easy (am using the lr_centers_555 cost table) so here are the counts with those in place
 [2021-09-01T09:56:32.909] IDA threshold 9, explored 0 nodes, took 0.000s, 0 nodes-per-sec
 [2021-09-01T09:56:32.909] IDA threshold 10, explored 654 nodes, took 0.000s, 0 nodes-per-sec
 [2021-09-01T09:56:32.913] IDA threshold 11, explored 16,077 nodes, took 0.004s, 4,019,250 nodes-per-sec

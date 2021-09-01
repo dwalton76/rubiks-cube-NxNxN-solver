@@ -248,9 +248,7 @@ void centers_state_444(char *cube, char *centers_state) {
     }
 }
 
-struct ida_heuristic_result ida_heuristic_reduce_333_444(
-    char *cube, unsigned int max_cost_to_goal, struct key_value_pair **reduce_333_444, char *reduce_333_edges_only,
-    char *reduce_333_centers_only, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
+struct ida_heuristic_result ida_heuristic_reduce_333_444(char *cube, unsigned int max_cost_to_goal, char *reduce_333_edges_only, char *reduce_333_centers_only, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
     unsigned long edges_state_bucket = 0;
     unsigned long centers_state_bucket = 0;
     unsigned int edges_cost = 0;
@@ -260,8 +258,6 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
     char edges_state[NUM_EDGES_444 + 1];
     char centers_state[NUM_CENTERS_444 + 1];
     struct ida_heuristic_result result;
-    int MAX_DEPTH = 6;  // The table we loaded is 6-deep
-    struct key_value_pair *hash_entry = NULL;
     memset(&result, 0, sizeof(struct ida_heuristic_result));
 
     // edges cost
@@ -279,32 +275,12 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
     sprintf(result.lt_state, "%s%s", centers_state, edges_state);
     // LOG("lt_state %s\n", result.lt_state);
 
-    cost_to_goal = max(edges_cost, centers_cost);
+    result.cost_to_goal = max(edges_cost, centers_cost);
 
-    if (cost_to_goal == 0) {
-        // we found a solution
-        result.cost_to_goal = cost_to_goal;
-        return result;
+    if (result.cost_to_goal) {
+        result.cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
     }
 
-    /*
-    // If the edges_count or centers_cost is greater than MAX_DEPTH then there is no need to do call hash_find, we know
-    // it will not find a match
-    if (cost_to_goal <= MAX_DEPTH) {
-        hash_entry = hash_find(reduce_333_444, result.lt_state);
-    }
-
-    if (hash_entry) {
-        // if we found a match then we know the exact cost to the goal
-        cost_to_goal = hash_entry->value;
-
-    } else {
-        cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
-    }
-    */
-
-    cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
-    result.cost_to_goal = cost_to_goal;
     return result;
 }
 

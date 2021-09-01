@@ -54,7 +54,6 @@ char *UD_centers_cost_only_444 = NULL;
 char *LR_centers_cost_only_444 = NULL;
 char *FB_centers_cost_only_444 = NULL;
 
-struct key_value_pair *reduce_333_444 = NULL;
 char *reduce_333_edges_only = NULL;
 char *reduce_333_centers_only = NULL;
 struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
@@ -239,7 +238,7 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, un
     switch (type) {
         // 4x4x4
         case REDUCE_333_444:
-            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, &reduce_333_444, reduce_333_edges_only,
+            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, reduce_333_edges_only,
                                                 reduce_333_centers_only, wings_for_recolor_444);
 
         // 6x6x6
@@ -678,7 +677,6 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
     }
 
     if (type == REDUCE_333_444) {
-        // ida_prune_table_preload(&reduce_333_444, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt");
         reduce_333_edges_only = ida_cost_only_preload(
             "lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
         reduce_333_centers_only = ida_cost_only_preload(

@@ -20,7 +20,6 @@ struct wings_for_edges_recolor_pattern_444 *init_wings_for_edges_recolor_pattern
 int strmatch(char *str1, char *str2);
 
 struct ida_heuristic_result ida_heuristic_reduce_333_444(char *cube, unsigned int max_cost_to_goal,
-                                                         struct key_value_pair **reduce_333_444,
                                                          char *reduce_333_edges_only, char *reduce_333_centers_only,
                                                          struct wings_for_edges_recolor_pattern_444 *wings_for_recolor);
 unsigned char ida_search_complete_reduce_333_444(char *cube);

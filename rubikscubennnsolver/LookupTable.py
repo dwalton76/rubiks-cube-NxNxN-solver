@@ -1173,26 +1173,7 @@ class LookupTableIDA(LookupTable):
             return (f_cost, False, [])
         self.explored[lt_state] = cost_to_here
 
-        skip_other_steps_this_face = None
-
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
-
-            # https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-            """
-            Well, it's a simple technique to reduce the number of nodes accessed.
-            For example, we start at a position S whose pruning value is no more
-            than maxl, otherwise, S will be pruned in previous searching.  After
-            a move X, we obtain position S', whose pruning value is larger than
-            maxl, which means that X makes S farther from the solved state.  In
-            this case, we won't try X2 and X'.
-            --cs0x7f
-            """
-            if skip_other_steps_this_face is not None:
-                if self.steps_on_same_face_and_layer_cache[(skip_other_steps_this_face, step)]:
-                    continue
-                else:
-                    skip_other_steps_this_face = None
-
             self.parent.state = self.rotate_xxx(prev_state, step)
 
             (f_cost_tmp, found_solution, solution_steps) = self.ida_search(
@@ -1201,11 +1182,6 @@ class LookupTableIDA(LookupTable):
 
             if found_solution:
                 return (f_cost_tmp, True, solution_steps)
-            else:
-                if f_cost_tmp > threshold:
-                    skip_other_steps_this_face = step
-                else:
-                    skip_other_steps_this_face = None
 
         self.parent.state = prev_state[:]
         return (f_cost, False, [])

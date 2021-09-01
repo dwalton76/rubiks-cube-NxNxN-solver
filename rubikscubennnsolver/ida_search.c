@@ -423,11 +423,10 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
                                     unsigned int avoid_pll) {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
-    move_type move, skip_other_steps_this_face;
+    move_type move;
     struct ida_heuristic_result heuristic_result;
     char cube_tmp[array_size];
     char cost_to_here_str[4];
-    skip_other_steps_this_face = MOVE_NONE;
     struct ida_search_result search_result, tmp_search_result;
 
     ida_count++;
@@ -485,26 +484,6 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     for (unsigned char i = 0; i < legal_move_count; i++) {
         move = prev_move_move_matrix[i];
 
-        // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-        /*
-         * Well, it's a simple technique to reduce the number of nodes accessed.
-         * For example, we start at a position S whose pruning value is no more
-         * than maxl, otherwise, S will be pruned in previous searching.  After
-         * a move X, we obtain position S', whose pruning value is larger than
-         * maxl, which means that X makes S farther from the solved state.  In
-         * this case, we won't try X2 and X'.
-         * --cs0x7f
-         */
-        /*
-        if (skip_other_steps_this_face != MOVE_NONE) {
-            if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
-                continue;
-            } else {
-                skip_other_steps_this_face = MOVE_NONE;
-            }
-        }
-         */
-
         // This is the scenario where the move is on the same face and layer as prev_move
         if (move == MOVE_NONE) {
             continue;
@@ -537,14 +516,6 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
             return tmp_search_result;
         } else {
             moves_to_here[cost_to_here] = MOVE_NONE;
-
-            /*
-            if (tmp_search_result.f_cost > threshold) {
-                skip_other_steps_this_face = move;
-            } else {
-                skip_other_steps_this_face = MOVE_NONE;
-            }
-            */
         }
     }
 

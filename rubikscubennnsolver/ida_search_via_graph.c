@@ -641,7 +641,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
     unsigned int pt2_state = 0;
     unsigned int pt3_state = 0;
     unsigned int pt4_state = 0;
-    move_type move, skip_other_steps_this_face, moves_to_here[MAX_IDA_THRESHOLD];
+    move_type move, moves_to_here[MAX_IDA_THRESHOLD];
     memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
     search_result.found_solution = 0;
     char key[64];
@@ -727,30 +727,10 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
         }
 
         memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
-
-        // skip_other_steps_this_face = MOVE_NONE;
         prev_move_move_matrix = move_matrix[node->prev_move];
 
         for (unsigned char i = 0; i < legal_move_count; i++) {
             move = prev_move_move_matrix[i];
-
-            // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-            /*
-             * Well, it's a simple technique to reduce the number of nodes accessed.
-             * For example, we start at a position S whose pruning value is no more
-             * than maxl, otherwise, S will be pruned in previous searching.  After
-             * a move X, we obtain position S', whose pruning value is larger than
-             * maxl, which means that X makes S farther from the solved state.  In
-             * this case, we won't try X2 and X'.
-             * --cs0x7f
-            if (skip_other_steps_this_face != MOVE_NONE) {
-                if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
-                    continue;
-                } else {
-                    skip_other_steps_this_face = MOVE_NONE;
-                }
-            }
-             */
 
             // This is the scenario where the move is on the same face and layer as prev_move
             if (move == MOVE_NONE) {
@@ -811,18 +791,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             cost_to_goal = get_cost_to_goal_simple(type, node->cost_to_here + 1, pt0_state, pt1_state, pt2_state,
                                                    pt3_state, pt4_state);
             ida_count++;
-
-            /*
-            if ((node->cost_to_here + 1 + cost_to_goal) > threshold) {
-                skip_other_steps_this_face = move;
-            } else {
-                skip_other_steps_this_face = MOVE_NONE;
-                moves_to_here[node->cost_to_here] = move;
-
-                push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
-                     pt3_state, pt4_state);
-            }
-             */
             moves_to_here[node->cost_to_here] = move;
 
             push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,

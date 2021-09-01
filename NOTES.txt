@@ -7,13 +7,6 @@ TODO section
   if we know the starting parity for corners and edges can we somehow use that speed things up?
   I think edge parity always starts out as even
 
-- ida_search and ida_search need a command line option that controls threshold-- when we find a solution. For 555 phase1 where we
-  want to see all solutions we cannot do the threshold-- but for any search where only care about find a single solution we
-  can do the decrement.
-
-- cleanup skip_other_steps_this_face
-- cleanup 444 6-deep table reduce_333_444
-
 
 555 combine phase1+2..attempt #432
 ==================================

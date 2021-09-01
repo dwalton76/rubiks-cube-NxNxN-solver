@@ -669,24 +669,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             continue;
         }
 
-        // Stop searching down this branch
-        if (f_cost >= threshold || (search_result.found_solution && node->cost_to_here >= search_result.f_cost)) {
-            // uncomment this to troubleshoot when the correct solution is incorrectly pruned
-            /*
-            if (invalid_prune(cost_to_here, moves_to_here)) {
-                LOG("IDA invalid prune, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-                    f_cost, threshold, cost_to_here, cost_to_goal);
-                print_moves(moves_to_here, cost_to_here);
-                LOG("pt0_state %07u, cost %d\n", pt0_state, pt0_cost);
-                LOG("pt1_state %07u, cost %d\n", pt1_state, pt1_cost);
-                LOG("pt2_state %07u, cost %d\n", pt2_state, pt2_cost);
-                exit(1);
-            }
-             */
-            free(node);
-            continue;
-        }
-
         // The following works, it does reduce the number of nodes we explore but it does so at the cost
         // of the memory to remember all of the nodes and the CPU to do the hash search to see if the
         // node is one that has already been explored.
@@ -776,8 +758,10 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             ida_count++;
             moves_to_here[node->cost_to_here] = move;
 
-            push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
-                 pt3_state, pt4_state);
+            if (!cost_to_goal || node->cost_to_here + 1 + cost_to_goal < threshold) {
+                push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
+                    pt3_state, pt4_state);
+            }
         }
         free(node);
     }

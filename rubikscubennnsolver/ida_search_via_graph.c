@@ -34,6 +34,7 @@ unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 unsigned char orbit0_wide_quarter_turns = 0;
 unsigned char orbit1_wide_quarter_turns = 0;
+unsigned int min_solution_count = 1;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
@@ -75,14 +76,14 @@ unsigned int lr_centers_stage_555[9][9] = {
      0  1  2  3  4  5  6  7  8
      */
     {0, 1, 2, 3, 4, 5, 6, 7, 8},    // t-center cost 0
-    {1, 1, 5, 3, 4, 5, 6, 7, 8},    // t-center cost 1
-    {2, 2, 2, 3, 4, 5, 7, 8, 8},    // t-center cost 2
-    {3, 3, 3, 3, 4, 5, 7, 8, 8},    // t-center cost 3
+    {1, 1, 2, 3, 4, 5, 6, 7, 8},    // t-center cost 1
+    {2, 2, 2, 3, 4, 5, 7, 7, 8},    // t-center cost 2
+    {3, 3, 3, 3, 4, 5, 6, 7, 8},    // t-center cost 3
     {4, 4, 4, 4, 4, 5, 7, 8, 8},    // t-center cost 4
-    {5, 5, 5, 5, 6, 6, 8, 9, 8},    // t-center cost 5
-    {6, 6, 7, 7, 7, 8, 8, 9, 10},   // t-center cost 6
-    {7, 7, 9, 8, 9, 9, 9, 10, 11},  // t-center cost 7
-    {8, 8, 8, 8, 9, 9, 10, 10, 8},  // t-center cost 8
+    {5, 5, 5, 5, 5, 5, 7, 8, 8},    // t-center cost 5
+    {6, 6, 6, 6, 7, 7, 8, 9, 10},   // t-center cost 6
+    {7, 7, 7, 8, 8, 9, 9, 10, 10},  // t-center cost 7
+    {8, 8, 8, 8, 8, 9, 10, 10, 8},  // t-center cost 8
 };
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
@@ -182,14 +183,12 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
         case 1:
             pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
 
+            if (pt1_cost > cost_to_goal) {
+                cost_to_goal = pt1_cost;
+            }
+
             if (type == LR_CENTERS_STAGE_555) {
-                // This is not admissible but speeds up the search a ton. Maybe add a command line switch to
-                // toggle this off/on for the next FMC.
                 cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
-            } else {
-                if (pt1_cost > cost_to_goal) {
-                    cost_to_goal = pt1_cost;
-                }
             }
             break;
 
@@ -317,12 +316,12 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned cha
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
+            if (result.pt1_cost > result.cost_to_goal) {
+                result.cost_to_goal = result.pt1_cost;
+            }
+
             if (type == LR_CENTERS_STAGE_555) {
                 result.cost_to_goal = lr_centers_stage_555[result.pt0_cost][result.pt1_cost];
-            } else {
-                if (result.pt1_cost > result.cost_to_goal) {
-                    result.cost_to_goal = result.pt1_cost;
-                }
             }
             break;
 
@@ -643,7 +642,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
     unsigned int pt3_state = 0;
     unsigned int pt4_state = 0;
     move_type move, skip_other_steps_this_face, moves_to_here[MAX_IDA_THRESHOLD];
-    skip_other_steps_this_face = MOVE_NONE;
     memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
     search_result.found_solution = 0;
     char key[64];
@@ -679,9 +677,16 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                     search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
             }
             print_moves(node->moves_to_here, node->cost_to_here);
+
+            if (solution_count >= min_solution_count) {
+                return search_result;
+            }
+
+            free(node);
+            continue;
         }
 
-        // Stop searching down this path
+        // Stop searching down this branch
         if (f_cost >= threshold || (search_result.found_solution && node->cost_to_here >= search_result.f_cost)) {
             // uncomment this to troubleshoot when the correct solution is incorrectly pruned
             /*
@@ -723,7 +728,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
 
         memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
 
-        skip_other_steps_this_face = MOVE_NONE;
+        // skip_other_steps_this_face = MOVE_NONE;
         prev_move_move_matrix = move_matrix[node->prev_move];
 
         for (unsigned char i = 0; i < legal_move_count; i++) {
@@ -738,7 +743,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
              * maxl, which means that X makes S farther from the solved state.  In
              * this case, we won't try X2 and X'.
              * --cs0x7f
-             */
             if (skip_other_steps_this_face != MOVE_NONE) {
                 if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
                     continue;
@@ -746,6 +750,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                     skip_other_steps_this_face = MOVE_NONE;
                 }
             }
+             */
 
             // This is the scenario where the move is on the same face and layer as prev_move
             if (move == MOVE_NONE) {
@@ -807,6 +812,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                                                    pt3_state, pt4_state);
             ida_count++;
 
+            /*
             if ((node->cost_to_here + 1 + cost_to_goal) > threshold) {
                 skip_other_steps_this_face = move;
             } else {
@@ -816,6 +822,11 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                 push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
                      pt3_state, pt4_state);
             }
+             */
+            moves_to_here[node->cost_to_here] = move;
+
+            push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
+                 pt3_state, pt4_state);
         }
         free(node);
     }
@@ -1020,6 +1031,10 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--multiplier")) {
             i++;
             cost_to_goal_multiplier = atof(argv[i]);
+
+        } else if (strmatch(argv[i], "--solution-count")) {
+            i++;
+            min_solution_count = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--max-ida-threshold")) {
             i++;

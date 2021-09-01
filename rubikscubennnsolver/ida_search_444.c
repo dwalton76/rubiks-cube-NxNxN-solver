@@ -9,6 +9,19 @@
 unsigned int centers_444[NUM_CENTERS_444] = {6,  7,  10, 11, 22, 23, 26, 27, 38, 39, 42, 43,
                                              54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91};
 
+unsigned int centers_edges_cost_444[10][13] = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},   // centers cost 0
+    {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},   // centers cost 1
+    {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 12},   // centers cost 2
+    {3, 3, 3, 3, 4, 5, 6, 7, 8, 9, 12, 13, 12},   // centers cost 3
+    {4, 4, 4, 4, 4, 5, 6, 7, 8, 9, 12, 13, 14},   // centers cost 4
+    {5, 5, 5, 5, 5, 5, 6, 7, 8, 9, 12, 13, 14},   // centers cost 5
+    {6, 6, 6, 6, 6, 6, 6, 7, 8, 9, 12, 13, 12},   // centers cost 6
+    {7, 7, 7, 7, 7, 7, 7, 7, 8, 9, 12, 13, 12},   // centers cost 7
+    {8, 8, 8, 8, 8, 8, 8, 8, 8, 11, 12, 13, 12},  // centers cost 8
+    {9, 9, 9, 9, 9, 9, 9, 9, 13, 9, 10, 13, 12},  // centers cost 9
+};
+
 struct wings_for_edges_recolor_pattern_444 *init_wings_for_edges_recolor_pattern_444() {
     struct wings_for_edges_recolor_pattern_444 *result = NULL;
     struct wings_for_edges_recolor_pattern_444 *curr = NULL;
@@ -274,6 +287,7 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
         return result;
     }
 
+    /*
     // If the edges_count or centers_cost is greater than MAX_DEPTH then there is no need to do call hash_find, we know
     // it will not find a match
     if (cost_to_goal <= MAX_DEPTH) {
@@ -285,11 +299,11 @@ struct ida_heuristic_result ida_heuristic_reduce_333_444(
         cost_to_goal = hash_entry->value;
 
     } else {
-        // dwalton
-        // float cost_to_goal_multiplier = 1.04;
-        // cost_to_goal = (unsigned int)round(cost_to_goal * cost_to_goal_multiplier);
+        cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
     }
+    */
 
+    cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
     result.cost_to_goal = cost_to_goal;
     return result;
 }

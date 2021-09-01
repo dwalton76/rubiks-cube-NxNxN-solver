@@ -3878,6 +3878,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 8 - UD centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve_via_c()
+        self.print_cube()
         self.solution.append(
             "COMMENT_%d_steps_777_UD_centers_vertical_bars"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
@@ -3891,12 +3892,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 9 - centers daisy solve
         tmp_solution_len = len(self.solution)
         self.lt_step60.solve_via_c()
+        self.print_cube()
         self.solution.append(
             "COMMENT_%d_steps_777_centers_daisy_solved"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        self.print_cube()
         logger.info(
             "%s: centers daisy solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )

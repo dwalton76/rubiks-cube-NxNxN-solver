@@ -5,25 +5,14 @@ Print stats to correlate 555 LR centers stage move count based on x-center, t-ce
 import json
 import logging
 import random
-from statistics import median
-from typing import Dict
 
 # rubiks cube libraries
 from rubikscubennnsolver import configure_logging
+from rubikscubennnsolver.misc import print_stats_median
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 
 logger = logging.getLogger(__name__)
 random.seed(1234)
-
-
-def print_stats(data: Dict) -> None:
-    print("\n{")
-
-    for total_count in sorted(data.keys()):
-        step_counts = data[(total_count)]
-        print(f"    {total_count}: {int(median(step_counts))},  # {len(step_counts)} entries")
-
-    print("}\n")
 
 
 def main():
@@ -76,11 +65,12 @@ def main():
                     data[(pt0_cost, pt1_cost)] = []
                 data[(pt0_cost, pt1_cost)].append(int(true_cost))
 
-        if (index + 1) % 100 == 0:
-            logger.info(index)
-            print_stats(data)
+        if index and index % 100 == 0:
+            logger.warning(f"INDEX {index}")
+            print_stats_median(data)
+            print("\n\n")
 
-    print_stats(data)
+    print_stats_median(data)
 
 
 if __name__ == "__main__":

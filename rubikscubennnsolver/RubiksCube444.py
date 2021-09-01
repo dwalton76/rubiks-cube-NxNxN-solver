@@ -646,8 +646,7 @@ class RubiksCube444(RubiksCube):
         self.edge_mapping = {}
 
         if RubiksCube444.instantiated:
-            # logger.warning("Another 4x4x4 instance is being created")
-            pass
+            logger.warning("Another 4x4x4 instance is being created")
         else:
             RubiksCube444.instantiated = True
 
@@ -872,7 +871,6 @@ class RubiksCube444(RubiksCube):
 
         logger.info(f"{self}: Start of Phase1")
 
-        # dwalton
         if not self.centers_staged():
             self.print_cube()
             self.lt_ULFRBD_centers_stage.solve_via_c()
@@ -907,6 +905,9 @@ class RubiksCube444(RubiksCube):
         # self.print_cube()
         # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         # sys.exit(0)
+
+        # logger.info(f"edge swaps even {self.edge_swaps_even(False, 0, False)}")
+        # logger.info(f"corner swaps even {self.corner_swaps_even(False)}")
 
         logger.info(f"{self}: Start of Phase3, {self.get_solution_len_minus_rotates(self.solution)} steps in")
         self.lt_reduce333.avoid_pll = True

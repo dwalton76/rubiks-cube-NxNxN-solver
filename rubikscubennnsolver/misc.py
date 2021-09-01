@@ -1,6 +1,7 @@
 # standard libraries
 import logging
-from typing import Any, List, Tuple
+from statistics import median
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -188,6 +189,26 @@ def parse_ascii_777(state: str) -> str:
         a string of the cube state in ULFRBD order
     """
     return parse_ascii(state, 7)
+
+
+def print_stats_min(data: Dict) -> None:
+    print("data_min = {")
+
+    for total_count in sorted(data.keys()):
+        step_counts = data[(total_count)]
+        print(f"    {total_count}: {min(step_counts)},  # {len(step_counts)} entries")
+
+    print("}")
+
+
+def print_stats_median(data: Dict) -> None:
+    print("data_median = {")
+
+    for total_count in sorted(data.keys()):
+        step_counts = data[(total_count)]
+        print(f"    {total_count}: {int(median(step_counts))},  # {len(step_counts)} entries")
+
+    print("}")
 
 
 pre_steps_to_try: Tuple[Tuple[str]] = (

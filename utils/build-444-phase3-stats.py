@@ -6,25 +6,14 @@ import json
 import logging
 import random
 import subprocess
-from statistics import median
-from typing import Dict
 
 # rubiks cube libraries
 from rubikscubennnsolver import configure_logging
+from rubikscubennnsolver.misc import print_stats_median
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
 logger = logging.getLogger(__name__)
 random.seed(1234)
-
-
-def print_stats(data: Dict) -> None:
-    print("\n{")
-
-    for total_count in sorted(data.keys()):
-        step_counts = data[(total_count)]
-        print(f"    {total_count}: {int(median(step_counts))},  # {len(step_counts)} entries")
-
-    print("}\n")
 
 
 def main():
@@ -41,7 +30,7 @@ def main():
         cube.tsai_phase2()
 
         try:
-            cube.lt_reduce333.avoid_pll = True
+            cube.lt_reduce333.avoid_pll = False
             cube.lt_reduce333.solve()
         except subprocess.CalledProcessError as e:
             logger.exception(e)
@@ -87,10 +76,12 @@ def main():
                     found_init = False
                     break
 
-        if (index + 1) % 10 == 0:
-            print_stats(data)
+        if index and index % 10 == 0:
+            logger.warning(f"INDEX {index}")
+            print_stats_median(data)
+            print("\n\n")
 
-    print_stats(data)
+    print_stats_median(data)
 
 
 if __name__ == "__main__":

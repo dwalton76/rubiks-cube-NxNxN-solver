@@ -1,23 +1,18 @@
 
 TODO section
 ------------
-- do we really need multipliers?
-
 - reduce duplicate code in ida_search.c and ida_search_via_graph.c 
 
-- 444 ida_heuristic_reduce_333_444 replace that switch statement with a 2D array
+- 444 ida_heuristic_reduce_333_444 finding solutions that have PLL waste a TON of time
+  if we know the starting parity for corners and edges can we somehow use that speed things up?
+  I think edge parity always starts out as even
 
-- 444 ida_heuristic_reduce_333_444 needs some work
-  ./ida_search --kociemba FRBRBUUBUUUBBRFDRRDFURRRFRRLDFLFRULBUFFFRFFDFBDLULFBRDDUBDDDUFDUDULUULLBDLLDBRFRDDULFBBLBBBRLLLL --type 4x4x4-reduce-333 --avoid-pll --legal-moves "U,U',U2,Uw2,L2,Lw2,F,F',F2,Fw2,R2,Rw2,B,B',B2,Bw2,D,D',D2,Dw2"
+- ida_search and ida_search need a command line option that controls threshold-- when we find a solution. For 555 phase1 where we
+  want to see all solutions we cannot do the threshold-- but for any search where only care about find a single solution we
+  can do the decrement.
 
-- 555 re-run utils/build-555-LR-centers-stage-stats.py
-
-- 555 can we do away with phase4 so that we could solve all 495 first-four-edges?
-
-- 555 use this cube to test phase1+2+3, its phase 1 goes to depth 12 which produces a ton of solutions
-reset; ./rubiks-cube-solver.py --state BBURBBRUDFRFUBLDDLDDRBLLDBBFDURBBLURRRUBRBDUDLBDFFFDBFLLRDFFBRFBUFFUUFDUDDUFRLFBUBDRLDDDURUFFUUFLBUUDRFRURFBLBFLLRDRLRULLBFLRRBLURLRLDUULBFULBFLDLFRDD
-
-
+- cleanup skip_other_steps_this_face
+- cleanup 444 6-deep table reduce_333_444
 
 
 555 combine phase1+2..attempt #432

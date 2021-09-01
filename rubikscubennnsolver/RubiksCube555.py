@@ -681,6 +681,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
             centers_only=True,
             C_ida_type="5x5x5-lr-centers-stage",
+            solution_count=10,
         )
 
 
@@ -2577,6 +2578,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
+            multiplier=1.09,
         )
 
 

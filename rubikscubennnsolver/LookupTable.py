@@ -1477,10 +1477,11 @@ class LookupTableIDAViaC(object):
         cmd_string = cmd_string.replace("--legal-moves ", '--legal-moves "')
         cmd_string += '"'
 
-        logger.info("%s: solving via C ida_search\n\n%s" % (self, cmd_string))
-        output = subprocess.check_output(cmd).decode("ascii")
+        logger.info("%s: solving via C ida_search\n%s" % (self, cmd_string))
+        output = subprocess.check_output(cmd).decode("utf-8")
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
-        logger.info(self.parent.solve_via_c_output)
+        logger.info(f"\n{output}")
+
         solutions = []
 
         for line in output.splitlines():

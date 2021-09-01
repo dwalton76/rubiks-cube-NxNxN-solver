@@ -32,6 +32,10 @@ def remove_failed_ida_output(lines: List[str]) -> List[str]:
 
             ida_output = []
 
+    if ida_output and "IDA failed with range" not in "".join(ida_output):
+        result.extend(ida_output)
+        ida_output = []
+
     return result
 
 
@@ -73,6 +77,7 @@ class LookupTableIDAViaGraph(LookupTable):
         centers_only: bool = False,
         use_uthash: bool = False,
         C_ida_type: str = None,
+        solution_count: int = None,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -88,6 +93,7 @@ class LookupTableIDAViaGraph(LookupTable):
         self.centers_only = centers_only
         self.use_uthash = use_uthash
         self.C_ida_type = C_ida_type
+        self.solution_count = solution_count
 
         if perfect_hash01_filename:
             self.perfect_hash01_filename = "lookup-tables/" + perfect_hash01_filename
@@ -314,6 +320,10 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--type")
             cmd.append(self.C_ida_type)
 
+        if self.solution_count is not None:
+            cmd.append("--solution-count")
+            cmd.append(str(self.solution_count))
+
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
 
@@ -327,12 +337,14 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        output = subprocess.check_output(cmd).decode("utf-8").splitlines()
-        self.parent.solve_via_c_output = f"\n{cmd_string}\n" + "\n".join(remove_failed_ida_output(output)) + "\n"
-        logger.info(self.parent.solve_via_c_output)
+        logger.info("%s: solving via C ida_search\n%s" % (self, cmd_string))
+        output = subprocess.check_output(cmd).decode("utf-8")
+        output = "\n".join(remove_failed_ida_output(output.splitlines()))
+        self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
+        logger.info(f"\n{output}")
         solutions = []
 
-        for line in output:
+        for line in output.splitlines():
             if line.startswith("SOLUTION"):
                 solution = line.split(":")[1].strip().split()
                 solutions.append((len(solution), solution))
@@ -341,7 +353,7 @@ class LookupTableIDAViaGraph(LookupTable):
             solutions.sort()
             return solutions
         else:
-            raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % "\n".join(output))
+            raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % output)
 
     def solve_via_c(self, pt_states=[], max_ida_threshold: int = None) -> None:
         solution = self.solutions_via_c(pt_states=pt_states, max_ida_threshold=max_ida_threshold)[0][1]

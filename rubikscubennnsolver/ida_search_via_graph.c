@@ -49,12 +49,6 @@ typedef enum {
 
 } lookup_table_type;
 
-struct ida_search_result {
-    unsigned int f_cost;
-    unsigned int found_solution;
-    move_type solution[MOVE_MAX];
-};
-
 struct cost_to_goal_result {
     unsigned char cost_to_goal;
     unsigned char pt0_cost;
@@ -183,12 +177,12 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
         case 1:
             pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
 
-            if (pt1_cost > cost_to_goal) {
-                cost_to_goal = pt1_cost;
-            }
-
             if (type == LR_CENTERS_STAGE_555) {
                 cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
+            } else {
+                if (pt1_cost > cost_to_goal) {
+                    cost_to_goal = pt1_cost;
+                }
             }
             break;
 
@@ -196,18 +190,6 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
             pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
             pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
             pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
-
-            if (pt1_cost > cost_to_goal) {
-                cost_to_goal = pt1_cost;
-            }
-
-            if (pt2_cost > cost_to_goal) {
-                cost_to_goal = pt2_cost;
-            }
-
-            if (pt3_cost > cost_to_goal) {
-                cost_to_goal = pt3_cost;
-            }
 
             if (type == CENTERS_STAGE_555) {
                 unsigned char lr_t_centers_cost = pt0_cost;
@@ -221,6 +203,27 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned ch
 
                 if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
                     cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
+                }
+
+                if (lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
+                    cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost];
+                }
+
+                if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
+                    cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
+                }
+
+            } else {
+                if (pt1_cost > cost_to_goal) {
+                    cost_to_goal = pt1_cost;
+                }
+
+                if (pt2_cost > cost_to_goal) {
+                    cost_to_goal = pt2_cost;
+                }
+
+                if (pt3_cost > cost_to_goal) {
+                    cost_to_goal = pt3_cost;
                 }
             }
             break;
@@ -316,12 +319,12 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned cha
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
-            if (result.pt1_cost > result.cost_to_goal) {
-                result.cost_to_goal = result.pt1_cost;
-            }
-
             if (type == LR_CENTERS_STAGE_555) {
                 result.cost_to_goal = lr_centers_stage_555[result.pt0_cost][result.pt1_cost];
+            } else {
+                if (result.pt1_cost > result.cost_to_goal) {
+                    result.cost_to_goal = result.pt1_cost;
+                }
             }
             break;
 
@@ -350,18 +353,6 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned cha
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
-            if (result.pt1_cost > result.cost_to_goal) {
-                result.cost_to_goal = result.pt1_cost;
-            }
-
-            if (result.pt2_cost > result.cost_to_goal) {
-                result.cost_to_goal = result.pt2_cost;
-            }
-
-            if (result.pt3_cost > result.cost_to_goal) {
-                result.cost_to_goal = result.pt3_cost;
-            }
-
             if (type == CENTERS_STAGE_555) {
                 unsigned char lr_t_centers_cost = result.pt0_cost;
                 unsigned char lr_x_centers_cost = result.pt1_cost;
@@ -374,6 +365,27 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type, unsigned cha
 
                 if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
                     result.cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
+                }
+
+                if (lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost];
+                }
+
+                if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
+                }
+
+            } else {
+                if (result.pt1_cost > result.cost_to_goal) {
+                    result.cost_to_goal = result.pt1_cost;
+                }
+
+                if (result.pt2_cost > result.cost_to_goal) {
+                    result.cost_to_goal = result.pt2_cost;
+                }
+
+                if (result.pt3_cost > result.cost_to_goal) {
+                    result.cost_to_goal = result.pt3_cost;
                 }
             }
             break;
@@ -549,34 +561,6 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
     printf("\n");
 }
 
-unsigned char invalid_prune(unsigned char cost_to_here, move_type *moves_to_here) {
-    // Lw2 U' Fw2 D R2 L2 Lw2 U2 L2 U' Rw2 Bw2 Rw2 U R2 D Rw2
-    move_type move_seq[17];
-
-    move_seq[0] = Lw2;
-    move_seq[1] = U_PRIME;
-    move_seq[2] = Fw2;
-    move_seq[3] = D;
-    move_seq[4] = R2;
-    move_seq[5] = L2;
-    move_seq[6] = Lw2;
-    move_seq[7] = U2;
-    move_seq[8] = L2;
-    move_seq[9] = U_PRIME;
-    move_seq[10] = Rw2;
-    move_seq[11] = Bw2;
-    move_seq[12] = Rw2;
-    move_seq[13] = U;
-    move_seq[14] = R2;
-    move_seq[15] = D;
-    move_seq[16] = Rw2;
-
-    if (threshold == 18 && memcmp(moves_to_here, move_seq, sizeof(move_type) * cost_to_here) == 0) {
-        return 1;
-    }
-
-    return 0;
-}
 
 unsigned char parity_ok(move_type *moves_to_here) {
     unsigned int orbit0_wide_quarter_turn_count = 0;

@@ -133,6 +133,12 @@ void LOG(const char *fmt, ...);
 unsigned long hex_to_int(char value);
 unsigned long max(unsigned long a, unsigned long b);
 
+struct ida_search_result {
+    unsigned int f_cost;
+    unsigned int found_solution;
+    move_type solution[MOVE_MAX];
+};
+
 struct ida_heuristic_result {
     char lt_state[64];
     unsigned int cost_to_goal;
@@ -173,5 +179,6 @@ unsigned char outer_layer_moves_in_order(move_type prev_move, move_type move);
 unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move);
 unsigned char steps_on_opposite_faces(move_type prev_move, move_type move);
 unsigned char steps_on_opposite_faces_in_order(move_type prev_move, move_type move);
+unsigned char invalid_prune(unsigned char cost_to_here, move_type *moves_to_here, unsigned int threshold);
 
 #endif /* _IDA_SEARCH_CORE_H */

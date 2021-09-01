@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/resource.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -383,39 +382,6 @@ unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned i
     return 0;
 }
 
-struct ida_search_result {
-    unsigned int f_cost;
-    unsigned int found_solution;
-    move_type solution[MOVE_MAX];
-};
-
-unsigned char invalid_prune(unsigned char cost_to_here, move_type *moves_to_here, unsigned int threshold) {
-    // Lw2 R2 D2 F U' Lw2 D2 Lw2 R2 Fw2 B Uw2 D Fw2
-    move_type move_seq[14];
-
-    move_seq[0] = Lw2;
-    move_seq[1] = R2;
-    move_seq[2] = D2;
-    move_seq[3] = F;
-    move_seq[4] = U_PRIME;
-    move_seq[5] = Lw2;
-    move_seq[6] = D2;
-    move_seq[7] = Lw2;
-    move_seq[8] = R2;
-    move_seq[9] = Fw2;
-    move_seq[10] = B;
-    move_seq[11] = Uw2;
-    move_seq[12] = D;
-    move_seq[13] = Fw2;
-
-    if (threshold == 15) {
-        if (memcmp(moves_to_here, move_seq, sizeof(move_type) * cost_to_here) == 0) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
 
 struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_to_here, unsigned int threshold,
                                     move_type prev_move, char *cube, unsigned int cube_size, lookup_table_type type,
@@ -977,9 +943,4 @@ int main(int argc, char *argv[]) {
 
     // print_cube(cube, cube_size);
     ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
-
-    // Print the maximum resident set size used (in MB).
-    // struct rusage r_usage;
-    // getrusage(RUSAGE_SELF, &r_usage);
-    // printf("Memory usage: %lu MB\n", (unsigned long)r_usage.ru_maxrss / (1024 * 1024));
 }

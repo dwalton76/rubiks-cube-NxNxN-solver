@@ -66,3 +66,23 @@ depth 15 will take ~5.87 hours
 depth 16 will take ~164 hours...that is almost a week!!
 
 
+after the t-centers table
+[2021-09-01T19:55:49.285] IDA threshold 9, explored 639 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-01T19:55:49.288] IDA threshold 10, explored 9,531 nodes, took 0.002s, 4,765,500 nodes-per-sec
+[2021-09-01T19:55:49.338] IDA threshold 11, explored 158,579 nodes, took 0.050s, 3,171,580 nodes-per-sec
+[2021-09-01T19:55:50.260] IDA threshold 12, explored 3,401,278 nodes, took 0.923s, 3,685,025 nodes-per-sec
+[2021-09-01T19:56:12.797] IDA threshold 13, explored 82,994,783 nodes, took 22.536s, 3,682,764 nodes-per-sec
+[2021-09-01T20:05:24.901] IDA threshold 14, explored 2,110,785,410 nodes, took 552.104s, 3,823,166 nodes-per-sec
+
+
+after the x-centers table
+[2021-09-01T20:19:57.142] IDA threshold 9, explored 321 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-01T20:19:57.144] IDA threshold 10, explored 5,212 nodes, took 0.001s, 5,212,000 nodes-per-sec
+[2021-09-01T20:19:57.162] IDA threshold 11, explored 83,867 nodes, took 0.018s, 4,659,278 nodes-per-sec
+[2021-09-01T20:19:57.686] IDA threshold 12, explored 1,819,758 nodes, took 0.524s, 3,472,820 nodes-per-sec
+[2021-09-01T20:20:09.893] IDA threshold 13, explored 44,503,823 nodes, took 12.207s, 3,645,762 nodes-per-sec
+[2021-09-01T20:24:49.570] IDA threshold 14, explored 1,145,946,750 nodes, took 279.677s, 4,097,393 nodes-per-sec
+[2021-09-01T22:38:52.069] IDA threshold 15, explored 29,854,989,484 nodes, took 8042.499s, 3,712,153 nodes-per-sec
+
+depth 15 should take ~1.8 hours
+depth 16 should take ~42 hours

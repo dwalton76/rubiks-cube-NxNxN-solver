@@ -79,6 +79,30 @@ unsigned int lr_centers_stage_555[9][9] = {
     {8, 8, 8, 8, 8, 9, 10, 10, 8},  // t-center cost 8
 };
 
+unsigned int t_centers_stage_555[9][9] = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8}, // LR t-centers cost 0
+    {1, 1, 2, 3, 4, 5, 6, 7, 8}, // LR t-centers cost 1
+    {2, 2, 2, 3, 4, 5, 6, 8, 8}, // LR t-centers cost 2
+    {3, 3, 3, 3, 4, 5, 6, 7, 8}, // LR t-centers cost 3
+    {4, 4, 4, 4, 4, 5, 6, 8, 8}, // LR t-centers cost 4
+    {5, 5, 5, 5, 5, 6, 7, 8, 9}, // LR t-centers cost 5
+    {6, 6, 6, 6, 6, 7, 8, 9, 9}, // LR t-centers cost 6
+    {7, 7, 7, 7, 7, 8, 9, 9, 10}, // LR t-centers cost 7
+    {8, 8, 8, 8, 8, 9, 9, 10, 10}, // LR t-centers cost 8
+};
+
+unsigned int x_centers_stage_555[9][9] = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 0
+    {1, 1, 2, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 1
+    {2, 2, 2, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 2
+    {3, 3, 3, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 3
+    {4, 4, 4, 4, 4, 5, 7, 7, 8}, // LR x-centers cost 4
+    {5, 5, 5, 5, 5, 6, 7, 8, 9}, // LR x-centers cost 5
+    {6, 6, 6, 6, 7, 7, 8, 9, 9}, // LR x-centers cost 6
+    {7, 7, 7, 7, 7, 8, 9, 9, 8}, // LR x-centers cost 7
+    {8, 8, 8, 8, 8, 8, 10, 10, 8}, // LR x-centers cost 8
+};
+
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
     switch (perfect_hash_cost) {
@@ -243,8 +267,6 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type,
                     cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
                 }
 
-                // dwalton experiment
-                /*
                 if (t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost] > cost_to_goal) {
                     cost_to_goal = t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost];
                 }
@@ -252,7 +274,6 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type,
                 if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > cost_to_goal) {
                     cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
                 }
-                */
 
             } else {
                 if (pt1_cost > cost_to_goal) {
@@ -414,6 +435,14 @@ struct cost_to_goal_result get_cost_to_goal(lookup_table_type type,
 
                 if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > result.cost_to_goal) {
                     result.cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
+                }
+
+                if (t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost];
+                }
+
+                if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
                 }
 
             } else {

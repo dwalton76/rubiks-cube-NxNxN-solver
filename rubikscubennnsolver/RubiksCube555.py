@@ -3131,11 +3131,15 @@ class RubiksCube555(RubiksCube):
             # logger.info("%s: %s permutation %s" % (self, index, "".join(map(str, permutation))))
             self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
 
+            # dwalton the state_index() call here is doing a binary search, it would be better to build a list of all the states
+            # we need to binary_search for and then do a binary_search_multiple
+            lt_phase3_lr_center_stage_eo_inner_orbit_state_index = (
+                self.lt_phase3_lr_center_stage_eo_inner_orbit.state_index()
+            )
+            lt_phase3_eo_outer_orbit_state_index = self.lt_phase3_eo_outer_orbit.state_index()
+
             pt_states.append(
-                (
-                    self.lt_phase3_lr_center_stage_eo_inner_orbit.state_index(),
-                    self.lt_phase3_eo_outer_orbit.state_index(),
-                )
+                (lt_phase3_lr_center_stage_eo_inner_orbit_state_index, lt_phase3_eo_outer_orbit_state_index)
             )
 
         self.state = original_state[:]
@@ -3343,43 +3347,6 @@ class RubiksCube555(RubiksCube):
 
         logger.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def best_phase1_2_for_eo_edges(
-        self, original_state: List[str], original_solution: List[str], phase1_2_solutions: List[List[str]]
-    ):
-        min_eo_edges_len = None
-        min_phase1_2 = None
-
-        for phase1_2_steps in phase1_2_solutions:
-            logger.warning(f"best_phase1_2_for_eo_edges {phase1_2_steps}")
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in phase1_2_steps:
-                self.rotate(step)
-            logging.getLogger().setLevel(logging.INFO)
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-            self.print_cube()
-            logging.getLogger().setLevel(logging.WARNING)
-            phase1_2_solution_len = len(self.solution)
-
-            self.eo_edges()
-            eo_edges_len = len(self.solution[phase1_2_solution_len:])
-            desc = f"EO edges is {eo_edges_len} steps"
-
-            if min_eo_edges_len is None or eo_edges_len < min_eo_edges_len:
-                logger.warning(f"{desc} (NEW MIN)")
-                min_phase1_2 = phase1_2_steps[:]
-
-            elif eo_edges_len == min_eo_edges_len:
-                logger.warning(f"{desc} (TIE)")
-            else:
-                logger.warning(desc)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        return min_phase1_2
-
     def phase1_2_solutions(
         self, pre_step: str = None, max_phase1_ida_threshold: int = None, min_phase1_2_len: int = None
     ) -> List[Tuple]:
@@ -3405,7 +3372,7 @@ class RubiksCube555(RubiksCube):
 
         min_phase1_2_solutions = []
 
-        for solution_len, phase1_steps in solutions:
+        for phase1_steps in solutions:
             self.state = original_state[:]
             self.solution = original_solution[:]
 
@@ -3431,7 +3398,7 @@ class RubiksCube555(RubiksCube):
                 max_ida_threshold = None
 
             try:
-                self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold, solution_count=10)
+                self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
                 phase2_output = self.solve_via_c_output
             except subprocess.CalledProcessError:
                 # logger.warning(
@@ -3562,7 +3529,6 @@ class RubiksCube555(RubiksCube):
             # z will move LR to UD and vice versa
             # y will move LR to FB and vice versa
             self.group_centers_phase1_and_2(rotations=[None, "z", "y"])
-            # dwalton
 
         elif True:
             self.group_centers_phase1_and_2(rotations=[None])

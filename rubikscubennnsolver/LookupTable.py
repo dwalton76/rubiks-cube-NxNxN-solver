@@ -67,6 +67,37 @@ def binary_search(fh: TextIO, width: int, state_width: int, linecount: int, stat
     return None
 
 
+def binary_search_list(states: List[str], b_state_to_find: str) -> Tuple[bool, int]:
+    """
+    Args:
+        states: a list of strings to search
+        b_state_to_find: the state to look for
+
+    Returns
+        True if we found ``b_state_to_find``
+        the line number for ``b_state_to_find``
+    """
+    first = 0
+    linecount = len(states)
+    last = linecount - 1
+
+    while first <= last:
+        midpoint = int((first + last) / 2)
+        b_state = bytearray(states[midpoint], encoding="utf-8")
+
+        if b_state_to_find < b_state:
+            last = midpoint - 1
+
+        # If this is the line we are looking for, then read the entire line
+        elif b_state_to_find == b_state:
+            return (True, midpoint)
+
+        else:
+            first = midpoint + 1
+
+    return (False, first)
+
+
 def get_file_vitals(filename: str) -> Tuple[int, int, int]:
     """
     Args:
@@ -379,37 +410,6 @@ def download_file_if_needed(filename: str, cube_size: int) -> None:
 
         logger.info(f"gunzip {filename_gz}")
         call(["gunzip", filename_gz])
-
-
-def binary_search_list(states: List[str], b_state_to_find: str) -> Tuple[bool, int]:
-    """
-    Args:
-        states: a list of strings to search
-        b_state_to_find: the state to look for
-
-    Returns
-        True if we found ``b_state_to_find``
-        the line number for ``b_state_to_find``
-    """
-    first = 0
-    linecount = len(states)
-    last = linecount - 1
-
-    while first <= last:
-        midpoint = int((first + last) / 2)
-        b_state = bytearray(states[midpoint], encoding="utf-8")
-
-        if b_state_to_find < b_state:
-            last = midpoint - 1
-
-        # If this is the line we are looking for, then read the entire line
-        elif b_state_to_find == b_state:
-            return (True, midpoint)
-
-        else:
-            first = midpoint + 1
-
-    return (False, first)
 
 
 class LookupTable(object):
@@ -1028,6 +1028,9 @@ class LookupTable(object):
             for line in fh:
                 if line.rstrip().endswith(f":{state_index}"):
                     return line.split(":")[0]
+
+    def state_index_cost(self, state_index: int) -> int:
+        return self.ida_graph[state_index * self.ROW_LENGTH]
 
     def ida_heuristic(self) -> Tuple[str, int]:
         """

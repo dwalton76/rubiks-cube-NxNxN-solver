@@ -350,7 +350,11 @@ class LookupTableIDAViaGraph(LookupTable):
                 solutions.append((len(solution), solution))
 
         if solutions:
+            # sort so the shortest solutions are first
             solutions.sort()
+
+            # chop the solutions length so we return just a list of solutions
+            solutions = [x[1] for x in solutions]
             return solutions
         else:
             raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % output)
@@ -358,7 +362,7 @@ class LookupTableIDAViaGraph(LookupTable):
     def solve_via_c(self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None) -> None:
         solution = self.solutions_via_c(
             pt_states=pt_states, max_ida_threshold=max_ida_threshold, solution_count=solution_count
-        )[0][1]
+        )[0]
 
         for step in solution:
             self.parent.rotate(step)

@@ -683,7 +683,6 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
             centers_only=True,
             C_ida_type="5x5x5-lr-centers-stage",
-            solution_count=10,
         )
 
 
@@ -3381,7 +3380,9 @@ class RubiksCube555(RubiksCube):
         self.solution = original_solution[:]
         return min_phase1_2
 
-    def phase1_2_solutions(self, pre_step: str = None, min_phase1_2_len: int = None) -> List[Tuple]:
+    def phase1_2_solutions(
+        self, pre_step: str = None, max_phase1_ida_threshold: int = None, min_phase1_2_len: int = None
+    ) -> List[Tuple]:
         if self.LR_centers_staged() and self.FB_centers_staged():
             return [()]
 
@@ -3391,8 +3392,17 @@ class RubiksCube555(RubiksCube):
         if pre_step is not None:
             self.rotate(pre_step)
 
-        solutions = self.lt_LR_centers_stage.solutions_via_c()
-        phase1_output = self.solve_via_c_output
+        # get up to 10 solutions so we have some choices to see which leads to the shortest phase1+2 solution
+        try:
+            # this can raise and exception if max_ida_threshold is low enough such that we do not find a solution
+            solutions = self.lt_LR_centers_stage.solutions_via_c(
+                max_ida_threshold=max_phase1_ida_threshold, solution_count=10
+            )
+            phase1_output = self.solve_via_c_output
+        except subprocess.CalledProcessError:
+            solutions = []
+            phase1_output = None
+
         min_phase1_2_solutions = []
 
         for solution_len, phase1_steps in solutions:
@@ -3421,7 +3431,7 @@ class RubiksCube555(RubiksCube):
                 max_ida_threshold = None
 
             try:
-                self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
+                self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold, solution_count=10)
                 phase2_output = self.solve_via_c_output
             except subprocess.CalledProcessError:
                 # logger.warning(
@@ -3460,45 +3470,10 @@ class RubiksCube555(RubiksCube):
         min_phase1_2_solutions.sort()
         return min_phase1_2_solutions
 
-    def group_centers_phase1_and_2(self) -> None:
-        if self.LR_centers_staged() and self.FB_centers_staged():
-            return
-
-        # disable INFO messages as we try all phase1 solutions to see which leads to the shortest phase2 solution
-        logging.getLogger().setLevel(logging.WARNING)
-        phase1_2_solution_len, phase1_output, phase1_steps, phase2_output, phase2_steps = self.phase1_2_solutions()[0]
-        phase1_steps_str = " ".join([x for x in phase1_steps if not x.startswith("COMMENT")])
-        phase2_steps_str = " ".join([x for x in phase2_steps if not x.startswith("COMMENT")])
-        logging.getLogger().setLevel(logging.INFO)
-
-        logger.info(phase1_output)
-        for step in phase1_steps:
-            self.rotate(step)
-        self.print_cube()
-        logger.info(
-            "%s: LR centers staged via %s, %d steps in"
-            % (self, phase1_steps_str, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_555_two_centers_staged" % self.get_solution_len_minus_rotates(phase1_steps)
-        )
-
-        logger.info(phase2_output)
-        for step in phase2_steps:
-            self.rotate(step)
-        self.print_cube()
-        logger.info(
-            "%s: FB centers staged via %s, %d steps in"
-            % (self, phase2_steps_str, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-    def group_centers_phase1_and_2_multi_axis(self) -> None:
+    def group_centers_phase1_and_2(self, rotations: List[str]) -> None:
         """
         phase1 stages the centers on sides L and R
         phase2 stages the centers on sides F and B
-
-        There are three different combinations of colors we can put on sides LR (colors LR, UD or FB).
-        Try all three combinations and see which leads to the shortest phase1 + phase2 solution length.
         """
         if self.LR_centers_staged() and self.FB_centers_staged():
             return
@@ -3510,9 +3485,8 @@ class RubiksCube555(RubiksCube):
         # disable INFO messages as we try all three combinations
         logging.getLogger().setLevel(logging.WARNING)
 
-        # z will move LR to UD and vice versa
-        # y will move LR to FB and vice versa
-        for pre_step in (None, "z", "y"):
+        # rotations is a list of whole cube rotations
+        for pre_step in rotations:
             if multi_axis_phase1_2_solutions:
                 multi_axis_phase1_2_solutions.sort()
                 min_phase1_2_len = multi_axis_phase1_2_solutions[0][0]
@@ -3529,27 +3503,33 @@ class RubiksCube555(RubiksCube):
         phase1_2_solution_len, phase1_output, phase1_steps, phase2_output, phase2_steps = multi_axis_phase1_2_solutions[
             0
         ]
-        phase1_steps_str = " ".join([x for x in phase1_steps if not x.startswith("COMMENT")])
-        phase2_steps_str = " ".join([x for x in phase2_steps if not x.startswith("COMMENT")])
+
         logging.getLogger().setLevel(logging.INFO)
 
         logger.info(phase1_output)
         for step in phase1_steps:
             self.rotate(step)
         self.print_cube()
+        phase1_steps_str = " ".join(phase1_steps)
         logger.info(
             "%s: LR centers staged via %s, %d steps in"
             % (self, phase1_steps_str, self.get_solution_len_minus_rotates(self.solution))
+        )
+        self.solution.append(
+            "COMMENT_%d_steps_555_two_centers_staged" % self.get_solution_len_minus_rotates(phase1_steps)
         )
 
         logger.info(phase2_output)
         for step in phase2_steps:
             self.rotate(step)
         self.print_cube()
+        phase2_steps_str = " ".join(phase2_steps)
         logger.info(
             "%s: FB centers staged via %s, %d steps in"
             % (self, phase2_steps_str, self.get_solution_len_minus_rotates(self.solution))
         )
+        self.solution.append("COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(phase2_steps))
+        self.solve_via_c_output = phase2_output
 
         # rotate U to U and F to F
         pre_rotate_state = self.state[:]
@@ -3576,10 +3556,16 @@ class RubiksCube555(RubiksCube):
         self.rotate_F_to_F()
 
         if True:
-            self.group_centers_phase1_and_2_multi_axis()
+            # There are three different combinations of colors we can put on sides LR (colors LR, UD or FB).
+            # Try all three combinations and see which leads to the shortest phase1 + phase2 solution length.
+            #
+            # z will move LR to UD and vice versa
+            # y will move LR to FB and vice versa
+            self.group_centers_phase1_and_2(rotations=[None, "z", "y"])
+            # dwalton
 
         elif True:
-            self.group_centers_phase1_and_2()
+            self.group_centers_phase1_and_2(rotations=[None])
 
         elif True:
             # phase 1

@@ -16,6 +16,9 @@ TODO section
 
 - sphinx docs?
 
+- 555 upload the new step 21 and 22 tables
+- 555 force the step 21 and 22 tables to download
+
 
 555 combine phase1+2..attempt #432
 ==================================

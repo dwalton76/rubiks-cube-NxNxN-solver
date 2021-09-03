@@ -875,7 +875,7 @@ class LookupTable555FBTCenterStage(LookupTable):
             max_depth=9,
             filesize=476190,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
+            illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -883,6 +883,10 @@ class LookupTable555FBTCenterStage(LookupTable):
     def state(self):
         parent_state = self.parent.state
         FB_colors = (parent_state[63], parent_state[113])
+
+        if FB_colors == (".", "."):
+            FB_colors = ("F", "B")
+
         state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_t_centers_555])
         return self.hex_format % int(state, 2)
 
@@ -923,7 +927,7 @@ class LookupTable555FBXCenterStage(LookupTable):
             max_depth=7,
             filesize=411840,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
+            illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -931,6 +935,10 @@ class LookupTable555FBXCenterStage(LookupTable):
     def state(self):
         parent_state = self.parent.state
         FB_colors = (parent_state[63], parent_state[113])
+
+        if FB_colors == (".", "."):
+            FB_colors = ("F", "B")
+
         state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_x_centers_555])
         return self.hex_format % int(state, 2)
 
@@ -950,7 +958,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
+            illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
             prune_tables=[parent.lt_FB_t_centers_stage, parent.lt_FB_x_centers_stage],
             centers_only=True,
         )

@@ -2,7 +2,7 @@
 import itertools
 import logging
 import subprocess
-from typing import List, Tuple
+from typing import List
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -2927,7 +2927,7 @@ class RubiksCube555(RubiksCube):
             for square_index in side.edge_pos:
                 self.state[square_index] = orient_edge_state[orient_edge_state_index]
                 orient_edge_state_index += 1
-        self.print_cube()
+        self.print_cube(f"{self}: high/low edges")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -3053,13 +3053,14 @@ class RubiksCube555(RubiksCube):
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_LR_centers_stage.solve_via_c()
-            self.print_cube()
+            self.print_cube(
+                "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
+
             self.solution.append(
                 "COMMENT_%d_steps_555_two_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
-
-        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_stage_FB(self, max_ida_threshold: int = None):
         """
@@ -3069,7 +3070,9 @@ class RubiksCube555(RubiksCube):
         if not self.FB_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
-            self.print_cube()
+            self.print_cube(
+                "%s: FB centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
             self.solution.append(
                 "COMMENT_%d_steps_555_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
@@ -3083,8 +3086,6 @@ class RubiksCube555(RubiksCube):
             except ValueError:
                 pass
 
-        logger.info("%s: FB centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
     def eo_edges(self):
         """
         Our goal is to get the edges split into high/low groups but we do not care what
@@ -3092,6 +3093,7 @@ class RubiksCube555(RubiksCube):
         orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2
         is because there cannot be an odd number of edges not in their final orientation.
         """
+        logger.info("eo_edges called")
         permutations = []
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3115,9 +3117,10 @@ class RubiksCube555(RubiksCube):
 
         # Put all 2048 starting states in a file and point ida-via-graph
         # at the file so it can solve all of them and apply the one that is the shortest.
-        pt_states = []
+        lr_center_stage_eo_inner_orbit_states = []
+        eo_outer_orbit_states = []
 
-        for (index, permutation) in enumerate(permutations):
+        for permutation in permutations:
             must_be_uppercase = []
             must_be_lowercase = []
             self.state = original_state[:]
@@ -3131,23 +3134,36 @@ class RubiksCube555(RubiksCube):
             # logger.info("%s: %s permutation %s" % (self, index, "".join(map(str, permutation))))
             self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
 
-            # dwalton the state_index() call here is doing a binary search, it would be better to build a list of all the states
-            # we need to binary_search for and then do a binary_search_multiple
-            lt_phase3_lr_center_stage_eo_inner_orbit_state_index = (
-                self.lt_phase3_lr_center_stage_eo_inner_orbit.state_index()
-            )
-            lt_phase3_eo_outer_orbit_state_index = self.lt_phase3_eo_outer_orbit.state_index()
+            # build lists of the states that we need to find state_indexes for
+            lr_center_stage_eo_inner_orbit_states.append(self.lt_phase3_lr_center_stage_eo_inner_orbit.state())
+            eo_outer_orbit_states.append(self.lt_phase3_eo_outer_orbit.state())
 
-            pt_states.append(
-                (lt_phase3_lr_center_stage_eo_inner_orbit_state_index, lt_phase3_eo_outer_orbit_state_index)
+        # now we have a huge list of states to lookup, do a binary search on multiple states at once (this is drastically faster
+        # than binary searching for them individually).  state_index_multiple() will return a dict where the state is the key
+        # and the state_index is the value.
+        lr_center_stage_eo_inner_orbit_state_indexes = self.lt_phase3_lr_center_stage_eo_inner_orbit.state_index_multiple(
+            lr_center_stage_eo_inner_orbit_states
+        )
+        eo_outer_orbit_state_indexes = self.lt_phase3_eo_outer_orbit.state_index_multiple(eo_outer_orbit_states)
+
+        # build a list of tuples of the state indexes
+        pt_state_indexes = []
+        for (lr_center_stage_eo_inner_orbit_state, eo_outer_orbit_state) in zip(
+            lr_center_stage_eo_inner_orbit_states, eo_outer_orbit_states
+        ):
+            pt_state_indexes.append(
+                (
+                    lr_center_stage_eo_inner_orbit_state_indexes[lr_center_stage_eo_inner_orbit_state],
+                    eo_outer_orbit_state_indexes[eo_outer_orbit_state],
+                )
             )
 
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        # When solve_via_c is passed pt_states (2048 lines of states in this case), it will try all 2048 of them
+        # When solve_via_c is passed pt_state_indexes (2048 lines of states in this case), it will try all 2048 of them
         # to find the state that has the shortest solution.
-        self.lt_phase3.solve_via_c(pt_states=pt_states)
+        self.lt_phase3.solve_via_c(pt_states=pt_state_indexes)
         self.solution.append(
             "COMMENT_%d_steps_555_edges_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
@@ -3160,9 +3176,8 @@ class RubiksCube555(RubiksCube):
         self.edges_flip_orientation(wing_strs, [])
 
         self.highlow_edges_print()
-        self.print_cube()
-        logger.info(
-            "%s: end of phase 3, edges EOed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube(
+            "%s: end of phase 3, edges EOed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def high_edge_midge_pair_count(self, target_wing_str=[]):
@@ -3267,9 +3282,8 @@ class RubiksCube555(RubiksCube):
         original_solution_len = len(self.solution)
         self.lt_phase4.wing_strs = phase4_wing_str_combo
         self.lt_phase4.solve(True)
-        self.print_cube()
-        logger.info(
-            "%s: end of phase 4, first four edges in x-plane and y-plane, %d steps in"
+        self.print_cube(
+            "%s: end of phase 4, first four edges in x-plane and y-plane (%d steps in)"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         self.solution.append(
@@ -3293,9 +3307,9 @@ class RubiksCube555(RubiksCube):
         for step in pair_four_edge_solution:
             self.rotate(step)
 
-        self.print_cube()
+        self.print_cube(f"{self}: first four edges paired")
         logger.info(
-            "%s: end of phase 5, x-plane edges paired, %d steps in"
+            "%s: end of phase 5, x-plane edges paired (%d steps in)"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         self.solution.append(
@@ -3339,103 +3353,13 @@ class RubiksCube555(RubiksCube):
         for step in pair_eight_edge_solution:
             self.rotate(step)
 
-        self.print_cube()
+        self.print_cube(f"{self}: last eight edges paired")
         self.solution.append(
             "COMMENT_%d_steps_555_last_eight_edges_paired"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        logger.info("%s: reduced to 3x3x3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-    def phase1_2_solutions(
-        self, pre_step: str = None, max_phase1_ida_threshold: int = None, min_phase1_2_len: int = None
-    ) -> List[Tuple]:
-        if self.LR_centers_staged() and self.FB_centers_staged():
-            return [()]
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        if pre_step is not None:
-            self.rotate(pre_step)
-
-        # get up to 10 solutions so we have some choices to see which leads to the shortest phase1+2 solution
-        try:
-            # this can raise and exception if max_ida_threshold is low enough such that we do not find a solution
-            solutions = self.lt_LR_centers_stage.solutions_via_c(
-                max_ida_threshold=max_phase1_ida_threshold, solution_count=10
-            )
-            phase1_output = self.solve_via_c_output
-        except subprocess.CalledProcessError:
-            solutions = []
-            phase1_output = None
-
-        min_phase1_2_solutions = []
-
-        for phase1_steps in solutions:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            if pre_step is not None:
-                self.rotate(pre_step)
-                pre_and_phase1_steps = [pre_step] + phase1_steps
-            else:
-                pre_and_phase1_steps = phase1_steps
-
-            for step in phase1_steps:
-                self.rotate(step)
-
-            phase1_steps_str = " ".join(phase1_steps)
-            phase1_len = len(phase1_steps)
-            original_and_phase1_len = len(self.solution)
-
-            # If we already have a candidate solution for phase1_2 then we can put a cap on how deep
-            # into phase2 we should look. This can save some cycles by aborting phase2 once we know
-            # the phase1_2 solution will not be shorter than our current min_phase1_2_len.
-            if min_phase1_2_len is not None:
-                max_ida_threshold = min_phase1_2_len - phase1_len - 1
-            else:
-                max_ida_threshold = None
-
-            try:
-                self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
-                phase2_output = self.solve_via_c_output
-            except subprocess.CalledProcessError:
-                # logger.warning(
-                #    f"pre_step {pre_step}, phase1 {phase1_steps_str} ({phase1_len} steps), phase2 max_ida_threshold {max_ida_threshold} (NO SOLUTION)"
-                # )
-                continue
-
-            phase2_steps = self.solution[original_and_phase1_len:]
-            phase2_steps_str = " ".join([step for step in phase2_steps if not step.startswith("COMMENT")])
-            phase2_len = self.get_solution_len_minus_rotates(phase2_steps)
-
-            phase1_2_solution_len = self.get_solution_len_minus_rotates(self.solution)
-            desc = f"pre_step {pre_step}, phase1 {phase1_steps_str} ({phase1_len} steps), phase2 {phase2_steps_str} ({phase2_len} steps), phase1+2 len {phase1_2_solution_len}"
-
-            if min_phase1_2_len is None or phase1_2_solution_len < min_phase1_2_len:
-                logger.warning(f"{desc} (NEW MIN)")
-                min_phase1_2_solutions = []
-                min_phase1_2_solutions.append(
-                    (phase1_2_solution_len, phase1_output, pre_and_phase1_steps, phase2_output, phase2_steps)
-                )
-                min_phase1_2_len = phase1_2_solution_len
-                phase2_output = self.solve_via_c_output
-
-            elif phase1_2_solution_len == min_phase1_2_len:
-                logger.warning(f"{desc} (TIE)")
-                min_phase1_2_solutions.append(
-                    (phase1_2_solution_len, phase1_output, pre_and_phase1_steps, phase2_output, phase2_steps)
-                )
-
-            # else:
-            #     logger.warning(desc)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        min_phase1_2_solutions.sort()
-        return min_phase1_2_solutions
+        logger.info("%s: reduced to 3x3x3 (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def group_centers_phase1_and_2(self, rotations: List[str]) -> None:
         """
@@ -3447,65 +3371,117 @@ class RubiksCube555(RubiksCube):
 
         original_state = self.state[:]
         original_solution = self.solution[:]
-        multi_axis_phase1_2_solutions = []
+        min_phase1_solutions = []
+        min_phase1_solutions_len = None
+        min_phase1_solutions_pre_step = None
+        min_phase1_solutions_output = None
+        max_phase1_ida_threshold = None
 
         # disable INFO messages as we try all three combinations
         logging.getLogger().setLevel(logging.WARNING)
 
-        # rotations is a list of whole cube rotations
+        # find the shortest phase1 solutions
         for pre_step in rotations:
-            if multi_axis_phase1_2_solutions:
-                multi_axis_phase1_2_solutions.sort()
-                min_phase1_2_len = multi_axis_phase1_2_solutions[0][0]
-            else:
-                min_phase1_2_len = None
+            self.rotate(pre_step)
 
-            multi_axis_phase1_2_solutions.extend(
-                self.phase1_2_solutions(pre_step=pre_step, min_phase1_2_len=min_phase1_2_len)
-            )
-            self.solution = original_solution[:]
+            try:
+                phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(
+                    max_ida_threshold=max_phase1_ida_threshold, solution_count=10
+                )
+            except subprocess.CalledProcessError:
+                phase1_solutions = []
+
+            for phase1_solution in phase1_solutions:
+                phase1_solution_len = len(phase1_solution)
+
+                if min_phase1_solutions_len is None or phase1_solution_len < min_phase1_solutions_len:
+                    min_phase1_solutions_len = phase1_solution_len
+                    min_phase1_solutions = []
+                    min_phase1_solutions.append(phase1_solution)
+                    min_phase1_solutions_pre_step = pre_step
+                    max_phase1_ida_threshold = min_phase1_solutions_len - 1
+                    min_phase1_solutions_output = self.solve_via_c_output
+                    logger.warning(
+                        f"pre_step {pre_step}, phase1_solution {phase1_solution} length {phase1_solution_len} (NEW MIN)"
+                    )
+                elif phase1_solution_len == min_phase1_solutions_len:
+                    logger.warning(
+                        f"pre_step {pre_step}, phase1_solution {phase1_solution} length {phase1_solution_len} (TIE)"
+                    )
+                    min_phase1_solutions.append(phase1_solution)
+                else:
+                    logger.warning(
+                        f"pre_step {pre_step}, phase1_solution {phase1_solution} length {phase1_solution_len}"
+                    )
+
             self.state = original_state[:]
+            self.solution = original_solution[:]
 
-        multi_axis_phase1_2_solutions.sort()
-        phase1_2_solution_len, phase1_output, phase1_steps, phase2_output, phase2_steps = multi_axis_phase1_2_solutions[
-            0
-        ]
+        min_phase2_solution = []
+        min_phase2_solution_len = None
+        min_phase1_solution_for_phase2 = None
+        min_phase2_solutions_output = None
+        max_phase2_ida_threshold = None
+
+        # find the phase1 solution that leads to the shortest phase2 solution
+        for phase1_solution in min_phase1_solutions:
+            self.rotate(min_phase1_solutions_pre_step)
+
+            for step in phase1_solution:
+                self.rotate(step)
+
+            post_phase1_solution = self.solution[:]
+            post_phase1_solution_len = len(post_phase1_solution)
+
+            try:
+                self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_phase2_ida_threshold)
+            except subprocess.CalledProcessError:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                continue
+
+            phase2_solution = self.solution[post_phase1_solution_len:]
+            phase2_solution_len = len(phase2_solution)
+
+            if min_phase2_solution_len is None or phase2_solution_len < min_phase2_solution_len:
+                logger.warning(
+                    f"pre_step {min_phase1_solutions_pre_step} phase1_solution {phase1_solution} leads to phase2_solution {phase2_solution} length {len(phase2_solution)} (NEW MIN)"
+                )
+                min_phase2_solution_len = phase2_solution_len
+                min_phase2_solution = phase2_solution
+                min_phase1_solution_for_phase2 = phase1_solution
+                max_phase2_ida_threshold = phase2_solution_len - 1
+                min_phase2_solutions_output = self.solve_via_c_output
+            else:
+                logger.warning(
+                    f"pre_step {min_phase1_solutions_pre_step} phase1_solution {phase1_solution} leads to phase2_solution {phase2_solution} length {len(phase2_solution)}"
+                )
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
 
         logging.getLogger().setLevel(logging.INFO)
+        logger.info("\n" + min_phase1_solutions_output)
+        self.rotate(min_phase1_solutions_pre_step)
 
-        logger.info(phase1_output)
-        for step in phase1_steps:
+        for step in min_phase1_solution_for_phase2:
             self.rotate(step)
-        self.print_cube()
-        phase1_steps_str = " ".join(phase1_steps)
-        logger.info(
-            "%s: LR centers staged via %s, %d steps in"
-            % (self, phase1_steps_str, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_555_two_centers_staged" % self.get_solution_len_minus_rotates(phase1_steps)
-        )
 
-        logger.info(phase2_output)
-        for step in phase2_steps:
+        self.print_cube(
+            "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+        self.solution.append("COMMENT_%d_steps_555_two_centers_staged" % len(min_phase1_solution_for_phase2))
+
+        logger.info("\n" + min_phase2_solutions_output)
+        for step in min_phase2_solution:
             self.rotate(step)
-        self.print_cube()
-        phase2_steps_str = " ".join(phase2_steps)
-        logger.info(
-            "%s: FB centers staged via %s, %d steps in"
-            % (self, phase2_steps_str, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append("COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(phase2_steps))
-        self.solve_via_c_output = phase2_output
-
-        # rotate U to U and F to F
-        pre_rotate_state = self.state[:]
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        if self.state != pre_rotate_state:
-            self.print_cube()
-            logger.info("%s: post rotate U to U and F to F", self)
+        self.print_cube(
+            "%s: FB centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+        self.solution.append("COMMENT_%d_steps_555_centers_staged" % len(min_phase2_solution))
 
     def reduce_333(self):
         self.lt_init()
@@ -3529,9 +3505,6 @@ class RubiksCube555(RubiksCube):
             # z will move LR to UD and vice versa
             # y will move LR to FB and vice versa
             self.group_centers_phase1_and_2(rotations=[None, "z", "y"])
-
-        elif True:
-            self.group_centers_phase1_and_2(rotations=[None])
 
         elif True:
             # phase 1
@@ -3564,10 +3537,7 @@ class RubiksCube555(RubiksCube):
             self.solution.append(
                 "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
             )
-            logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-        # import sys
-        # sys.exit(0)
+            logger.info("%s: centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # phase 3
         self.eo_edges()
@@ -3662,10 +3632,16 @@ class RubiksCube555(RubiksCube):
 
             if step.endswith("first_four_edges_paired"):
                 logger.info(min_phase45_output)
-                self.print_cube()
+                self.print_cube(
+                    "%s: first four edges paired (%d steps in)"
+                    % (self, self.get_solution_len_minus_rotates(self.solution))
+                )
             elif step.endswith("last_eight_edges_paired"):
                 logger.info(min_phase6_output)
-                self.print_cube()
+                self.print_cube(
+                    "%s: last eight edges paired (%d steps in)"
+                    % (self, self.get_solution_len_minus_rotates(self.solution))
+                )
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

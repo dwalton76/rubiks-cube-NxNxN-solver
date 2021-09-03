@@ -119,7 +119,7 @@ try:
             cube.rotate(step)
 
     cube.sanity_check()
-    cube.print_cube()
+    cube.print_cube("Initial Cube")
     cube.www_header()
     cube.www_write_cube("Initial Cube")
 
@@ -142,8 +142,7 @@ try:
             raise
 
     end_time = dt.datetime.now()
-    logger.info("Final Cube")
-    cube.print_cube()
+    cube.print_cube("Final Cube")
     cube.print_solution(not args.no_comments)
 
     logger.info("*********************************************************************************")

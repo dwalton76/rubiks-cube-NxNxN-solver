@@ -5,6 +5,17 @@ TODO section
   if we know the starting parity for corners and edges can we somehow use that speed things up?
   I think edge parity always starts out as even
 
+- 555 can we use my-pt-states.txt to try multiple wing_strs at once for the first four edges?
+
+- use threads for ida_search_via_graph.c. Once this is done remove the C_ida_type="5x5x5-lr-centers-stage"
+  arg so that phase1 becomes admissible again.
+
+- move to f-strings
+
+- type hints everywhere
+
+- sphinx docs?
+
 
 555 combine phase1+2..attempt #432
 ==================================
@@ -15,8 +26,6 @@ TODO section
     --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 594026 \
     --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.bin --prune-table-3-state 484064 \
     --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" --type 5x5x5-centers-stage
-
-TODO - use threads
 
 TODO - today we have a lr_centers_stage_555 table which is a 2D array of the LR t-centers and x-centers costs. This gives
   us heuristics that go as high as 11 (vs 7 for the standalone t-center/x-center tables). This ends up making a big difference

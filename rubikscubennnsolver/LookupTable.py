@@ -98,6 +98,78 @@ def binary_search_list(states: List[str], b_state_to_find: str) -> Tuple[bool, i
     return (False, first)
 
 
+def binary_search_multiple(
+    fh: TextIO, width: int, state_width: int, linecount: int, states_to_find: List[str]
+) -> Dict[str, str]:
+    """
+    Args:
+        states_to_find: a list of states to search for
+
+    Returns:
+        a dictionary where the state is the key and the value is a move sequence or move count
+    """
+    states_to_find = sorted(states_to_find)
+    cache = []
+    results = {}
+    fh.seek(0)
+    b_state_first = fh.read(state_width)
+
+    fh.seek((linecount - 1) * width)
+    b_state_last = fh.read(state_width)
+
+    (_, starting_index) = binary_search_list(states_to_find, b_state_first)
+    # logger.info("start at index %d" % starting_index)
+
+    for state_to_find in states_to_find[starting_index:]:
+        b_state_to_find = bytearray(state_to_find, encoding="utf-8")
+
+        # This provides a pretty massive improvement when you are looking for 100k+ states
+        if b_state_to_find < b_state_first:
+            # This part is basically a no-op now that we binary_search states_to_find
+            # for b_state_first to find the starting_index
+            continue
+        elif b_state_to_find > b_state_last:
+            break
+
+        if cache:
+            (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
+        else:
+            first = 0
+            last = linecount - 1
+
+        # logger.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
+        while first <= last:
+            midpoint = int((first + last) / 2)
+            fh.seek(midpoint * width)
+
+            # Only read the 'state' part of the line (for speed)
+            b_state = fh.read(state_width)
+
+            # We did a read...reads are expensive...cache the read
+            cache.append((midpoint, b_state))
+
+            if b_state_to_find < b_state:
+                last = midpoint - 1
+
+            # If this is the line we are looking for, then read the entire line
+            elif b_state_to_find == b_state:
+                fh.seek(midpoint * width)
+                line = fh.read(width)
+                (_, value) = line.decode("utf-8").rstrip().split(":")
+                if value.isdigit():
+                    value = int(value)
+                results[state_to_find] = value
+                break
+
+            else:
+                first = midpoint + 1
+        else:
+            # results[state_to_find] = None
+            pass
+
+    return results
+
+
 def get_file_vitals(filename: str) -> Tuple[int, int, int]:
     """
     Args:
@@ -565,71 +637,7 @@ class LookupTable(object):
         Returns:
             a dictionary where the state is the key and the value is a move sequence or move count
         """
-        states_to_find.sort()
-        cache = []
-        results = {}
-        linecount = self.linecount
-        width = self.width
-        state_width = self.state_width
-        fh_txt = self.fh_txt
-        # logger.info("\n\n\n\n\n\n")
-        # logger.info("binary_search_multiple called for %s" % pformat(states_to_find))
-
-        fh_txt.seek(0)
-        b_state_first = fh_txt.read(state_width)
-
-        fh_txt.seek((linecount - 1) * width)
-        b_state_last = fh_txt.read(state_width)
-
-        (_, starting_index) = binary_search_list(states_to_find, b_state_first)
-        # logger.info("start at index %d" % starting_index)
-
-        for state_to_find in states_to_find[starting_index:]:
-            b_state_to_find = bytearray(state_to_find, encoding="utf-8")
-
-            # This provides a pretty massive improvement when you are looking for 100k+ states
-            if b_state_to_find < b_state_first:
-                # This part is basically a no-op now that we binary_search states_to_find
-                # for b_state_first to find the starting_index
-                continue
-            elif b_state_to_find > b_state_last:
-                break
-
-            if cache:
-                (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
-            else:
-                first = 0
-                last = linecount - 1
-
-            # logger.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
-            while first <= last:
-                midpoint = int((first + last) / 2)
-                fh_txt.seek(midpoint * width)
-
-                # Only read the 'state' part of the line (for speed)
-                b_state = fh_txt.read(state_width)
-
-                # We did a read...reads are expensive...cache the read
-                cache.append((midpoint, b_state))
-
-                if b_state_to_find < b_state:
-                    last = midpoint - 1
-
-                # If this is the line we are looking for, then read the entire line
-                elif b_state_to_find == b_state:
-                    fh_txt.seek(midpoint * width)
-                    line = fh_txt.read(width)
-                    (_, value) = line.decode("utf-8").rstrip().split(":")
-                    results[state_to_find] = value
-                    break
-
-                else:
-                    first = midpoint + 1
-            else:
-                # results[state_to_find] = None
-                pass
-
-        return results
+        return binary_search_multiple(self.fh_txt, self.width, self.state_width, self.linecount, states_to_find)
 
     def binary_search(self, state_to_find: str) -> str:
         """
@@ -995,12 +1003,13 @@ class LookupTable(object):
                 (state, state_index) = line.rstrip().split(":")
                 self.state_index_cache[state] = int(state_index)
 
-    def state_index(self) -> int:
+    def state_index(self, state: str = None) -> int:
         """
         Returns:
             the index of the current state
         """
-        state = self.state()
+        if state is None:
+            state = self.state()
 
         if self.state_index_cache:
             return self.state_index_cache.get(state)
@@ -1014,6 +1023,13 @@ class LookupTable(object):
                 return int(state_index)
             except TypeError:
                 raise TypeError(f"{self}: state {state} not found")
+
+    def state_index_multiple(self, states_to_find: List[str]) -> Dict[str, str]:
+        state_index_filename = self.filename.replace(".txt", ".state_index")
+        (width, state_width, linecount) = get_file_vitals(state_index_filename)
+        # dwalton here now
+        with open(state_index_filename, "rb") as fh:
+            return binary_search_multiple(fh, width, state_width, linecount, states_to_find)
 
     def reverse_state_index(self, state_index: int) -> str:
         """

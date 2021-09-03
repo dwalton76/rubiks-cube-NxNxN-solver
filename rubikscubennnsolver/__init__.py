@@ -117,7 +117,7 @@ def configure_logging(level=logging.INFO) -> None:
     """
     Set the logging format
     """
-    logging.basicConfig(level=level, format="%(asctime)s %(filename)22s:%(lineno)d %(levelname)8s: %(message)s")
+    logging.basicConfig(level=level, format="%(asctime)s %(filename)25s:%(lineno)d %(levelname)8s: %(message)s")
 
 
 def reverse_steps(steps: List[str]) -> List[str]:
@@ -683,7 +683,7 @@ class RubiksCube(object):
                 msg = f"side {desc} {side} count is {value} (should be {expected_count})"
                 logger.warning(f"InvalidCubeReduction {msg}")
                 self.enable_print_cube = True
-                self.print_cube()
+                self.print_cube(f"InvalidCubeReduction {msg}")
                 raise InvalidCubeReduction(msg)
 
     def re_init(self) -> None:
@@ -1449,7 +1449,7 @@ class RubiksCube(object):
         if self.enable_print_cube:
             logger.info("\n" + get_cube_layout(self.size) + "\n")
 
-    def print_cube(self, print_positions: bool = False) -> None:
+    def print_cube(self, title: str = None, print_positions: bool = False) -> None:
         """
         log the cube state
         """
@@ -1460,6 +1460,11 @@ class RubiksCube(object):
         side_name_index = 0
         rows = []
         row_index = 0
+        logger.info("")
+
+        if title:
+            logger.info(title)
+            logger.info("=" * len(title))
 
         for x in range(self.size * 3):
             rows.append([])
@@ -1531,8 +1536,6 @@ class RubiksCube(object):
 
             if ((row_index + 1) % self.size) == 0:
                 logger.info("")
-
-        logger.info("")
 
     def print_case_statement_C(self, case: str, first_step: bool) -> None:
         """
@@ -3429,8 +3432,7 @@ class RubiksCube(object):
                     )
                 )
                 oll_solution = oll_solution.split()
-                logger.warning("Solving OLL in %d steps" % len(oll_solution))
-                self.print_cube()
+                self.print_cube("solving OLL in %d steps" % len(oll_solution))
 
                 for step in oll_solution:
                     self.rotate(step)
@@ -3576,8 +3578,7 @@ class RubiksCube(object):
                 self.size / 2,
                 self.size / 2,
             )
-            logger.warning("Solving PLL ID %d: %s" % (pll_id, pll_solution))
-            self.print_cube()
+            self.print_cube("solving PLL ID %d: %s" % (pll_id, pll_solution))
 
             for step in pll_solution.split():
                 self.rotate(step)

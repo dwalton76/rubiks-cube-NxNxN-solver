@@ -499,27 +499,19 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
                 ("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848, "20ac2ed7ca369c3b5183f836f5d99262"),
                 ("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", None, "3f990fc1fb6bf506d81ba65f03ad74f6"),
             ),
-            # fmt: on
             "4x4x4-reduce-333",  # C_ida_type
             all_moves=moves_444,
             illegal_moves=[
-                "Uw",
-                "Uw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Rw",
-                "Rw'",
-                "Bw",
-                "Bw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
             ],
+            # fmt: on
         )
 
 

@@ -11,61 +11,14 @@ from rubikscubennnsolver.swaps import swaps_777
 logger = logging.getLogger(__name__)
 
 
+# fmt: off
 moves_777 = (
-    "U",
-    "U'",
-    "U2",
-    "Uw",
-    "Uw'",
-    "Uw2",
-    "3Uw",
-    "3Uw'",
-    "3Uw2",
-    "L",
-    "L'",
-    "L2",
-    "Lw",
-    "Lw'",
-    "Lw2",
-    "3Lw",
-    "3Lw'",
-    "3Lw2",
-    "F",
-    "F'",
-    "F2",
-    "Fw",
-    "Fw'",
-    "Fw2",
-    "3Fw",
-    "3Fw'",
-    "3Fw2",
-    "R",
-    "R'",
-    "R2",
-    "Rw",
-    "Rw'",
-    "Rw2",
-    "3Rw",
-    "3Rw'",
-    "3Rw2",
-    "B",
-    "B'",
-    "B2",
-    "Bw",
-    "Bw'",
-    "Bw2",
-    "3Bw",
-    "3Bw'",
-    "3Bw2",
-    "D",
-    "D'",
-    "D2",
-    "Dw",
-    "Dw'",
-    "Dw2",
-    "3Dw",
-    "3Dw'",
-    "3Dw2",
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
+    "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
+    "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
+    "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
+    "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2",
     # slices...not used for now
     # "2U", "2U'", "2U2", "2D", "2D'", "2D2",
     # "2L", "2L'", "2L2", "2R", "2R'", "2R2",
@@ -78,260 +31,21 @@ moves_777 = (
 solved_777 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
 centers_777 = (
-    9,
-    10,
-    11,
-    12,
-    13,
-    16,
-    17,
-    18,
-    19,
-    20,
-    23,
-    24,
-    25,
-    26,
-    27,
-    30,
-    31,
-    32,
-    33,
-    34,
-    37,
-    38,
-    39,
-    40,
-    41,  # Upper
-    58,
-    59,
-    60,
-    61,
-    62,
-    65,
-    66,
-    67,
-    68,
-    69,
-    72,
-    73,
-    74,
-    75,
-    76,
-    79,
-    80,
-    81,
-    82,
-    83,
-    86,
-    87,
-    88,
-    89,
-    90,  # Left
-    107,
-    108,
-    109,
-    110,
-    111,
-    114,
-    115,
-    116,
-    117,
-    118,
-    121,
-    122,
-    123,
-    124,
-    125,
-    128,
-    129,
-    130,
-    131,
-    132,
-    135,
-    136,
-    137,
-    138,
-    139,  # Front
-    156,
-    157,
-    158,
-    159,
-    160,
-    163,
-    164,
-    165,
-    166,
-    167,
-    170,
-    171,
-    172,
-    173,
-    174,
-    177,
-    178,
-    179,
-    180,
-    181,
-    184,
-    185,
-    186,
-    187,
-    188,  # Right
-    205,
-    206,
-    207,
-    208,
-    209,
-    212,
-    213,
-    214,
-    215,
-    216,
-    219,
-    220,
-    221,
-    222,
-    223,
-    226,
-    227,
-    228,
-    229,
-    230,
-    233,
-    234,
-    235,
-    236,
-    237,  # Back
-    254,
-    255,
-    256,
-    257,
-    258,
-    261,
-    262,
-    263,
-    264,
-    265,
-    268,
-    269,
-    270,
-    271,
-    272,
-    275,
-    276,
-    277,
-    278,
-    279,
-    282,
-    283,
-    284,
-    285,
-    286,  # Down
+    9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41,  # Upper
+    58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90,  # Left
+    107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139,  # Front
+    156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188,  # Right
+    205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237,  # Back
+    254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286,  # Down
 )
 
 ULRD_centers_777 = (
-    9,
-    10,
-    11,
-    12,
-    13,
-    16,
-    17,
-    18,
-    19,
-    20,
-    23,
-    24,
-    25,
-    26,
-    27,
-    30,
-    31,
-    32,
-    33,
-    34,
-    37,
-    38,
-    39,
-    40,
-    41,  # Upper
-    58,
-    59,
-    60,
-    61,
-    62,
-    65,
-    66,
-    67,
-    68,
-    69,
-    72,
-    73,
-    74,
-    75,
-    76,
-    79,
-    80,
-    81,
-    82,
-    83,
-    86,
-    87,
-    88,
-    89,
-    90,  # Left
-    156,
-    157,
-    158,
-    159,
-    160,
-    163,
-    164,
-    165,
-    166,
-    167,
-    170,
-    171,
-    172,
-    173,
-    174,
-    177,
-    178,
-    179,
-    180,
-    181,
-    184,
-    185,
-    186,
-    187,
-    188,  # Right
-    254,
-    255,
-    256,
-    257,
-    258,
-    261,
-    262,
-    263,
-    264,
-    265,
-    268,
-    269,
-    270,
-    271,
-    272,
-    275,
-    276,
-    277,
-    278,
-    279,
-    282,
-    283,
-    284,
-    285,
-    286,  # Down
+    9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41,  # Upper
+    58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90,  # Left
+    156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188,  # Right
+    254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286,  # Down
 )
+# fmt: on
 
 
 # ===============================
@@ -339,83 +53,20 @@ ULRD_centers_777 = (
 # ===============================
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
 
+    # fmt: off
     oblique_edges_777 = (
-        10,
-        11,
-        12,
-        16,
-        20,
-        23,
-        27,
-        30,
-        34,
-        38,
-        39,
-        40,  # Upper
-        59,
-        60,
-        61,
-        65,
-        69,
-        72,
-        76,
-        79,
-        83,
-        87,
-        88,
-        89,  # Left
-        108,
-        109,
-        110,
-        114,
-        118,
-        121,
-        125,
-        128,
-        132,
-        136,
-        137,
-        138,  # Front
-        157,
-        158,
-        159,
-        163,
-        167,
-        170,
-        174,
-        177,
-        181,
-        185,
-        186,
-        187,  # Right
-        206,
-        207,
-        208,
-        212,
-        216,
-        219,
-        223,
-        226,
-        230,
-        234,
-        235,
-        236,  # Back
-        255,
-        256,
-        257,
-        261,
-        265,
-        268,
-        272,
-        275,
-        279,
-        283,
-        284,
-        285,  # Down
+        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
+        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
+        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
+        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
     )
+    # fmt: on
 
     def __init__(self, parent):
 
+        # fmt: off
         LookupTableIDAViaC.__init__(
             self,
             parent,
@@ -423,9 +74,15 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
             (),
             "7x7x7-LR-oblique-edges-stage",  # C_ida_type
             all_moves=moves_777,
-            illegal_moves=["3Uw", "3Uw'", "3Dw", "3Dw'", "3Fw", "3Fw'", "3Bw", "3Bw'"],
+            illegal_moves=[
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+            ],
             centers_only=True,
         )
+        # fmt: on
 
     def recolor(self):
         logger.info("%s: recolor (custom)" % self)
@@ -447,59 +104,18 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
 # ===================================
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
+    # fmt: off
     UFBD_oblique_edges_777 = (
-        10,
-        11,
-        12,
-        16,
-        20,
-        23,
-        27,
-        30,
-        34,
-        38,
-        39,
-        40,  # Upper
-        108,
-        109,
-        110,
-        114,
-        118,
-        121,
-        125,
-        128,
-        132,
-        136,
-        137,
-        138,  # Front
-        206,
-        207,
-        208,
-        212,
-        216,
-        219,
-        223,
-        226,
-        230,
-        234,
-        235,
-        236,  # Back
-        255,
-        256,
-        257,
-        261,
-        265,
-        268,
-        272,
-        275,
-        279,
-        283,
-        284,
-        285,  # Down
+        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
+        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
     )
+    # fmt: on
 
     def __init__(self, parent):
 
+        # fmt: off
         LookupTableIDAViaC.__init__(
             self,
             parent,
@@ -508,35 +124,22 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
             "7x7x7-UD-oblique-edges-stage",  # C_ida_type
             all_moves=moves_777,
             illegal_moves=[
-                "3Uw",
-                "3Uw'",
-                "3Dw",
-                "3Dw'",
-                "3Lw",
-                "3Lw'",
-                "3Rw",
-                "3Rw'",
-                "3Fw",
-                "3Fw'",
-                "3Bw",
-                "3Bw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "L",
-                "L'",
-                "L2",
-                "R",
-                "R'",
-                "R2",
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Lw", "3Lw'",
+                "3Rw", "3Rw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
             ],
             centers_only=True,
         )
+        # fmt: on
 
     def recolor(self):
         logger.info("%s: recolor (custom)" % self)
@@ -649,38 +252,15 @@ class LookupTable777Step41(LookupTable):
         "RRRRRRRRRRRRLLLLLLLLLLLL",
     )
 
+    # fmt: off
     LR_oblique_edges_and_outer_t_center = (
-        # 10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
-        59,
-        60,
-        61,
-        65,
-        69,
-        72,
-        76,
-        79,
-        83,
-        87,
-        88,
-        89,  # Left
-        # 108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
-        157,
-        158,
-        159,
-        163,
-        167,
-        170,
-        174,
-        177,
-        181,
-        185,
-        186,
-        187,  # Right
-        # 206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
-        # 255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
+        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
+        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -691,46 +271,21 @@ class LookupTable777Step41(LookupTable):
             filesize=20237000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "U",
-                "U'",
-                "U2",
-                "D",
-                "D'",
-                "D2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "U", "U'", "U2",
+                "D", "D'", "D2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -801,40 +356,15 @@ class LookupTable777Step42(LookupTable):
         "RRLRRRLRRRLRRLLRLLLRLLLRLL",
     )
 
+    # fmt: off
     LR_inside_centers_and_left_oblique_edges = (
-        # 10, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 40,  # Upper
-        59,
-        66,
-        67,
-        68,
-        69,
-        73,
-        74,
-        75,
-        79,
-        80,
-        81,
-        82,
-        89,  # Left
-        # 108, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 138,  # Front
-        157,
-        164,
-        165,
-        166,
-        167,
-        171,
-        172,
-        173,
-        177,
-        178,
-        179,
-        180,
-        187,  # Right
-        # 206, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 236,  # Back
-        # 255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285,  # Down
+        59, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 89,  # Left
+        157, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 187,  # Right
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -845,46 +375,21 @@ class LookupTable777Step42(LookupTable):
             filesize=22981000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "U",
-                "U'",
-                "U2",
-                "D",
-                "D'",
-                "D2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "U", "U'", "U2",
+                "D", "D'", "D2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -916,38 +421,12 @@ class LookupTable777Step43(LookupTable):
     Average: 5.87 moves
     """
 
+    # fmt: off
     LR_inside_centers_and_outer_t_centers = (
-        # 11, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 39,  # Upper
-        60,
-        66,
-        67,
-        68,
-        72,
-        73,
-        74,
-        75,
-        76,
-        80,
-        81,
-        82,
-        88,  # Left
-        # 109, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 137,  # Front
-        158,
-        164,
-        165,
-        166,
-        170,
-        171,
-        172,
-        173,
-        174,
-        178,
-        179,
-        180,
-        186,  # Right
-        # 207, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 235,  # Back
-        # 256, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 284,  # Down
+        60, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 88,  # Left
+        158, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 186,  # Right
     )
+    # fmt: on
 
     state_targets = (
         "LLLLLLLLLLLLLRRRRRRRRRRRRR",
@@ -989,6 +468,7 @@ class LookupTable777Step43(LookupTable):
     )
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -999,46 +479,21 @@ class LookupTable777Step43(LookupTable):
             filesize=22981000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "U",
-                "U'",
-                "U2",
-                "D",
-                "D'",
-                "D2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "U", "U'", "U2",
+                "D", "D'", "D2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1109,40 +564,15 @@ class LookupTable777Step44(LookupTable):
         "RRRLRRLRRLRRRLLLRLLRLLRLLL",
     )
 
+    # fmt: off
     LR_inside_centers_and_right_oblique_edges = [
-        # 12, 16, 17, 18, 19, 24, 25, 26, 31, 32, 33, 34, 38,  # Upper
-        61,
-        65,
-        66,
-        67,
-        68,
-        73,
-        74,
-        75,
-        80,
-        81,
-        82,
-        83,
-        87,  # Left
-        # 110, 114, 115, 116, 117, 122, 123, 124, 129, 130, 131, 132, 136,  # Front
-        159,
-        163,
-        164,
-        165,
-        166,
-        171,
-        172,
-        173,
-        178,
-        179,
-        180,
-        181,
-        185,  # Right
-        # 208, 212, 213, 214, 215, 220, 221, 222, 227, 228, 229, 230, 234,  # Back
-        # 257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283,  # Down
+        61, 65, 66, 67, 68, 73, 74, 75, 80, 81, 82, 83, 87,  # Left
+        159, 163, 164, 165, 166, 171, 172, 173, 178, 179, 180, 181, 185,  # Right
     ]
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1153,46 +583,21 @@ class LookupTable777Step44(LookupTable):
             filesize=22981000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "U",
-                "U'",
-                "U2",
-                "D",
-                "D'",
-                "D2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "U", "U'", "U2",
+                "D", "D'", "D2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1207,51 +612,27 @@ class LookupTable777Step44(LookupTable):
 
 class LookupTableIDA777Step40(LookupTableIDAViaGraph):
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "U",
-                "U'",
-                "U2",
-                "D",
-                "D'",
-                "D2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "U", "U'", "U2",
+                "D", "D'", "D2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             prune_tables=(parent.lt_step41, parent.lt_step42, parent.lt_step43, parent.lt_step44),
             centers_only=True,
         )
+        # fmt: on
 
 
 # =====================================
@@ -1351,38 +732,15 @@ class LookupTable777Step51(LookupTable):
         "UUUUUUUUUUUUDDDDDDDDDDDD",
     )
 
+    # fmt: off
     UD_oblique_edges_and_outer_t_center = (
-        10,
-        11,
-        12,
-        16,
-        20,
-        23,
-        27,
-        30,
-        34,
-        38,
-        39,
-        40,  # Upper
-        # 59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
-        # 108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
-        # 157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
-        # 206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
-        255,
-        256,
-        257,
-        261,
-        265,
-        268,
-        272,
-        275,
-        279,
-        283,
-        284,
-        285,  # Down
+        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
+        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1393,48 +751,22 @@ class LookupTable777Step51(LookupTable):
             filesize=21266000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Uw2",
-                "3Dw2",
-                "Uw2",
-                "Dw2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
-            ),
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Uw2", "Uw2",
+                "3Dw2", "Dw2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1506,40 +838,15 @@ class LookupTable777Step52(LookupTable):
         "UUUUUUUUUUUUUDDDDDDDDDDDDD",
     )
 
+    # fmt: off
     UD_inside_centers_and_left_oblique_edges = (
-        10,
-        17,
-        18,
-        19,
-        20,
-        24,
-        25,
-        26,
-        30,
-        31,
-        32,
-        33,
-        40,  # Upper
-        # 59, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 89,  # Left
-        # 108, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 138,  # Front
-        # 157, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 187,  # Right
-        # 206, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 236,  # Back
-        255,
-        262,
-        263,
-        264,
-        265,
-        269,
-        270,
-        271,
-        275,
-        276,
-        277,
-        278,
-        285,  # Down
+        10, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 40,  # Upper
+        255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285,  # Down
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1550,48 +857,23 @@ class LookupTable777Step52(LookupTable):
             filesize=23667000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Uw2",
-                "3Dw2",
-                "Uw2",
-                "Dw2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Uw2", "Uw2",
+                "3Dw2", "Dw2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1663,40 +945,15 @@ class LookupTable777Step53(LookupTable):
         "UUUUUUUUUUUUUDDDDDDDDDDDDD",
     )
 
+    # fmt: off
     UD_inside_centers_and_outer_t_centers = (
-        11,
-        17,
-        18,
-        19,
-        23,
-        24,
-        25,
-        26,
-        27,
-        31,
-        32,
-        33,
-        39,  # Upper
-        # 60, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 88,  # Left
-        # 109, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 137,  # Front
-        # 158, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 186,  # Right
-        # 207, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 235,  # Back
-        256,
-        262,
-        263,
-        264,
-        268,
-        269,
-        270,
-        271,
-        272,
-        276,
-        277,
-        278,
-        284,  # Down
+        11, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 39,  # Upper
+        256, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 284,  # Down
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1707,48 +964,23 @@ class LookupTable777Step53(LookupTable):
             filesize=23667000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Uw2",
-                "3Dw2",
-                "Uw2",
-                "Dw2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Uw2", "Uw2",
+                "3Dw2", "Dw2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1820,40 +1052,15 @@ class LookupTable777Step54(LookupTable):
         "UUUUUUUUUUUUUDDDDDDDDDDDDD",
     )
 
+    # fmt: off
     UD_inside_centers_and_right_oblique_edges = [
-        12,
-        16,
-        17,
-        18,
-        19,
-        24,
-        25,
-        26,
-        31,
-        32,
-        33,
-        34,
-        38,  # Upper
-        # 61, 65, 66, 67, 68, 73, 74, 75, 80, 81, 82, 83, 87,  # Left
-        # 110, 114, 115, 116, 117, 122, 123, 124, 129, 130, 131, 132, 136,  # Front
-        # 159, 163, 164, 165, 166, 171, 172, 173, 178, 179, 180, 181, 185,  # Right
-        # 208, 212, 213, 214, 215, 220, 221, 222, 227, 228, 229, 230, 234,  # Back
-        257,
-        261,
-        262,
-        263,
-        264,
-        269,
-        270,
-        271,
-        276,
-        277,
-        278,
-        279,
-        283,  # Down
+        12, 16, 17, 18, 19, 24, 25, 26, 31, 32, 33, 34, 38,  # Upper
+        257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283,  # Down
     ]
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1864,48 +1071,23 @@ class LookupTable777Step54(LookupTable):
             filesize=24010000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Uw2",
-                "3Dw2",
-                "Uw2",
-                "Dw2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Uw2", "Uw2",
+                "3Dw2", "Dw2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1932,54 +1114,17 @@ class LookupTable777Step55(LookupTable):
     Average: 2.67 moves
     """
 
+    # fmt: off
     LR_centers_minus_outside_x_centers_777 = (
-        59,
-        60,
-        61,
-        65,
-        66,
-        67,
-        68,
-        69,
-        72,
-        73,
-        74,
-        75,
-        76,
-        79,
-        80,
-        81,
-        82,
-        83,
-        87,
-        88,
-        89,  # Left
-        157,
-        158,
-        159,
-        163,
-        164,
-        165,
-        166,
-        167,
-        170,
-        171,
-        172,
-        173,
-        174,
-        177,
-        178,
-        179,
-        180,
-        181,
-        185,
-        186,
-        187,  # Right
+        59, 60, 61, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 87, 88, 89,  # Left
+        157, 158, 159, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 185, 186, 187,  # Right
     )
+    # fmt: on
 
     state_targets = ("LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR", "RRRRLLLRRLLLRRLLLRRRRLLLLRRRLLRRRLLRRRLLLL")
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1990,48 +1135,23 @@ class LookupTable777Step55(LookupTable):
             filesize=4392,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Uw2",
-                "3Dw2",
-                "Uw2",
-                "Dw2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Uw2", "Uw2",
+                "3Dw2", "Dw2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -2046,53 +1166,29 @@ class LookupTable777Step55(LookupTable):
 
 class LookupTableIDA777Step50(LookupTableIDAViaGraph):
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Uw2",
-                "3Dw2",
-                "Uw2",
-                "Dw2",
-                "F",
-                "F'",
-                "F2",
-                "D",
-                "D'",
-                "D2",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Uw2", "Uw2",
+                "3Dw2", "Dw2",
+                "F", "F'", "F2",
+                "D", "D'", "D2",
             ),
             prune_tables=(parent.lt_step51, parent.lt_step52, parent.lt_step53, parent.lt_step54, parent.lt_step55),
             centers_only=True,
         )
+        # fmt: on
 
 
 # =============================
@@ -2112,54 +1208,17 @@ class LookupTable777Step61(LookupTable):
     Average: 2.67 moves
     """
 
+    # fmt: off
     UD_centers_minus_outside_x_centers_777 = (
-        10,
-        11,
-        12,
-        16,
-        17,
-        18,
-        19,
-        20,
-        23,
-        24,
-        25,
-        26,
-        27,
-        30,
-        31,
-        32,
-        33,
-        34,
-        38,
-        39,
-        40,  # Upper
-        255,
-        256,
-        257,
-        261,
-        262,
-        263,
-        264,
-        265,
-        268,
-        269,
-        270,
-        271,
-        272,
-        275,
-        276,
-        277,
-        278,
-        279,
-        283,
-        284,
-        285,  # Down
+        10, 11, 12, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 38, 39, 40,  # Upper
+        255, 256, 257, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 283, 284, 285,  # Down
     )
+    # fmt: on
 
     state_targets = ("UUUUUUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDDDDDD", "DDDDUUUDDUUUDDUUUDDDDUUUUDDDUUDDDUUDDDUUUU")
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -2170,46 +1229,23 @@ class LookupTable777Step61(LookupTable):
             filesize=4392,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -2236,54 +1272,17 @@ class LookupTable777Step62(LookupTable):
     Average: 2.67 moves
     """
 
+    # fmt: off
     LR_centers_minus_outside_x_centers_777 = (
-        59,
-        60,
-        61,
-        65,
-        66,
-        67,
-        68,
-        69,
-        72,
-        73,
-        74,
-        75,
-        76,
-        79,
-        80,
-        81,
-        82,
-        83,
-        87,
-        88,
-        89,  # Left
-        157,
-        158,
-        159,
-        163,
-        164,
-        165,
-        166,
-        167,
-        170,
-        171,
-        172,
-        173,
-        174,
-        177,
-        178,
-        179,
-        180,
-        181,
-        185,
-        186,
-        187,  # Right
+        59, 60, 61, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 87, 88, 89,  # Left
+        157, 158, 159, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 185, 186, 187,  # Right
     )
+    # fmt: on
 
     state_targets = ("LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR", "RRRRLLLRRLLLRRLLLRRRRLLLLRRRLLRRRLLRRRLLLL")
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -2294,46 +1293,23 @@ class LookupTable777Step62(LookupTable):
             filesize=4392,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -2366,42 +1342,17 @@ class LookupTable777Step65(LookupTable):
     Average: 7.73 moves
     """
 
+    # fmt: off
     FB_inside_centers_and_outer_t_centers = (
-        # 11, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 39,  # Upper
-        # 60, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 88,  # Left
-        109,
-        115,
-        116,
-        117,
-        121,
-        122,
-        123,
-        124,
-        125,
-        129,
-        130,
-        131,
-        137,  # Front
-        # 158, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 186,  # Right
-        207,
-        213,
-        214,
-        215,
-        219,
-        220,
-        221,
-        222,
-        223,
-        227,
-        228,
-        229,
-        235,  # Back
-        # 256, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 284,  # Down
+        109, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 137,  # Front
+        207, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 235,  # Back
     )
+    # fmt: on
 
     state_targets = ("FFFFFFFFFFFFFBBBBBBBBBBBBB", "BFFFBFFFBFFFBFBBBFBBBFBBBF")
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -2412,46 +1363,23 @@ class LookupTable777Step65(LookupTable):
             filesize=25039000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -2484,40 +1412,17 @@ class LookupTable777Step66(LookupTable):
     Average: 7.42 moves
     """
 
+    # fmt: off
     FB_oblique_edges_and_outer_t_center = (
-        # 10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
-        # 59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
-        108,
-        109,
-        110,
-        114,
-        118,
-        121,
-        125,
-        128,
-        132,
-        136,
-        137,
-        138,  # Front
-        # 157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
-        206,
-        207,
-        208,
-        212,
-        216,
-        219,
-        223,
-        226,
-        230,
-        234,
-        235,
-        236,  # Back
-        # 255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
     )
+    # fmt: on
 
     state_targets = ("BBBBBBBBBBBBFFFFFFFFFFFF", "FFFFFFFFFFFFBBBBBBBBBBBB")
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -2528,46 +1433,23 @@ class LookupTable777Step66(LookupTable):
             filesize=23667000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -2582,51 +1464,29 @@ class LookupTable777Step66(LookupTable):
 
 class LookupTableIDA777Step60(LookupTableIDAViaGraph):
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             prune_tables=(parent.lt_step61, parent.lt_step62, parent.lt_step65, parent.lt_step66),
             centers_only=True,
         )
+        # fmt: on
 
 
 # =================================================
@@ -2694,6 +1554,7 @@ class LookupTable777Step71(LookupTable):
     state_targets = ("UUUUUUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDDDDDD",)
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -2704,46 +1565,23 @@ class LookupTable777Step71(LookupTable):
             filesize=2196,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -2818,6 +1656,7 @@ class LookupTable777Step72(LookupTable):
     state_targets = ("LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR",)
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -2828,46 +1667,23 @@ class LookupTable777Step72(LookupTable):
             filesize=2196,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -2938,6 +1754,7 @@ class LookupTable777Step75(LookupTable):
     state_targets = ("FFFFFFFFFFFFFBBBBBBBBBBBBB",)
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -2948,46 +1765,23 @@ class LookupTable777Step75(LookupTable):
             filesize=27097000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -3055,6 +1849,7 @@ class LookupTable777Step76(LookupTable):
     state_targets = ("FFFFFFFFFFFFBBBBBBBBBBBB",)
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -3065,46 +1860,23 @@ class LookupTable777Step76(LookupTable):
             filesize=24353000,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -3119,52 +1891,30 @@ class LookupTable777Step76(LookupTable):
 
 class LookupTableIDA777Step70(LookupTableIDAViaGraph):
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_777,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "Uw",
-                "Uw'",
-                "3Lw",
-                "3Lw'",
-                "Lw",
-                "Lw'",
-                "3Fw",
-                "3Fw'",
-                "Fw",
-                "Fw'",
-                "3Rw",
-                "3Rw'",
-                "Rw",
-                "Rw'",
-                "3Bw",
-                "3Bw'",
-                "Bw",
-                "Bw'",
-                "3Dw",
-                "3Dw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
-                "3Fw2",
-                "3Bw2",
-                "Fw2",
-                "Bw2",
-                "U",
-                "U'",
-                "D",
-                "D'",
+                "3Uw", "3Uw'", "Uw", "Uw'",
+                "3Lw", "3Lw'", "Lw", "Lw'",
+                "3Fw", "3Fw'", "Fw", "Fw'",
+                "3Rw", "3Rw'", "Rw", "Rw'",
+                "3Bw", "3Bw'", "Bw", "Bw'",
+                "3Dw", "3Dw'", "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "3Fw2", "Fw2",
+                "3Bw2", "Bw2",
+                "U", "U'",
+                "D", "D'",
             ),
             prune_tables=(parent.lt_step71, parent.lt_step72, parent.lt_step75, parent.lt_step76),
             multiplier=1.08,
             centers_only=True,
         )
+        # fmt: on
 
 
 class RubiksCube777(RubiksCubeNNNOddEdges):

@@ -22,6 +22,11 @@ TODO section
 
 - 555 phase1 center use my-pt-states.txt so we only have to load everything into RAM once
 
+- 666 phase6 has a huge 24 million entry table...do we still need that now that we can do
+  a gazillion nodes per sec?
+
+- chop "def phase()"
+
 
 profiling baseline
 ==================

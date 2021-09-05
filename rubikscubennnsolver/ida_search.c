@@ -236,8 +236,8 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, un
     switch (type) {
         // 4x4x4
         case REDUCE_333_444:
-            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, reduce_333_edges_only,
-                                                reduce_333_centers_only, wings_for_recolor_444);
+            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, reduce_333_edges_only, reduce_333_centers_only,
+                                                wings_for_recolor_444);
 
         // 6x6x6
         case LR_OBLIQUE_EDGES_STAGE_666:
@@ -380,7 +380,6 @@ unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned i
 
     return 0;
 }
-
 
 struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_to_here, unsigned int threshold,
                                     move_type prev_move, char *cube, unsigned int cube_size, lookup_table_type type,

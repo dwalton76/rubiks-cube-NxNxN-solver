@@ -287,64 +287,6 @@ class LookupTable444LRCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable444FBCentersStage(LookupTable):
-    """
-    lookup-table-4x4x4-step13-FB-centers-stage.txt
-    ==============================================
-    0 steps has 3 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 2.00x previous step)
-    2 steps has 108 entries (0 percent, 18.00x previous step)
-    3 steps has 1,434 entries (0 percent, 13.28x previous step)
-    4 steps has 15,210 entries (2 percent, 10.61x previous step)
-    5 steps has 126,306 entries (17 percent, 8.30x previous step)
-    6 steps has 420,312 entries (57 percent, 3.33x previous step)
-    7 steps has 171,204 entries (23 percent, 0.41x previous step)
-    8 steps has 888 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    Average: 6.02 moves
-    """
-
-    state_targets = ("FFFFxxxxxxxxxxxxxxxxFFFF", "xxxxFFFFxxxxFFFFxxxxxxxx", "xxxxxxxxFFFFxxxxFFFFxxxx")
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-4x4x4-step13-FB-centers-stage.txt",
-            self.state_targets,
-            linecount=735471,
-            max_depth=8,
-            filesize=40450905,
-            all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self) -> str:
-        """
-        Returns:
-            the state of the cube per this lookup table
-        """
-        parent_state = self.parent.state
-        return "".join(["F" if parent_state[x] in ("F", "B") else "x" for x in centers_444])
-
-    def populate_cube_from_state(self, state: str, cube: List[str], steps_to_solve: List[str]) -> None:
-        """
-        Given a state string, populate the cube to match that state string
-
-        Args:
-            state: the target state
-            cube: the cube to manipulate
-            steps_to_solve: N/A for this table
-        """
-        state = list(state)
-
-        for (pos, pos_state) in zip(centers_444, state):
-            cube[pos] = pos_state
-
-
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -352,11 +294,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
             parent,
             all_moves=moves_444,
             illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
-            prune_tables=[
-                parent.lt_UD_centers_stage,
-                parent.lt_LR_centers_stage,
-                # parent.lt_FB_centers_stage,
-            ],
+            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage],
             centers_only=True,
         )
 
@@ -755,7 +693,6 @@ class RubiksCube444(RubiksCube):
 
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-        self.lt_FB_centers_stage = LookupTable444FBCentersStage(self)
 
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0

@@ -26,6 +26,7 @@ unsigned char *pt_perfect_hash01 = NULL;
 unsigned char *pt_perfect_hash02 = NULL;
 unsigned int pt1_state_max = 0;
 unsigned int pt2_state_max = 0;
+unsigned char call_pt_simple = 0;
 
 #define MAX_IDA_THRESHOLD 20
 unsigned char pt_max = 0;
@@ -80,29 +81,28 @@ unsigned int lr_centers_stage_555[9][9] = {
 };
 
 unsigned int t_centers_stage_555[9][9] = {
-    {0, 1, 2, 3, 4, 5, 6, 7, 8}, // LR t-centers cost 0
-    {1, 1, 2, 3, 4, 5, 6, 7, 8}, // LR t-centers cost 1
-    {2, 2, 2, 3, 4, 5, 6, 8, 8}, // LR t-centers cost 2
-    {3, 3, 3, 3, 4, 5, 6, 7, 8}, // LR t-centers cost 3
-    {4, 4, 4, 4, 4, 5, 6, 8, 8}, // LR t-centers cost 4
-    {5, 5, 5, 5, 5, 6, 7, 8, 9}, // LR t-centers cost 5
-    {6, 6, 6, 6, 6, 7, 8, 9, 9}, // LR t-centers cost 6
-    {7, 7, 7, 7, 7, 8, 9, 9, 10}, // LR t-centers cost 7
-    {8, 8, 8, 8, 8, 9, 9, 10, 10}, // LR t-centers cost 8
+    {0, 1, 2, 3, 4, 5, 6, 7, 8},    // LR t-centers cost 0
+    {1, 1, 2, 3, 4, 5, 6, 7, 8},    // LR t-centers cost 1
+    {2, 2, 2, 3, 4, 5, 6, 8, 8},    // LR t-centers cost 2
+    {3, 3, 3, 3, 4, 5, 6, 7, 8},    // LR t-centers cost 3
+    {4, 4, 4, 4, 4, 5, 6, 8, 8},    // LR t-centers cost 4
+    {5, 5, 5, 5, 5, 6, 7, 8, 9},    // LR t-centers cost 5
+    {6, 6, 6, 6, 6, 7, 8, 9, 9},    // LR t-centers cost 6
+    {7, 7, 7, 7, 7, 8, 9, 9, 10},   // LR t-centers cost 7
+    {8, 8, 8, 8, 8, 9, 9, 10, 10},  // LR t-centers cost 8
 };
 
 unsigned int x_centers_stage_555[9][9] = {
-    {0, 1, 2, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 0
-    {1, 1, 2, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 1
-    {2, 2, 2, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 2
-    {3, 3, 3, 3, 4, 5, 6, 7, 8}, // LR x-centers cost 3
-    {4, 4, 4, 4, 4, 5, 7, 7, 8}, // LR x-centers cost 4
-    {5, 5, 5, 5, 5, 6, 7, 8, 9}, // LR x-centers cost 5
-    {6, 6, 6, 6, 7, 7, 8, 9, 9}, // LR x-centers cost 6
-    {7, 7, 7, 7, 7, 8, 9, 9, 8}, // LR x-centers cost 7
-    {8, 8, 8, 8, 8, 8, 10, 10, 8}, // LR x-centers cost 8
+    {0, 1, 2, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 0
+    {1, 1, 2, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 1
+    {2, 2, 2, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 2
+    {3, 3, 3, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 3
+    {4, 4, 4, 4, 4, 5, 7, 7, 8},    // LR x-centers cost 4
+    {5, 5, 5, 5, 5, 6, 7, 8, 9},    // LR x-centers cost 5
+    {6, 6, 6, 6, 7, 7, 8, 9, 9},    // LR x-centers cost 6
+    {7, 7, 7, 7, 7, 8, 9, 9, 8},    // LR x-centers cost 7
+    {8, 8, 8, 8, 8, 8, 10, 10, 8},  // LR x-centers cost 8
 };
-
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
     switch (perfect_hash_cost) {
@@ -211,127 +211,44 @@ struct StackNode *pop(struct StackNode **root) {
     return temp;
 }
 
-unsigned char get_cost_to_goal_simple(lookup_table_type type, unsigned int prev_pt0_state,
-                                      unsigned int prev_pt1_state, unsigned int prev_pt2_state,
-                                      unsigned int prev_pt3_state, unsigned int prev_pt4_state);
+unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev_pt0_state, unsigned int prev_pt1_state,
+                                       unsigned int prev_pt2_state, unsigned int prev_pt3_state,
+                                       unsigned int prev_pt4_state, unsigned char pt0_cost, unsigned char pt1_cost,
+                                       unsigned char pt2_cost, unsigned char pt3_cost, unsigned char pt4_cost,
+                                       unsigned char init_cost_to_goal) {
+    unsigned char cost_to_goal = init_cost_to_goal;
 
-inline unsigned char get_cost_to_goal_simple(lookup_table_type type,
-                                             unsigned int prev_pt0_state, unsigned int prev_pt1_state,
-                                             unsigned int prev_pt2_state, unsigned int prev_pt3_state,
-                                             unsigned int prev_pt4_state) {
-    unsigned char pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-    unsigned char pt1_cost = 0;
-    unsigned char pt2_cost = 0;
-    unsigned char pt3_cost = 0;
-    unsigned char pt4_cost = 0;
-    unsigned char cost_to_goal = pt0_cost;
-    unsigned char use_multiplier = 1;
+    if (type == LR_CENTERS_STAGE_555) {
+        cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
+    } else if (type == CENTERS_STAGE_555) {
+        unsigned char lr_t_centers_cost = pt0_cost;
+        unsigned char lr_x_centers_cost = pt1_cost;
+        unsigned char ud_t_centers_cost = pt2_cost;
+        unsigned char ud_x_centers_cost = pt3_cost;
 
-    switch (pt_max) {
-        case 1:
-            pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+        if (lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
+            cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost];
+        }
 
-            if (type == LR_CENTERS_STAGE_555) {
-                cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
-            } else {
-                if (pt1_cost > cost_to_goal) {
-                    cost_to_goal = pt1_cost;
-                }
-            }
-            break;
+        if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
+            cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
+        }
 
-        case 3:
-            pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-            pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-            pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+        if (lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
+            cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost];
+        }
 
-            if (type == CENTERS_STAGE_555) {
-                unsigned char lr_t_centers_cost = pt0_cost;
-                unsigned char lr_x_centers_cost = pt1_cost;
-                unsigned char ud_t_centers_cost = pt2_cost;
-                unsigned char ud_x_centers_cost = pt3_cost;
+        if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
+            cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
+        }
 
-                if (lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
-                    cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost];
-                }
+        if (t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost] > cost_to_goal) {
+            cost_to_goal = t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost];
+        }
 
-                if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
-                    cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
-                }
-
-                if (lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
-                    cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost];
-                }
-
-                if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
-                    cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
-                }
-
-                if (t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost] > cost_to_goal) {
-                    cost_to_goal = t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost];
-                }
-
-                if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > cost_to_goal) {
-                    cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
-                }
-
-            } else {
-                if (pt1_cost > cost_to_goal) {
-                    cost_to_goal = pt1_cost;
-                }
-
-                if (pt2_cost > cost_to_goal) {
-                    cost_to_goal = pt2_cost;
-                }
-
-                if (pt3_cost > cost_to_goal) {
-                    cost_to_goal = pt3_cost;
-                }
-            }
-            break;
-
-        case 2:
-            pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-            pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-
-            if (pt1_cost > cost_to_goal) {
-                cost_to_goal = pt1_cost;
-            }
-
-            if (pt2_cost > cost_to_goal) {
-                cost_to_goal = pt2_cost;
-            }
-            break;
-
-        case 4:
-            pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-            pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-            pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
-            pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
-
-            if (pt1_cost > cost_to_goal) {
-                cost_to_goal = pt1_cost;
-            }
-
-            if (pt2_cost > cost_to_goal) {
-                cost_to_goal = pt2_cost;
-            }
-
-            if (pt3_cost > cost_to_goal) {
-                cost_to_goal = pt3_cost;
-            }
-
-            if (pt4_cost > cost_to_goal) {
-                cost_to_goal = pt4_cost;
-            }
-            break;
-
-        case 0:
-            break;
-
-        default:
-            printf("ERROR: invalid pt_max %d\n", pt_max);
-            exit(1);
+        if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > cost_to_goal) {
+            cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
+        }
     }
 
     if (pt_perfect_hash01) {
@@ -358,19 +275,17 @@ inline unsigned char get_cost_to_goal_simple(lookup_table_type type,
         }
     }
 
-    if (use_multiplier && cost_to_goal_multiplier) {
+    if (cost_to_goal_multiplier) {
         cost_to_goal = (unsigned char)round(cost_to_goal * cost_to_goal_multiplier);
     }
 
     return cost_to_goal;
 }
 
-struct cost_to_goal_result get_cost_to_goal(lookup_table_type type,
-                                            unsigned int prev_pt0_state, unsigned int prev_pt1_state,
-                                            unsigned int prev_pt2_state, unsigned int prev_pt3_state,
-                                            unsigned int prev_pt4_state) {
+struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned int prev_pt0_state,
+                                             unsigned int prev_pt1_state, unsigned int prev_pt2_state,
+                                             unsigned int prev_pt3_state, unsigned int prev_pt4_state) {
     struct cost_to_goal_result result;
-    unsigned char use_multiplier = 1;
 
     switch (pt_max) {
         case 1:
@@ -554,6 +469,8 @@ unsigned int read_state(char *pt, unsigned int location) {
      */
 }
 
+unsigned char read_cost(char *pt, unsigned int location) { return pt[location]; }
+
 void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
                        unsigned int pt3_state, unsigned int pt4_state, move_type *solution,
                        unsigned char solution_len) {
@@ -566,7 +483,7 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
     unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
 
-    ctg = get_cost_to_goal(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    ctg = pt_states_to_cost(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
     pt0_cost = ctg.pt0_cost;
     pt1_cost = ctg.pt1_cost;
     pt2_cost = ctg.pt2_cost;
@@ -588,7 +505,7 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
             }
             j++;
         }
-        unsigned int offset = 1 + (4 * j);
+        unsigned int offset = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * j);
 
         if (pt_max == 1) {
             pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
@@ -616,7 +533,7 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
             pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
         }
 
-        ctg = get_cost_to_goal(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+        ctg = pt_states_to_cost(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         cost_to_goal = ctg.cost_to_goal;
         pt0_cost = ctg.pt0_cost;
         pt1_cost = ctg.pt1_cost;
@@ -630,7 +547,6 @@ void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned 
     }
     printf("\n");
 }
-
 
 unsigned char parity_ok(move_type *moves_to_here) {
     unsigned int orbit0_wide_quarter_turn_count = 0;
@@ -695,31 +611,36 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
     unsigned int pt2_state = 0;
     unsigned int pt3_state = 0;
     unsigned int pt4_state = 0;
+    unsigned char pt0_cost = 0;
+    unsigned char pt1_cost = 0;
+    unsigned char pt2_cost = 0;
+    unsigned char pt3_cost = 0;
+    unsigned char pt4_cost = 0;
     move_type move, moves_to_here[MAX_IDA_THRESHOLD];
     memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
     search_result.found_solution = 0;
     char key[64];
-    unsigned char state_changed = 0;
     move_type *prev_move_move_matrix = NULL;
 
+    struct cost_to_goal_result ctg =
+        pt_states_to_cost(type, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
     struct StackNode *root = NULL;
     struct StackNode *node = NULL;
-    struct cost_to_goal_result ctg;
-    cost_to_goal = get_cost_to_goal_simple(type, init_pt0_state, init_pt1_state, init_pt2_state, init_pt3_state, init_pt4_state);
-    push(&root, 0, cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
+
+    push(&root, 0, ctg.cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
          init_pt3_state, init_pt4_state);
 
     for (unsigned char i = 0; i < legal_move_count; i++) {
-        offset[i] = 1 + (4 * i);
+        offset[i] = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * i);
     }
 
     while (root) {
         node = pop(&root);
-        f_cost = node->cost_to_here + node->cost_to_goal;
 
         if (node->cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
             // We found a solution!!
             solution_count++;
+            f_cost = node->cost_to_here + node->cost_to_goal;
 
             if (!search_result.found_solution || f_cost < search_result.f_cost) {
                 search_result.f_cost = f_cost;
@@ -742,6 +663,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
         // The following works, it does reduce the number of nodes we explore but it does so at the cost
         // of the memory to remember all of the nodes and the CPU to do the hash search to see if the
         // node is one that has already been explored.
+        /*
         if (use_uthash) {
             // keep memory usage in check
             if (ida_count % 1000000 == 0) {
@@ -760,7 +682,9 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             }
             hash_add(&ida_explored, key, 0);
         }
+        */
 
+        // dwalton can we save some cycles here?
         memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
         prev_move_move_matrix = move_matrix[node->prev_move];
 
@@ -777,41 +701,71 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             switch (pt_max) {
                 case 1:
                     pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    state_changed = (pt0_state != node->pt0_state || pt1_state != node->pt1_state);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    cost_to_goal = max(pt0_cost, pt1_cost);
                     break;
 
                 case 3:
                     pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
+                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
-                    state_changed = (pt0_state != node->pt0_state || pt1_state != node->pt1_state ||
-                                     pt2_state != node->pt2_state || pt3_state != node->pt3_state);
+                    pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
+                    cost_to_goal = max(pt0_cost, pt1_cost);
+                    cost_to_goal = max(cost_to_goal, pt2_cost);
+                    cost_to_goal = max(cost_to_goal, pt3_cost);
                     break;
 
                 case 2:
                     pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
-                    state_changed =
-                        (pt0_state != node->pt0_state || pt1_state != node->pt1_state || pt2_state != node->pt2_state);
+                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
+                    cost_to_goal = max(pt0_cost, pt1_cost);
+                    cost_to_goal = max(cost_to_goal, pt2_cost);
                     break;
 
                 case 4:
                     pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
+                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
+                    pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
                     pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset_i);
-                    state_changed =
-                        (pt0_state != node->pt0_state || pt1_state != node->pt1_state || pt2_state != node->pt2_state ||
-                         pt3_state != node->pt3_state || pt4_state != node->pt4_state);
+                    pt4_cost = read_cost(pt4, (node->pt4_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+
+                    cost_to_goal = max(pt0_cost, pt1_cost);
+                    cost_to_goal = max(cost_to_goal, pt2_cost);
+                    cost_to_goal = max(cost_to_goal, pt3_cost);
+                    cost_to_goal = max(cost_to_goal, pt4_cost);
                     break;
 
                 case 0:
                     pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    state_changed = (pt0_state != node->pt0_state);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    cost_to_goal = pt0_cost;
                     break;
 
                 default:
@@ -819,17 +773,16 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                     exit(1);
             }
 
-            if (!state_changed) {
-                continue;
+            if (call_pt_simple) {
+                cost_to_goal = pt_states_to_cost_simple(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state,
+                                                        pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, cost_to_goal);
             }
-
-            cost_to_goal = get_cost_to_goal_simple(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
             ida_count++;
             moves_to_here[node->cost_to_here] = move;
 
             if (!cost_to_goal || node->cost_to_here + 1 + cost_to_goal <= threshold) {
                 push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
-                    pt3_state, pt4_state);
+                     pt3_state, pt4_state);
             }
         }
         free(node);
@@ -841,15 +794,21 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
 struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state,
                                    unsigned int pt2_state, unsigned int pt3_state, unsigned int pt4_state,
                                    unsigned char max_ida_threshold, unsigned char use_uthash) {
-    struct cost_to_goal_result ctg;
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
     unsigned char min_ida_threshold = 0;
+    unsigned char pt0_cost = 0;
+    unsigned char pt1_cost = 0;
+    unsigned char pt2_cost = 0;
+    unsigned char pt3_cost = 0;
+    unsigned char pt4_cost = 0;
+    unsigned char cost_to_goal = 0;
 
     // For printing commas via %'d
     setlocale(LC_NUMERIC, "");
 
-    min_ida_threshold = get_cost_to_goal_simple(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    struct cost_to_goal_result ctg = pt_states_to_cost(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    min_ida_threshold = ctg.cost_to_goal;
     search_result.found_solution = 0;
 
     // LOG("min_ida_threshold %d\n", min_ida_threshold);
@@ -1046,8 +1005,8 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--centers-only")) {
             centers_only = 1;
 
-        } else if (strmatch(argv[i], "--uthash")) {
-            use_uthash = 1;
+            // } else if (strmatch(argv[i], "--uthash")) {
+            //     use_uthash = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;
@@ -1195,6 +1154,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (type == LR_CENTERS_STAGE_555 || type == CENTERS_STAGE_555 || pt_perfect_hash01 || cost_to_goal_multiplier) {
+        call_pt_simple = 1;
+    }
+
     // build the move matrix, we do this to avoid tons of
     // steps_on_same_face_and_layer() during the IDA search
     for (unsigned char i = 0; i < legal_move_count; i++) {
@@ -1229,7 +1192,7 @@ int main(int argc, char *argv[]) {
         move_matrix[i_move][j] = legal_moves[j];
     }
 
-    ROW_LENGTH = COST_LENGTH + (STATE_LENGTH * legal_move_count);
+    ROW_LENGTH = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * legal_move_count);
     struct ida_search_result search_result;
     search_result.found_solution = 0;
     search_result.f_cost = 99;

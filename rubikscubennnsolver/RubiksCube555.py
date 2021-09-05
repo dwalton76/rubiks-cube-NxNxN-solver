@@ -682,7 +682,7 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
             centers_only=True,
-            C_ida_type="5x5x5-lr-centers-stage",
+            # C_ida_type="5x5x5-lr-centers-stage",
         )
 
 

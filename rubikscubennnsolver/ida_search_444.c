@@ -248,7 +248,9 @@ void centers_state_444(char *cube, char *centers_state) {
     }
 }
 
-struct ida_heuristic_result ida_heuristic_reduce_333_444(char *cube, unsigned int max_cost_to_goal, char *reduce_333_edges_only, char *reduce_333_centers_only, struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
+struct ida_heuristic_result ida_heuristic_reduce_333_444(
+    char *cube, unsigned int max_cost_to_goal, char *reduce_333_edges_only, char *reduce_333_centers_only,
+    struct wings_for_edges_recolor_pattern_444 *wings_for_recolor) {
     unsigned long edges_state_bucket = 0;
     unsigned long centers_state_bucket = 0;
     unsigned int edges_cost = 0;

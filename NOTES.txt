@@ -16,8 +16,145 @@ TODO section
 
 - sphinx docs?
 
-- 555 upload the new step 21 and 22 tables
-- 555 force the step 21 and 22 tables to download
+- upload all new .bin files
+
+- add md5sum for all .bin files to force download
+
+- 555 phase1 center use my-pt-states.txt so we only have to load everything into RAM once
+
+- 555 phase3 use min-ida-threshold to save time?
+
+
+profiling baseline
+==================
+gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm
+
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 --centers-only --solution-count 10 --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+[2021-09-03T16:54:46.253] IDA threshold 7, explored 717 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-03T16:54:46.255] IDA threshold 8, explored 22,766 nodes, took 0.002s, 11,383,000 nodes-per-sec
+[2021-09-03T16:54:46.309] IDA threshold 9, explored 525,053 nodes, took 0.053s, 9,906,660 nodes-per-sec
+[2021-09-03T16:54:47.605] IDA threshold 10, explored 12,616,044 nodes, took 1.295s, 9,742,119 nodes-per-sec
+[2021-09-03T16:54:47.956] IDA count 3,419,526, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw' 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw' 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw' 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw' 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw 
+[2021-09-03T16:54:48.591] IDA threshold 11, explored 8,988,659 nodes, took 0.987s, 9,107,051 nodes-per-sec
+[2021-09-03T16:54:48.591] IDA found solution, explored 22,153,239 total nodes, took 2.338s, 9,475,295 nodes-per-sec
+
+       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX
+       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===
+  INIT   6    7    0    0    0      0      0    0   11    0
+   D2    6    6    0    0    0      0      0    6   10    1
+  Rw'    6    5    0    0    0      0      0    6    9    2
+   D2    7    5    0    0    0      0      0    7    8    3
+   Fw    6    5    0    0    0      0      0    6    7    4
+  Rw'    5    6    0    0    0      0      0    6    6    5
+    B    5    5    0    0    0      0      0    5    5    6
+  Uw'    4    4    0    0    0      0      0    4    4    7
+  Lw'    3    3    0    0    0      0      0    3    3    8
+    D    2    2    0    0    0      0      0    2    2    9
+   Dw    1    1    0    0    0      0      0    1    1   10
+  Bw'    0    0    0    0    0      0      0    0    0   11
+
+
+profiling
+=========
+gcc  -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm -pg; rm prof_output gmon.out; ./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 --centers-only --solution-count 10 --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"; gprof ida_search_via_graph gmon.out > prof_output
+baseline
+  
+[2021-09-03T16:56:19.254] IDA threshold 7, explored 717 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-03T16:56:19.260] IDA threshold 8, explored 22,766 nodes, took 0.005s, 4,553,200 nodes-per-sec
+[2021-09-03T16:56:19.383] IDA threshold 9, explored 525,053 nodes, took 0.123s, 4,268,723 nodes-per-sec
+[2021-09-03T16:56:22.885] IDA threshold 10, explored 12,616,044 nodes, took 3.502s, 3,602,525 nodes-per-sec
+[2021-09-03T16:56:23.537] IDA count 3,419,526, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw' 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw' 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw' 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw' 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw 
+[2021-09-03T16:56:24.567] IDA threshold 11, explored 8,988,659 nodes, took 1.682s, 5,344,030 nodes-per-sec
+[2021-09-03T16:56:24.567] IDA found solution, explored 22,153,239 total nodes, took 5.312s, 4,170,414 nodes-per-sec
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 83.12      3.15     3.15 44924610     0.00     0.00  read_cost
+  7.92      3.45     0.30        5     0.06     0.76  ida_search
+  6.47      3.70     0.25 44924620     0.00     0.00  read_state
+  1.32      3.75     0.05 22462305     0.00     0.00  max
+  0.92      3.78     0.04   898118     0.00     0.00  push
+  0.13      3.79     0.01   897998     0.00     0.00  pop
+
+So if I make read_cost take the same amount of time as read_state that would chop 2.9s which would take the total
+runtime from 3.79s (5,845,181 nodes-per-sec) down to 0.89s (24,891,279 nodes-per-sec). That is a 4.25x improvement!!
+
+That would take the -O3 number from 9,475,295 nodes-per-sec to 40,270,003!!
+
+
+with the fix
+============
+[2021-09-03T17:17:04.427] IDA threshold 7, explored 717 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-03T17:17:04.427] IDA threshold 8, explored 22,766 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-03T17:17:04.439] IDA threshold 9, explored 525,053 nodes, took 0.011s, 47,732,088 nodes-per-sec
+[2021-09-03T17:17:04.680] IDA threshold 10, explored 12,616,044 nodes, took 0.241s, 52,348,732 nodes-per-sec
+[2021-09-03T17:17:04.742] IDA count 3,419,526, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw' 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw' 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw' 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw' 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw 
+[2021-09-03T17:17:04.851] IDA threshold 11, explored 8,988,659 nodes, took 0.170s, 52,874,464 nodes-per-sec
+[2021-09-03T17:17:04.851] IDA found solution, explored 22,153,239 total nodes, took 0.424s, 52,248,208 nodes-per-sec
+
+WOW!!!!!
+
+with the fix with profiling
+===========================
+[2021-09-03T17:17:36.521] IDA threshold 7, explored 717 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-03T17:17:36.523] IDA threshold 8, explored 22,766 nodes, took 0.002s, 11,383,000 nodes-per-sec
+[2021-09-03T17:17:36.574] IDA threshold 9, explored 525,053 nodes, took 0.051s, 10,295,157 nodes-per-sec
+[2021-09-03T17:17:37.830] IDA threshold 10, explored 12,616,044 nodes, took 1.255s, 10,052,625 nodes-per-sec
+[2021-09-03T17:17:38.185] IDA count 3,419,526, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw' 
+SOLUTION (11 steps): D2 Fw R2 Dw2 Bw' Uw' Bw Lw2 U Dw2 Bw 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw' 
+SOLUTION (11 steps): D2 Fw R Dw2 Bw' Uw' Bw Uw2 Fw2 D Fw 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw' 
+SOLUTION (11 steps): D2 Lw' R' Dw Lw' Bw U Fw2 Lw' Fw Dw 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw' 
+SOLUTION (11 steps): D' Bw Rw2 U2 D' Fw B2 Uw' Bw2 Dw2 Bw 
+[2021-09-03T17:17:38.707] IDA threshold 11, explored 8,988,659 nodes, took 0.877s, 10,249,326 nodes-per-sec
+[2021-09-03T17:17:38.707] IDA found solution, explored 22,153,239 total nodes, took 2.185s, 10,138,782 nodes-per-sec
+
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 56.98      0.49     0.49 44924620     0.00     0.00  read_state
+ 34.89      0.79     0.30        5    60.01   170.02  ida_search
+  5.81      0.84     0.05   898118     0.00     0.00  push
+  1.16      0.85     0.01 44924610     0.00     0.00  read_cost
+  1.16      0.86     0.01       12     0.83     0.83  get_cost_to_goal
+  0.00      0.86     0.00 22462305     0.00     0.00  max
+  0.00      0.86     0.00   897998     0.00     0.00  pop
+
+
 
 
 555 combine phase1+2..attempt #432
@@ -98,3 +235,13 @@ after the x-centers table
 
 depth 15 should take ~1.8 hours
 depth 16 should take ~42 hours
+
+with the .bin changes
+[2021-09-03T19:17:24.806] IDA threshold 9, explored 321 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-03T19:17:24.806] IDA threshold 10, explored 5,212 nodes, took 0.000s, 0 nodes-per-sec
+[2021-09-03T19:17:24.810] IDA threshold 11, explored 83,867 nodes, took 0.003s, 27,955,666 nodes-per-sec
+[2021-09-03T19:17:24.898] IDA threshold 12, explored 1,819,758 nodes, took 0.087s, 20,916,758 nodes-per-sec
+[2021-09-03T19:17:26.761] IDA threshold 13, explored 44,503,823 nodes, took 1.864s, 23,875,442 nodes-per-sec
+[2021-09-03T19:18:12.649] IDA threshold 14, explored 1,145,946,750 nodes, took 45.888s, 24,972,690 nodes-per-sec
+depth 15 should take 20 minutes
+depth 16 should take 9 hours

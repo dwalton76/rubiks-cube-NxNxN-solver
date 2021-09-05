@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # standard libraries
 import logging
 import random

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Print stats to correlate how many unpaired 7x7x7 UD oblique edges there are to a move count.
 This was used to build the switch statement in rubikscubennnsolver/ida_search_777.c ida_heuristic_UD_oblique_edges_stage_777()

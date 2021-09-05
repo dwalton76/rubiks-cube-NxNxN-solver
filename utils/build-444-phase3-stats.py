@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Print stats to correlate 444 phase3 stage move count based centers cost and edges cost
 """

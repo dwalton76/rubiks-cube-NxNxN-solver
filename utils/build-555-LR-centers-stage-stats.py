@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Print stats to correlate 555 LR centers stage move count based on x-center, t-center move count tuple.
 """

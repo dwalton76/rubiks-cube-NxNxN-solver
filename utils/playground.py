@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Used for doing misc testing
 """

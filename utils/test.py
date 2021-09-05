@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # standard libraries
 import argparse
 import json

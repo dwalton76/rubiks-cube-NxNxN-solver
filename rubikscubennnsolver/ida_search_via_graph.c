@@ -874,8 +874,10 @@ char *read_file(char *filename) {
             exit(1);
         }
 
-        // Read the entire file into memory
+        // Read the entire file into memory. A 128M file take ~140ms to load.
+        // LOG("%s fread begin\n", filename);
         size_t new_len = fread(buffer, sizeof(char), bufsize, fh);
+        // LOG("%s fread end\n", filename);
 
         if (ferror(fh) != 0) {
             printf("ERROR: could not read %s\n", filename);

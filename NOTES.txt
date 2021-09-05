@@ -22,8 +22,6 @@ TODO section
 
 - 555 phase1 center use my-pt-states.txt so we only have to load everything into RAM once
 
-- 555 phase3 use min-ida-threshold to save time?
-
 
 profiling baseline
 ==================

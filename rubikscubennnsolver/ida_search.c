@@ -576,7 +576,7 @@ void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_res
                 rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
                 heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
             } else {
-                printf("ERROR: print_ida_summary %s is an invalid --type\n", type);
+                printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
                 exit(1);
             }
 
@@ -586,7 +586,7 @@ void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_res
         printf("\n");
 
     } else {
-        printf("ERROR: print_ida_summary %s is an invalid --type\n", type);
+        printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
         exit(1);
     }
 }

@@ -736,11 +736,9 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     )
 
     # fmt: off
-    ULRD_inner_x_centers_oblique_edges = (
-        9, 10, 14, 17, 20, 23, 27, 28,  # Upper
+    LR_inner_x_centers_oblique_edges = (
         45, 46, 50, 51, 52, 53, 56, 57, 58, 59, 63, 64,  # Left
         117, 118, 122, 123, 124, 125, 128, 129, 130, 131, 135, 136,  # Right
-        189, 190, 194, 197, 200, 203, 207, 208,  # Down
     )
 
     def __init__(self, parent, build_state_index=False):
@@ -779,12 +777,12 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.ULRD_inner_x_centers_oblique_edges])
+        return "".join([parent_state[x] for x in self.LR_inner_x_centers_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.ULRD_inner_x_centers_oblique_edges, state):
+        for (pos, pos_state) in zip(self.LR_inner_x_centers_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -817,8 +815,10 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
         81, 82, 86, 87, 88, 89, 92, 93, 94, 95, 99, 100,  # Front
         153, 154, 158, 159, 160, 161, 164, 165, 166, 167, 171, 172,  # Back
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -850,7 +850,7 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             use_state_index=True,
             build_state_index=build_state_index,
         )
-    # fmt: on
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -860,6 +860,79 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
         state = list(state)
 
         for (pos, pos_state) in zip(self.FB_inner_x_centers_oblique_edges, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDObliqueEdges(LookupTable):
+    """
+    lookup-tables/lookup-table-6x6x6-step63-UD-oblique-edges.txt
+    ============================================================
+    0 steps has 2 entries (2 percent, 0.00x previous step)
+    1 steps has 8 entries (11 percent, 4.00x previous step)
+    2 steps has 30 entries (42 percent, 3.75x previous step)
+    3 steps has 30 entries (42 percent, 1.00x previous step)
+
+    Total: 70 entries
+    Average: 2.26 moves
+    """
+
+    # fmt: off
+    state_targets = (
+        "UUUUUUUUDDDDDDDD",
+        "DDDDDDDDUUUUUUUU",
+    )
+
+    UD_oblique_edges = (
+        9, 10, 14, 17, 20, 23, 27, 28,  # Upper
+        189, 190, 194, 197, 200, 203, 207, 208,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index=False):
+        # fmt: off
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step63-UD-oblique-edges.txt",
+            self.state_targets,
+            linecount=70,
+            max_depth=3,
+            filesize=1960,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Rw", "3Rw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "Rw", "Rw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "3Rw2",
+                "3Lw2",
+                "3Fw2",
+                "3Bw2",
+                "3Lw", "3Lw'", "3Lw2",
+                "3Dw", "3Dw'", "3Dw2",
+                "3Bw", "3Bw'", "3Bw2"
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+        # fmt: on
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in self.UD_oblique_edges])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UD_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -892,6 +965,7 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
             prune_tables=(
                 parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
+                parent.lt_UD_oblique_edges,
             ),
             multiplier=1.06,
             centers_only=True,
@@ -1145,6 +1219,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # phase 6
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
+        self.lt_UD_oblique_edges = LookupTable666UDObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
     def populate_fake_444_for_inner_x_centers_stage(self):

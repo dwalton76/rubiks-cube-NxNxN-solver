@@ -201,7 +201,7 @@ class LookupTable444UDCentersStage(LookupTable):
             max_depth=8,
             filesize=40450905,
             all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
+            illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -259,7 +259,7 @@ class LookupTable444LRCentersStage(LookupTable):
             max_depth=8,
             filesize=40450905,
             all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
+            illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -293,9 +293,8 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
+            illegal_moves=(),
             prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage],
-            centers_only=True,
         )
 
 
@@ -685,7 +684,6 @@ class RubiksCube444(RubiksCube):
 
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
 

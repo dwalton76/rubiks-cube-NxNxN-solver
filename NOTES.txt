@@ -27,6 +27,16 @@ TODO section
 
 - chop "def phase()"
 
+- investigate this
+    # restricting these has minimal impact on move count
+    # but having few moves to explore means a faster IDA
+
+- investigate these
+    # can skip these for 4x4x4 cubes
+    # can skip these for 6x6x6 cubes
+
+- investigate all heuristic tables...do we still need them?
+
 
 profiling baseline
 ==================

@@ -964,7 +964,7 @@ class LookupTable(object):
 
             index += 1
 
-            if index % 10000 == 0:
+            if index % 100000 == 0:
                 logger.info(f"{index:,}")
 
                 # avoid running out of memory

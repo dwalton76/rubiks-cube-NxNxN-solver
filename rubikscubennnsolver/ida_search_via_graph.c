@@ -282,6 +282,13 @@ unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev
     return cost_to_goal;
 }
 
+unsigned int read_state(unsigned char *pt, unsigned int location) {
+    return (((pt[location] & 0x000000ff) << 24u) | ((pt[location + 1] & 0x000000ff) << 16u) |
+            ((pt[location + 2] & 0x000000ff) << 8u) | (pt[location + 3] & 0x000000ff));
+}
+
+unsigned char read_cost(unsigned char *pt, unsigned int location) { return pt[location]; }
+
 struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned int prev_pt0_state,
                                              unsigned int prev_pt1_state, unsigned int prev_pt2_state,
                                              unsigned int prev_pt3_state, unsigned int prev_pt4_state) {
@@ -289,8 +296,8 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
 
     switch (pt_max) {
         case 1:
-            result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-            result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
+            result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
+            result.pt1_cost = read_cost(pt1, prev_pt1_state * ROW_LENGTH);
             result.pt2_cost = 0;
             result.pt3_cost = 0;
             result.pt4_cost = 0;
@@ -306,9 +313,9 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             break;
 
         case 2:
-            result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-            result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-            result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
+            result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
+            result.pt1_cost = read_cost(pt1, prev_pt1_state * ROW_LENGTH);
+            result.pt2_cost = read_cost(pt2, prev_pt2_state * ROW_LENGTH);
             result.pt3_cost = 0;
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
@@ -323,10 +330,10 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             break;
 
         case 3:
-            result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-            result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-            result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-            result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
+            result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
+            result.pt1_cost = read_cost(pt1, prev_pt1_state * ROW_LENGTH);
+            result.pt2_cost = read_cost(pt2, prev_pt2_state * ROW_LENGTH);
+            result.pt3_cost = read_cost(pt3, prev_pt3_state * ROW_LENGTH);
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
@@ -376,11 +383,11 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             break;
 
         case 4:
-            result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-            result.pt1_cost = pt1[prev_pt1_state * ROW_LENGTH];
-            result.pt2_cost = pt2[prev_pt2_state * ROW_LENGTH];
-            result.pt3_cost = pt3[prev_pt3_state * ROW_LENGTH];
-            result.pt4_cost = pt4[prev_pt4_state * ROW_LENGTH];
+            result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
+            result.pt1_cost = read_cost(pt1, prev_pt1_state * ROW_LENGTH);
+            result.pt2_cost = read_cost(pt2, prev_pt2_state * ROW_LENGTH);
+            result.pt3_cost = read_cost(pt3, prev_pt3_state * ROW_LENGTH);
+            result.pt4_cost = read_cost(pt4, prev_pt4_state * ROW_LENGTH);
             result.cost_to_goal = result.pt0_cost;
 
             if (result.pt1_cost > result.cost_to_goal) {
@@ -398,15 +405,6 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             if (result.pt4_cost > result.cost_to_goal) {
                 result.cost_to_goal = result.pt4_cost;
             }
-            break;
-
-        case 0:
-            result.pt0_cost = pt0[prev_pt0_state * ROW_LENGTH];
-            result.pt1_cost = 0;
-            result.pt2_cost = 0;
-            result.pt3_cost = 0;
-            result.pt4_cost = 0;
-            result.cost_to_goal = result.pt0_cost;
             break;
 
         default:
@@ -452,24 +450,6 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
 
     return result;
 }
-
-unsigned int read_state(char *pt, unsigned int location) {
-    return (((pt[location] & 0x000000ff) << 24u) | ((pt[location + 1] & 0x000000ff) << 16u) |
-            ((pt[location + 2] & 0x000000ff) << 8u) | (pt[location + 3] & 0x000000ff));
-
-    /*
-    uint32_t b0, b1, b2, b3;
-
-    b0 = (num & 0x000000ff) << 24u;
-    b1 = (num & 0x0000ff00) << 8u;
-    b2 = (num & 0x00ff0000) >> 8u;
-    b3 = (num & 0xff000000) >> 24u;
-
-    return b0 | b1 | b2 | b3;
-     */
-}
-
-unsigned char read_cost(char *pt, unsigned int location) { return pt[location]; }
 
 void print_ida_summary(lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
                        unsigned int pt3_state, unsigned int pt4_state, move_type *solution,
@@ -760,12 +740,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                     cost_to_goal = max(cost_to_goal, pt2_cost);
                     cost_to_goal = max(cost_to_goal, pt3_cost);
                     cost_to_goal = max(cost_to_goal, pt4_cost);
-                    break;
-
-                case 0:
-                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
-                    cost_to_goal = pt0_cost;
                     break;
 
                 default:

@@ -1318,20 +1318,25 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                 self.rotate(step)
 
         self.rotate_for_best_centers_staging(inner_x_centers_666)
-        self.print_cube()
+        self.solution.append(
+            "COMMENT_%d_steps_666_inner_x_centers_staged"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+        self.print_cube(
+            "%s: inner-x centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         # phase 2
         # pair the LR oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_LR_oblique_edge_stage.solve()
-        self.print_cube()
-        self.solution.append(
-            "COMMENT_%d_steps_666_LR_oblique_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: LR oblique edges paired (not staged), %d steps in"
+        self.print_cube(
+            "%s: LR oblique edges paired but not staged (%d steps in)"
             % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+        self.solution.append(
+            "COMMENT_%d_steps_666_LR_oblique_edges_paired"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
         # phase 3
@@ -1347,21 +1352,22 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             else:
                 self.rotate(step)
 
-        self.rotate_for_best_centers_staging(inner_x_centers_666)
-        self.print_cube()
-        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # self.rotate_for_best_centers_staging(inner_x_centers_666)
+        self.print_cube(
+            "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         # phase 4
         # pair the UD oblique edges and outer x-centers to finish staging centers
+        tmp_solution_len = len(self.solution)
         self.lt_UD_centers_stage.solve_via_c()
-
-        self.print_cube()
+        self.print_cube(
+            "%s: centers staged, (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_666_centers_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-
-        logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -1372,14 +1378,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # solve the UD inner x-centers and pair the UD oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
-        self.print_cube()
+        self.print_cube(
+            "%s: UD inner x-center solved and oblique edges paired, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_666_UD_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: UD inner x-center solved and oblique edges paired, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # phase 6
@@ -1387,14 +1392,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # solve the FB inner x-centers and pair the FB oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve_via_c()
-        self.print_cube()
+        self.print_cube(
+            "%s: LFRB inner x-center and oblique edges paired, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_666_LR_FB_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: LFRB inner x-center and oblique edges paired, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def phase(self):

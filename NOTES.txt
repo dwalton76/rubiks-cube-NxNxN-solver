@@ -38,6 +38,10 @@ TODO section
 - investigate all heuristic tables...do we still need them?
 
 
+- this core dumps:
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-4x4x4-step11-UD-centers-stage.bin --prune-table-0-state 504670 --prune-table-1-filename lookup-tables/lookup-table-4x4x4-step12-LR-centers-stage.bin --prune-table-1-state 315174 --orbit0-need-even-w --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" --solution-count 500
+
+
 profiling baseline
 ==================
 gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm

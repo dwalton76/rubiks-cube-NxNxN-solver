@@ -162,8 +162,6 @@ void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cos
           move_type prev_move, unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
           unsigned int pt3_state, unsigned int pt4_state) {
     struct StackNode *node = (struct StackNode *)malloc(sizeof(struct StackNode));
-    struct StackNode *curr_node = *root;
-    struct StackNode *prev_node = NULL;
     node->cost_to_here = cost_to_here;
     node->cost_to_goal = cost_to_goal;
     memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
@@ -173,36 +171,8 @@ void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cos
     node->pt2_state = pt2_state;
     node->pt3_state = pt3_state;
     node->pt4_state = pt4_state;
-
-    if (!curr_node) {
-        // the stack is empty
-        node->next = *root;
-        *root = node;
-
-    } else {
-        /*
-         * Go down the stack looking at all of the nodes on top with the same cost_to_here
-         * Insert the new node so that nodes with lower cost_to_goal are closer to the top of the stack
-         *
-         * We do this so that when we are at an IDA threshold that is large enough to find a solution, we priortize
-         * the branches that are headed in the right direction. In other words this only has benefit for the IDA
-         * threshold where we actually find a solution.
-         */
-        while (curr_node) {
-            if (curr_node->cost_to_here < node->cost_to_here || curr_node->cost_to_goal >= cost_to_goal) {
-                if (prev_node) {
-                    prev_node->next = node;
-                } else {
-                    *root = node;
-                }
-                node->next = curr_node;
-                return;
-            }
-
-            prev_node = curr_node;
-            curr_node = curr_node->next;
-        }
-    }
+    node->next = *root;
+    *root = node;
 }
 
 struct StackNode *pop(struct StackNode **root) {
@@ -535,13 +505,13 @@ unsigned char parity_ok(move_type *moves_to_here) {
     if (orbit0_wide_quarter_turns) {
         orbit0_wide_quarter_turn_count = get_orbit0_wide_quarter_turn_count(moves_to_here);
 
-        // orbit0 must have an odd number of wide quarter
+        // orbit0 must have an odd number of wide quarter turns
         if (orbit0_wide_quarter_turns == 1) {
             if (orbit0_wide_quarter_turn_count % 2 == 0) {
                 return 0;
             }
 
-            // orbit0 must have an even number of wide quarter
+        // orbit0 must have an even number of wide quarter turns
         } else if (orbit0_wide_quarter_turns == 2) {
             if (orbit0_wide_quarter_turn_count % 2) {
                 return 0;
@@ -556,13 +526,13 @@ unsigned char parity_ok(move_type *moves_to_here) {
     if (orbit1_wide_quarter_turns) {
         orbit1_wide_quarter_turn_count = get_orbit1_wide_quarter_turn_count(moves_to_here);
 
-        // orbit1 must have an odd number of wide quarter
+        // orbit1 must have an odd number of wide quarter turns
         if (orbit1_wide_quarter_turns == 1) {
             if (orbit1_wide_quarter_turn_count % 2 == 0) {
                 return 0;
             }
 
-            // orbit1 must have an even number of wide quarter
+        // orbit1 must have an even number of wide quarter turns
         } else if (orbit1_wide_quarter_turns == 2) {
             if (orbit1_wide_quarter_turn_count % 2) {
                 return 0;

@@ -1370,7 +1370,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         self.solution.append(
-            "COMMENT_%d_steps_666_LR_FB_reduced_to_555"
+            "COMMENT_%d_steps_666_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 

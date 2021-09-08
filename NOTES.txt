@@ -1,11 +1,13 @@
 
 TODO section
 ------------
+- read_state() is the bottleneck, is this because of all of the bit shifting it does or because of the memory access?
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step21-FB-t-centers-stage.bin --prune-table-0-state 11464 --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step22-FB-x-centers-stage.bin --prune-table-1-state 11034 --orbit0-need-odd-w --centers-only --legal-moves "U,U',U2,Uw2,Lw,Lw',Lw2,F,F',F2,Fw2,Rw,Rw',Rw2,B,B',B2,Bw2,D,D',D2,Dw2"
+
+
 - 444 ida_heuristic_reduce_333_444 finding solutions that have PLL waste a TON of time
   if we know the starting parity for corners and edges can we somehow use that speed things up?
   I think edge parity always starts out as even
-
-- 555 can we use my-pt-states.txt to try multiple wing_strs at once for the first four edges?
 
 - 666 phase6 (the step61, 62 and 63 tables) could be sped up a good bit with a perfect hash table, it would only be 24M
 ./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.bin --prune-table-0-state 168548 --prune-table-1-filename lookup-tables/lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.bin --prune-table-1-state 69108 --prune-table-2-filename lookup-tables/lookup-table-6x6x6-step63-UD-oblique-edges.bin --prune-table-2-state 13 --centers-only --legal-moves "U,U',U2,Uw2,3Uw2,L,L',L2,Lw2,F,F',F2,Fw2,R,R',R2,Rw2,B,B',B2,Bw2,D,D',D2,Dw2,3Dw2"
@@ -23,10 +25,6 @@ https://stackoverflow.com/questions/56877053/is-there-a-tool-to-automatically-co
 - upload all new .bin files
 
 - add md5sum for all .bin files to force download
-
-- 555 phase1 center use my-pt-states.txt so we only have to load everything into RAM once
-
-- chop "def phase()"
 
 - investigate all heuristic tables...do we still need them?
 

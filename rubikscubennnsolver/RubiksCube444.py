@@ -641,7 +641,7 @@ class RubiksCube444(RubiksCube):
             for square_index in side.edge_pos:
                 self.state[square_index] = orient_edge_state[orient_edge_state_index]
                 orient_edge_state_index += 1
-        self.print_cube()
+        self.print_cube("high/low edges")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -674,7 +674,6 @@ class RubiksCube444(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         phase1_solution_len = len(self.solution)
-        logger.info(f"{self}: Start of find best edge_mapping")
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
@@ -737,7 +736,7 @@ class RubiksCube444(RubiksCube):
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
 
-        logger.info(f"{self}: End of find best edge_mapping")
+        logger.info(f"{self}: end of find best edge_mapping")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -750,17 +749,14 @@ class RubiksCube444(RubiksCube):
         # self.highlow_edges_print()
         # sys.exit(0)
 
-        logger.info(f"{self}: Start of Phase2, {self.get_solution_len_minus_rotates(self.solution)} steps in")
-
         for step in min_phase2_steps:
             self.rotate(step)
 
         self.solution.append(
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_444_phase2"
         )
-        self.print_cube()
         self.highlow_edges_print()
-        logger.info(f"{self}: End of Phase2, {self.get_solution_len_minus_rotates(self.solution)} steps in")
+        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
     def reduce_333(self) -> None:
 
@@ -768,30 +764,24 @@ class RubiksCube444(RubiksCube):
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
 
-        logger.info(f"{self}: Start of Phase1")
-
         if not self.centers_staged():
-            self.print_cube()
             self.lt_ULFRBD_centers_stage.solve_via_c()
-            self.print_cube()
-
-        if self.rotate_for_best_centers_staging():
-            self.print_cube()
 
         phase1_solution_len = len(self.solution)
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
-        logger.info(f"{self}: End of Phase1, {self.get_solution_len_minus_rotates(self.solution)} steps in")
+        self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
         # We need the edge swaps to be even for our edges lookup table to work.
         if self.edge_swaps_odd(False, 0, False):
             logger.warning(f"{self}: edge swaps are odd, running prevent_OLL to correct")
             self.prevent_OLL()
-            self.print_cube()
+            self.print_cube(
+                f"{self}: end of prevent_OLL ({self.get_solution_len_minus_rotates(self.solution)} steps in)"
+            )
             self.solution.append(
                 f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_prevent_OLL"
             )
-            logger.info(f"{self}: End of prevent_OLL, {self.get_solution_len_minus_rotates(self.solution)} steps in")
 
         self.tsai_phase2()
 
@@ -808,7 +798,6 @@ class RubiksCube444(RubiksCube):
         # logger.info(f"edge swaps even {self.edge_swaps_even(False, 0, False)}")
         # logger.info(f"corner swaps even {self.corner_swaps_even(False)}")
 
-        logger.info(f"{self}: Start of Phase3, {self.get_solution_len_minus_rotates(self.solution)} steps in")
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
 
@@ -816,11 +805,10 @@ class RubiksCube444(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-        self.print_cube()
+        self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
         self.solution.append(
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:])}_steps_444_phase3"
         )
-        logger.info(f"{self}: End of Phase3, {self.get_solution_len_minus_rotates(self.solution)} steps in")
         logger.info("")
 
         self.solution.append("CENTERS_SOLVED")

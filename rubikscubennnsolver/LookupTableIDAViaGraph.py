@@ -1,5 +1,6 @@
 # standard libraries
 import logging
+import re
 import subprocess
 from typing import List
 
@@ -343,18 +344,35 @@ class LookupTableIDAViaGraph(LookupTable):
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
         logger.info(f"\n{output}\n\n")
         solutions = []
+        pt0_state = None
+        pt1_state = None
+        pt2_state = None
+        pt3_state = None
+        pt4_state = None
+        RE_PT_STATES = re.compile(
+            r"pt0_state (\d+), pt1_state (\d+), pt2_state (\d+), pt3_state (\d+), pt4_state (\d+)"
+        )
 
         for line in output.splitlines():
-            if line.startswith("SOLUTION"):
+            match = RE_PT_STATES.search(line)
+
+            if match:
+                pt0_state = int(match.group(1))
+                pt1_state = int(match.group(2))
+                pt2_state = int(match.group(3))
+                pt3_state = int(match.group(4))
+                pt4_state = int(match.group(5))
+
+            elif line.startswith("SOLUTION"):
                 solution = line.split(":")[1].strip().split()
-                solutions.append((len(solution), solution))
+                solutions.append((len(solution), solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state)))
 
         if solutions:
             # sort so the shortest solutions are first
             solutions.sort()
 
-            # chop the solutions length so we return just a list of solutions
-            solutions = [x[1] for x in solutions]
+            # chop the solutions length
+            solutions = [x[1:3] for x in solutions]
             return solutions
         else:
             raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % output)
@@ -362,7 +380,7 @@ class LookupTableIDAViaGraph(LookupTable):
     def solve_via_c(self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None) -> None:
         solution = self.solutions_via_c(
             pt_states=pt_states, max_ida_threshold=max_ida_threshold, solution_count=solution_count
-        )[0]
+        )[0][0]
 
         for step in solution:
             self.parent.rotate(step)

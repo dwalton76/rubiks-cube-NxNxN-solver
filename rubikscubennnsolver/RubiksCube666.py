@@ -941,7 +941,6 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_UD_oblique_edges,
             ),
-            multiplier=1.06,
             centers_only=True,
         )
         # fmt: on

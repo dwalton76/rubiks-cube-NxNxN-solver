@@ -3349,67 +3349,44 @@ class RubiksCube555(RubiksCube):
         """
         phase1 stages the centers on sides L and R
         phase2 stages the centers on sides F and B
+        rotations will be a list containing None, x, y, and/or z
         """
         if self.LR_centers_staged() and self.FB_centers_staged():
             return
 
         original_state = self.state[:]
         original_solution = self.solution[:]
-        min_phase1_solutions = []
-        min_phase1_solutions_len = None
-        min_phase1_solutions_pre_step = None
-        min_phase1_solutions_output = None
-        max_phase1_ida_threshold = None
 
-        # disable INFO messages as we try all three combinations
-        logging.getLogger().setLevel(logging.WARNING)
+        # build a list of pt_state tuples to solve for
+        pt_state_indexes = []
+        pt_state_indexes_to_pre_step = {}
 
-        # find the shortest phase1 solutions
         for pre_step in rotations:
             self.rotate(pre_step)
-
-            try:
-                phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(
-                    max_ida_threshold=max_phase1_ida_threshold, solution_count=10
-                )
-            except subprocess.CalledProcessError:
-                phase1_solutions = []
-
-            for phase1_solution in phase1_solutions:
-                phase1_solution_len = len(phase1_solution)
-
-                if min_phase1_solutions_len is None or phase1_solution_len < min_phase1_solutions_len:
-                    min_phase1_solutions_len = phase1_solution_len
-                    min_phase1_solutions = []
-                    min_phase1_solutions.append(phase1_solution)
-                    min_phase1_solutions_pre_step = pre_step
-                    max_phase1_ida_threshold = min_phase1_solutions_len - 1
-                    min_phase1_solutions_output = self.solve_via_c_output
-                    logger.warning(
-                        f"pre_step {pre_step}, phase1_solution {phase1_solution} length {phase1_solution_len} (NEW MIN)"
-                    )
-                elif phase1_solution_len == min_phase1_solutions_len:
-                    logger.warning(
-                        f"pre_step {pre_step}, phase1_solution {phase1_solution} length {phase1_solution_len} (TIE)"
-                    )
-                    min_phase1_solutions.append(phase1_solution)
-                else:
-                    logger.warning(
-                        f"pre_step {pre_step}, phase1_solution {phase1_solution} length {phase1_solution_len}"
-                    )
-
+            this_pre_step_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_LR_centers_stage.prune_tables])
+            pt_state_indexes_to_pre_step[this_pre_step_pt_state_indexes] = pre_step
+            pt_state_indexes.append(this_pre_step_pt_state_indexes)
             self.state = original_state[:]
             self.solution = original_solution[:]
 
+        # find the shortest phase1 solutions
+        phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(pt_states=pt_state_indexes, solution_count=50)
+
+        # disable INFO messages as we try many phase2 solutions
+        logging.getLogger().setLevel(logging.WARNING)
+
         min_phase2_solution = []
         min_phase2_solution_len = None
-        min_phase1_solution_for_phase2 = None
         min_phase2_solutions_output = None
         max_phase2_ida_threshold = None
+        min_phase1_solutions_pre_step = None
+        min_phase1_solution_for_phase2 = None
 
         # find the phase1 solution that leads to the shortest phase2 solution
-        for phase1_solution in min_phase1_solutions:
-            self.rotate(min_phase1_solutions_pre_step)
+        for phase1_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase1_solutions:
+            phase1_solution_str = " ".join(phase1_solution)
+            pre_step = pt_state_indexes_to_pre_step[(pt0_state, pt1_state)]
+            self.rotate(pre_step)
 
             for step in phase1_solution:
                 self.rotate(step)
@@ -3425,27 +3402,25 @@ class RubiksCube555(RubiksCube):
                 continue
 
             phase2_solution = self.solution[post_phase1_solution_len:]
+            phase2_solution_str = " ".join(phase2_solution)
             phase2_solution_len = len(phase2_solution)
+            desc = f"pre_step {min_phase1_solutions_pre_step} phase1_solution {phase1_solution_str} leads to phase2_solution {phase2_solution_str} length {len(phase2_solution)}"
 
             if min_phase2_solution_len is None or phase2_solution_len < min_phase2_solution_len:
-                logger.warning(
-                    f"pre_step {min_phase1_solutions_pre_step} phase1_solution {phase1_solution} leads to phase2_solution {phase2_solution} length {len(phase2_solution)} (NEW MIN)"
-                )
+                logger.warning(f"{desc} (NEW MIN)")
                 min_phase2_solution_len = phase2_solution_len
                 min_phase2_solution = phase2_solution
+                min_phase1_solutions_pre_step = pre_step
                 min_phase1_solution_for_phase2 = phase1_solution
                 max_phase2_ida_threshold = phase2_solution_len - 1
                 min_phase2_solutions_output = self.solve_via_c_output
             else:
-                logger.warning(
-                    f"pre_step {min_phase1_solutions_pre_step} phase1_solution {phase1_solution} leads to phase2_solution {phase2_solution} length {len(phase2_solution)}"
-                )
+                logger.warning(desc)
 
             self.state = original_state[:]
             self.solution = original_solution[:]
 
         logging.getLogger().setLevel(logging.INFO)
-        logger.info("\n" + min_phase1_solutions_output)
         self.rotate(min_phase1_solutions_pre_step)
 
         for step in min_phase1_solution_for_phase2:

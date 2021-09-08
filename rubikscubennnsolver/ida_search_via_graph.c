@@ -1182,6 +1182,9 @@ int main(int argc, char *argv[]) {
                     token_index++;
                 }
 
+                LOG("pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n",
+                    prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state, prune_table_4_state);
+
                 search_result = ida_solve(type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
                                           prune_table_3_state, prune_table_4_state, i_max_ida_threshold, use_uthash);
 

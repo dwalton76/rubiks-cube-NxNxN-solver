@@ -7,6 +7,9 @@ TODO section
 
 - 555 can we use my-pt-states.txt to try multiple wing_strs at once for the first four edges?
 
+- 666 phase6 (the step61, 62 and 63 tables) could be sped up a good bit with a perfect hash table, it would only be 24M
+./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.bin --prune-table-0-state 168548 --prune-table-1-filename lookup-tables/lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.bin --prune-table-1-state 69108 --prune-table-2-filename lookup-tables/lookup-table-6x6x6-step63-UD-oblique-edges.bin --prune-table-2-state 13 --centers-only --legal-moves "U,U',U2,Uw2,3Uw2,L,L',L2,Lw2,F,F',F2,Fw2,R,R',R2,Rw2,B,B',B2,Bw2,D,D',D2,Dw2,3Dw2"
+
 - use threads for ida_search_via_graph.c? This might be more trouble than it is worth given that
   we are bound by reading from memory.
 

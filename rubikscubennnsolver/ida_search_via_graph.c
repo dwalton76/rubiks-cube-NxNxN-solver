@@ -254,8 +254,9 @@ unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev
 }
 
 unsigned int read_state(unsigned char *pt, unsigned int location) {
-    return (((pt[location] & 0x000000ff) << 24u) | ((pt[location + 1] & 0x000000ff) << 16u) |
-            ((pt[location + 2] & 0x000000ff) << 8u) | (pt[location + 3] & 0x000000ff));
+    unsigned int result = 0;
+    memcpy(&result, &pt[location], sizeof(unsigned int));
+    return result;
 }
 
 unsigned char read_cost(unsigned char *pt, unsigned int location) { return pt[location]; }

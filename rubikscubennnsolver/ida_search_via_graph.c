@@ -787,7 +787,7 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
-            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n", ida_count_total,
+            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n\n", ida_count_total,
                 ms / 1000, nodes_per_sec);
             return search_result;
         }
@@ -1191,10 +1191,7 @@ int main(int argc, char *argv[]) {
                 if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
                     min_search_result = search_result;
                     max_ida_threshold = search_result.f_cost;
-
-                    if (solution_count >= min_solution_count) {
-                        break;
-                    }
+                    break;
                 }
 
                 line_index++;

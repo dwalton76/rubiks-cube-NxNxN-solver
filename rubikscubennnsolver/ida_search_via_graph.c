@@ -587,23 +587,25 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
     while (root) {
         node = pop(&root);
 
-        if (node->cost_to_goal == 0 && parity_ok(node->moves_to_here)) {
-            // We found a solution!!
-            solution_count++;
-            f_cost = node->cost_to_here + node->cost_to_goal;
+        if (node->cost_to_goal == 0) {
+            if (parity_ok(node->moves_to_here)) {
+                // We found a solution!!
+                solution_count++;
+                f_cost = node->cost_to_here + node->cost_to_goal;
 
-            if (!search_result.found_solution || f_cost < search_result.f_cost) {
-                search_result.f_cost = f_cost;
-                search_result.found_solution = 1;
-                memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+                if (!search_result.found_solution || f_cost < search_result.f_cost) {
+                    search_result.f_cost = f_cost;
+                    search_result.found_solution = 1;
+                    memcpy(search_result.solution, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
 
-                LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count,
-                    search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
-            }
-            print_moves(node->moves_to_here, node->cost_to_here);
+                    LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count,
+                        search_result.f_cost, threshold, node->cost_to_here, node->cost_to_goal);
+                }
+                print_moves(node->moves_to_here, node->cost_to_here);
 
-            if (solution_count >= min_solution_count) {
-                return search_result;
+                if (solution_count >= min_solution_count) {
+                    return search_result;
+                }
             }
 
             free(node);
@@ -634,7 +636,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
         }
         */
 
-        // dwalton can we save some cycles here?
         memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
         prev_move_move_matrix = move_matrix[node->prev_move];
 
@@ -724,7 +725,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
             ida_count++;
             moves_to_here[node->cost_to_here] = move;
 
-            if (!cost_to_goal || node->cost_to_here + 1 + cost_to_goal <= threshold) {
+            if (node->cost_to_here + 1 + cost_to_goal <= threshold) {
                 push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
                      pt3_state, pt4_state);
             }

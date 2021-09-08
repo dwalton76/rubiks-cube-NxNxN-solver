@@ -32,9 +32,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
     RubiksCubeNNNOdd RubiksCube777
     """
 
-    def phase(self):
-        return "Solve Odd NxNxN"
-
     def get_fake_777(self):
         if self.fake_777 is None:
             self.fake_777 = RubiksCube777(solved_777, "URFDLB")

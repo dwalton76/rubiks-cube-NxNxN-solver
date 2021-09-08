@@ -379,9 +379,6 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
                 # we are not manipulating anything on sides L or R
                 "L", "L'", "L2",
                 "R", "R'", "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2", "D2", "F2", "B2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
@@ -445,9 +442,6 @@ class LookupTable666UDRightObliqueStage(LookupTable):
                 # we are not manipulating anything on sides L or R
                 "L", "L'", "L2",
                 "R", "R'", "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2", "D2", "F2", "B2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
@@ -507,9 +501,6 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
                 # we are not manipulating anything on sides L or R
                 "L", "L'", "L2",
                 "R", "R'", "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2", "D2", "F2", "B2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
@@ -587,10 +578,6 @@ class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
                 # we are not manipulating anything on sides L or R
                 "L", "L'", "L2",
                 "R", "R'", "R2",
-
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2", "D2", "F2", "B2",
             ),
             prune_tables=(
                 parent.lt_UD_left_oblique_edges_stage,
@@ -622,9 +609,6 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
                 # we are not manipulating anything on sides L or R
                 "L", "L'", "L2",
                 "R", "R'", "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2", "D2", "F2", "B2",
             ),
             prune_tables=(
                 parent.lt_UD_left_oblique_edges_stage,
@@ -709,47 +693,44 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     """
     lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
-    0 steps has 4 entries (0 percent, 0.00x previous step)
-    1 steps has 28 entries (0 percent, 7.00x previous step)
-    2 steps has 332 entries (0 percent, 11.86x previous step)
-    3 steps has 2,276 entries (0 percent, 6.86x previous step)
-    4 steps has 10,040 entries (0 percent, 4.41x previous step)
-    5 steps has 49,532 entries (0 percent, 4.93x previous step)
-    6 steps has 265,976 entries (1 percent, 5.37x previous step)
-    7 steps has 1,211,572 entries (5 percent, 4.56x previous step)
-    8 steps has 3,965,028 entries (16 percent, 3.27x previous step)
-    9 steps has 7,762,424 entries (32 percent, 1.96x previous step)
-    10 steps has 7,749,136 entries (32 percent, 1.00x previous step)
-    11 steps has 2,876,024 entries (11 percent, 0.37x previous step)
-    12 steps has 117,084 entries (0 percent, 0.04x previous step)
-    13 steps has 544 entries (0 percent, 0.00x previous step)
+    0 steps has 2 entries (0 percent, 0.00x previous step)
+    1 steps has 12 entries (0 percent, 6.00x previous step)
+    2 steps has 68 entries (0 percent, 5.67x previous step)
+    3 steps has 282 entries (0 percent, 4.15x previous step)
+    4 steps has 1,218 entries (0 percent, 4.32x previous step)
+    5 steps has 5,382 entries (1 percent, 4.42x previous step)
+    6 steps has 20,484 entries (5 percent, 3.81x previous step)
+    7 steps has 62,640 entries (18 percent, 3.06x previous step)
+    8 steps has 118,196 entries (34 percent, 1.89x previous step)
+    9 steps has 104,328 entries (30 percent, 0.88x previous step)
+    10 steps has 29,872 entries (8 percent, 0.29x previous step)
+    11 steps has 516 entries (0 percent, 0.02x previous step)
 
-    Total: 24,010,000 entries
-    Average: 9.27 moves
+    Total: 343,000 entries
+    Average: 8.11 moves
     """
 
+    # fmt: off
     state_targets = (
-        "DDDDDDDDLLLLLLLLLLLLRRRRRRRRRRRRUUUUUUUU",
-        "DDDDDDDDRRRLLRRLLRRRLLLRRLLRRLLLUUUUUUUU",
-        "UUUUUUUULLLLLLLLLLLLRRRRRRRRRRRRDDDDDDDD",
-        "UUUUUUUURRRLLRRLLRRRLLLRRLLRRLLLDDDDDDDD",
+        "LLLLLLLLLLLLRRRRRRRRRRRR",
+        "RRRLLRRLLRRRLLLRRLLRRLLL",
     )
 
-    # fmt: off
     LR_inner_x_centers_oblique_edges = (
         45, 46, 50, 51, 52, 53, 56, 57, 58, 59, 63, 64,  # Left
         117, 118, 122, 123, 124, 125, 128, 129, 130, 131, 135, 136,  # Right
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt",
             self.state_targets,
-            linecount=24010000,
-            max_depth=13,
-            filesize=2232930000,
+            linecount=343000,
+            max_depth=12,
             all_moves=moves_666,
             illegal_moves=(
                 "3Rw", "3Rw'",
@@ -765,15 +746,14 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
                 "Uw", "Uw'",
                 "Dw", "Dw'",
                 "3Rw2",
+                "3Lw2",
                 "3Fw2",
-                "3Lw", "3Lw'", "3Lw2",
-                "3Dw", "3Dw'", "3Dw2",
-                "3Bw", "3Bw'", "3Bw2",
+                "3Bw2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
         )
-    # fmt: on
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -791,21 +771,20 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
     lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
     0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 10 entries (0 percent, 5.00x previous step)
-    2 steps has 50 entries (0 percent, 5.00x previous step)
-    3 steps has 178 entries (0 percent, 3.56x previous step)
-    4 steps has 816 entries (0 percent, 4.58x previous step)
-    5 steps has 3,894 entries (1 percent, 4.77x previous step)
-    6 steps has 15,644 entries (4 percent, 4.02x previous step)
-    7 steps has 50,456 entries (14 percent, 3.23x previous step)
-    8 steps has 105,874 entries (30 percent, 2.10x previous step)
-    9 steps has 119,298 entries (34 percent, 1.13x previous step)
-    10 steps has 45,352 entries (13 percent, 0.38x previous step)
-    11 steps has 1,410 entries (0 percent, 0.03x previous step)
-    12 steps has 16 entries (0 percent, 0.01x previous step)
+    1 steps has 12 entries (0 percent, 6.00x previous step)
+    2 steps has 68 entries (0 percent, 5.67x previous step)
+    3 steps has 282 entries (0 percent, 4.15x previous step)
+    4 steps has 1,218 entries (0 percent, 4.32x previous step)
+    5 steps has 5,382 entries (1 percent, 4.42x previous step)
+    6 steps has 20,484 entries (5 percent, 3.81x previous step)
+    7 steps has 62,640 entries (18 percent, 3.06x previous step)
+    8 steps has 118,196 entries (34 percent, 1.89x previous step)
+    9 steps has 104,328 entries (30 percent, 0.88x previous step)
+    10 steps has 29,872 entries (8 percent, 0.29x previous step)
+    11 steps has 516 entries (0 percent, 0.02x previous step)
 
     Total: 343,000 entries
-    Average: 8.34 moves
+    Average: 8.11 moves
     """
 
     state_targets = ("BBBFFBBFFBBBFFFBBFFBBFFF", "FFFFFFFFFFFFBBBBBBBBBBBB")
@@ -842,10 +821,9 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
                 "Uw", "Uw'",
                 "Dw", "Dw'",
                 "3Rw2",
+                "3Lw2",
                 "3Fw2",
-                "3Lw", "3Lw'", "3Lw2",
-                "3Dw", "3Dw'", "3Dw2",
-                "3Bw", "3Bw'", "3Bw2",
+                "3Bw2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
@@ -916,9 +894,6 @@ class LookupTable666UDObliqueEdges(LookupTable):
                 "3Lw2",
                 "3Fw2",
                 "3Bw2",
-                "3Lw", "3Lw'", "3Lw2",
-                "3Dw", "3Dw'", "3Dw2",
-                "3Bw", "3Bw'", "3Bw2"
             ),
             use_state_index=True,
             build_state_index=build_state_index,
@@ -957,10 +932,9 @@ class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
                 "Uw", "Uw'",
                 "Dw", "Dw'",
                 "3Rw2",
+                "3Lw2",
                 "3Fw2",
-                "3Lw", "3Lw'", "3Lw2",
-                "3Dw", "3Dw'", "3Dw2",
-                "3Bw", "3Bw'", "3Bw2",
+                "3Bw2",
             ),
             prune_tables=(
                 parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
@@ -1400,30 +1374,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             "COMMENT_%d_steps_666_LR_FB_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-
-    def phase(self):
-        if self._phase is None:
-            self._phase = "Stage UD centers"
-            return self._phase
-
-        if self._phase == "Stage UD centers":
-            if self.UD_centers_staged():
-                self._phase = "Stage LR centers"
-            return self._phase
-
-        if self._phase == "Stage LR centers":
-            if self.LR_centers_staged():
-                self._phase = "Solve Centers"
-
-        if self._phase == "Solve Centers":
-            if self.centers_solved():
-                self._phase = "Pair Edges"
-
-        if self._phase == "Pair Edges":
-            if not self.get_non_paired_edges():
-                self._phase = "Solve 3x3x3"
-
-        return self._phase
 
 
 def rotate_666(cube, step):

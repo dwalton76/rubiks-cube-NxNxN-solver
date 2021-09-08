@@ -157,12 +157,11 @@ try:
     for (i, step) in enumerate(solution):
 
         if args.print_steps:
-            print(("Phase     : %s" % cube.phase()))
             print(("Move %d/%d: %s" % (i + 1, len_steps, step)))
 
         cube.rotate(step)
 
-        www_desc = "Phase: %s<br>\nCube After Move %d/%d: %s<br>\n" % (cube.phase(), i + 1, len_steps, step)
+        www_desc = "Cube After Move %d/%d: %s<br>\n" % (i + 1, len_steps, step)
         cube.www_write_cube(www_desc)
 
         if args.print_steps:

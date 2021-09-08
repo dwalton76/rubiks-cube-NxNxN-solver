@@ -137,13 +137,6 @@ class RubiksCube333(RubiksCube):
         (53, 44),
     )
 
-    def phase(self) -> str:
-        """
-        Returns:
-            a description of the current phase of the solver
-        """
-        return "Solve 3x3x3"
-
     def solve(self, solution333: List[str] = None) -> None:
         """
         Solve the cube

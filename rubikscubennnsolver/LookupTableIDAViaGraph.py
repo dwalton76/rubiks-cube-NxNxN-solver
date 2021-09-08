@@ -341,7 +341,7 @@ class LookupTableIDAViaGraph(LookupTable):
         output = subprocess.check_output(cmd).decode("utf-8")
         output = "\n".join(remove_failed_ida_output(output.splitlines()))
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
-        logger.info(f"{output}\n\n")
+        logger.info(f"\n{output}\n\n")
         solutions = []
 
         for line in output.splitlines():

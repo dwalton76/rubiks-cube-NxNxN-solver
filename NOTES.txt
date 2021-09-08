@@ -7,10 +7,11 @@ TODO section
 
 - 555 can we use my-pt-states.txt to try multiple wing_strs at once for the first four edges?
 
-- use threads for ida_search_via_graph.c. Once this is done remove the C_ida_type="5x5x5-lr-centers-stage"
-  arg so that phase1 becomes admissible again.
+- use threads for ida_search_via_graph.c? This might be more trouble than it is worth given that
+  we are bound by reading from memory.
 
 - move to f-strings
+https://stackoverflow.com/questions/56877053/is-there-a-tool-to-automatically-convert-string-formatting-types-to-f-strings
 
 - type hints everywhere
 
@@ -22,24 +23,10 @@ TODO section
 
 - 555 phase1 center use my-pt-states.txt so we only have to load everything into RAM once
 
-- 666 phase6 has a huge 24 million entry table...do we still need that now that we can do
-  a gazillion nodes per sec?
-
 - chop "def phase()"
-
-- investigate this
-    # restricting these has minimal impact on move count
-    # but having few moves to explore means a faster IDA
-
-- investigate these
-    # can skip these for 4x4x4 cubes
-    # can skip these for 6x6x6 cubes
 
 - investigate all heuristic tables...do we still need them?
 
-
-- this core dumps:
-./ida_search_via_graph --prune-table-0-filename lookup-tables/lookup-table-4x4x4-step11-UD-centers-stage.bin --prune-table-0-state 504670 --prune-table-1-filename lookup-tables/lookup-table-4x4x4-step12-LR-centers-stage.bin --prune-table-1-state 315174 --orbit0-need-even-w --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2" --solution-count 500
 
 
 profiling baseline

@@ -3433,6 +3433,114 @@ class RubiksCube555(RubiksCube):
         )
         self.solution.append("COMMENT_%d_steps_555_centers_staged" % len(min_phase2_solution))
 
+    def pair_edges(self):
+        # phase 4
+        # phase 5
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
+        pt_state_indexes = []
+        phase5_pt_state_indexes_to_wing_str_combo = {}
+
+        for phase4_solution_len, wing_str_combo in self.find_first_four_edges_to_pair():
+            if phase4_solution_len >= 3:
+                break
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            self.lt_phase4.wing_strs = wing_str_combo
+            self.lt_phase4.solve()
+            self.edges_flip_orientation(wing_str_combo, [])
+
+            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
+            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
+            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase5.prune_tables])
+            phase5_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
+            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=pt_state_indexes, solution_count=500)
+
+        # phase 6
+        pt_state_indexes = []
+        phase6_pt_state_indexes_to_phase4_solution = {}
+        phase6_pt_state_indexes_to_phase5_solution = {}
+
+        for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
+            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state, pt3_state)]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            self.lt_phase4.wing_strs = wing_str_combo
+            self.lt_phase4.solve()
+            phase4_solution = self.solution[original_solution_len:]
+
+            self.edges_flip_orientation(wing_strs_all, [])
+            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
+            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
+
+            for step in phase5_solution:
+                self.rotate(step)
+
+            yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
+            self.lt_phase6_high_edge_midge.ida_graph_node = None
+            self.lt_phase6_low_edge_midge.ida_graph_node = None
+            self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
+            self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
+            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase6.prune_tables])
+            phase6_pt_state_indexes_to_phase4_solution[wing_str_combo_pt_state_indexes] = phase4_solution
+            phase6_pt_state_indexes_to_phase5_solution[wing_str_combo_pt_state_indexes] = phase5_solution
+            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
+
+        phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = self.lt_phase6.solutions_via_c(
+            pt_states=pt_state_indexes
+        )[0]
+        phase4_solution = phase6_pt_state_indexes_to_phase4_solution[(pt0_state, pt1_state, pt2_state)]
+        phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
+
+        # apply the solution
+        self.state = self.post_eo_state
+        self.solution = self.post_eo_solution[:]
+
+        # phase 4
+        tmp_solution_len = len(self.solution)
+        for step in phase4_solution:
+            self.rotate(step)
+
+        self.solution.append(
+            "COMMENT_%d_steps_555_first_four_edges_staged"
+            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
+        )
+
+        # phase 5
+        tmp_solution_len = len(self.solution)
+
+        for step in phase5_solution:
+            self.rotate(step)
+
+        self.solution.append(
+            "COMMENT_%d_steps_555_first_four_edges_paired"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+        self.print_cube(
+            "%s: first four edges paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+
+        # phase 6
+        tmp_solution_len = len(self.solution)
+
+        for step in phase6_solution:
+            self.rotate(step)
+
+        self.solution.append(
+            "COMMENT_%d_steps_555_last_eight_edges_paired"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+        self.print_cube(
+            "%s: last eight edges paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+
     def reduce_333(self):
         self.lt_init()
 
@@ -3492,129 +3600,8 @@ class RubiksCube555(RubiksCube):
         # phase 3
         self.eo_edges()
 
-        # phase 4
-        # phase 5
-        # phase 6
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
-        pt_state_indexes = []
-        phase5_pt_state_indexes_to_wing_str_combo = {}
-
-        for phase4_solution_len, wing_str_combo in self.find_first_four_edges_to_pair():
-            if phase4_solution_len >= 3:
-                break
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            self.lt_phase4.wing_strs = wing_str_combo
-            self.lt_phase4.solve()
-            self.edges_flip_orientation(wing_str_combo, [])
-
-            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase5.prune_tables])
-            phase5_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
-            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=pt_state_indexes, solution_count=500)
-
-        # phase 6
-        pt_state_indexes = []
-        phase6_pt_state_indexes_to_wing_str_combo = {}
-        phase6_pt_state_indexes_to_phase4_solution = {}
-        phase6_pt_state_indexes_to_phase5_solution = {}
-
-        for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
-            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state, pt3_state)]
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            self.lt_phase4.wing_strs = wing_str_combo
-            self.lt_phase4.solve()
-            phase4_solution = self.solution[original_solution_len:]
-
-            self.edges_flip_orientation(wing_strs_all, [])
-            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-
-            for step in phase5_solution:
-                self.rotate(step)
-
-            # self.print_cube(f"{wing_str_combo}")
-            yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
-            self.lt_phase6_high_edge_midge.ida_graph_node = None
-            self.lt_phase6_low_edge_midge.ida_graph_node = None
-            self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
-            self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
-            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase6.prune_tables])
-            phase6_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
-            phase6_pt_state_indexes_to_phase4_solution[wing_str_combo_pt_state_indexes] = phase4_solution
-            phase6_pt_state_indexes_to_phase5_solution[wing_str_combo_pt_state_indexes] = phase5_solution
-            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
-
-        phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = self.lt_phase6.solutions_via_c(
-            pt_states=pt_state_indexes
-        )[0]
-        wing_str_combo = phase6_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state)]
-        phase4_solution = phase6_pt_state_indexes_to_phase4_solution[(pt0_state, pt1_state, pt2_state)]
-        phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
-
-        # dwalton
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in phase4_solution:
-            self.rotate(step)
-
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
-        )
-        tmp_solution_len = len(self.solution)
-
-        for step in phase5_solution:
-            self.rotate(step)
-
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        tmp_solution_len = len(self.solution)
-
-        for step in phase6_solution:
-            self.rotate(step)
-
-        self.solution.append(
-            "COMMENT_%d_steps_555_last_eight_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        # self.pair_last_eight_edges(call_print_cube=False)
-        min_phase456_solution = self.solution[original_solution_len:]
-
-        logging.getLogger().setLevel(logging.INFO)
-        self.state = self.post_eo_state
-        self.solution = self.post_eo_solution[:]
-
-        for step in min_phase456_solution:
-            self.rotate(step)
-
-            if step.endswith("first_four_edges_paired"):
-                # logger.info(min_phase45_output)
-                self.print_cube(
-                    "%s: first four edges paired (%d steps in)"
-                    % (self, self.get_solution_len_minus_rotates(self.solution))
-                )
-            elif step.endswith("last_eight_edges_paired"):
-                # logger.info(min_phase6_output)
-                self.print_cube(
-                    "%s: last eight edges paired (%d steps in)"
-                    % (self, self.get_solution_len_minus_rotates(self.solution))
-                )
+        # phases 4 5 and 6
+        self.pair_edges()
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

@@ -1019,10 +1019,11 @@ class LookupTable(object):
 
         with open(state_index_filename, "r") as fh:
             state_index = binary_search(fh, width, state_width, linecount, state)
-            try:
-                return int(state_index)
-            except TypeError:
-                raise TypeError(f"{self}: state {state} not found")
+
+            if state_index is None:
+                raise Exception(f"{self}: state {state} not found in {state_index_filename}")
+
+            return int(state_index)
 
     def state_index_multiple(self, states_to_find: List[str]) -> Dict[str, str]:
         state_index_filename = self.filename.replace(".txt", ".state_index")

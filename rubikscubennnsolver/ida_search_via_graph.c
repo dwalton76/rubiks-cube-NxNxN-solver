@@ -35,6 +35,7 @@ unsigned char STATE_LENGTH = 4;
 unsigned char ROW_LENGTH = 0;
 unsigned char orbit0_wide_quarter_turns = 0;
 unsigned char orbit1_wide_quarter_turns = 0;
+unsigned int solution_count = 0;
 unsigned int min_solution_count = 1;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
@@ -555,7 +556,6 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
     unsigned char f_cost = 0;
     unsigned char offset[legal_move_count];
     unsigned char offset_i = 0;
-    unsigned int solution_count = 0;
     unsigned int pt0_state = 0;
     unsigned int pt1_state = 0;
     unsigned int pt2_state = 0;
@@ -760,6 +760,9 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
     if (min_ida_threshold >= max_ida_threshold) {
         return search_result;
     }
+
+    LOG("pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n",
+        pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 
     gettimeofday(&start, NULL);
 
@@ -1182,16 +1185,16 @@ int main(int argc, char *argv[]) {
                     token_index++;
                 }
 
-                LOG("pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n",
-                    prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state, prune_table_4_state);
-
                 search_result = ida_solve(type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
                                           prune_table_3_state, prune_table_4_state, i_max_ida_threshold, use_uthash);
 
                 if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
                     min_search_result = search_result;
                     max_ida_threshold = search_result.f_cost;
-                    break;
+
+                    if (solution_count >= min_solution_count) {
+                        break;
+                    }
                 }
 
                 line_index++;

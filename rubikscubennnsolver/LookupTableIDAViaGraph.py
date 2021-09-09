@@ -111,13 +111,15 @@ class LookupTableIDAViaGraph(LookupTable):
             assert (
                 self.perfect_hash01_filename and self.pt1_state_max
             ), "both perfect_hash01_filename and pt1_state_max must be specified"
-            download_file_if_needed(self.perfect_hash01_filename, self.parent.size)
+            # rm_file_if_mismatch(self.perfect_hash01_filename, md5_hash01)
+            download_file_if_needed(self.perfect_hash01_filename)
 
         if self.perfect_hash02_filename or self.pt2_state_max:
             assert (
                 self.perfect_hash02_filename and self.pt2_state_max
             ), "both perfect_hash02_filename and pt2_state_max must be specified"
-            download_file_if_needed(self.perfect_hash02_filename, self.parent.size)
+            # rm_file_if_mismatch(self.perfect_hash02_filename, md5_hash02)
+            download_file_if_needed(self.perfect_hash02_filename)
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -253,7 +255,7 @@ class LookupTableIDAViaGraph(LookupTable):
         if pt_states:
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
-                cmd.append(pt.filename.replace(".txt", ".bin"))
+                cmd.append(pt.filename_bin)
 
             with open(my_pt_state_filename, "w") as fh:
                 for x in pt_states:
@@ -265,7 +267,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
-                cmd.append(pt.filename.replace(".txt", ".bin"))
+                cmd.append(pt.filename_bin)
 
                 if not pt_states:
                     cmd.append("--prune-table-%d-state" % index)

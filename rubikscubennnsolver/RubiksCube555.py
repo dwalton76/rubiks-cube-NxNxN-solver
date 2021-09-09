@@ -584,10 +584,11 @@ class LookupTable555LRTCenterStage(LookupTable):
             "0f0f00",
             linecount=735471,
             max_depth=8,
-            filesize=27947898,
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="47f0fbaaa6bc57e13227013f2a4e6000",
+            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -647,10 +648,11 @@ class LookupTable555LRXCenterStage(LookupTable):
             "0f0f00",
             linecount=735471,
             max_depth=8,
-            filesize=27212427,
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="f115bf1b641fdbcedc4a0cf0dad94b94",
+            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -723,10 +725,11 @@ class LookupTable555UDCenterStageTCenter(LookupTable):
             "f0000f",
             linecount=735471,
             max_depth=8,
-            filesize=28683369,
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="95098a033e10150e8750a80e3f3bdd0c",
+            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -781,10 +784,11 @@ class LookupTable555UDCenterStageXCenter(LookupTable):
             "f0000f",
             linecount=735471,
             max_depth=8,
-            filesize=27212427,
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="7b799b163737f59dae3fbaefdd891652",
+            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -873,11 +877,12 @@ class LookupTable555FBTCenterStage(LookupTable):
             "0ff0",
             linecount=12870,
             max_depth=9,
-            filesize=476190,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="688fa1df55afc811cd8286aae7ae27ce",
+            md5_state_index="879b393fdddff5c298a4279b58464e5f",
         )
 
     def state(self):
@@ -925,11 +930,12 @@ class LookupTable555FBXCenterStage(LookupTable):
             "0ff0",
             linecount=12870,
             max_depth=7,
-            filesize=411840,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="fa7775fbd1dc684389ec32dc0e04b4b2",
+            md5_state_index="879b393fdddff5c298a4279b58464e5f",
         )
 
     def state(self):
@@ -1425,11 +1431,12 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
             self.state_targets,
             linecount=4900,
             max_depth=5,
-            filesize=181300,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="432c1d1352f6831dc261d756f07aeeee",
+            md5_state_index="496f2f5dbdff19e670329bd896fc339f",
         )
 
     def state(self):
@@ -1483,11 +1490,12 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
             "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
             linecount=2704156,
             max_depth=10,
-            filesize=227149104,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="e84b1616f11737c99f5bdb9ed1cb4ac6",
+            md5_state_index="b421a267c023f9857f64c5bbdf8218da",
         )
 
     def state(self):
@@ -1560,11 +1568,12 @@ class LookupTable555EdgeOrientInnerOrbit(LookupTable):
             "UUUUUUUUUUUUUUUUUUUUUUUU",
             linecount=2048,
             max_depth=7,
-            filesize=94208,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="beb38008ba62f77e716031011a59927f",
+            md5_state_index="82b52422c600a32b5ba2ab70f6d4f3cf",
         )
 
     def state(self):
@@ -1652,7 +1661,7 @@ class LookupTable555Phase4(LookupTable):
             "TBD",
             linecount=32389725,
             max_depth=3,
-            filesize=971691750,
+            md5_txt="dc7bf65fe07d6d3b3afebd01b4a801b6",
         )
         self.wing_strs = None
 
@@ -1772,7 +1781,6 @@ class LookupTable555Phase5Centers(LookupTable):
             self.state_targets,
             linecount=2116800,
             max_depth=10,
-            filesize=160876800,
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
@@ -1785,6 +1793,8 @@ class LookupTable555Phase5Centers(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="ba83862ac8a23bcaedfc219738d6d832",
+            md5_state_index="94850abdebb4a2cc598ad1ecaacfabae",
         )
 
     def state(self):
@@ -1825,7 +1835,6 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
             "-------------SSTT--UUVV-------------",
             linecount=117600,
             max_depth=10,
-            filesize=8820000,
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
@@ -1838,6 +1847,8 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="d69e83118e56f1c4b7f0825f2184f704",
+            md5_state_index="43bf02b7b00d01d6fdeca65a0fdb3617",
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -1915,7 +1926,6 @@ class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
             state_target=self.state_targets,
             linecount=576240000,
             max_depth=13,
-            filesize=59928960000,
             all_moves=moves_555,
             illegal_moves=(
                 "Uw", "Uw'",
@@ -1986,7 +1996,6 @@ class LookupTable555Phase5FBCentersLowEdgeMidge(LookupTableIDAViaGraph):
             state_target=self.state_targets,
             linecount=576240000,
             max_depth=13,
-            filesize=59928960000,
             all_moves=moves_555,
             illegal_moves=(
                 "Uw", "Uw'",
@@ -2053,7 +2062,6 @@ class LookupTable555Phase5FBCenters(LookupTable):
             self.state_targets,
             linecount=4900,
             max_depth=7,
-            filesize=220500,
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
@@ -2066,6 +2074,8 @@ class LookupTable555Phase5FBCenters(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="416e5b19a12638c745ef43da971097e5",
+            md5_state_index="1143afbaff9319d0b56af388ed8df18c",
         )
 
     def state(self):
@@ -2106,7 +2116,6 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             "------------sS--TtuU--Vv------------",
             linecount=117600,
             max_depth=10,
-            filesize=8702400,
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
@@ -2119,6 +2128,8 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="63563216a99d9f1df5452dd4b926896d",
+            md5_state_index="a92e9c2f00b8139cfe4d310b77f9ffb0",
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -2221,7 +2232,6 @@ class LookupTable555Phase6Centers(LookupTable):
             "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD",
             linecount=176400,
             max_depth=9,
-            filesize=15699600,
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
@@ -2234,6 +2244,8 @@ class LookupTable555Phase6Centers(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="39246f6f4a4df584346a6a49a3981237",
+            md5_state_index="a9fb5d65b2b3e0ecb43eb32153156f3a",
         )
 
     def state(self):
@@ -2274,7 +2286,6 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
             "OO--PPQQ--RR------------WW--XXYY--ZZ",
             linecount=40320,
             max_depth=10,
-            filesize=2983680,
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
@@ -2287,6 +2298,8 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="56382060bb427711e0303bec5a30195e",
+            md5_state_index="2e2d4fdd18f52a2bec92226067d1cfc4",
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -2349,7 +2362,6 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
             "-OopP--QqrR--------------WwxX--YyzZ-",
             linecount=40320,
             max_depth=10,
-            filesize=2983680,
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
@@ -2362,6 +2374,8 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="7d6b1ed74075cda1b191382bbd18b2cb",
+            md5_state_index="af4211fe7054e882ea4d62aea2c2d9de",
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -2431,7 +2445,6 @@ class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
             parent,
             state_target='OOopPPQQqrRR------------WWwxXXYYyzZZ',
             filename='lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt',
-            filesize=634035456,
             max_depth=9,
             linecount=8806048,
             all_moves=moves_555,
@@ -2508,11 +2521,12 @@ class LookupTable555UDCenterSolve(LookupTable):
             "TBD",
             linecount=4900,
             max_depth=8,
-            filesize=240100,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="b3219e18ffab62f3e9e5d2546b7efa9b",
+            md5_state_index="32fbc4731dcaf920612cdf601668f47c",
         )
 
     def state(self):
@@ -2552,11 +2566,12 @@ class LookupTable555LRCenterSolve(LookupTable):
             "TBD",
             linecount=4900,
             max_depth=8,
-            filesize=240100,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="3e014635d3d60c7cd795a1ce6fda02a5",
+            md5_state_index="496f2f5dbdff19e670329bd896fc339f",
         )
 
     def state(self):
@@ -2596,11 +2611,12 @@ class LookupTable555FBCenterSolve(LookupTable):
             "TBD",
             linecount=4900,
             max_depth=8,
-            filesize=240100,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="185ef249db6173d097ddb7f508172922",
+            md5_state_index="1143afbaff9319d0b56af388ed8df18c",
         )
 
     def state(self):
@@ -2679,7 +2695,7 @@ class LookupTable555TCenterSolve(LookupTable):
             "lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt",
             "UUUULLLLFFFFRRRRBBBBDDDD",
             linecount=343000,
-            filesize=19551000,
+            md5_txt="87cd07a8258c2489cb2ec07edf24c9f6",
         )
 
     def ida_heuristic(self):

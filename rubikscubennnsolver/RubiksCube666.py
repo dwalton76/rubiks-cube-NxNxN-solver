@@ -363,7 +363,6 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
             self.state_targets,
             linecount=12870,
             max_depth=9,
-            filesize=656370,
             all_moves=moves_666,
             illegal_moves=(
                 "3Uw", "3Uw'",
@@ -382,6 +381,8 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="fe57c3bcfc9df5a1615bd1e0fa3377bb",
+            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -426,7 +427,6 @@ class LookupTable666UDRightObliqueStage(LookupTable):
             self.state_targets,
             linecount=12870,
             max_depth=9,
-            filesize=656370,
             all_moves=moves_666,
             illegal_moves=(
                 "3Uw", "3Uw'",
@@ -445,6 +445,8 @@ class LookupTable666UDRightObliqueStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="85d92657ecceb2b01d8bffabf49f3a59",
+            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -485,7 +487,6 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=7,
-            filesize=553410,
             all_moves=moves_666,
             illegal_moves=(
                 "3Uw", "3Uw'",
@@ -504,6 +505,8 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="fc2b0db976435d82a3e43397ec57bc97",
+            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -559,7 +562,6 @@ class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
             filename="lookup-table-6x6x6-step14-UD-oblique-stage.txt",
             state_target=self.state_targets,
             linecount=165636900,
-            filesize=15238594800,
             max_depth=15,
             all_moves=moves_666,
             illegal_moves=(
@@ -670,7 +672,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             ),
             linecount=343000,
             max_depth=8,
-            filesize=15092000,
+            md5_txt="e1b1991511ed4bba6ee5cbc118b19ea3",
         )
     # fmt: on
 
@@ -752,6 +754,8 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="ab6a16a1f73c7a77570d89818d1e4821",
+            md5_state_index="9cb94f2836125f89c439cd354c3252c1",
         )
         # fmt: on
 
@@ -805,7 +809,6 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=12,
-            filesize=25039000,
             all_moves=moves_666,
             illegal_moves=(
                 "3Rw", "3Rw'",
@@ -827,6 +830,8 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="e3ffa78934aea743884dcd0c4121420f",
+            md5_state_index="83059d579e597f51e8322c684bb7fb08",
         )
         # fmt: on
 
@@ -875,7 +880,6 @@ class LookupTable666UDObliqueEdges(LookupTable):
             self.state_targets,
             linecount=70,
             max_depth=3,
-            filesize=1960,
             all_moves=moves_666,
             illegal_moves=(
                 "3Rw", "3Rw'",
@@ -897,6 +901,8 @@ class LookupTable666UDObliqueEdges(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="13c8edcae7332aa5936426a7001f0080",
+            md5_state_index="953f9d93e6a6b1680be76a68b3edf93b",
         )
         # fmt: on
 

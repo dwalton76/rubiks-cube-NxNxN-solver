@@ -199,11 +199,13 @@ class LookupTable444UDCentersStage(LookupTable):
             self.state_targets,
             linecount=735471,
             max_depth=8,
-            filesize=40450905,
             all_moves=moves_444,
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="2835d311466ad3fada95722fb676ec1a",
+            md5_state_index="d0b9bbb685a08bf985782daa78208330",
+            md5_txt="a26afb9be23495b3ec19abef686901ae",
         )
 
     def state(self) -> str:
@@ -257,11 +259,13 @@ class LookupTable444LRCentersStage(LookupTable):
             self.state_targets,
             linecount=735471,
             max_depth=8,
-            filesize=40450905,
             all_moves=moves_444,
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="2835d311466ad3fada95722fb676ec1a",
+            md5_state_index="79f362d800935a484dab4de8f655ca07",
+            md5_txt="b8609a899722c2c9132d21b09f98c5d9",
         )
 
     def state(self) -> str:
@@ -325,7 +329,7 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
             "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
             linecount=2704156,
             max_depth=10,
-            filesize=227149104,
+            md5_txt="70496f999f5de71e34164fc8fd17726c",
         )
 
 
@@ -363,7 +367,7 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
             ),
             linecount=70,
             max_depth=4,
-            filesize=1610,
+            md5_txt="8b9c6869ea131aeb20584f5632ae3084",
         )
 
 
@@ -404,7 +408,7 @@ class LookupTable444HighLowEdges(LookupTable):
             legal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             linecount=2304998,
             max_depth=6,
-            filesize=182094842,
+            md5_txt="17d09599ec9d8a6b590628dd3ad60f42",
         )
 
     def state(self) -> str:
@@ -494,9 +498,9 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             # fmt: off
             (
-                ("lookup-table-4x4x4-step30-reduce333.txt", 73437552, "82fbc3414d07e53448d0746d96e25ebd"),  # 6-deep
-                ("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848, "20ac2ed7ca369c3b5183f836f5d99262"),
-                ("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", None, "3f990fc1fb6bf506d81ba65f03ad74f6"),
+                ("lookup-table-4x4x4-step30-reduce333.txt", "82fbc3414d07e53448d0746d96e25ebd"),  # 6-deep
+                ("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", "20ac2ed7ca369c3b5183f836f5d99262"),
+                ("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", "3f990fc1fb6bf506d81ba65f03ad74f6"),
             ),
             "4x4x4-reduce-333",  # C_ida_type
             all_moves=moves_444,
@@ -729,8 +733,6 @@ class RubiksCube444(RubiksCube):
                 break
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
-
-        logger.info(f"{self}: end of find best edge_mapping")
 
         self.state = original_state[:]
         self.solution = original_solution[:]

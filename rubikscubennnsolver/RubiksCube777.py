@@ -268,7 +268,6 @@ class LookupTable777Step41(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=8,
-            filesize=20237000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -284,6 +283,8 @@ class LookupTable777Step41(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="a99658478f460240789754fc8896ed09",
+            md5_state_index="2fe1b77fdece6f4be954ab79c60db9ee",
         )
         # fmt: on
 
@@ -372,7 +373,6 @@ class LookupTable777Step42(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=9,
-            filesize=22981000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -388,6 +388,8 @@ class LookupTable777Step42(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="78f84af016af93b92b3077d1dfce8786",
+            md5_state_index="7254b47203417f4ab7b54a6693435bfa",
         )
         # fmt: on
 
@@ -476,7 +478,6 @@ class LookupTable777Step43(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=8,
-            filesize=22981000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -492,6 +493,8 @@ class LookupTable777Step43(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="24e93efa9e21378f271e8d630603c099",
+            md5_state_index="7254b47203417f4ab7b54a6693435bfa",
         )
         # fmt: on
 
@@ -580,7 +583,6 @@ class LookupTable777Step44(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=9,
-            filesize=22981000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -596,6 +598,8 @@ class LookupTable777Step44(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="ea50be228f9f34f8b997b14a63ebce3a",
+            md5_state_index="0feebbbbe88ba9045c5e1decfbf8bf0f",
         )
         # fmt: on
 
@@ -748,7 +752,6 @@ class LookupTable777Step51(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=9,
-            filesize=21266000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -765,6 +768,8 @@ class LookupTable777Step51(LookupTable):
                 "D", "D'", "D2",),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="72325fcb5ac8e58c4314caf62ba9dcef",
+            md5_state_index="41d936ea0dc63ce1c8d69c65914eb701",
         )
         # fmt: on
 
@@ -854,7 +859,6 @@ class LookupTable777Step52(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=10,
-            filesize=23667000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -872,6 +876,8 @@ class LookupTable777Step52(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="f4dc1f9e08a8bc38d6c761014dc53682",
+            md5_state_index="2668c53df090e8db9b2d3da78010b466",
         )
         # fmt: on
 
@@ -961,7 +967,6 @@ class LookupTable777Step53(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=10,
-            filesize=23667000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -979,6 +984,8 @@ class LookupTable777Step53(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1068,7 +1075,6 @@ class LookupTable777Step54(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=10,
-            filesize=24010000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1086,6 +1092,8 @@ class LookupTable777Step54(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1132,7 +1140,6 @@ class LookupTable777Step55(LookupTable):
             self.state_targets,
             linecount=72,
             max_depth=4,
-            filesize=4392,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1150,6 +1157,8 @@ class LookupTable777Step55(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1226,7 +1235,6 @@ class LookupTable777Step61(LookupTable):
             self.state_targets,
             linecount=72,
             max_depth=4,
-            filesize=4392,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1244,6 +1252,8 @@ class LookupTable777Step61(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1290,7 +1300,6 @@ class LookupTable777Step62(LookupTable):
             self.state_targets,
             linecount=72,
             max_depth=4,
-            filesize=4392,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1308,6 +1317,8 @@ class LookupTable777Step62(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1360,7 +1371,6 @@ class LookupTable777Step65(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=10,
-            filesize=25039000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1378,6 +1388,8 @@ class LookupTable777Step65(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1430,7 +1442,6 @@ class LookupTable777Step66(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=10,
-            filesize=23667000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1448,6 +1459,8 @@ class LookupTable777Step66(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1562,7 +1575,6 @@ class LookupTable777Step71(LookupTable):
             self.state_targets,
             linecount=36,
             max_depth=4,
-            filesize=2196,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1580,6 +1592,8 @@ class LookupTable777Step71(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="",
+            md5_state_index="",
         )
         # fmt: on
 
@@ -1664,7 +1678,6 @@ class LookupTable777Step72(LookupTable):
             self.state_targets,
             linecount=36,
             max_depth=4,
-            filesize=2196,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1682,6 +1695,8 @@ class LookupTable777Step72(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="7a691d2b187f6d36506bfb524d0ec11b",
+            md5_state_index="187ae0ae8e247a0d59ffcc815350c309",
         )
         # fmt: on
 
@@ -1762,7 +1777,6 @@ class LookupTable777Step75(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=12,
-            filesize=27097000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1780,6 +1794,8 @@ class LookupTable777Step75(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="a5ff6663425343abc08f5710e044afc8",
+            md5_state_index="62f36af96f03a25ce0bf61469abd8104",
         )
         # fmt: on
 
@@ -1857,7 +1873,6 @@ class LookupTable777Step76(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=11,
-            filesize=24353000,
             all_moves=moves_777,
             illegal_moves=(
                 "3Uw", "3Uw'", "Uw", "Uw'",
@@ -1875,6 +1890,8 @@ class LookupTable777Step76(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="f7028fcf06aa35bb46fbd294c16fc837",
+            md5_state_index="6d69631183a1d4948aeffde686208922",
         )
         # fmt: on
 

@@ -423,16 +423,15 @@ def md5signature(filename: str) -> str:
     with open(filename, "rb") as fh:
         buf = fh.read()
         hasher.update(buf)
-    return hasher.hexdigest()
+    return str(hasher.hexdigest())
 
 
-def rm_file_if_mismatch(filename: str, filesize: int, md5target: str) -> None:
+def rm_file_if_mismatch(filename: str, md5target: str) -> None:
     """
-    Delete a file if its filesize or md5 signature do not match
+    Delete a file if its md5 signature does not match
 
     Args:
         filename: the file to examine
-        filesize: the size of the file in bytes
         md5target: the md5 signature to look for
     """
     filename_gz = filename + ".gz"
@@ -440,30 +439,18 @@ def rm_file_if_mismatch(filename: str, filesize: int, md5target: str) -> None:
     # This only happens if a new copy of the lookup table has been checked in...we need to delete
     # the one we have and download the new one.
     if os.path.exists(filename):
-        if filesize is not None:
-            if os.path.getsize(filename) != filesize:
-                logger.info(
-                    f"{filename}: filesize {os.path.getsize(filename):,} does not equal target filesize {filesize:,}"
-                )
-                os.remove(filename)
+        if md5signature(filename) != md5target:
+            logger.info(f"{filename}: md5 signature {md5signature(filename)} is not {md5target}")
+            os.remove(filename)
 
-                if os.path.exists(filename_gz):
-                    os.remove(filename_gz)
-
-        elif md5target is not None:
-            if md5signature(filename) != md5target:
-                logger.info(f"{filename}: md5 signature {md5signature(filename)} is not {md5target}")
-                os.remove(filename)
-
-                if os.path.exists(filename_gz):
-                    os.remove(filename_gz)
+            if os.path.exists(filename_gz):
+                os.remove(filename_gz)
 
 
-def download_file_if_needed(filename: str, cube_size: int) -> None:
+def download_file_if_needed(filename: str) -> None:
     """
     Args:
         filename: the file to download
-        cube_size: the size of the cube this file applies to
     """
 
     if not os.path.exists(filename):
@@ -501,8 +488,9 @@ class LookupTable(object):
         state_target: str,
         linecount: int = None,
         max_depth: int = None,
-        filesize: int = None,
-        md5: str = None,
+        md5_txt: str = None,
+        md5_bin: str = None,
+        md5_state_index: str = None,
         legal_moves: List[str] = None,
         all_moves: List[str] = None,
         illegal_moves: List[str] = None,
@@ -523,10 +511,15 @@ class LookupTable(object):
             LOOKUP_TABLES = "lookup-tables/"
             Path(LOOKUP_TABLES).mkdir(parents=True, exist_ok=True)
             self.filename = LOOKUP_TABLES + filename
+            self.filename_bin = self.filename.replace(".txt", ".bin")
+            self.filename_state_index = self.filename.replace(".txt", ".state_index")
+            self.filename_gz = filename + ".gz" if filename else None
         else:
-            self.filename = filename
+            self.filename = None
+            self.filename_bin = None
+            self.filename_state_index = None
+            self.filename_gz = None
 
-        self.filename_gz = filename + ".gz" if filename else None
         self.desc = filename.replace("lookup-table-", "").replace(".txt", "") if filename else ""
         self.filename_exists = False
         self.linecount = linecount
@@ -540,8 +533,6 @@ class LookupTable(object):
         self.cache = {}
         self.cache_set = set()
         self.cache_list = []
-        self.filesize = filesize
-        self.md5 = md5
         self.collect_stats = False
         self.use_isdigit = False
         self.only_colors = ()
@@ -587,13 +578,19 @@ class LookupTable(object):
 
             if use_state_index:
                 if not build_state_index:
-                    download_file_if_needed(self.filename.replace(".txt", ".state_index"), self.parent.size)
-                    download_file_if_needed(self.filename.replace(".txt", ".bin"), self.parent.size)
+                    assert md5_bin, f"need md5sum for {self.filename_bin}"
+                    assert md5_state_index, f"need md5sum for {self.filename_state_index}"
+                    # It takes a long time to calculate the md5 signatures...need to think of a better way
+                    # rm_file_if_mismatch(self.filename_bin, md5_bin)
+                    # rm_file_if_mismatch(self.filename_state_index, md5_state_index)
+                    download_file_if_needed(self.filename_bin)
+                    download_file_if_needed(self.filename_state_index)
                 self.state_width = len(list(self.state_target)[0])
 
             else:
-                rm_file_if_mismatch(self.filename, self.filesize, self.md5)
-                download_file_if_needed(self.filename, self.parent.size)
+                assert md5_txt, f"need md5sum for {self.filename}"
+                # rm_file_if_mismatch(self.filename, md5_txt)
+                download_file_if_needed(self.filename)
 
             if (
                 "perfect-hash" not in self.filename
@@ -928,14 +925,13 @@ class LookupTable(object):
         self.preload_cache_dict()
 
         states = sorted(self.cache.keys())
-        state_index_filename = self.filename.replace(".txt", ".state_index")
 
         logger.info(f"{self}: state_index begin")
-        with open(state_index_filename, "w") as fh:
+        with open(self.filename_state_index, "w") as fh:
             for (index, state) in enumerate(states):
                 fh.write("%s:%d\n" % (state, index))
 
-        subprocess.call(["./utils/pad-lines.py", state_index_filename])
+        subprocess.call(["./utils/pad-lines.py", self.filename_state_index])
         logger.info(f"{self}: state_index end")
 
         logger.info(f"{self}: json begin")
@@ -984,9 +980,7 @@ class LookupTable(object):
         """
         Load our IDA graph into memory
         """
-        bin_filename = self.filename.replace(".txt", ".bin")
-
-        with open(bin_filename, "rb") as fh:
+        with open(self.filename_bin, "rb") as fh:
             logger.info(f"{self}: load IDA graph begin")
             self.ida_graph = fh.read()
             logger.info(f"{self}: load IDA graph end")
@@ -996,9 +990,8 @@ class LookupTable(object):
         Load our state index cached into memory
         """
         self.state_index_cache = {}
-        state_index_filename = self.filename.replace(".txt", ".state_index")
 
-        with open(state_index_filename, "r") as fh:
+        with open(self.filename_state_index, "r") as fh:
             for line in fh:
                 (state, state_index) = line.rstrip().split(":")
                 self.state_index_cache[state] = int(state_index)
@@ -1014,22 +1007,19 @@ class LookupTable(object):
         if self.state_index_cache:
             return self.state_index_cache.get(state)
 
-        state_index_filename = self.filename.replace(".txt", ".state_index")
-        (width, state_width, linecount) = get_file_vitals(state_index_filename)
+        (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
 
-        with open(state_index_filename, "r") as fh:
+        with open(self.filename_state_index, "r") as fh:
             state_index = binary_search(fh, width, state_width, linecount, state)
 
             if state_index is None:
-                raise Exception(f"{self}: state {state} not found in {state_index_filename}")
+                raise Exception(f"{self}: state {state} not found in {self.filename_state_index}")
 
             return int(state_index)
 
     def state_index_multiple(self, states_to_find: List[str]) -> Dict[str, str]:
-        state_index_filename = self.filename.replace(".txt", ".state_index")
-        (width, state_width, linecount) = get_file_vitals(state_index_filename)
-        # dwalton here now
-        with open(state_index_filename, "rb") as fh:
+        (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
+        with open(self.filename_state_index, "rb") as fh:
             return binary_search_multiple(fh, width, state_width, linecount, states_to_find)
 
     def reverse_state_index(self, state_index: int) -> str:
@@ -1040,8 +1030,7 @@ class LookupTable(object):
         Returns:
             the state for ``state_index``
         """
-        state_index_filename = self.filename.replace(".txt", ".state_index")
-        with open(state_index_filename, "r") as fh:
+        with open(self.filename_state_index, "r") as fh:
             for line in fh:
                 if line.rstrip().endswith(f":{state_index}"):
                     return line.split(":")[0]
@@ -1079,11 +1068,10 @@ class LookupTableIDA(LookupTable):
         moves_illegal: List[str],
         linecount: int = None,
         max_depth: int = None,
-        filesize: int = None,
         legal_moves: List = None,
         multiplier: float = None,
     ):
-        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
+        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth)
         self.recolor_positions = []
         self.recolor_map = {}
         self.nuke_corners = False
@@ -1361,10 +1349,10 @@ class LookupTableIDAViaC(object):
         self.C_ida_type = C_ida_type
         self.centers_only = centers_only
 
-        for (filename, filesize, md5target) in files:
+        for (filename, md5target) in files:
             filename = "lookup-tables/" + filename
-            rm_file_if_mismatch(filename, filesize, md5target)
-            download_file_if_needed(filename, self.parent.size)
+            rm_file_if_mismatch(filename, md5target)
+            download_file_if_needed(filename)
 
         if legal_moves:
             self.all_moves = list(legal_moves)

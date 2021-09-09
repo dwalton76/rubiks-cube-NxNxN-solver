@@ -74,7 +74,6 @@ def magic(count: List[int]) -> int:
         )
 
     for cost, (under_estimate_percentage, perfect_percentage, over_estimate_percentag) in data.items():
-        # dwalton here now
         if under_estimate_percentage <= 0.80:
             return cost
 
@@ -125,7 +124,7 @@ def parse_csv(filename: str) -> None:
     c_array_str = pformat(c_array)
     c_array_str = c_array_str.replace("[", "{")
     c_array_str = c_array_str.replace("]", "}")
-    print(f"unsigned char dwalton[9][9][9][9] = {c_array_str};")
+    print(f"unsigned char foobar[9][9][9][9] = {c_array_str};")
 
     logger.info(f"{len(data)} pt_cost keys")
 

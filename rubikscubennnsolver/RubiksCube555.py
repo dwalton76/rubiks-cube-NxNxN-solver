@@ -683,6 +683,427 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
         )
 
 
+class LookupTable555UDCenterStageTCenter(LookupTable):
+    """
+    lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.txt
+    ============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
+    """
+
+    # fmt: off
+    t_centers_555 = (
+        8, 12, 14, 18,  # Upper
+        33, 37, 39, 43,  # Left
+        58, 62, 64, 68,  # Front
+        83, 87, 89, 93,  # Right
+        108, 112, 114, 118,  # Back
+        133, 137, 139, 143,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index=False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.txt",
+            "f0000f",
+            linecount=735471,
+            max_depth=8,
+            legal_moves=moves_555,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
+
+
+class LookupTable555UDCenterStageXCenter(LookupTable):
+    """
+    lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.txt
+    ============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+    """
+
+    # fmt: off
+    x_centers_555 = (
+        7, 9, 17, 19,  # Upper
+        32, 34, 42, 44,  # Left
+        57, 59, 67, 69,  # Front
+        82, 84, 92, 94,  # Right
+        107, 109, 117, 119,  # Back
+        132, 134, 142, 144,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index=False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.txt",
+            "f0000f",
+            linecount=735471,
+            max_depth=8,
+            legal_moves=moves_555,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
+
+
+class LookupTable555CenterStageOnePhase(LookupTableIDAViaGraph):
+    """
+    lookup-table-5x5x5-step14-centers-stage.txt
+    ===========================================
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 147 entries (0 percent, 21.00x previous step)
+    3 steps has 3,054 entries (0 percent, 20.78x previous step)
+    4 steps has 65,520 entries (0 percent, 21.45x previous step)
+    5 steps has 1,467,630 entries (4 percent, 22.40x previous step)
+    6 steps has 33,349,612 entries (95 percent, 22.72x previous step)
+
+    extrapolate frome here
+    7 steps has 731,023,495 entries (21.92x previous step)
+    8 steps has 15,439,216,214 entries (21.12x previous step)
+    9 steps has 313,724,873,468 entries (20.32x previous step)
+    10 steps has 6,123,909,530,095 entries (19.52x previous step)
+    11 steps has 114,639,586,403,378 entries (18.72x previous step)
+    12 steps has 2,054,341,388,348,533 entries (17.92x previous step)
+    13 steps has 35,170,324,568,526,872 entries (17.12x previous step)
+    14 steps has 573,979,696,958,358,336 entries (16.32x previous step)
+    15 steps has 8,908,164,896,793,716,736 entries (15.52x previous step)
+    16 steps has 80,076,422,714,873,649,803 entries (8.99x previous step)
+
+    Average: 15.886485169358519
+    Total  : 89,595,913,068,008,532,900
+
+    (24!/(8!*8!*8!))^2
+
+    Without an unpaired_count heuristic the following search takes 19 hours!! :(
+
+./ida_search_via_graph \
+  --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 \
+  --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
+  --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 594026 \
+  --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.bin --prune-table-3-state 484064 \
+  --centers-only --type 5x5x5-centers-stage \
+  --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+
+[2021-10-13T11:54:58.819] cost_to_goal 0, pt0_state 218536, pt1_state 86325, pt2_state 594026, pt3_state 484064, pt4_state 0
+[2021-10-13T11:54:58.819] IDA threshold 9, explored 321 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-10-13T11:54:58.820] IDA threshold 10, explored 9,078 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-10-13T11:54:58.827] IDA threshold 11, explored 183,306 nodes, took 0.007s, 26,186,572 nodes-per-sec
+[2021-10-13T11:54:59.018] IDA threshold 12, explored 4,560,597 nodes, took 0.191s, 23,877,470 nodes-per-sec
+[2021-10-13T11:55:03.475] IDA threshold 13, explored 120,650,823 nodes, took 4.457s, 27,069,962 nodes-per-sec
+[2021-10-13T11:57:06.506] IDA threshold 14, explored 3,270,726,204 nodes, took 123.031s, 26,584,568 nodes-per-sec
+[2021-10-13T12:52:50.303] IDA threshold 15, explored 88,924,551,117 nodes, took 3343.798s, 26,593,876 nodes-per-sec
+[2021-10-14T07:05:28.035] IDA count 1,613,106,062,106, f_cost 16 vs threshold 16 (cost_to_here 16, cost_to_goal 0)
+SOLUTION (16 steps): L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+[2021-10-14T07:05:28.036] IDA threshold 16, explored 1,613,106,062,106 nodes, took 65557.734s, 24,605,884 nodes-per-sec
+[2021-10-14T07:05:28.037] IDA found solution, explored 1,705,426,743,552 total nodes, took 69029.219s, 24,705,868 nodes-per-sec
+
+    The output below is with an unpaired_count heuristic
+
+./ida_search_via_graph \
+  --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 \
+  --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
+  --prune-table-2-filename lookup-tables/lookup-table-5x5x5-step17-UD-centers-stage-t-center-only.bin --prune-table-2-state 594026 \
+  --prune-table-3-filename lookup-tables/lookup-table-5x5x5-step18-UD-centers-stage-x-center-only.bin --prune-table-3-state 484064 \
+  --kociemba ......xUU..xUL..UUU............ULx..xLL..xUx............LUL..Lxx..LxU............LLL..LUx..Lxx............LxU..ULU..xLx............UxL..UxL..UUx...... \
+  --centers-only \
+  --type 5x5x5-centers-stage \
+  --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+[2021-10-18T10:44:30.674] IDA threshold 9, explored 321 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-10-18T10:44:30.676] IDA threshold 10, explored 9,025 nodes, took 0.002s, 4,512,500 nodes-per-sec
+[2021-10-18T10:44:30.725] IDA threshold 11, explored 181,519 nodes, took 0.048s, 3,781,645 nodes-per-sec
+[2021-10-18T10:44:31.816] IDA threshold 12, explored 4,487,915 nodes, took 1.091s, 4,113,579 nodes-per-sec
+[2021-10-18T10:44:56.339] IDA threshold 13, explored 118,413,465 nodes, took 24.524s, 4,828,472 nodes-per-sec
+
+    So it doesn't prune many more branches but runs about 6x slower :( If we add
+        --solution "L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'"
+
+    we can see what the unpaired count would be for each step
+
+       UNPAIRED  EST  PT0  PT1  PT2  PT3  CTG  TRU  IDX
+       ========  ===  ===  ===  ===  ===  ===  ===  ===
+ INIT        18    4    6    7    6    6    9   16    0
+   L2        18    4    5    6    6    6    8   15    1
+   R2        18    4    6    6    6    7    9   14    2
+  Fw2        18    4    6    7    6    6    9   13    3
+   U2        18    4    6    6    7    6    9   12    4
+    F        18    4    6    5    6    5    8   11    5
+   Lw        21    5    7    6    6    5    9   10    6
+  Dw2        20    5    6    6    6    5    8    9    7
+   Lw        21    5    6    5    6    5    8    8    8
+    D        21    5    5    4    5    4    6    7    9
+  Fw'        20    5    4    3    4    3    4    6   10
+  Rw'        20    5    4    2    4    2    4    5   11
+  Dw2        16    4    4    2    4    2    4    4   12
+  Lw2        16    4    3    3    3    3    3    3   13
+  Rw2        12    3    2    2    2    2    2    2   14
+  Dw'         8    2    1    1    1    1    1    1   15
+  Bw'         0    0    0    0    0    0    0    0   16
+
+    In a nutshell the unpaired_count isn't super helpful, it only starts trending down for the last seven moves which are all wide turns.
+    The EST based on unpaired_count was (dividing by 8 would be admissable):
+        result.cost_to_goal = result.unpaired_count / 4;
+
+    Here is the solution if you want to visualize it
+    https://alg.cubing.net/?puzzle=5x5x5&alg=L2_R2_Fw2_U2_F_Lw_Dw2_Lw_D_Fw-_Rw-_Dw2_Lw2_Rw2_Dw-_Bw-_%2F%2F_centers_staged_(16_steps)%0A%0AD-_L2_Lw2_R-_U_Bw2_L-_%2F%2F_edges_EOed_into_high%2Flow_groups_(7_steps)%0A%0ARw2_U-_%2F%2F_4_edges_prepped_for_pairing_(2_steps)%0A%0AF_U2_Fw2_Dw2_Bw2_R2_F-_L2_Rw2_Uw2_Lw2_F_Uw2_%2F%2F_x_plane_edges_paired,_LR_FB_centers_vertical_bars_(13_steps)%0A%0AFw2_D2_Rw2_F2_Lw2_D_L2_U_Bw2_U_L2_D-_Fw2_%2F%2F_last_eight_edges_paired,_centers_solved_(13_steps)%0A%0AR_B-_R_F_U-_R_D2_R2_B2_R2_B_L2_D2_L2_F2_U_R2_D-_L2_B2_%2F%2F_solve_3x3x3_(20_steps)%0A%0A&type=alg
+
+    dwalton - look into this
+    It is interesting that the last seven moves are all wide turns though.
+    The output above was for LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
+
+    Trying with LDFFFUFDDFFLUDLRBUBBUBDUDFLUULLFBBBBBRFBLRDUDDFUFLBURFRRURDDDRFURFLFRUUBUBBRRRLRDFDDRLRDFBUUUFRBBDFBURUDRFRLLBRLLBBUULBDLLFLFDDDRFURFLLLRBBFBDULRDLLDU
+    to see if it has a similar solution that ends with all wide turns...it does not (6 of the last 8 moves are wide turns) :(
+
+[2021-10-18T11:12:17.256] IDA threshold 9, explored 69 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-10-18T11:12:17.256] IDA threshold 10, explored 3,909 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-10-18T11:12:17.267] IDA threshold 11, explored 216,393 nodes, took 0.010s, 21,639,300 nodes-per-sec
+[2021-10-18T11:12:17.564] IDA threshold 12, explored 7,514,955 nodes, took 0.297s, 25,302,878 nodes-per-sec
+[2021-10-18T11:12:26.534] IDA threshold 13, explored 229,584,804 nodes, took 8.970s, 25,594,738 nodes-per-sec
+[2021-10-18T11:16:32.073] IDA threshold 14, explored 6,514,768,515 nodes, took 245.539s, 26,532,520 nodes-per-sec
+[2021-10-18T12:58:14.357] IDA count 118,439,409,159, f_cost 15 vs threshold 15 (cost_to_here 15, cost_to_goal 0)
+SOLUTION (15 steps): Lw U2 B Rw Fw2 Dw F2 Fw2 Uw2 B Bw' Rw2 Bw R' Uw'
+SOLUTION (15 steps): Lw U2 B Rw Fw2 Dw F2 Fw2 Uw2 B Bw' Rw2 Bw R' Uw
+[2021-10-18T19:07:38.795] IDA threshold 15, explored 176,660,783,889 nodes, took 8465.967s, 20,867,172 nodes-per-sec
+[2021-10-18T19:07:38.795] IDA found solution, explored 183,412,872,534 total nodes, took 8727.876s, 21,014,606 nodes-per-sec
+
+       PT0  PT1  PT2  PT3  CTG  TRU  IDX
+       ===  ===  ===  ===  ===  ===  ===
+ INIT    7    6    6    6    9   15    0
+   Lw    7    6    6    7   10   14    1
+   U2    7    6    5    6    9   13    2
+    B    6    6    4    5    8   12    3
+   Rw    6    6    3    5    8   11    4
+  Fw2    5    5    3    5    6   10    5
+   Dw    4    4    4    4    4    9    6
+   F2    5    4    4    4    5    8    7
+  Fw2    6    5    4    4    7    7    8
+  Uw2    5    5    3    3    5    6    9
+    B    5    5    3    3    5    5   10
+  Bw'    4    4    2    2    4    4   11
+  Rw2    3    3    1    1    3    3   12
+   Bw    2    2    0    0    2    2   13
+   R'    1    1    0    0    1    1   14
+  Uw'    0    0    0    0    0    0   15
+
+[2021-10-19T06:44:09.304] IDA count 558,707,046,183, f_cost 16 vs threshold 16 (cost_to_here 16, cost_to_goal 0)
+SOLUTION (16 steps): D Rw Fw R' Uw2 Dw' F' Uw L' Rw' Fw Dw' R2 Fw Dw Fw'
+SOLUTION (16 steps): D Rw Fw R' Uw2 Dw' F' Uw L' Rw' Fw Dw' R2 Fw Dw Fw
+SOLUTION (16 steps): Bw Rw' Bw Lw Rw2 Fw2 R' B Uw' Dw' L R2 Dw2 Fw R Dw'
+SOLUTION (16 steps): Bw Rw' Bw Lw Rw2 Fw2 R' B Uw' Dw' L R2 Dw2 Fw R Dw
+
+    ugh, the solutions do not end with long streaks of wide turns :(
+
+    If you build the stage-LR step11/12 tables with the following illegal moves
+            (
+                "U", "U'", "U2",
+                "L", "L'", "L2",
+                "F", "F'", "F2",
+                "R", "R'", "R2",
+                "B", "B'", "B2",
+                "D", "D'", "D2",
+            ),
+
+    You can no longer get to all 735741 states...that is a really good thing!
+
+    lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.txt
+    ==========================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 50 entries (0 percent, 12.50x previous step)
+    3 steps has 516 entries (0 percent, 10.32x previous step)
+    4 steps has 4,180 entries (3 percent, 8.10x previous step)
+    5 steps has 26,144 entries (20 percent, 6.25x previous step)
+    6 steps has 68,541 entries (54 percent, 2.62x previous step)
+    7 steps has 27,184 entries (21 percent, 0.40x previous step)
+    8 steps has 100 entries (0 percent, 0.00x previous step)
+
+    Total: 126,720 entries
+    Average: 5.93 moves
+
+
+    lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.txt
+    ==========================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 34 entries (1 percent, 8.50x previous step)
+    3 steps has 186 entries (8 percent, 5.47x previous step)
+    4 steps has 816 entries (37 percent, 4.39x previous step)
+    5 steps has 1,018 entries (46 percent, 1.25x previous step)
+    6 steps has 128 entries (5 percent, 0.13x previous step)
+
+    Total: 2,187 entries
+    Average: 4.46 moves
+
+    So phase1 could be "put the cube in a state so that it is solveable with U U' U2 L L' L2, etc"
+    and phase2 could be "stage all centers".
+
+    The phase2 table would have this many entries:
+        126720 * 126720 * 2187 * 2187 = 76,804,717,230,489,600
+
+    and would look like:
+
+    1 steps has 6 entries (0 percent, 0.00x previous step)
+    2 steps has 75 entries (0 percent, 12.50x previous step)
+    3 steps has 888 entries (0 percent, 11.84x previous step)
+    4 steps has 11,082 entries (0 percent, 12.48x previous step)
+    5 steps has 142,230 entries (0 percent, 12.83x previous step)
+    6 steps has 1,828,443 entries (7 percent, 12.86x previous step)
+    7 steps has 23,404,284 entries (92 percent, 12.80x previous step)
+
+    # extrapolate from here
+    8 steps has 280,851,408 entries (12.00x previous step)
+    9 steps has 3,145,535,769 entries (11.20x previous step)
+    10 steps has 32,713,571,997 entries (10.40x previous step)
+    11 steps has 314,050,291,171 entries (9.60x previous step)
+    12 steps has 2,763,642,562,304 entries (8.80x previous step)
+    13 steps has 22,109,140,498,431 entries (8.00x previous step)
+    14 steps has 159,185,811,588,703 entries (7.20x previous step)
+    15 steps has 1,018,789,194,167,698 entries (6.40x previous step)
+    16 steps has 5,705,219,487,339,107 entries (5.60x previous step)
+    17 steps has 27,385,053,539,227,704 entries (4.80x previous step)
+    18 steps has 42,511,246,199,468,299 entries (1.55x previous step)
+
+    Average: 17.445109310035612
+    Total  : 76,804,717,230,489,600
+
+    There are four perfect hashes that could be made
+
+        126,720 * 2,187 = 277,136,640
+
+    And this one could be a regular prune table
+        2187 * 2187 = 4,782,969
+
+    In terms of search speed
+        277136640 / 76804717230489600 = 0.000 000 003
+
+    So this would have to be something where you found a ton of phase1 solutions and then do a pt-state.txt based solve
+    for phase2. In our baseline 555 cube scenario if you found all phase1 solutions up to depth 9 you would then find the
+    phase2 solution that is 7 steps long...that phase2 search should be really fast since the solution is only 7 steps. I don't
+    know how many phase1 9 step solutions there would be though...that is the next thing to figure out.
+
+
+    The phase1 solutions are going to be really short..the two prune tables are
+
+    lookup-tables/lookup-table-5x5x5-phase1-x-centers.txt
+    =====================================================
+    0 steps has 2,187 entries (0 percent, 0.00x previous step)
+    1 steps has 28,512 entries (3 percent, 13.04x previous step)
+    2 steps has 195,264 entries (26 percent, 6.85x previous step)
+    3 steps has 422,676 entries (57 percent, 2.16x previous step)
+    4 steps has 86,556 entries (11 percent, 0.20x previous step)
+    5 steps has 276 entries (0 percent, 0.00x previous step)
+
+    Total: 735,471 entries
+    Average: 2.77 moves
+
+    lookup-tables/lookup-table-5x5x5-phase1-t-centers.txt
+    =====================================================
+    0 steps has 126,720 entries (17 percent, 0.00x previous step)
+    1 steps has 379,008 entries (51 percent, 2.99x previous step)
+    2 steps has 218,625 entries (29 percent, 0.58x previous step)
+    3 steps has 11,112 entries (1 percent, 0.05x previous step)
+    4 steps has 6 entries (0 percent, 0.00x previous step)
+
+    Total: 735,471 entries
+    Average: 1.16 moves
+
+    Those were just the LR x-centers and t-centers but would be the same for UD x-centers and t-centers.
+    So let's guess phase1 takes 4 moves...that plus the 17 moves from phase2 would put use at 21 moves
+    which isn't any better than we have today. You would need to load the phase2 solutions up to depth-7
+    in memory and search for phase1 solutions until you found one that put the cue in a state that is in
+    one of the phase2 depth-7 solutions.
+
+    next steps
+    - build phase1 LR tables
+    - build phase1 UD tables
+    - implement phase1
+
+    - modify phase1 to load phase2 depth-7 solutions into memory
+
+    Final thoughts...this won't work.  Today's single phase solutions do not often end with all wide turns...the
+    first one we saw like that was the exception to the rule.  That and you would have to find about a billion
+    phase1 solutions before you found one that hit in the phase2 7-deep table.
+    """
+
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_555,
+            illegal_moves=(),
+            prune_tables=[
+                parent.lt_LR_t_centers_stage,
+                parent.lt_LR_x_centers_stage,
+                parent.lt_UD_t_centers_stage,
+                parent.lt_UD_x_centers_stage,
+            ],
+            centers_only=True,
+            C_ida_type="5x5x5-centers-stage",
+        )
+
+    def recolor(self):
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_555:
+            if self.parent.state[x] == "U" or self.parent.state[x] == "D":
+                self.parent.state[x] = "U"
+            elif self.parent.state[x] == "L" or self.parent.state[x] == "R":
+                self.parent.state[x] = "L"
+            else:
+                self.parent.state[x] = "x"
+
+
 class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -3229,7 +3650,10 @@ class RubiksCube555(RubiksCube):
         # phase 1
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
+        self.lt_UD_t_centers_stage = LookupTable555UDCenterStageTCenter(self)
+        self.lt_UD_x_centers_stage = LookupTable555UDCenterStageXCenter(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
+        self.lt_centers_stage_experiment = LookupTable555CenterStageOnePhase(self)
         self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
 
         # phase 2
@@ -3874,12 +4298,36 @@ class RubiksCube555(RubiksCube):
         if False:
             self.group_centers_phase1_and_2()
 
-        else:
+        elif True:
             # phase 1
             self.group_centers_stage_LR()
 
             # phase 2
             self.group_centers_stage_FB()
+
+        else:
+            """
+            These are phase1 solutions for cube
+            LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF
+
+                R2  F  L2 Fw2 U2 Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+                L2 R2 Fw2  U2  F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'
+            """
+
+            """
+            for step in "L2 R2 Fw2 U2 F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'".split():
+                self.rotate(step)
+            self.solution.append(
+                "COMMENT_%d_steps_555_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
+            )
+            self.print_cube()
+            """
+            tmp_solution_len = len(self.solution)
+
+            # this works but takes 19 hours to run!! :(
+            # self.lt_centers_stage_experiment.solve_via_c(use_kociemba_string=True, solution="L2 R2 Fw2  U2  F Lw Dw2 Lw D Fw' Rw' Dw2 Lw2 Rw2 Dw' Bw'")
+            self.lt_centers_stage_experiment.solve_via_c()
+            self.print_cube_add_comment("centers staged", tmp_solution_len)
 
         # phase 3
         self.eo_edges()

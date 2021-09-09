@@ -281,6 +281,7 @@ class LookupTableIDAViaGraph(LookupTable):
         solution_count: int = None,
         find_extra: bool = False,
         use_kociemba_string: bool = False,
+        solution: str = None,
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
 
@@ -394,6 +395,10 @@ class LookupTableIDAViaGraph(LookupTable):
         if find_extra:
             cmd.append("--find-extra")
 
+        if solution is not None:
+            cmd.append("--solution")
+            cmd.append(solution)
+
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
 
@@ -460,6 +465,7 @@ class LookupTableIDAViaGraph(LookupTable):
         solution_count: int = None,
         find_extra: bool = False,
         use_kociemba_string: bool = False,
+        solution: str = None,
     ) -> None:
         solution = self.solutions_via_c(
             pt_states=pt_states,
@@ -468,6 +474,7 @@ class LookupTableIDAViaGraph(LookupTable):
             solution_count=solution_count,
             find_extra=find_extra,
             use_kociemba_string=use_kociemba_string,
+            solution=solution,
         )[0][0]
 
         for step in solution:

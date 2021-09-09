@@ -763,6 +763,7 @@ class RubiksCube444(RubiksCube):
         if not self.centers_staged():
             self.lt_ULFRBD_centers_stage.solve_via_c()
 
+        self.rotate_for_best_centers_staging(centers_444)
         phase1_solution_len = len(self.solution)
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
         self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")

@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, wing_str_map
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDAViaC
+from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinations
@@ -440,82 +440,309 @@ class LookupTable444HighLowEdges(LookupTable):
         return (lt_state, cost_to_goal)
 
 
-class LookupTableIDA444Reduce333(LookupTableIDAViaC):
+# phase 3
+class LookupTable444Reduce333FirstTwoCenters(LookupTable):
     """
-    lookup-table-4x4x4-step31-reduce333-edges.txt
-    =============================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 20 entries (0 percent, 5.00x previous step)
-    3 steps has 140 entries (0 percent, 7.00x previous step)
-    4 steps has 1,141 entries (0 percent, 8.15x previous step)
-    5 steps has 8,059 entries (0 percent, 7.06x previous step)
-    6 steps has 62,188 entries (0 percent, 7.72x previous step)
-    7 steps has 442,293 entries (0 percent, 7.11x previous step)
-    8 steps has 2,958,583 entries (1 percent, 6.69x previous step)
-    9 steps has 17,286,512 entries (7 percent, 5.84x previous step)
-    10 steps has 69,004,356 entries (28 percent, 3.99x previous step)
-    11 steps has 122,416,936 entries (51 percent, 1.77x previous step)
-    12 steps has 27,298,296 entries (11 percent, 0.22x previous step)
-    13 steps has 22,272 entries (0 percent, 0.00x previous step)
+    lookup-tables/lookup-table-4x4x4-step31-centers.txt
+    ===================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 115 entries (13 percent, 115.00x previous step)
+    2 steps has 212 entries (25 percent, 1.84x previous step)
+    3 steps has 288 entries (34 percent, 1.36x previous step)
+    4 steps has 192 entries (22 percent, 0.67x previous step)
+    5 steps has 32 entries (3 percent, 0.17x previous step)
 
-    Total: 239,500,800 entries
-    Average: 10.635709 moves
-
-
-    lookup-table-4x4x4-step32-reduce333-centers.txt
-    ===============================================
-    1 steps has 16 entries (0 percent, 0.00x previous step)
-    2 steps has 136 entries (0 percent, 8.50x previous step)
-    3 steps has 952 entries (1 percent, 7.00x previous step)
-    4 steps has 4,048 entries (6 percent, 4.25x previous step)
-    5 steps has 10,588 entries (18 percent, 2.62x previous step)
-    6 steps has 16,620 entries (28 percent, 1.57x previous step)
-    7 steps has 16,392 entries (27 percent, 0.99x previous step)
-    8 steps has 8,768 entries (14 percent, 0.53x previous step)
-    9 steps has 1,280 entries (2 percent, 0.15x previous step)
-
-    Total: 58,800 entries
-    Average: 6.27 moves
-
-
-    lookup-table-4x4x4-step30-reduce333.txt
-    =======================================
-    1 steps has 16 entries (0 percent, 0.00x previous step)
-    2 steps has 136 entries (0 percent, 8.50x previous step)
-    3 steps has 1,424 entries (0 percent, 10.47x previous step)
-    4 steps has 14,032 entries (0 percent, 9.85x previous step)
-    5 steps has 134,052 entries (9 percent, 9.55x previous step)
-    6 steps has 1,290,292 entries (89 percent, 9.63x previous step)
-
-    Total: 1,439,952 entries
+    Total: 840 entries
+    Average: 2.77 moves
     """
 
-    def __init__(self, parent):
+    state_targets = (
+        "LLLLBBBBRRRRFFFF",
+        "LLLLBFBFRRRRBFBF",
+        "LLLLBFBFRRRRFBFB",
+        "LLLLFBFBRRRRBFBF",
+        "LLLLFBFBRRRRFBFB",
+        "LLLLFFFFRRRRBBBB",
+        "LRLRBBBBLRLRFFFF",
+        "LRLRBBBBRLRLFFFF",
+        "LRLRBFBFLRLRBFBF",
+        "LRLRBFBFLRLRFBFB",
+        "LRLRBFBFRLRLBFBF",
+        "LRLRBFBFRLRLFBFB",
+        "LRLRFBFBLRLRBFBF",
+        "LRLRFBFBLRLRFBFB",
+        "LRLRFBFBRLRLBFBF",
+        "LRLRFBFBRLRLFBFB",
+        "LRLRFFFFLRLRBBBB",
+        "LRLRFFFFRLRLBBBB",
+        "RLRLBBBBLRLRFFFF",
+        "RLRLBBBBRLRLFFFF",
+        "RLRLBFBFLRLRBFBF",
+        "RLRLBFBFLRLRFBFB",
+        "RLRLBFBFRLRLBFBF",
+        "RLRLBFBFRLRLFBFB",
+        "RLRLFBFBLRLRBFBF",
+        "RLRLFBFBLRLRFBFB",
+        "RLRLFBFBRLRLBFBF",
+        "RLRLFBFBRLRLFBFB",
+        "RLRLFFFFLRLRBBBB",
+        "RLRLFFFFRLRLBBBB",
+        "RRRRBBBBLLLLFFFF",
+        "RRRRBFBFLLLLBFBF",
+        "RRRRBFBFLLLLFBFB",
+        "RRRRFBFBLLLLBFBF",
+        "RRRRFBFBLLLLFBFB",
+        "RRRRFFFFLLLLBBBB",
+    )
 
-        LookupTableIDAViaC.__init__(
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
             self,
             parent,
-            # Needed tables and their md5 signatures
-            # fmt: off
-            (
-                ("lookup-table-4x4x4-step30-reduce333.txt", "82fbc3414d07e53448d0746d96e25ebd"),  # 6-deep
-                ("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", "20ac2ed7ca369c3b5183f836f5d99262"),
-                ("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", "3f990fc1fb6bf506d81ba65f03ad74f6"),
-            ),
-            "4x4x4-reduce-333",  # C_ida_type
+            "lookup-table-4x4x4-step31-centers.txt",
+            self.state_targets,
+            linecount=840,
+            max_depth=5,
             all_moves=moves_444,
-            illegal_moves=[
-                "Uw", "Uw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Rw", "Rw'",
-                "Bw", "Bw'",
-                "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-            ],
-            # fmt: on
+            illegal_moves=(
+                "Uw",
+                "Uw'",
+                "Lw",
+                "Lw'",
+                "Fw",
+                "Fw'",
+                "Rw",
+                "Rw'",
+                "Bw",
+                "Bw'",
+                "Dw",
+                "Dw'",
+                "L",
+                "L'",
+                "R",
+                "R'",
+            ),
+            use_state_index=False,
+            build_state_index=build_state_index,
         )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in LFRB_centers_444])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(LFRB_centers_444, state):
+            cube[pos] = pos_state
+
+
+class LookupTable444Reduce333FirstFourEdges(LookupTable):
+    """
+    lookup-tables/lookup-table-4x4x4-step32-first-four-edges.txt
+    ============================================================
+    1 steps has 4 entries (0 percent, 0.00x previous step)
+    2 steps has 27 entries (0 percent, 6.75x previous step)
+    3 steps has 216 entries (0 percent, 8.00x previous step)
+    4 steps has 1,418 entries (0 percent, 6.56x previous step)
+    5 steps has 9,623 entries (0 percent, 6.79x previous step)
+    6 steps has 63,448 entries (1 percent, 6.59x previous step)
+    7 steps has 365,270 entries (6 percent, 5.76x previous step)
+    8 steps has 1,548,382 entries (26 percent, 4.24x previous step)
+    9 steps has 3,061,324 entries (52 percent, 1.98x previous step)
+    10 steps has 830,336 entries (14 percent, 0.27x previous step)
+    11 steps has 552 entries (0 percent, 0.00x previous step)
+
+    Total: 5,880,600 entries
+    Average: 8.71 moves
+    """
+
+    state_targets = ("--------a8b9ecfd--------",)
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-4x4x4-step32-first-four-edges.txt",
+            self.state_targets,
+            linecount=5880600,
+            max_depth=11,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Uw",
+                "Uw'",
+                "Lw",
+                "Lw'",
+                "Fw",
+                "Fw'",
+                "Rw",
+                "Rw'",
+                "Bw",
+                "Bw'",
+                "Dw",
+                "Dw'",
+                "L",
+                "L'",
+                "R",
+                "R'",
+            ),
+            use_state_index=False,
+            build_state_index=build_state_index,
+        )
+
+        """
+    # dwalton
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in CUBE_POSITION_LIST])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(CUBE_POSITION_LIST, state):
+            cube[pos] = pos_state
+        """
+
+
+# phase 4
+class LookupTable444Reduce333Centers(LookupTable):
+    """
+    lookup-tables/lookup-table-4x4x4-step41-centers.txt
+    ===================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 42 entries (1 percent, 10.50x previous step)
+    3 steps has 244 entries (9 percent, 5.81x previous step)
+    4 steps has 774 entries (30 percent, 3.17x previous step)
+    5 steps has 878 entries (34 percent, 1.13x previous step)
+    6 steps has 569 entries (22 percent, 0.65x previous step)
+    7 steps has 8 entries (0 percent, 0.01x previous step)
+
+    Total: 2,520 entries
+    Average: 4.67 moves
+    """
+
+    state_targets = ("UUUULLLLFFFFRRRRBBBBDDDD",)
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-4x4x4-step41-centers.txt",
+            self.state_targets,
+            linecount=2520,
+            max_depth=7,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Uw",
+                "Uw'",
+                "Lw",
+                "Lw'",
+                "Fw",
+                "Fw'",
+                "Rw",
+                "Rw'",
+                "Bw",
+                "Bw'",
+                "Dw",
+                "Dw'",
+                "L",
+                "L'",
+                "R",
+                "R'",
+                "Uw2",
+                "Dw2",
+                "F",
+                "F'",
+                "B",
+                "B'",
+            ),
+            use_state_index=False,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in centers_444])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(centers_444, state):
+            cube[pos] = pos_state
+
+
+# phase 4
+class LookupTable444Reduce333LastEightEdges(LookupTable):
+    """
+    lookup-tables/lookup-table-4x4x4-step42-last-eight-edges.txt
+    ============================================================
+    1 steps has 3 entries (0 percent, 0.00x previous step)
+    2 steps has 10 entries (0 percent, 3.33x previous step)
+    3 steps has 36 entries (0 percent, 3.60x previous step)
+    4 steps has 165 entries (0 percent, 4.58x previous step)
+    5 steps has 606 entries (3 percent, 3.67x previous step)
+    6 steps has 1,937 entries (9 percent, 3.20x previous step)
+    7 steps has 5,172 entries (25 percent, 2.67x previous step)
+    8 steps has 7,719 entries (38 percent, 1.49x previous step)
+    9 steps has 4,344 entries (21 percent, 0.56x previous step)
+    10 steps has 168 entries (0 percent, 0.04x previous step)
+
+    Total: 20,160 entries
+    Average: 7.65 moves
+    """
+
+    state_targets = ("10425376--------hgkiljnm",)
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-4x4x4-step42-last-eight-edges.txt",
+            self.state_targets,
+            linecount=20160,
+            max_depth=10,
+            all_moves=moves_444,
+            illegal_moves=(
+                "Uw",
+                "Uw'",
+                "Lw",
+                "Lw'",
+                "Fw",
+                "Fw'",
+                "Rw",
+                "Rw'",
+                "Bw",
+                "Bw'",
+                "Dw",
+                "Dw'",
+                "L",
+                "L'",
+                "R",
+                "R'",
+                "Uw2",
+                "Dw2",
+                "F",
+                "F'",
+                "B",
+                "B'",
+            ),
+            use_state_index=False,
+            build_state_index=build_state_index,
+        )
+
+        """
+    # dwalton
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in CUBE_POSITION_LIST])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(CUBE_POSITION_LIST, state):
+            cube[pos] = pos_state
+        """
 
 
 class RubiksCube444(RubiksCube):
@@ -667,7 +894,10 @@ class RubiksCube444(RubiksCube):
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_highlow_edges = LookupTable444HighLowEdges(self)
 
-        self.lt_reduce333 = LookupTableIDA444Reduce333(self)
+        self.lt_phase3_centers = LookupTable444Reduce333FirstTwoCenters(self)
+        self.lt_phase3_edges = LookupTable444Reduce333FirstFourEdges(self)
+        self.lt_phase4_centers = LookupTable444Reduce333Centers(self)
+        self.lt_phase4_edges = LookupTable444Reduce333LastEightEdges(self)
 
     def tsai_phase2(self) -> None:
         # Pick the best edge_mapping
@@ -784,19 +1014,19 @@ class RubiksCube444(RubiksCube):
 
         phase2_solution_len = len(self.solution)
 
-        # Pair all 12 edges and solve the centers in one phase
-        # Testing the phase3 prune tables
-        # self.lt_reduce333_edges_solve.solve()
-        # self.lt_reduce333_centers_solve.solve()
+        # dwalton solve the prune tables
+        # self.lt_phase3_centers.solve_old_school()
         # self.print_cube()
-        # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        # sys.exit(0)
 
-        # logger.info(f"edge swaps even {self.edge_swaps_even(False, 0, False)}")
-        # logger.info(f"corner swaps even {self.corner_swaps_even(False)}")
+        self.lt_phase3_edges.solve_old_school()
+        self.print_cube()
+        raise Exception("DONE")
 
-        self.lt_reduce333.avoid_pll = True
-        self.lt_reduce333.solve()
+        self.lt_phase4_centers.solve_old_school()
+        self.print_cube()
+
+        self.lt_phase4_edges.solve_old_school()
+        self.print_cube()
 
         if self.state[6] != "U" or self.state[38] != "F":
             self.rotate_U_to_U()

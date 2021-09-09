@@ -703,13 +703,7 @@ class RubiksCube444(RubiksCube):
                     edge_mapping_for_phase2_state[phase2_state] = edge_mapping
                     high_low_states_to_find.append(phase2_state)
 
-            logger.info(
-                f"{self}: edge_mapping binary_search_multiple {len(high_low_states_to_find)} high_low_states_to_find begin"
-            )
             high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
-            logger.info(
-                f"{self}: edge_mapping binary_search_multiple {len(high_low_states_to_find)} high_low_states_to_find end"
-            )
             min_edge_mapping = None
             min_phase2_cost = None
             min_phase2_steps = None
@@ -727,7 +721,7 @@ class RubiksCube444(RubiksCube):
                     min_phase2_steps = list(pre_steps) + phase2_steps[:]
                     logger.info(f"{desc} (NEW MIN)")
                 elif phase2_cost == min_phase2_cost:
-                    logger.info(f"{desc} (TIE)")
+                    logger.debug(f"{desc} (TIE)")
 
             if min_edge_mapping:
                 if pre_steps:

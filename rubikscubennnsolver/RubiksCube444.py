@@ -578,10 +578,15 @@ class LookupTable444Reduce333FirstFourEdges(LookupTable):
             use_state_index=False,
             build_state_index=build_state_index,
         )
+        self.only_colors = []
 
     def state(self):
-        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
-        state = edges_recolor_pattern_444(self.parent.state[:], self.only_colors)
+        if self.only_colors:
+            first_four_edges = self.only_colors
+        else:
+            first_four_edges = ("LB", "LF", "RB", "RF")
+
+        state = edges_recolor_pattern_444(self.parent.state[:], first_four_edges)
         return "".join([state[index] for index in wings_444])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
@@ -726,11 +731,14 @@ class LookupTable444Reduce333LastEightEdges(LookupTable):
         )
 
     def state(self):
-        last_eight_colors = []
+        if hasattr(self.parent, "lt_phase3_edges") and self.parent.lt_phase3_edges.only_colors:
+            last_eight_colors = []
 
-        for wing_str_combo in wing_strs_all:
-            if wing_str_combo not in self.parent.lt_phase3_edges.only_colors:
-                last_eight_colors.append(wing_str_combo)
+            for wing_str_combo in wing_strs_all:
+                if wing_str_combo not in self.parent.lt_phase3_edges.only_colors:
+                    last_eight_colors.append(wing_str_combo)
+        else:
+            last_eight_colors = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
         state = edges_recolor_pattern_444(self.parent.state[:], last_eight_colors)
         return "".join([state[index] for index in wings_444])
@@ -757,7 +765,7 @@ class LookupTable444Reduce333LastEightEdges(LookupTable):
         self.parent.nuke_centers()
 
         for pos in x_plane_edges_444:
-            self.parent.state[pos] = "."
+            self.parent.state[pos] = "-"
 
         for step in steps_to_scramble:
             self.parent.rotate(step)

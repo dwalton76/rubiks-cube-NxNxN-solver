@@ -199,11 +199,13 @@ class LookupTable444UDCentersStage(LookupTable):
             self.state_targets,
             linecount=735471,
             max_depth=8,
-            filesize=40450905,
             all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
+            illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="2835d311466ad3fada95722fb676ec1a",
+            md5_state_index="d0b9bbb685a08bf985782daa78208330",
+            md5_txt="a26afb9be23495b3ec19abef686901ae",
         )
 
     def state(self) -> str:
@@ -257,11 +259,13 @@ class LookupTable444LRCentersStage(LookupTable):
             self.state_targets,
             linecount=735471,
             max_depth=8,
-            filesize=40450905,
             all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
+            illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="2835d311466ad3fada95722fb676ec1a",
+            md5_state_index="79f362d800935a484dab4de8f655ca07",
+            md5_txt="b8609a899722c2c9132d21b09f98c5d9",
         )
 
     def state(self) -> str:
@@ -287,77 +291,14 @@ class LookupTable444LRCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable444FBCentersStage(LookupTable):
-    """
-    lookup-table-4x4x4-step13-FB-centers-stage.txt
-    ==============================================
-    0 steps has 3 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 2.00x previous step)
-    2 steps has 108 entries (0 percent, 18.00x previous step)
-    3 steps has 1,434 entries (0 percent, 13.28x previous step)
-    4 steps has 15,210 entries (2 percent, 10.61x previous step)
-    5 steps has 126,306 entries (17 percent, 8.30x previous step)
-    6 steps has 420,312 entries (57 percent, 3.33x previous step)
-    7 steps has 171,204 entries (23 percent, 0.41x previous step)
-    8 steps has 888 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    Average: 6.02 moves
-    """
-
-    state_targets = ("FFFFxxxxxxxxxxxxxxxxFFFF", "xxxxFFFFxxxxFFFFxxxxxxxx", "xxxxxxxxFFFFxxxxFFFFxxxx")
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-4x4x4-step13-FB-centers-stage.txt",
-            self.state_targets,
-            linecount=735471,
-            max_depth=8,
-            filesize=40450905,
-            all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self) -> str:
-        """
-        Returns:
-            the state of the cube per this lookup table
-        """
-        parent_state = self.parent.state
-        return "".join(["F" if parent_state[x] in ("F", "B") else "x" for x in centers_444])
-
-    def populate_cube_from_state(self, state: str, cube: List[str], steps_to_solve: List[str]) -> None:
-        """
-        Given a state string, populate the cube to match that state string
-
-        Args:
-            state: the target state
-            cube: the cube to manipulate
-            steps_to_solve: N/A for this table
-        """
-        state = list(state)
-
-        for (pos, pos_state) in zip(centers_444, state):
-            cube[pos] = pos_state
-
-
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_444,
-            illegal_moves=("Lw", "Lw'", "Lw2", "Bw", "Bw'", "Bw2", "Dw", "Dw'", "Dw2"),
-            prune_tables=[
-                parent.lt_UD_centers_stage,
-                parent.lt_LR_centers_stage,
-                # parent.lt_FB_centers_stage,
-            ],
-            centers_only=True,
+            illegal_moves=(),
+            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage],
         )
 
 
@@ -388,7 +329,7 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
             "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
             linecount=2704156,
             max_depth=10,
-            filesize=227149104,
+            md5_txt="70496f999f5de71e34164fc8fd17726c",
         )
 
 
@@ -426,7 +367,7 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
             ),
             linecount=70,
             max_depth=4,
-            filesize=1610,
+            md5_txt="8b9c6869ea131aeb20584f5632ae3084",
         )
 
 
@@ -467,7 +408,7 @@ class LookupTable444HighLowEdges(LookupTable):
             legal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             linecount=2304998,
             max_depth=6,
-            filesize=182094842,
+            md5_txt="17d09599ec9d8a6b590628dd3ad60f42",
         )
 
     def state(self) -> str:
@@ -557,31 +498,23 @@ class LookupTableIDA444Reduce333(LookupTableIDAViaC):
             # Needed tables and their md5 signatures
             # fmt: off
             (
-                ("lookup-table-4x4x4-step30-reduce333.txt", 73437552, "82fbc3414d07e53448d0746d96e25ebd"),  # 6-deep
-                ("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848, "20ac2ed7ca369c3b5183f836f5d99262"),
-                ("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", None, "3f990fc1fb6bf506d81ba65f03ad74f6"),
+                ("lookup-table-4x4x4-step30-reduce333.txt", "82fbc3414d07e53448d0746d96e25ebd"),  # 6-deep
+                ("lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", "20ac2ed7ca369c3b5183f836f5d99262"),
+                ("lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", "3f990fc1fb6bf506d81ba65f03ad74f6"),
             ),
-            # fmt: on
             "4x4x4-reduce-333",  # C_ida_type
             all_moves=moves_444,
             illegal_moves=[
-                "Uw",
-                "Uw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Rw",
-                "Rw'",
-                "Bw",
-                "Bw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
             ],
+            # fmt: on
         )
 
 
@@ -653,34 +586,6 @@ class RubiksCube444(RubiksCube):
         if debug:
             logger.setLevel(logging.DEBUG)
 
-    def phase(self) -> str:
-        """
-        Returns:
-            a description of the current phase of the solver
-        """
-        if self._phase is None:
-            self._phase = "Stage UD centers"
-            return self._phase
-
-        if self._phase == "Stage UD centers":
-            if self.UD_centers_staged():
-                self._phase = "Stage LR centers"
-            return self._phase
-
-        if self._phase == "Stage LR centers":
-            if self.LR_centers_staged():
-                self._phase = "Solve Centers"
-
-        if self._phase == "Solve Centers":
-            if self.centers_solved():
-                self._phase = "Pair Edges"
-
-        if self._phase == "Pair Edges":
-            if not self.get_non_paired_edges():
-                self._phase = "Solve 3x3x3"
-
-        return self._phase
-
     def sanity_check(self) -> None:
         """
         Verify the cube is valid
@@ -740,7 +645,7 @@ class RubiksCube444(RubiksCube):
             for square_index in side.edge_pos:
                 self.state[square_index] = orient_edge_state[orient_edge_state_index]
                 orient_edge_state_index += 1
-        self.print_cube()
+        self.print_cube("high/low edges")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -755,8 +660,6 @@ class RubiksCube444(RubiksCube):
 
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-        self.lt_FB_centers_stage = LookupTable444FBCentersStage(self)
-
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
 
@@ -775,7 +678,6 @@ class RubiksCube444(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
         phase1_solution_len = len(self.solution)
-        logger.info(f"{self}: Start of find best edge_mapping")
 
         for pre_steps in pre_steps_to_try:
             self.state = original_state[:]
@@ -793,9 +695,9 @@ class RubiksCube444(RubiksCube):
             # us to NOT load this file into memory.
             high_low_states_to_find = []
             edge_mapping_for_phase2_state = {}
-            count = 0
 
-            for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
+            # for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
+            for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
                 for edge_mapping in edges_to_flip_sets:
                     self.state[:] = tmp_state[:]
                     self.solution[:] = tmp_solution[:]
@@ -804,21 +706,8 @@ class RubiksCube444(RubiksCube):
                     phase2_state = self.lt_highlow_edges.state()
                     edge_mapping_for_phase2_state[phase2_state] = edge_mapping
                     high_low_states_to_find.append(phase2_state)
-                    count += 1
 
-                    # If we evaluate all 2048 of them on a pi3 it takes about 1500ms which ends
-                    # up being a huge chunk of the total solve time.  Checking the first 25% will
-                    # get us a reasonably short solution.
-                    if count >= 512:
-                        break
-
-            logger.info(
-                f"{self}: edge_mapping binary_search_multiple {len(high_low_states_to_find)} high_low_states_to_find begin"
-            )
             high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
-            logger.info(
-                f"{self}: edge_mapping binary_search_multiple {len(high_low_states_to_find)} high_low_states_to_find end"
-            )
             min_edge_mapping = None
             min_phase2_cost = None
             min_phase2_steps = None
@@ -828,12 +717,15 @@ class RubiksCube444(RubiksCube):
                 self.solution = tmp_solution[:]
                 phase2_steps = phase2_steps.split()
                 phase2_cost = len(phase2_steps)
+                desc = f"{self}: edge_mapping {min_edge_mapping}, phase2 cost {phase2_cost}"
 
                 if min_phase2_cost is None or phase2_cost < min_phase2_cost:
                     min_phase2_cost = phase2_cost
                     min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
                     min_phase2_steps = list(pre_steps) + phase2_steps[:]
-                    logger.info(f"{self}: using edge_mapping {min_edge_mapping}, phase2 cost {phase2_cost}")
+                    logger.info(f"{desc} (NEW MIN)")
+                elif phase2_cost == min_phase2_cost:
+                    logger.debug(f"{desc} (TIE)")
 
             if min_edge_mapping:
                 if pre_steps:
@@ -841,8 +733,6 @@ class RubiksCube444(RubiksCube):
                 break
         else:
             assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
-
-        logger.info(f"{self}: End of find best edge_mapping")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -855,17 +745,14 @@ class RubiksCube444(RubiksCube):
         # self.highlow_edges_print()
         # sys.exit(0)
 
-        logger.info(f"{self}: Start of Phase2, {self.get_solution_len_minus_rotates(self.solution)} steps in")
-
         for step in min_phase2_steps:
             self.rotate(step)
 
         self.solution.append(
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_444_phase2"
         )
-        self.print_cube()
         self.highlow_edges_print()
-        logger.info(f"{self}: End of Phase2, {self.get_solution_len_minus_rotates(self.solution)} steps in")
+        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
     def reduce_333(self) -> None:
 
@@ -873,30 +760,25 @@ class RubiksCube444(RubiksCube):
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
 
-        logger.info(f"{self}: Start of Phase1")
-
         if not self.centers_staged():
-            self.print_cube()
             self.lt_ULFRBD_centers_stage.solve_via_c()
-            self.print_cube()
 
-        if self.rotate_for_best_centers_staging():
-            self.print_cube()
-
+        self.rotate_for_best_centers_staging(centers_444)
         phase1_solution_len = len(self.solution)
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
-        logger.info(f"{self}: End of Phase1, {self.get_solution_len_minus_rotates(self.solution)} steps in")
+        self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
         # We need the edge swaps to be even for our edges lookup table to work.
         if self.edge_swaps_odd(False, 0, False):
             logger.warning(f"{self}: edge swaps are odd, running prevent_OLL to correct")
             self.prevent_OLL()
-            self.print_cube()
+            self.print_cube(
+                f"{self}: end of prevent_OLL ({self.get_solution_len_minus_rotates(self.solution)} steps in)"
+            )
             self.solution.append(
                 f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_prevent_OLL"
             )
-            logger.info(f"{self}: End of prevent_OLL, {self.get_solution_len_minus_rotates(self.solution)} steps in")
 
         self.tsai_phase2()
 
@@ -910,7 +792,9 @@ class RubiksCube444(RubiksCube):
         # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         # sys.exit(0)
 
-        logger.info(f"{self}: Start of Phase3, {self.get_solution_len_minus_rotates(self.solution)} steps in")
+        # logger.info(f"edge swaps even {self.edge_swaps_even(False, 0, False)}")
+        # logger.info(f"corner swaps even {self.corner_swaps_even(False)}")
+
         self.lt_reduce333.avoid_pll = True
         self.lt_reduce333.solve()
 
@@ -918,11 +802,10 @@ class RubiksCube444(RubiksCube):
             self.rotate_U_to_U()
             self.rotate_F_to_F()
 
-        self.print_cube()
+        self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
         self.solution.append(
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:])}_steps_444_phase3"
         )
-        logger.info(f"{self}: End of Phase3, {self.get_solution_len_minus_rotates(self.solution)} steps in")
         logger.info("")
 
         self.solution.append("CENTERS_SOLVED")

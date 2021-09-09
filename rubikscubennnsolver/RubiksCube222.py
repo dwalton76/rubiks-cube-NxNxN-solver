@@ -20,13 +20,6 @@ solved_222: str = "UUUURRRRFFFFDDDDLLLLBBBB"
 
 
 class RubiksCube222(RubiksCube):
-    def phase(self) -> str:
-        """
-        Returns:
-            a description of the current phase of the solver
-        """
-        return "Solve 2x2x2"
-
     def solve_non_table(self) -> None:
         """
         100% of the credit for this 2x2x2 solver goes to

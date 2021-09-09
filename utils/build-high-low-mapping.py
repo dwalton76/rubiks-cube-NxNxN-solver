@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Ran once for 333, 444, 555 and 666 cubes to generate
 """

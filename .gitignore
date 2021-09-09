@@ -104,3 +104,6 @@ ida_search.dSYM
 ida_search_via_graph
 lookup-tables
 my-pt-states.txt
+gmon.out
+prof_output
+NOTES.txt

@@ -133,9 +133,16 @@ void LOG(const char *fmt, ...);
 unsigned long hex_to_int(char value);
 unsigned long max(unsigned long a, unsigned long b);
 
+struct ida_search_result {
+    unsigned int f_cost;
+    unsigned int found_solution;
+    move_type solution[MOVE_MAX];
+};
+
 struct ida_heuristic_result {
     char lt_state[64];
     unsigned int cost_to_goal;
+    unsigned int unpaired_count;
 };
 
 // uthash references
@@ -159,14 +166,19 @@ int strmatch(char *str1, char *str2);
 
 void print_moves(move_type *moves, int max_i);
 
-unsigned int wide_turn_count(move_type *moves);
-unsigned int get_orbit0_wide_half_turn_count(move_type *moves);
-unsigned int get_orbit0_wide_quarter_turn_count(move_type *moves);
-unsigned int get_orbit1_wide_quarter_turn_count(move_type *moves);
-unsigned int get_outer_layer_quarter_turn_count(move_type *moves);
-int moves_cancel_out(move_type move, move_type prev_move);
-int steps_on_same_face_and_layer(move_type move, move_type prev_move);
-int outer_layer_move(move_type move);
-int outer_layer_moves_in_order(move_type move, move_type prev_move);
+unsigned char wide_turn_count(move_type *moves);
+unsigned char get_orbit0_wide_half_turn_count(move_type *moves);
+unsigned char get_orbit0_wide_quarter_turn_count(move_type *moves);
+unsigned char get_orbit1_wide_quarter_turn_count(move_type *moves);
+unsigned char get_outer_layer_quarter_turn_count(move_type *moves);
+unsigned char moves_cancel_out(move_type prev_move, move_type move);
+unsigned char steps_on_same_face_and_layer(move_type prev_move, move_type move);
+unsigned char steps_on_same_face(move_type prev_move, move_type move);
+unsigned char outer_layer_move(move_type move);
+unsigned char outer_layer_moves_in_order(move_type prev_move, move_type move);
+unsigned char steps_on_same_face_in_order(move_type prev_move, move_type move);
+unsigned char steps_on_opposite_faces(move_type prev_move, move_type move);
+unsigned char steps_on_opposite_faces_in_order(move_type prev_move, move_type move);
+unsigned char invalid_prune(unsigned char cost_to_here, move_type *moves_to_here, unsigned int threshold);
 
 #endif /* _IDA_SEARCH_CORE_H */

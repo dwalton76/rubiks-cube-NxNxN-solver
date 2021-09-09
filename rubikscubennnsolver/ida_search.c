@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/resource.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -15,6 +14,7 @@
 #include "ida_search_777.h"
 #include "ida_search_core.h"
 #include "uthash.h"
+#include "xxhash.h"
 
 // scratchpads that we do not want to allocate over and over again
 char *sp_cube_state;
@@ -26,7 +26,6 @@ unsigned char centers_only = 0;
 unsigned char legal_move_count = 0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
-move_type same_face_and_layer_matrix[MOVE_MAX][MOVE_MAX];
 #define MAX_IDA_THRESHOLD 20
 
 // Supported IDA searches
@@ -53,7 +52,6 @@ char *UD_centers_cost_only_444 = NULL;
 char *LR_centers_cost_only_444 = NULL;
 char *FB_centers_cost_only_444 = NULL;
 
-struct key_value_pair *reduce_333_444 = NULL;
 char *reduce_333_edges_only = NULL;
 char *reduce_333_centers_only = NULL;
 struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
@@ -238,19 +236,19 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, un
     switch (type) {
         // 4x4x4
         case REDUCE_333_444:
-            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, &reduce_333_444, reduce_333_edges_only,
-                                                reduce_333_centers_only, wings_for_recolor_444);
+            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, reduce_333_edges_only, reduce_333_centers_only,
+                                                wings_for_recolor_444);
 
         // 6x6x6
         case LR_OBLIQUE_EDGES_STAGE_666:
-            return ida_heuristic_LR_oblique_edges_stage_666(cube, max_cost_to_goal);
+            return ida_heuristic_LR_oblique_edges_stage_666(cube);
 
         // 7x7x7
         case LR_OBLIQUE_EDGES_STAGE_777:
-            return ida_heuristic_LR_oblique_edges_stage_777(cube, max_cost_to_goal);
+            return ida_heuristic_LR_oblique_edges_stage_777(cube);
 
         case UD_OBLIQUE_EDGES_STAGE_777:
-            return ida_heuristic_UD_oblique_edges_stage_777(cube, max_cost_to_goal);
+            return ida_heuristic_UD_oblique_edges_stage_777(cube);
 
         default:
             printf("ERROR: ida_heuristic() does not yet support this --type\n");
@@ -340,7 +338,7 @@ unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned i
                     /* Read the output a line at a time - output it. */
                     while (fgets(path, sizeof(path) - 1, fp) != NULL) {
                         if (strmatch(path, "True\n")) {
-                            // LOG("Found solution but it has PLL\n");
+                            LOG("Found solution but it has PLL\n");
                             result = 0;
                             break;
                         } else if (strmatch(path, "False\n")) {
@@ -383,22 +381,16 @@ unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned i
     return 0;
 }
 
-struct ida_search_result {
-    unsigned int f_cost;
-    unsigned int found_solution;
-};
-
 struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_to_here, unsigned int threshold,
                                     move_type prev_move, char *cube, unsigned int cube_size, lookup_table_type type,
                                     unsigned int orbit0_wide_quarter_turns, unsigned int orbit1_wide_quarter_turns,
                                     unsigned int avoid_pll) {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
-    move_type move, skip_other_steps_this_face;
+    move_type move;
     struct ida_heuristic_result heuristic_result;
     char cube_tmp[array_size];
     char cost_to_here_str[4];
-    skip_other_steps_this_face = MOVE_NONE;
     struct ida_search_result search_result, tmp_search_result;
 
     ida_count++;
@@ -408,28 +400,38 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     f_cost = cost_to_here + cost_to_goal;
     search_result.f_cost = f_cost;
     search_result.found_solution = 0;
+    move_type *prev_move_move_matrix = NULL;
+    size_t array_size_char = sizeof(char) * array_size;
 
-    // Abort Searching
-    if (f_cost >= threshold) {
-        // if (debug) {
-        //    LOG("IDA prune f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
-        //        f_cost, threshold, cost_to_here, cost_to_goal);
-        //    LOG("\n");
-        //}
-        return search_result;
-    }
-
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll,
-                            moves_to_here)) {
+    if (cost_to_goal == 0 && ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns,
+                                                 avoid_pll, moves_to_here)) {
         // We are finished!!
         LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count, f_cost,
             threshold, cost_to_here, cost_to_goal);
         print_moves(moves_to_here, cost_to_here);
-        search_result.found_solution = 1;
+
+        if (!search_result.found_solution || f_cost < search_result.f_cost) {
+            search_result.f_cost = f_cost;
+            search_result.found_solution = 1;
+            memcpy(search_result.solution, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+        }
 
         // print the solved cube
         print_cube(cube, cube_size);
+        return search_result;
+    }
 
+    // Stop searching down this branch
+    if (f_cost > threshold) {
+        // uncomment this to troubleshoot when the correct solution is incorrectly pruned
+        /*
+        if (invalid_prune(cost_to_here, moves_to_here, threshold)) {
+            LOG("IDA invalid prune HERE 00, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n",
+                f_cost, threshold, cost_to_here, cost_to_goal);
+            print_moves(moves_to_here, cost_to_here);
+            exit(1);
+        }
+         */
         return search_result;
     }
 
@@ -441,27 +443,10 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     }
 
     hash_add(&ida_explored, heuristic_result.lt_state, 0);
+    prev_move_move_matrix = move_matrix[prev_move];
 
     for (unsigned char i = 0; i < legal_move_count; i++) {
-        move = move_matrix[prev_move][i];
-
-        // https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-        /*
-         * Well, it's a simple technique to reduce the number of nodes accessed.
-         * For example, we start at a position S whose pruning value is no more
-         * than maxl, otherwise, S will be pruned in previous searching.  After
-         * a move X, we obtain position S', whose pruning value is larger than
-         * maxl, which means that X makes S farther from the solved state.  In
-         * this case, we won't try X2 and X'.
-         * --cs0x7f
-         */
-        if (skip_other_steps_this_face != MOVE_NONE) {
-            if (same_face_and_layer_matrix[skip_other_steps_this_face][move]) {
-                continue;
-            } else {
-                skip_other_steps_this_face = MOVE_NONE;
-            }
-        }
+        move = prev_move_move_matrix[i];
 
         // This is the scenario where the move is on the same face and layer as prev_move
         if (move == MOVE_NONE) {
@@ -469,7 +454,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         }
 
         char cube_copy[array_size];
-        memcpy(cube_copy, cube, sizeof(char) * array_size);
+        memcpy(cube_copy, cube, array_size_char);
 
         if (cube_size == 4) {
             rotate_444(cube_copy, cube_tmp, array_size, move);
@@ -481,6 +466,11 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
             printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
             exit(1);
         }
+
+        // if the cube state did not change, continue
+        if (memcmp(cube, cube_copy, array_size_char) == 0) {
+            continue;
+        }
         moves_to_here[cost_to_here] = move;
 
         tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
@@ -490,16 +480,115 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
             return tmp_search_result;
         } else {
             moves_to_here[cost_to_here] = MOVE_NONE;
-
-            if (tmp_search_result.f_cost > threshold) {
-                skip_other_steps_this_face = move;
-            } else {
-                skip_other_steps_this_face = MOVE_NONE;
-            }
         }
     }
 
     return search_result;
+}
+
+void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_result search_result) {
+    unsigned int solution_len = search_result.f_cost;
+    char cube_tmp[array_size];
+    char cube_copy[array_size];
+    size_t array_size_char = sizeof(char) * array_size;
+    unsigned int cost_to_goal = 0;
+
+    memcpy(cube_copy, cube, array_size_char);
+
+    if (type == REDUCE_333_444) {
+        char edges_state[NUM_EDGES_444 + 1];
+        char centers_state[NUM_CENTERS_444 + 1];
+        unsigned long edges_state_bucket = 0;
+        unsigned long centers_state_bucket = 0;
+        unsigned int edges_cost = 0;
+        unsigned int centers_cost = 0;
+
+        unsigned int centers_edges_cost_444[10][13] = {
+            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},   // centers cost 0
+            {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},   // centers cost 1
+            {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 12},   // centers cost 2
+            {3, 3, 3, 3, 4, 5, 6, 7, 8, 9, 12, 13, 12},   // centers cost 3
+            {4, 4, 4, 4, 4, 5, 6, 7, 8, 9, 12, 13, 14},   // centers cost 4
+            {5, 5, 5, 5, 5, 5, 6, 7, 8, 9, 12, 13, 14},   // centers cost 5
+            {6, 6, 6, 6, 6, 6, 6, 7, 8, 9, 12, 13, 12},   // centers cost 6
+            {7, 7, 7, 7, 7, 7, 7, 7, 8, 9, 12, 13, 12},   // centers cost 7
+            {8, 8, 8, 8, 8, 8, 8, 8, 8, 11, 12, 13, 12},  // centers cost 8
+            {9, 9, 9, 9, 9, 9, 9, 9, 13, 9, 10, 13, 12},  // centers cost 9
+        };
+
+        centers_state_444(cube, centers_state);
+        centers_state_bucket = XXH32(centers_state, NUM_CENTERS_444, 0) % BUCKETSIZE_CENTERS_444;
+        centers_cost = hex_to_int(reduce_333_centers_only[centers_state_bucket]);
+
+        edges_state_444(cube, wings_for_recolor_444, edges_state);
+        edges_state_bucket = XXH32(edges_state, NUM_EDGES_444, 0) % BUCKETSIZE_EDGES_444;
+        edges_cost = hex_to_int(reduce_333_edges_only[edges_state_bucket]);
+        cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
+
+        printf("\n\n");
+        printf("       CENTERS  EDGES  CTG  TRU  IDX\n");
+        printf("       =======  =====  ===  ===  ===\n");
+        printf(" INIT  %7d  %5d  %3d  %3d  %3d\n", centers_cost, edges_cost, cost_to_goal, search_result.f_cost, 0);
+
+        for (unsigned char i = 0; i < solution_len; i++) {
+            rotate_444(cube, cube_tmp, array_size, search_result.solution[i]);
+            centers_state_444(cube, centers_state);
+            centers_state_bucket = XXH32(centers_state, NUM_CENTERS_444, 0) % BUCKETSIZE_CENTERS_444;
+            centers_cost = hex_to_int(reduce_333_centers_only[centers_state_bucket]);
+
+            edges_state_444(cube, wings_for_recolor_444, edges_state);
+            edges_state_bucket = XXH32(edges_state, NUM_EDGES_444, 0) % BUCKETSIZE_EDGES_444;
+            edges_cost = hex_to_int(reduce_333_edges_only[edges_state_bucket]);
+            cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
+
+            printf("%5s  %7d  %5d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], centers_cost, edges_cost,
+                   cost_to_goal, search_result.f_cost - i - 1, i + 1);
+        }
+        printf("\n");
+
+    } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_STAGE_777 ||
+               type == UD_OBLIQUE_EDGES_STAGE_777) {
+        struct ida_heuristic_result heuristic;
+
+        if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+            heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
+        } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
+            heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
+        } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
+            heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
+        }
+
+        printf("\n\n");
+        printf("       UNPAIRED\n");
+        printf("          COUNT  CTG  TRU  IDX\n");
+        printf("       ========  ===  ===  ===\n");
+        printf(" INIT  %8d  %3d  %3d  %3d\n", heuristic.unpaired_count, heuristic.cost_to_goal, search_result.f_cost,
+               0);
+
+        for (unsigned char i = 0; i < solution_len; i++) {
+            if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+                rotate_666(cube, cube_tmp, array_size, search_result.solution[i]);
+                heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
+            } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
+                rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
+                heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
+            } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
+                rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
+                heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
+            } else {
+                printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
+                exit(1);
+            }
+
+            printf("%5s  %8d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], heuristic.unpaired_count,
+                   heuristic.cost_to_goal, search_result.f_cost - i - 1, i + 1);
+        }
+        printf("\n");
+
+    } else {
+        printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
+        exit(1);
+    }
 }
 
 int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
@@ -523,7 +612,6 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
     }
 
     if (type == REDUCE_333_444) {
-        ida_prune_table_preload(&reduce_333_444, "lookup-tables/lookup-table-4x4x4-step30-reduce333.txt");
         reduce_333_edges_only = ida_cost_only_preload(
             "lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
         reduce_333_centers_only = ida_cost_only_preload(
@@ -561,6 +649,8 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n", ida_count_total,
                 ms / 1000, nodes_per_sec);
+
+            print_ida_summary(type, cube, search_result);
             return 1;
         }
     }
@@ -580,7 +670,6 @@ int main(int argc, char *argv[]) {
     memset(kociemba, 0, sizeof(char) * 300);
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
-    memset(same_face_and_layer_matrix, 0, MOVE_MAX * MOVE_MAX);
 
     for (int i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
@@ -803,6 +892,15 @@ int main(int argc, char *argv[]) {
                 // U B F, etc. We can do only one of those and that is enough.
                 move_matrix[i_move][j] = MOVE_NONE;
 
+                // this has a negative impact on some of the oblique edge pairing searches
+                /*
+                 * } else if (!steps_on_same_face_in_order(i_move, j_move)) {
+                 *   move_matrix[i_move][j] = MOVE_NONE;
+                 */
+
+            } else if (!steps_on_opposite_faces_in_order(i_move, j_move)) {
+                move_matrix[i_move][j] = MOVE_NONE;
+
             } else {
                 move_matrix[i_move][j] = j_move;
             }
@@ -812,18 +910,6 @@ int main(int argc, char *argv[]) {
     move_type i_move = MOVE_NONE;
     for (unsigned char j = 0; j < legal_move_count; j++) {
         move_matrix[i_move][j] = legal_moves[j];
-    }
-
-    // build the same_face_and_layer_matrix, we do this to avoid tons of
-    // steps_on_same_face_and_layer() during the IDA search
-    for (unsigned char i = 1; i < MOVE_MAX; i++) {
-        for (unsigned char j = 1; j < MOVE_MAX; j++) {
-            if (steps_on_same_face_and_layer(i, j)) {
-                same_face_and_layer_matrix[i][j] = 1;
-            } else {
-                same_face_and_layer_matrix[i][j] = 0;
-            }
-        }
     }
 
     unsigned int cube_size = cube_size_kociemba;
@@ -842,9 +928,4 @@ int main(int argc, char *argv[]) {
 
     // print_cube(cube, cube_size);
     ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
-
-    // Print the maximum resident set size used (in MB).
-    struct rusage r_usage;
-    getrusage(RUSAGE_SELF, &r_usage);
-    printf("Memory usage: %lu MB\n", (unsigned long)r_usage.ru_maxrss / (1024 * 1024));
 }

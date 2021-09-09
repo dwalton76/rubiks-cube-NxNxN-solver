@@ -105,9 +105,8 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-        self.print_cube()
-        logger.info(
-            "%s: Inside edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        self.print_cube(
+            "%s: inside edges are paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def pair_edge_orbit_via_555(self, orbit):
@@ -219,12 +218,9 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             start_555 += 25
 
         fake_555.sanity_check()
-        self.print_cube()
         fake_555.enable_print_cube = True
-        fake_555.print_cube()
         fake_555.avoid_pll = False
         fake_555.reduce_333()
-        fake_555.print_cube()
 
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
@@ -297,5 +293,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         for orbit in reversed(list(range(0, max_orbit - 1))):
             self.pair_edge_orbit_via_555(orbit)
 
-        self.print_cube()
-        logger.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube(
+            "%s: edges are paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )

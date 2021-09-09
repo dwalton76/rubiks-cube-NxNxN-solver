@@ -67,6 +67,109 @@ def binary_search(fh: TextIO, width: int, state_width: int, linecount: int, stat
     return None
 
 
+def binary_search_list(states: List[str], b_state_to_find: str) -> Tuple[bool, int]:
+    """
+    Args:
+        states: a list of strings to search
+        b_state_to_find: the state to look for
+
+    Returns
+        True if we found ``b_state_to_find``
+        the line number for ``b_state_to_find``
+    """
+    first = 0
+    linecount = len(states)
+    last = linecount - 1
+
+    while first <= last:
+        midpoint = int((first + last) / 2)
+        b_state = bytearray(states[midpoint], encoding="utf-8")
+
+        if b_state_to_find < b_state:
+            last = midpoint - 1
+
+        # If this is the line we are looking for, then read the entire line
+        elif b_state_to_find == b_state:
+            return (True, midpoint)
+
+        else:
+            first = midpoint + 1
+
+    return (False, first)
+
+
+def binary_search_multiple(
+    fh: TextIO, width: int, state_width: int, linecount: int, states_to_find: List[str]
+) -> Dict[str, str]:
+    """
+    Args:
+        states_to_find: a list of states to search for
+
+    Returns:
+        a dictionary where the state is the key and the value is a move sequence or move count
+    """
+    states_to_find = sorted(states_to_find)
+    cache = []
+    results = {}
+    fh.seek(0)
+    b_state_first = fh.read(state_width)
+
+    fh.seek((linecount - 1) * width)
+    b_state_last = fh.read(state_width)
+
+    (_, starting_index) = binary_search_list(states_to_find, b_state_first)
+    # logger.info("start at index %d" % starting_index)
+
+    for state_to_find in states_to_find[starting_index:]:
+        b_state_to_find = bytearray(state_to_find, encoding="utf-8")
+
+        # This provides a pretty massive improvement when you are looking for 100k+ states
+        if b_state_to_find < b_state_first:
+            # This part is basically a no-op now that we binary_search states_to_find
+            # for b_state_first to find the starting_index
+            continue
+        elif b_state_to_find > b_state_last:
+            break
+
+        if cache:
+            (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
+        else:
+            first = 0
+            last = linecount - 1
+
+        # logger.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
+        while first <= last:
+            midpoint = int((first + last) / 2)
+            fh.seek(midpoint * width)
+
+            # Only read the 'state' part of the line (for speed)
+            b_state = fh.read(state_width)
+
+            # We did a read...reads are expensive...cache the read
+            cache.append((midpoint, b_state))
+
+            if b_state_to_find < b_state:
+                last = midpoint - 1
+
+            # If this is the line we are looking for, then read the entire line
+            elif b_state_to_find == b_state:
+                fh.seek(midpoint * width)
+                line = fh.read(width)
+                (_, value) = line.decode("utf-8").rstrip().split(":")
+                if value.isdigit():
+                    value = int(value)
+                results[state_to_find] = value
+                break
+
+            else:
+                first = midpoint + 1
+        else:
+            # results[state_to_find] = None
+            pass
+
+    return results
+
+
 def get_file_vitals(filename: str) -> Tuple[int, int, int]:
     """
     Args:
@@ -320,16 +423,15 @@ def md5signature(filename: str) -> str:
     with open(filename, "rb") as fh:
         buf = fh.read()
         hasher.update(buf)
-    return hasher.hexdigest()
+    return str(hasher.hexdigest())
 
 
-def rm_file_if_mismatch(filename: str, filesize: int, md5target: str) -> None:
+def rm_file_if_mismatch(filename: str, md5target: str) -> None:
     """
-    Delete a file if its filesize or md5 signature do not match
+    Delete a file if its md5 signature does not match
 
     Args:
         filename: the file to examine
-        filesize: the size of the file in bytes
         md5target: the md5 signature to look for
     """
     filename_gz = filename + ".gz"
@@ -337,30 +439,18 @@ def rm_file_if_mismatch(filename: str, filesize: int, md5target: str) -> None:
     # This only happens if a new copy of the lookup table has been checked in...we need to delete
     # the one we have and download the new one.
     if os.path.exists(filename):
-        if filesize is not None:
-            if os.path.getsize(filename) != filesize:
-                logger.info(
-                    f"{filename}: filesize {os.path.getsize(filename):,} does not equal target filesize {filesize:,}"
-                )
-                os.remove(filename)
+        if md5signature(filename) != md5target:
+            logger.info(f"{filename}: md5 signature {md5signature(filename)} is not {md5target}")
+            os.remove(filename)
 
-                if os.path.exists(filename_gz):
-                    os.remove(filename_gz)
-
-        elif md5target is not None:
-            if md5signature(filename) != md5target:
-                logger.info(f"{filename}: md5 signature {md5signature(filename)} is not {md5target}")
-                os.remove(filename)
-
-                if os.path.exists(filename_gz):
-                    os.remove(filename_gz)
+            if os.path.exists(filename_gz):
+                os.remove(filename_gz)
 
 
-def download_file_if_needed(filename: str, cube_size: int) -> None:
+def download_file_if_needed(filename: str) -> None:
     """
     Args:
         filename: the file to download
-        cube_size: the size of the cube this file applies to
     """
 
     if not os.path.exists(filename):
@@ -381,37 +471,6 @@ def download_file_if_needed(filename: str, cube_size: int) -> None:
         call(["gunzip", filename_gz])
 
 
-def binary_search_list(states: List[str], b_state_to_find: str) -> Tuple[bool, int]:
-    """
-    Args:
-        states: a list of strings to search
-        b_state_to_find: the state to look for
-
-    Returns
-        True if we found ``b_state_to_find``
-        the line number for ``b_state_to_find``
-    """
-    first = 0
-    linecount = len(states)
-    last = linecount - 1
-
-    while first <= last:
-        midpoint = int((first + last) / 2)
-        b_state = bytearray(states[midpoint], encoding="utf-8")
-
-        if b_state_to_find < b_state:
-            last = midpoint - 1
-
-        # If this is the line we are looking for, then read the entire line
-        elif b_state_to_find == b_state:
-            return (True, midpoint)
-
-        else:
-            first = midpoint + 1
-
-    return (False, first)
-
-
 class LookupTable(object):
     """
     A base class for all lookup table classes
@@ -429,8 +488,9 @@ class LookupTable(object):
         state_target: str,
         linecount: int = None,
         max_depth: int = None,
-        filesize: int = None,
-        md5: str = None,
+        md5_txt: str = None,
+        md5_bin: str = None,
+        md5_state_index: str = None,
         legal_moves: List[str] = None,
         all_moves: List[str] = None,
         illegal_moves: List[str] = None,
@@ -451,10 +511,15 @@ class LookupTable(object):
             LOOKUP_TABLES = "lookup-tables/"
             Path(LOOKUP_TABLES).mkdir(parents=True, exist_ok=True)
             self.filename = LOOKUP_TABLES + filename
+            self.filename_bin = self.filename.replace(".txt", ".bin")
+            self.filename_state_index = self.filename.replace(".txt", ".state_index")
+            self.filename_gz = filename + ".gz" if filename else None
         else:
-            self.filename = filename
+            self.filename = None
+            self.filename_bin = None
+            self.filename_state_index = None
+            self.filename_gz = None
 
-        self.filename_gz = filename + ".gz" if filename else None
         self.desc = filename.replace("lookup-table-", "").replace(".txt", "") if filename else ""
         self.filename_exists = False
         self.linecount = linecount
@@ -468,8 +533,6 @@ class LookupTable(object):
         self.cache = {}
         self.cache_set = set()
         self.cache_list = []
-        self.filesize = filesize
-        self.md5 = md5
         self.collect_stats = False
         self.use_isdigit = False
         self.only_colors = ()
@@ -515,13 +578,19 @@ class LookupTable(object):
 
             if use_state_index:
                 if not build_state_index:
-                    download_file_if_needed(self.filename.replace(".txt", ".state_index"), self.parent.size)
-                    download_file_if_needed(self.filename.replace(".txt", ".bin"), self.parent.size)
+                    assert md5_bin, f"need md5sum for {self.filename_bin}"
+                    assert md5_state_index, f"need md5sum for {self.filename_state_index}"
+                    # It takes a long time to calculate the md5 signatures...need to think of a better way
+                    # rm_file_if_mismatch(self.filename_bin, md5_bin)
+                    # rm_file_if_mismatch(self.filename_state_index, md5_state_index)
+                    download_file_if_needed(self.filename_bin)
+                    download_file_if_needed(self.filename_state_index)
                 self.state_width = len(list(self.state_target)[0])
 
             else:
-                rm_file_if_mismatch(self.filename, self.filesize, self.md5)
-                download_file_if_needed(self.filename, self.parent.size)
+                assert md5_txt, f"need md5sum for {self.filename}"
+                # rm_file_if_mismatch(self.filename, md5_txt)
+                download_file_if_needed(self.filename)
 
             if (
                 "perfect-hash" not in self.filename
@@ -565,71 +634,7 @@ class LookupTable(object):
         Returns:
             a dictionary where the state is the key and the value is a move sequence or move count
         """
-        states_to_find.sort()
-        cache = []
-        results = {}
-        linecount = self.linecount
-        width = self.width
-        state_width = self.state_width
-        fh_txt = self.fh_txt
-        # logger.info("\n\n\n\n\n\n")
-        # logger.info("binary_search_multiple called for %s" % pformat(states_to_find))
-
-        fh_txt.seek(0)
-        b_state_first = fh_txt.read(state_width)
-
-        fh_txt.seek((linecount - 1) * width)
-        b_state_last = fh_txt.read(state_width)
-
-        (_, starting_index) = binary_search_list(states_to_find, b_state_first)
-        # logger.info("start at index %d" % starting_index)
-
-        for state_to_find in states_to_find[starting_index:]:
-            b_state_to_find = bytearray(state_to_find, encoding="utf-8")
-
-            # This provides a pretty massive improvement when you are looking for 100k+ states
-            if b_state_to_find < b_state_first:
-                # This part is basically a no-op now that we binary_search states_to_find
-                # for b_state_first to find the starting_index
-                continue
-            elif b_state_to_find > b_state_last:
-                break
-
-            if cache:
-                (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
-            else:
-                first = 0
-                last = linecount - 1
-
-            # logger.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
-            while first <= last:
-                midpoint = int((first + last) / 2)
-                fh_txt.seek(midpoint * width)
-
-                # Only read the 'state' part of the line (for speed)
-                b_state = fh_txt.read(state_width)
-
-                # We did a read...reads are expensive...cache the read
-                cache.append((midpoint, b_state))
-
-                if b_state_to_find < b_state:
-                    last = midpoint - 1
-
-                # If this is the line we are looking for, then read the entire line
-                elif b_state_to_find == b_state:
-                    fh_txt.seek(midpoint * width)
-                    line = fh_txt.read(width)
-                    (_, value) = line.decode("utf-8").rstrip().split(":")
-                    results[state_to_find] = value
-                    break
-
-                else:
-                    first = midpoint + 1
-            else:
-                # results[state_to_find] = None
-                pass
-
-        return results
+        return binary_search_multiple(self.fh_txt, self.width, self.state_width, self.linecount, states_to_find)
 
     def binary_search(self, state_to_find: str) -> str:
         """
@@ -920,14 +925,13 @@ class LookupTable(object):
         self.preload_cache_dict()
 
         states = sorted(self.cache.keys())
-        state_index_filename = self.filename.replace(".txt", ".state_index")
 
         logger.info(f"{self}: state_index begin")
-        with open(state_index_filename, "w") as fh:
+        with open(self.filename_state_index, "w") as fh:
             for (index, state) in enumerate(states):
                 fh.write("%s:%d\n" % (state, index))
 
-        subprocess.call(["./utils/pad-lines.py", state_index_filename])
+        subprocess.call(["./utils/pad-lines.py", self.filename_state_index])
         logger.info(f"{self}: state_index end")
 
         logger.info(f"{self}: json begin")
@@ -956,7 +960,7 @@ class LookupTable(object):
 
             index += 1
 
-            if index % 10000 == 0:
+            if index % 100000 == 0:
                 logger.info(f"{index:,}")
 
                 # avoid running out of memory
@@ -976,9 +980,7 @@ class LookupTable(object):
         """
         Load our IDA graph into memory
         """
-        bin_filename = self.filename.replace(".txt", ".bin")
-
-        with open(bin_filename, "rb") as fh:
+        with open(self.filename_bin, "rb") as fh:
             logger.info(f"{self}: load IDA graph begin")
             self.ida_graph = fh.read()
             logger.info(f"{self}: load IDA graph end")
@@ -988,32 +990,37 @@ class LookupTable(object):
         Load our state index cached into memory
         """
         self.state_index_cache = {}
-        state_index_filename = self.filename.replace(".txt", ".state_index")
 
-        with open(state_index_filename, "r") as fh:
+        with open(self.filename_state_index, "r") as fh:
             for line in fh:
                 (state, state_index) = line.rstrip().split(":")
                 self.state_index_cache[state] = int(state_index)
 
-    def state_index(self) -> int:
+    def state_index(self, state: str = None) -> int:
         """
         Returns:
             the index of the current state
         """
-        state = self.state()
+        if state is None:
+            state = self.state()
 
         if self.state_index_cache:
             return self.state_index_cache.get(state)
 
-        state_index_filename = self.filename.replace(".txt", ".state_index")
-        (width, state_width, linecount) = get_file_vitals(state_index_filename)
+        (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
 
-        with open(state_index_filename, "r") as fh:
+        with open(self.filename_state_index, "r") as fh:
             state_index = binary_search(fh, width, state_width, linecount, state)
-            try:
-                return int(state_index)
-            except TypeError:
-                raise TypeError(f"{self}: state {state} not found")
+
+            if state_index is None:
+                raise Exception(f"{self}: state {state} not found in {self.filename_state_index}")
+
+            return int(state_index)
+
+    def state_index_multiple(self, states_to_find: List[str]) -> Dict[str, str]:
+        (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
+        with open(self.filename_state_index, "rb") as fh:
+            return binary_search_multiple(fh, width, state_width, linecount, states_to_find)
 
     def reverse_state_index(self, state_index: int) -> str:
         """
@@ -1023,11 +1030,13 @@ class LookupTable(object):
         Returns:
             the state for ``state_index``
         """
-        state_index_filename = self.filename.replace(".txt", ".state_index")
-        with open(state_index_filename, "r") as fh:
+        with open(self.filename_state_index, "r") as fh:
             for line in fh:
                 if line.rstrip().endswith(f":{state_index}"):
                     return line.split(":")[0]
+
+    def state_index_cost(self, state_index: int) -> int:
+        return self.ida_graph[state_index * self.ROW_LENGTH]
 
     def ida_heuristic(self) -> Tuple[str, int]:
         """
@@ -1059,11 +1068,10 @@ class LookupTableIDA(LookupTable):
         moves_illegal: List[str],
         linecount: int = None,
         max_depth: int = None,
-        filesize: int = None,
         legal_moves: List = None,
         multiplier: float = None,
     ):
-        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
+        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth)
         self.recolor_positions = []
         self.recolor_map = {}
         self.nuke_corners = False
@@ -1173,26 +1181,7 @@ class LookupTableIDA(LookupTable):
             return (f_cost, False, [])
         self.explored[lt_state] = cost_to_here
 
-        skip_other_steps_this_face = None
-
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
-
-            # https://github.com/cs0x7f/TPR-4x4x4-Solver/issues/7
-            """
-            Well, it's a simple technique to reduce the number of nodes accessed.
-            For example, we start at a position S whose pruning value is no more
-            than maxl, otherwise, S will be pruned in previous searching.  After
-            a move X, we obtain position S', whose pruning value is larger than
-            maxl, which means that X makes S farther from the solved state.  In
-            this case, we won't try X2 and X'.
-            --cs0x7f
-            """
-            if skip_other_steps_this_face is not None:
-                if self.steps_on_same_face_and_layer_cache[(skip_other_steps_this_face, step)]:
-                    continue
-                else:
-                    skip_other_steps_this_face = None
-
             self.parent.state = self.rotate_xxx(prev_state, step)
 
             (f_cost_tmp, found_solution, solution_steps) = self.ida_search(
@@ -1201,11 +1190,6 @@ class LookupTableIDA(LookupTable):
 
             if found_solution:
                 return (f_cost_tmp, True, solution_steps)
-            else:
-                if f_cost_tmp > threshold:
-                    skip_other_steps_this_face = step
-                else:
-                    skip_other_steps_this_face = None
 
         self.parent.state = prev_state[:]
         return (f_cost, False, [])
@@ -1365,10 +1349,10 @@ class LookupTableIDAViaC(object):
         self.C_ida_type = C_ida_type
         self.centers_only = centers_only
 
-        for (filename, filesize, md5target) in files:
+        for (filename, md5target) in files:
             filename = "lookup-tables/" + filename
-            rm_file_if_mismatch(filename, filesize, md5target)
-            download_file_if_needed(filename, self.parent.size)
+            rm_file_if_mismatch(filename, md5target)
+            download_file_if_needed(filename)
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -1477,17 +1461,24 @@ class LookupTableIDAViaC(object):
         cmd_string = cmd_string.replace("--legal-moves ", '--legal-moves "')
         cmd_string += '"'
 
-        logger.info("%s: solving via C ida_search\n\n%s" % (self, cmd_string))
-        output = subprocess.check_output(cmd).decode("ascii")
-        logger.info("\n\n" + output + "\n\n")
+        logger.info("%s: solving via C ida_search\n%s" % (self, cmd_string))
+        output = subprocess.check_output(cmd).decode("utf-8")
+        self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
+        logger.info(f"\n{output}")
+
+        solutions = []
 
         for line in output.splitlines():
             if line.startswith("SOLUTION"):
-                steps = line.split(":")[1].strip().split()
-                break
-        else:
-            raise NoIDASolution("%s" % self)
+                solution = line.split(":")[1].strip().split()
+                solutions.append((len(solution), solution))
 
+        if not solutions:
+            raise NoIDASolution(str(self))
+
+        # apply the shortest solution
+        solutions.sort()
+        steps = solutions[0][1]
         logger.info("%s: ida_search found solution %s" % (self, " ".join(steps)))
         self.parent.state = self.pre_recolor_state[:]
         self.parent.solution = self.pre_recolor_solution[:]

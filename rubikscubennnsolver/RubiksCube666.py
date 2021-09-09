@@ -13,61 +13,14 @@ from rubikscubennnsolver.swaps import swaps_666
 logger = logging.getLogger(__name__)
 
 
+# fmt: off
 moves_666 = (
-    "U",
-    "U'",
-    "U2",
-    "Uw",
-    "Uw'",
-    "Uw2",
-    "3Uw",
-    "3Uw'",
-    "3Uw2",
-    "L",
-    "L'",
-    "L2",
-    "Lw",
-    "Lw'",
-    "Lw2",
-    "3Lw",
-    "3Lw'",
-    "3Lw2",
-    "F",
-    "F'",
-    "F2",
-    "Fw",
-    "Fw'",
-    "Fw2",
-    "3Fw",
-    "3Fw'",
-    "3Fw2",
-    "R",
-    "R'",
-    "R2",
-    "Rw",
-    "Rw'",
-    "Rw2",
-    "3Rw",
-    "3Rw'",
-    "3Rw2",
-    "B",
-    "B'",
-    "B2",
-    "Bw",
-    "Bw'",
-    "Bw2",
-    "3Bw",
-    "3Bw'",
-    "3Bw2",
-    "D",
-    "D'",
-    "D2",
-    "Dw",
-    "Dw'",
-    "Dw2",
-    "3Dw",
-    "3Dw'",
-    "3Dw2",
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
+    "F", "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
+    "R", "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
+    "B", "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
+    "D", "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2",
     # slices...not used for now
     # "2U", "2U'", "2U2", "2D", "2D'", "2D2",
     # "2L", "2L'", "2L2", "2R", "2R'", "2R2",
@@ -80,380 +33,80 @@ solved_666 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 
 
 inner_x_centers_666 = (
-    15,
-    16,
-    21,
-    22,
-    51,
-    52,
-    57,
-    58,
-    87,
-    88,
-    93,
-    94,
-    123,
-    124,
-    129,
-    130,
-    159,
-    160,
-    165,
-    166,
-    195,
-    196,
-    201,
-    202,
+    15, 16, 21, 22,
+    51, 52, 57, 58,
+    87, 88, 93, 94,
+    123, 124, 129, 130,
+    159, 160, 165, 166,
+    195, 196, 201, 202,
 )
 
 centers_666 = (
-    8,
-    9,
-    10,
-    11,
-    14,
-    15,
-    16,
-    17,
-    20,
-    21,
-    22,
-    23,
-    26,
-    27,
-    28,
-    29,  # Upper
-    44,
-    45,
-    46,
-    47,
-    50,
-    51,
-    52,
-    53,
-    56,
-    57,
-    58,
-    59,
-    62,
-    63,
-    64,
-    65,  # Left
-    80,
-    81,
-    82,
-    83,
-    86,
-    87,
-    88,
-    89,
-    92,
-    93,
-    94,
-    95,
-    98,
-    99,
-    100,
-    101,  # Front
-    116,
-    117,
-    118,
-    119,
-    122,
-    123,
-    124,
-    125,
-    128,
-    129,
-    130,
-    131,
-    134,
-    135,
-    136,
-    137,  # Right
-    152,
-    153,
-    154,
-    155,
-    158,
-    159,
-    160,
-    161,
-    164,
-    165,
-    166,
-    167,
-    170,
-    171,
-    172,
-    173,  # Back
-    188,
-    189,
-    190,
-    191,
-    194,
-    195,
-    196,
-    197,
-    200,
-    201,
-    202,
-    203,
-    206,
-    207,
-    208,
-    209,  # Down
+    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29,  # Upper
+    44, 45, 46, 47, 50, 51, 52, 53, 56, 57, 58, 59, 62, 63, 64, 65,  # Left
+    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,  # Front
+    116, 117, 118, 119, 122, 123, 124, 125, 128, 129, 130, 131, 134, 135, 136, 137,  # Right
+    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,  # Back
+    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,  # Down
 )
 
 UD_centers_666 = (
-    8,
-    9,
-    10,
-    11,
-    14,
-    15,
-    16,
-    17,
-    20,
-    21,
-    22,
-    23,
-    26,
-    27,
-    28,
-    29,
-    188,
-    189,
-    190,
-    191,
-    194,
-    195,
-    196,
-    197,
-    200,
-    201,
-    202,
-    203,
-    206,
-    207,
-    208,
-    209,
+    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29,
+    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,
 )
 
 FB_centers_666 = (
-    80,
-    81,
-    82,
-    83,
-    86,
-    87,
-    88,
-    89,
-    92,
-    93,
-    94,
-    95,
-    98,
-    99,
-    100,
-    101,
-    152,
-    153,
-    154,
-    155,
-    158,
-    159,
-    160,
-    161,
-    164,
-    165,
-    166,
-    167,
-    170,
-    171,
-    172,
-    173,
+    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
+    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
 )
 
 UFBD_centers_666 = (
-    8,
-    9,
-    10,
-    11,
-    14,
-    15,
-    16,
-    17,
-    20,
-    21,
-    22,
-    23,
-    26,
-    27,
-    28,
-    29,
-    80,
-    81,
-    82,
-    83,
-    86,
-    87,
-    88,
-    89,
-    92,
-    93,
-    94,
-    95,
-    98,
-    99,
-    100,
-    101,
-    152,
-    153,
-    154,
-    155,
-    158,
-    159,
-    160,
-    161,
-    164,
-    165,
-    166,
-    167,
-    170,
-    171,
-    172,
-    173,
-    188,
-    189,
-    190,
-    191,
-    194,
-    195,
-    196,
-    197,
-    200,
-    201,
-    202,
-    203,
-    206,
-    207,
-    208,
-    209,
+    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29, 80,
+    81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
+    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
+    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,
 )
 
 UDFB_left_oblique_edges = (
-    9,
-    17,
-    28,
-    20,  # Upper
-    189,
-    197,
-    208,
-    200,  # Down
-    81,
-    89,
-    100,
-    92,  # Front
-    153,
-    161,
-    172,
-    164,  # Back
+    9, 17, 28, 20,  # Upper
+    189, 197, 208, 200,  # Down
+    81, 89, 100, 92,  # Front
+    153, 161, 172, 164,  # Back
 )
 
 UDFB_right_oblique_edges = (
-    10,
-    23,
-    27,
-    14,  # Upper
-    190,
-    203,
-    207,
-    194,  # Down
-    82,
-    95,
-    99,
-    86,  # Front
-    154,
-    167,
-    171,
-    158,  # Back
+    10, 23, 27, 14,  # Upper
+    190, 203, 207, 194,  # Down
+    82, 95, 99, 86,  # Front
+    154, 167, 171, 158,  # Back
 )
 
 UDFB_outer_x_centers = (
-    8,
-    11,
-    26,
-    29,  # Upper
-    188,
-    191,
-    206,
-    209,  # Down
-    80,
-    83,
-    98,
-    101,  # Front
-    152,
-    155,
-    170,
-    173,  # Back
+    8, 11, 26, 29,  # Upper
+    188, 191, 206, 209,  # Down
+    80, 83, 98, 101,  # Front
+    152, 155, 170, 173,  # Back
 )
 
 UDFB_inner_x_centers = (
-    15,
-    16,
-    21,
-    22,  # Upper
-    195,
-    196,
-    201,
-    202,  # Down
-    87,
-    88,
-    93,
-    94,  # Front
-    159,
-    160,
-    165,
-    166,  # Back
+    15, 16, 21, 22,  # Upper
+    195, 196, 201, 202,  # Down
+    87, 88, 93, 94,  # Front
+    159, 160, 165, 166,  # Back
 )
 
 UFBD_outer_x_centers = (
-    8,
-    11,
-    26,
-    29,  # Upper
-    80,
-    83,
-    98,
-    101,  # Front
-    152,
-    155,
-    170,
-    173,  # Back
-    188,
-    191,
-    206,
-    209,  # Down
+    8, 11, 26, 29,  # Upper
+    80, 83, 98, 101,  # Front
+    152, 155, 170, 173,  # Back
+    188, 191, 206, 209,  # Down
 )
 
 UFBD_inner_x_centers = (
-    15,
-    16,
-    21,
-    22,  # Upper
-    87,
-    88,
-    93,
-    94,  # Front
-    159,
-    160,
-    165,
-    166,  # Back
-    195,
-    196,
-    201,
-    202,  # Down
+    15, 16, 21, 22,  # Upper
+    87, 88, 93, 94,  # Front
+    159, 160, 165, 166,  # Back
+    195, 196, 201, 202,  # Down
 )
 
 LR_left_oblique_edges = (45, 53, 64, 56, 117, 125, 136, 128)
@@ -467,165 +120,25 @@ outer_x_centers_666 = set(
 )
 
 outer_x_center_inner_x_centers_666 = (
-    # outer x-centers
-    8,
-    11,
-    26,
-    29,
-    44,
-    47,
-    62,
-    65,
-    80,
-    83,
-    98,
-    101,
-    116,
-    119,
-    134,
-    137,
-    152,
-    155,
-    170,
-    173,
-    188,
-    191,
-    206,
-    209,
-    # inner x-centers
-    15,
-    16,
-    21,
-    22,
-    51,
-    52,
-    57,
-    58,
-    87,
-    88,
-    93,
-    94,
-    123,
-    124,
-    129,
-    130,
-    159,
-    160,
-    165,
-    166,
-    195,
-    196,
-    201,
-    202,
+    8, 11, 26, 29, 44, 47, 62, 65, 80, 83, 98, 101, 116, 119, 134, 137, 152, 155, 170, 173, 188, 191, 206, 209,  # outer x-centers
+    15, 16, 21, 22, 51, 52, 57, 58, 87, 88, 93, 94, 123, 124, 129, 130, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
 )
 
 UFBD_inner_x_centers_left_oblique_edges_666 = (
-    # inner x-centers
-    15,
-    16,
-    21,
-    22,
-    87,
-    88,
-    93,
-    94,
-    159,
-    160,
-    165,
-    166,
-    195,
-    196,
-    201,
-    202,
-    # left oblique edges
-    9,
-    17,
-    20,
-    28,
-    81,
-    89,
-    92,
-    100,
-    153,
-    161,
-    164,
-    172,
-    189,
-    197,
-    200,
-    208,
+    15, 16, 21, 22, 87, 88, 93, 94, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
+    9, 17, 20, 28, 81, 89, 92, 100, 153, 161, 164, 172, 189, 197, 200, 208,  # left oblique edges
 )
 
 UFBD_inner_x_centers_right_oblique_edges_666 = (
-    # inner x-centers
-    15,
-    16,
-    21,
-    22,
-    87,
-    88,
-    93,
-    94,
-    159,
-    160,
-    165,
-    166,
-    195,
-    196,
-    201,
-    202,
-    # right oblique edges
-    10,
-    14,
-    23,
-    27,
-    82,
-    86,
-    95,
-    99,
-    154,
-    158,
-    167,
-    171,
-    190,
-    194,
-    203,
-    207,
+    15, 16, 21, 22, 87, 88, 93, 94, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
+    10, 14, 23, 27, 82, 86, 95, 99, 154, 158, 167, 171, 190, 194, 203, 207,  # right oblique edges
 )
 
 UFBD_oblique_edges_666 = (
-    9,
-    10,
-    14,
-    17,
-    20,
-    23,
-    27,
-    28,
-    81,
-    82,
-    86,
-    89,
-    92,
-    95,
-    99,
-    100,
-    153,
-    154,
-    158,
-    161,
-    164,
-    167,
-    171,
-    172,
-    189,
-    190,
-    194,
-    197,
-    200,
-    203,
-    207,
-    208,
+    9, 10, 14, 17, 20, 23, 27, 28,
+    81, 82, 86, 89, 92, 95, 99, 100,
+    153, 154, 158, 161, 164, 167, 171, 172,
+    189, 190, 194, 197, 200, 203, 207, 208,
 )
 
 UFBD_left_oblique_edges_666 = (9, 17, 20, 28, 81, 89, 92, 100, 153, 161, 164, 172, 189, 197, 200, 208)
@@ -633,57 +146,21 @@ UFBD_left_oblique_edges_666 = (9, 17, 20, 28, 81, 89, 92, 100, 153, 161, 164, 17
 UFBD_right_oblique_edges_666 = (10, 14, 23, 27, 82, 86, 95, 99, 154, 158, 167, 171, 190, 194, 203, 207)
 
 left_oblique_edges_666 = (
-    9,
-    17,
-    20,
-    28,
-    45,
-    53,
-    56,
-    64,
-    81,
-    89,
-    92,
-    100,
-    117,
-    125,
-    128,
-    136,
-    153,
-    161,
-    164,
-    172,
-    189,
-    197,
-    200,
-    208,
+    9, 17, 20, 28,
+    45, 53, 56, 64,
+    81, 89, 92, 100,
+    117, 125, 128, 136,
+    153, 161, 164, 172,
+    189, 197, 200, 208,
 )
 
 right_oblique_edges_666 = (
-    10,
-    14,
-    23,
-    27,
-    46,
-    50,
-    59,
-    63,
-    82,
-    86,
-    95,
-    99,
-    118,
-    122,
-    131,
-    135,
-    154,
-    158,
-    167,
-    171,
-    190,
-    194,
-    203,
-    207,
+    10, 14, 23, 27,
+    46, 50, 59, 63,
+    82, 86, 95, 99,
+    118, 122, 131, 135,
+    154, 158, 167, 171,
+    190, 194, 203, 207,
 )
 
 LFRB_left_oblique_edges_666 = (45, 53, 56, 64, 81, 89, 92, 100, 117, 125, 128, 136, 153, 161, 164, 172)
@@ -691,105 +168,21 @@ LFRB_left_oblique_edges_666 = (45, 53, 56, 64, 81, 89, 92, 100, 117, 125, 128, 1
 LFRB_right_oblique_edges_666 = (46, 50, 59, 63, 82, 86, 95, 99, 118, 122, 131, 135, 154, 158, 167, 171)
 
 edge_orbit_0 = (
-    2,
-    5,
-    12,
-    30,
-    35,
-    32,
-    25,
-    7,
-    38,
-    41,
-    48,
-    66,
-    71,
-    68,
-    61,
-    43,
-    74,
-    77,
-    84,
-    102,
-    107,
-    104,
-    97,
-    79,
-    110,
-    113,
-    120,
-    138,
-    143,
-    140,
-    133,
-    115,
-    146,
-    149,
-    156,
-    174,
-    179,
-    176,
-    169,
-    151,
-    182,
-    185,
-    192,
-    210,
-    215,
-    212,
-    205,
-    187,
+    2, 5, 12, 30, 35, 32, 25, 7,
+    38, 41, 48, 66, 71, 68, 61, 43,
+    74, 77, 84, 102, 107, 104, 97, 79,
+    110, 113, 120, 138, 143, 140, 133, 115,
+    146, 149, 156, 174, 179, 176, 169, 151,
+    182, 185, 192, 210, 215, 212, 205, 187,
 )
 
 edge_orbit_1 = (
-    3,
-    4,
-    18,
-    24,
-    34,
-    33,
-    19,
-    13,
-    39,
-    40,
-    54,
-    60,
-    70,
-    69,
-    55,
-    49,
-    75,
-    76,
-    90,
-    96,
-    106,
-    105,
-    91,
-    85,
-    111,
-    112,
-    126,
-    132,
-    142,
-    141,
-    127,
-    121,
-    147,
-    148,
-    162,
-    168,
-    178,
-    177,
-    163,
-    157,
-    183,
-    184,
-    198,
-    204,
-    214,
-    213,
-    199,
-    193,
+    3, 4, 18, 24, 34, 33, 19, 13,
+    39, 40, 54, 60, 70, 69, 55, 49,
+    75, 76, 90, 96, 106, 105, 91, 85,
+    111, 112, 126, 132, 142, 141, 127, 121,
+    147, 148, 162, 168, 178, 177, 163, 157,
+    183, 184, 198, 204, 214, 213, 199, 193,
 )
 
 edges_partner_666 = {
@@ -890,6 +283,7 @@ edges_partner_666 = {
     214: 177,
     215: 176,
 }
+# fmt: on
 
 
 # phase 2
@@ -899,56 +293,16 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
     not need them to be placed on sides LR at this point.
     """
 
+    # fmt: off
     oblique_edges_666 = (
-        9,
-        10,
-        14,
-        17,
-        20,
-        23,
-        27,
-        28,
-        45,
-        46,
-        50,
-        53,
-        56,
-        59,
-        63,
-        64,
-        81,
-        82,
-        86,
-        89,
-        92,
-        95,
-        99,
-        100,
-        117,
-        118,
-        122,
-        125,
-        128,
-        131,
-        135,
-        136,
-        153,
-        154,
-        158,
-        161,
-        164,
-        167,
-        171,
-        172,
-        189,
-        190,
-        194,
-        197,
-        200,
-        203,
-        207,
-        208,
+        9, 10, 14, 17, 20, 23, 27, 28,
+        45, 46, 50, 53, 56, 59, 63, 64,
+        81, 82, 86, 89, 92, 95, 99, 100,
+        117, 118, 122, 125, 128, 131, 135, 136,
+        153, 154, 158, 161, 164, 167, 171, 172,
+        189, 190, 194, 197, 200, 203, 207, 208,
     )
+    # fmt: on
 
     def __init__(self, parent):
 
@@ -1001,6 +355,7 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
     state_targets = ("UUUUxxxxxxxxUUUU",)
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1008,46 +363,28 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
             self.state_targets,
             linecount=12870,
             max_depth=9,
-            filesize=656370,
             all_moves=moves_666,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "3Lw",
-                "3Lw'",
-                "3Fw",
-                "3Fw'",
-                "3Rw",
-                "3Rw'",
-                "3Bw",
-                "3Bw'",
-                "3Dw",
-                "3Dw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
+                "3Uw", "3Uw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Rw", "3Rw'",
+                "3Bw", "3Bw'",
+                "3Dw", "3Dw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
                 # we are not manipulating anything on sides L or R
-                "L",
-                "L'",
-                "L2",
-                "R",
-                "R'",
-                "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2",
-                "D2",
-                "F2",
-                "B2",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="fe57c3bcfc9df5a1615bd1e0fa3377bb",
+            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1082,6 +419,7 @@ class LookupTable666UDRightObliqueStage(LookupTable):
     state_targets = ("UUUUxxxxxxxxUUUU",)
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1089,46 +427,28 @@ class LookupTable666UDRightObliqueStage(LookupTable):
             self.state_targets,
             linecount=12870,
             max_depth=9,
-            filesize=656370,
             all_moves=moves_666,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "3Lw",
-                "3Lw'",
-                "3Fw",
-                "3Fw'",
-                "3Rw",
-                "3Rw'",
-                "3Bw",
-                "3Bw'",
-                "3Dw",
-                "3Dw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
+                "3Uw", "3Uw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Rw", "3Rw'",
+                "3Bw", "3Bw'",
+                "3Dw", "3Dw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
                 # we are not manipulating anything on sides L or R
-                "L",
-                "L'",
-                "L2",
-                "R",
-                "R'",
-                "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2",
-                "D2",
-                "F2",
-                "B2",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="85d92657ecceb2b01d8bffabf49f3a59",
+            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1159,6 +479,7 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
     """
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1166,46 +487,28 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=7,
-            filesize=553410,
             all_moves=moves_666,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "3Lw",
-                "3Lw'",
-                "3Fw",
-                "3Fw'",
-                "3Rw",
-                "3Rw'",
-                "3Bw",
-                "3Bw'",
-                "3Dw",
-                "3Dw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
+                "3Uw", "3Uw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Rw", "3Rw'",
+                "3Bw", "3Bw'",
+                "3Dw", "3Dw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
                 # we are not manipulating anything on sides L or R
-                "L",
-                "L'",
-                "L2",
-                "R",
-                "R'",
-                "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2",
-                "D2",
-                "F2",
-                "B2",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="fc2b0db976435d82a3e43397ec57bc97",
+            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1252,13 +555,13 @@ class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
     )
 
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             filename="lookup-table-6x6x6-step14-UD-oblique-stage.txt",
             state_target=self.state_targets,
             linecount=165636900,
-            filesize=15238594800,
             max_depth=15,
             all_moves=moves_666,
             illegal_moves=(
@@ -1277,59 +580,37 @@ class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
                 # we are not manipulating anything on sides L or R
                 "L", "L'", "L2",
                 "R", "R'", "R2",
-
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2", "D2", "F2", "B2",
             ),
             prune_tables=(
                 parent.lt_UD_left_oblique_edges_stage,
                 parent.lt_UD_right_oblique_edges_stage,
             ),
         )
+        # fmt: on
 '''
 
 
 class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_666,
             illegal_moves=(
-                "3Uw",
-                "3Uw'",
-                "3Lw",
-                "3Lw'",
-                "3Fw",
-                "3Fw'",
-                "3Rw",
-                "3Rw'",
-                "3Bw",
-                "3Bw'",
-                "3Dw",
-                "3Dw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
+                "3Uw", "3Uw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Rw", "3Rw'",
+                "3Bw", "3Bw'",
+                "3Dw", "3Dw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
                 # we are not manipulating anything on sides L or R
-                "L",
-                "L'",
-                "L2",
-                "R",
-                "R'",
-                "R2",
-                # restricting these has minimal impact on move count
-                # but having few moves to explore means a faster IDA
-                "U2",
-                "D2",
-                "F2",
-                "B2",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
             ),
             prune_tables=(
                 parent.lt_UD_left_oblique_edges_stage,
@@ -1340,6 +621,7 @@ class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
             pt1_state_max=12870,
             centers_only=True,
         )
+        # fmt: on
 
 
 # phase 5
@@ -1366,31 +648,10 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     steps.
     """
 
+    # fmt: off
     UD_inner_x_centers_and_oblique_edges = (
-        9,
-        10,
-        14,
-        15,
-        16,
-        17,
-        20,
-        21,
-        22,
-        23,
-        27,
-        28,  # Upper
-        189,
-        190,
-        194,
-        195,
-        196,
-        197,
-        200,
-        201,
-        202,
-        203,
-        207,
-        208,  # Down
+        9, 10, 14, 15, 16, 17, 20, 21, 22, 23, 27, 28,  # Upper
+        189, 190, 194, 195, 196, 197, 200, 201, 202, 203, 207, 208,  # Down
     )
 
     def __init__(self, parent):
@@ -1399,81 +660,21 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             parent,
             "lookup-table-6x6x6-step50-UD-solve-inner-x-center-and-oblique-edges.txt",
             (
-                "198e67",
-                "19b267",
-                "19bc47",
-                "19be23",
-                "19be64",
-                "1dc267",
-                "1dcc47",
-                "1dce23",
-                "1dce64",
-                "1df047",
-                "1df223",
-                "1df264",
-                "1dfc03",
-                "1dfc44",
-                "1dfe20",
-                "3b8267",
-                "3b8c47",
-                "3b8e23",
-                "3b8e64",
-                "3bb047",
-                "3bb223",
-                "3bb264",
-                "3bbc03",
-                "3bbc44",
-                "3bbe20",
-                "3fc047",
-                "3fc223",
-                "3fc264",
-                "3fcc03",
-                "3fcc44",
-                "3fce20",
-                "3ff003",
-                "3ff044",
-                "3ff220",
-                "3ffc00",
-                "d98267",
-                "d98c47",
-                "d98e23",
-                "d98e64",
-                "d9b047",
-                "d9b223",
-                "d9b264",
-                "d9bc03",
-                "d9bc44",
-                "d9be20",
-                "ddc047",
-                "ddc223",
-                "ddc264",
-                "ddcc03",
-                "ddcc44",
-                "ddce20",
-                "ddf003",
-                "ddf044",
-                "ddf220",
-                "ddfc00",
-                "fb8047",
-                "fb8223",
-                "fb8264",
-                "fb8c03",
-                "fb8c44",
-                "fb8e20",
-                "fbb003",
-                "fbb044",
-                "fbb220",
-                "fbbc00",
-                "ffc003",
-                "ffc044",
-                "ffc220",
-                "ffcc00",
-                "fff000",
+                "198e67", "19b267", "19bc47", "19be23", "19be64", "1dc267", "1dcc47", "1dce23",
+                "1dce64", "1df047", "1df223", "1df264", "1dfc03", "1dfc44", "1dfe20", "3b8267",
+                "3b8c47", "3b8e23", "3b8e64", "3bb047", "3bb223", "3bb264", "3bbc03", "3bbc44",
+                "3bbe20", "3fc047", "3fc223", "3fc264", "3fcc03", "3fcc44", "3fce20", "3ff003",
+                "3ff044", "3ff220", "3ffc00", "d98267", "d98c47", "d98e23", "d98e64", "d9b047",
+                "d9b223", "d9b264", "d9bc03", "d9bc44", "d9be20", "ddc047", "ddc223", "ddc264",
+                "ddcc03", "ddcc44", "ddce20", "ddf003", "ddf044", "ddf220", "ddfc00", "fb8047",
+                "fb8223", "fb8264", "fb8c03", "fb8c44", "fb8e20", "fbb003", "fbb044", "fbb220",
+                "fbbc00", "ffc003", "ffc044", "ffc220", "ffcc00", "fff000",
             ),
             linecount=343000,
             max_depth=8,
-            filesize=15092000,
+            md5_txt="e1b1991511ed4bba6ee5cbc118b19ea3",
         )
+    # fmt: on
 
     def ida_heuristic(self):
         parent_state = self.parent.state
@@ -1494,134 +695,78 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
     """
     lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
-    0 steps has 4 entries (0 percent, 0.00x previous step)
-    1 steps has 28 entries (0 percent, 7.00x previous step)
-    2 steps has 332 entries (0 percent, 11.86x previous step)
-    3 steps has 2,276 entries (0 percent, 6.86x previous step)
-    4 steps has 10,040 entries (0 percent, 4.41x previous step)
-    5 steps has 49,532 entries (0 percent, 4.93x previous step)
-    6 steps has 265,976 entries (1 percent, 5.37x previous step)
-    7 steps has 1,211,572 entries (5 percent, 4.56x previous step)
-    8 steps has 3,965,028 entries (16 percent, 3.27x previous step)
-    9 steps has 7,762,424 entries (32 percent, 1.96x previous step)
-    10 steps has 7,749,136 entries (32 percent, 1.00x previous step)
-    11 steps has 2,876,024 entries (11 percent, 0.37x previous step)
-    12 steps has 117,084 entries (0 percent, 0.04x previous step)
-    13 steps has 544 entries (0 percent, 0.00x previous step)
+    0 steps has 2 entries (0 percent, 0.00x previous step)
+    1 steps has 12 entries (0 percent, 6.00x previous step)
+    2 steps has 68 entries (0 percent, 5.67x previous step)
+    3 steps has 282 entries (0 percent, 4.15x previous step)
+    4 steps has 1,218 entries (0 percent, 4.32x previous step)
+    5 steps has 5,382 entries (1 percent, 4.42x previous step)
+    6 steps has 20,484 entries (5 percent, 3.81x previous step)
+    7 steps has 62,640 entries (18 percent, 3.06x previous step)
+    8 steps has 118,196 entries (34 percent, 1.89x previous step)
+    9 steps has 104,328 entries (30 percent, 0.88x previous step)
+    10 steps has 29,872 entries (8 percent, 0.29x previous step)
+    11 steps has 516 entries (0 percent, 0.02x previous step)
 
-    Total: 24,010,000 entries
-    Average: 9.27 moves
+    Total: 343,000 entries
+    Average: 8.11 moves
     """
 
+    # fmt: off
     state_targets = (
-        "DDDDDDDDLLLLLLLLLLLLRRRRRRRRRRRRUUUUUUUU",
-        "DDDDDDDDRRRLLRRLLRRRLLLRRLLRRLLLUUUUUUUU",
-        "UUUUUUUULLLLLLLLLLLLRRRRRRRRRRRRDDDDDDDD",
-        "UUUUUUUURRRLLRRLLRRRLLLRRLLRRLLLDDDDDDDD",
+        "LLLLLLLLLLLLRRRRRRRRRRRR",
+        "RRRLLRRLLRRRLLLRRLLRRLLL",
     )
 
-    ULRD_inner_x_centers_oblique_edges = (
-        9,
-        10,
-        14,
-        17,
-        20,
-        23,
-        27,
-        28,  # Upper
-        45,
-        46,
-        50,
-        51,
-        52,
-        53,
-        56,
-        57,
-        58,
-        59,
-        63,
-        64,  # Left
-        117,
-        118,
-        122,
-        123,
-        124,
-        125,
-        128,
-        129,
-        130,
-        131,
-        135,
-        136,  # Right
-        189,
-        190,
-        194,
-        197,
-        200,
-        203,
-        207,
-        208,  # Down
+    LR_inner_x_centers_oblique_edges = (
+        45, 46, 50, 51, 52, 53, 56, 57, 58, 59, 63, 64,  # Left
+        117, 118, 122, 123, 124, 125, 128, 129, 130, 131, 135, 136,  # Right
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-6x6x6-step61-LR-solve-inner-x-center-and-oblique-edges.txt",
             self.state_targets,
-            linecount=24010000,
-            max_depth=13,
-            filesize=2232930000,
+            linecount=343000,
+            max_depth=12,
             all_moves=moves_666,
             illegal_moves=(
-                "3Rw",
-                "3Rw'",
-                "3Lw",
-                "3Lw'",
-                "3Fw",
-                "3Fw'",
-                "3Bw",
-                "3Bw'",
-                "3Uw",
-                "3Uw'",
-                "3Dw",
-                "3Dw'",
-                "Rw",
-                "Rw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
+                "3Rw", "3Rw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "Rw", "Rw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
                 "3Rw2",
-                "3Fw2",
-                "3Lw",
-                "3Lw'",
                 "3Lw2",
-                "3Dw",
-                "3Dw'",
-                "3Dw2",
-                "3Bw",
-                "3Bw'",
+                "3Fw2",
                 "3Bw2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="ab6a16a1f73c7a77570d89818d1e4821",
+            md5_state_index="9cb94f2836125f89c439cd354c3252c1",
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.ULRD_inner_x_centers_oblique_edges])
+        return "".join([parent_state[x] for x in self.LR_inner_x_centers_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.ULRD_inner_x_centers_oblique_edges, state):
+        for (pos, pos_state) in zip(self.LR_inner_x_centers_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1630,53 +775,33 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
     lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
     0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 10 entries (0 percent, 5.00x previous step)
-    2 steps has 50 entries (0 percent, 5.00x previous step)
-    3 steps has 178 entries (0 percent, 3.56x previous step)
-    4 steps has 816 entries (0 percent, 4.58x previous step)
-    5 steps has 3,894 entries (1 percent, 4.77x previous step)
-    6 steps has 15,644 entries (4 percent, 4.02x previous step)
-    7 steps has 50,456 entries (14 percent, 3.23x previous step)
-    8 steps has 105,874 entries (30 percent, 2.10x previous step)
-    9 steps has 119,298 entries (34 percent, 1.13x previous step)
-    10 steps has 45,352 entries (13 percent, 0.38x previous step)
-    11 steps has 1,410 entries (0 percent, 0.03x previous step)
-    12 steps has 16 entries (0 percent, 0.01x previous step)
+    1 steps has 12 entries (0 percent, 6.00x previous step)
+    2 steps has 68 entries (0 percent, 5.67x previous step)
+    3 steps has 282 entries (0 percent, 4.15x previous step)
+    4 steps has 1,218 entries (0 percent, 4.32x previous step)
+    5 steps has 5,382 entries (1 percent, 4.42x previous step)
+    6 steps has 20,484 entries (5 percent, 3.81x previous step)
+    7 steps has 62,640 entries (18 percent, 3.06x previous step)
+    8 steps has 118,196 entries (34 percent, 1.89x previous step)
+    9 steps has 104,328 entries (30 percent, 0.88x previous step)
+    10 steps has 29,872 entries (8 percent, 0.29x previous step)
+    11 steps has 516 entries (0 percent, 0.02x previous step)
 
     Total: 343,000 entries
-    Average: 8.34 moves
+    Average: 8.11 moves
     """
 
     state_targets = ("BBBFFBBFFBBBFFFBBFFBBFFF", "FFFFFFFFFFFFBBBBBBBBBBBB")
 
+    # fmt: off
     FB_inner_x_centers_oblique_edges = (
-        81,
-        82,
-        86,
-        87,
-        88,
-        89,
-        92,
-        93,
-        94,
-        95,
-        99,
-        100,  # Front
-        153,
-        154,
-        158,
-        159,
-        160,
-        161,
-        164,
-        165,
-        166,
-        167,
-        171,
-        172,  # Back
+        81, 82, 86, 87, 88, 89, 92, 93, 94, 95, 99, 100,  # Front
+        153, 154, 158, 159, 160, 161, 164, 165, 166, 167, 171, 172,  # Back
     )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
+        # fmt: off
         LookupTable.__init__(
             self,
             parent,
@@ -1684,48 +809,31 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             self.state_targets,
             linecount=343000,
             max_depth=12,
-            filesize=25039000,
             all_moves=moves_666,
             illegal_moves=(
-                "3Rw",
-                "3Rw'",
-                "3Lw",
-                "3Lw'",
-                "3Fw",
-                "3Fw'",
-                "3Bw",
-                "3Bw'",
-                "3Uw",
-                "3Uw'",
-                "3Dw",
-                "3Dw'",
-                "Rw",
-                "Rw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
+                "3Rw", "3Rw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "Rw", "Rw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
                 "3Rw2",
-                "3Fw2",
-                "3Lw",
-                "3Lw'",
                 "3Lw2",
-                "3Dw",
-                "3Dw'",
-                "3Dw2",
-                "3Bw",
-                "3Bw'",
+                "3Fw2",
                 "3Bw2",
             ),
             use_state_index=True,
             build_state_index=build_state_index,
+            md5_bin="e3ffa78934aea743884dcd0c4121420f",
+            md5_state_index="83059d579e597f51e8322c684bb7fb08",
         )
+        # fmt: on
 
     def state(self):
         parent_state = self.parent.state
@@ -1738,56 +846,110 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTable666UDObliqueEdges(LookupTable):
+    """
+    lookup-tables/lookup-table-6x6x6-step63-UD-oblique-edges.txt
+    ============================================================
+    0 steps has 2 entries (2 percent, 0.00x previous step)
+    1 steps has 8 entries (11 percent, 4.00x previous step)
+    2 steps has 30 entries (42 percent, 3.75x previous step)
+    3 steps has 30 entries (42 percent, 1.00x previous step)
+
+    Total: 70 entries
+    Average: 2.26 moves
+    """
+
+    # fmt: off
+    state_targets = (
+        "UUUUUUUUDDDDDDDD",
+        "DDDDDDDDUUUUUUUU",
+    )
+
+    UD_oblique_edges = (
+        9, 10, 14, 17, 20, 23, 27, 28,  # Upper
+        189, 190, 194, 197, 200, 203, 207, 208,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index=False):
+        # fmt: off
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step63-UD-oblique-edges.txt",
+            self.state_targets,
+            linecount=70,
+            max_depth=3,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Rw", "3Rw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "Rw", "Rw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "3Rw2",
+                "3Lw2",
+                "3Fw2",
+                "3Bw2",
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+            md5_bin="13c8edcae7332aa5936426a7001f0080",
+            md5_state_index="953f9d93e6a6b1680be76a68b3edf93b",
+        )
+        # fmt: on
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in self.UD_oblique_edges])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UD_oblique_edges, state):
+            cube[pos] = pos_state
+
+
 class LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_666,
             illegal_moves=(
-                "3Rw",
-                "3Rw'",
-                "3Lw",
-                "3Lw'",
-                "3Fw",
-                "3Fw'",
-                "3Bw",
-                "3Bw'",
-                "3Uw",
-                "3Uw'",
-                "3Dw",
-                "3Dw'",
-                "Rw",
-                "Rw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Bw",
-                "Bw'",
-                "Uw",
-                "Uw'",
-                "Dw",
-                "Dw'",
+                "3Rw", "3Rw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "Rw", "Rw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
                 "3Rw2",
-                "3Fw2",
-                "3Lw",
-                "3Lw'",
                 "3Lw2",
-                "3Dw",
-                "3Dw'",
-                "3Dw2",
-                "3Bw",
-                "3Bw'",
+                "3Fw2",
                 "3Bw2",
             ),
             prune_tables=(
                 parent.lt_LR_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
+                parent.lt_UD_oblique_edges,
             ),
-            multiplier=1.06,
             centers_only=True,
         )
+        # fmt: on
 
 
 class RubiksCube666(RubiksCubeNNNEvenEdges):
@@ -1957,140 +1119,52 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         print("")
 
     def sanity_check(self):
+        # fmt: off
         corners = (
-            1,
-            6,
-            31,
-            36,
-            37,
-            42,
-            67,
-            72,
-            73,
-            78,
-            103,
-            108,
-            109,
-            114,
-            139,
-            144,
-            145,
-            150,
-            175,
-            180,
-            181,
-            186,
-            211,
-            216,
+            1, 6, 31, 36,
+            37, 42, 67, 72,
+            73, 78, 103, 108,
+            109, 114, 139, 144,
+            145, 150, 175, 180,
+            181, 186, 211, 216,
         )
 
         left_oblique_edge = (
-            9,
-            17,
-            28,
-            20,
-            45,
-            53,
-            64,
-            56,
-            81,
-            89,
-            100,
-            92,
-            117,
-            125,
-            136,
-            128,
-            153,
-            161,
-            172,
-            164,
-            189,
-            197,
-            208,
-            200,
+            9, 17, 28, 20,
+            45, 53, 64, 56,
+            81, 89, 100, 92,
+            117, 125, 136, 128,
+            153, 161, 172, 164,
+            189, 197, 208, 200,
         )
 
         right_oblique_edge = (
-            10,
-            23,
-            27,
-            14,
-            46,
-            59,
-            63,
-            50,
-            82,
-            95,
-            99,
-            86,
-            118,
-            131,
-            135,
-            122,
-            154,
-            167,
-            171,
-            158,
-            190,
-            203,
-            207,
-            194,
+            10, 23, 27, 14,
+            46, 59, 63, 50,
+            82, 95, 99, 86,
+            118, 131, 135, 122,
+            154, 167, 171, 158,
+            190, 203, 207, 194,
         )
 
         outside_x_centers = (
-            8,
-            11,
-            26,
-            29,
-            44,
-            47,
-            62,
-            65,
-            80,
-            83,
-            98,
-            101,
-            116,
-            119,
-            134,
-            137,
-            152,
-            155,
-            170,
-            173,
-            188,
-            191,
-            206,
-            209,
+            8, 11, 26, 29,
+            44, 47, 62, 65,
+            80, 83, 98, 101,
+            116, 119, 134, 137,
+            152, 155, 170, 173,
+            188, 191, 206, 209,
         )
 
         inside_x_centers = (
-            15,
-            16,
-            21,
-            22,
-            51,
-            52,
-            57,
-            58,
-            87,
-            88,
-            93,
-            94,
-            123,
-            124,
-            129,
-            130,
-            159,
-            160,
-            165,
-            166,
-            195,
-            196,
-            201,
-            202,
+            15, 16, 21, 22,
+            51, 52, 57, 58,
+            87, 88, 93, 94,
+            123, 124, 129, 130,
+            159, 160, 165, 166,
+            195, 196, 201, 202,
         )
+        # fmt: on
 
         self._sanity_check("edge-orbit-0", edge_orbit_0, 8)
         self._sanity_check("edge-orbit-1", edge_orbit_1, 8)
@@ -2124,6 +1198,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # phase 6
         self.lt_LR_solve_inner_x_centers_and_oblique_edges = LookupTable666LRInnerXCenterAndObliqueEdges(self)
         self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
+        self.lt_UD_oblique_edges = LookupTable666UDObliqueEdges(self)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666LFRBInnerXCenterAndObliqueEdges(self)
 
     def populate_fake_444_for_inner_x_centers_stage(self):
@@ -2222,20 +1297,25 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                 self.rotate(step)
 
         self.rotate_for_best_centers_staging(inner_x_centers_666)
-        self.print_cube()
+        self.solution.append(
+            "COMMENT_%d_steps_666_inner_x_centers_staged"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+        self.print_cube(
+            "%s: inner-x centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         # phase 2
         # pair the LR oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_LR_oblique_edge_stage.solve()
-        self.print_cube()
-        self.solution.append(
-            "COMMENT_%d_steps_666_LR_oblique_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: LR oblique edges paired (not staged), %d steps in"
+        self.print_cube(
+            "%s: LR oblique edges paired but not staged (%d steps in)"
             % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+        self.solution.append(
+            "COMMENT_%d_steps_666_LR_oblique_edges_paired"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
         # phase 3
@@ -2251,21 +1331,22 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             else:
                 self.rotate(step)
 
-        self.rotate_for_best_centers_staging(inner_x_centers_666)
-        self.print_cube()
-        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # self.rotate_for_best_centers_staging(inner_x_centers_666)
+        self.print_cube(
+            "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         # phase 4
         # pair the UD oblique edges and outer x-centers to finish staging centers
+        tmp_solution_len = len(self.solution)
         self.lt_UD_centers_stage.solve_via_c()
-
-        self.print_cube()
+        self.print_cube(
+            "%s: centers staged, (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_666_centers_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-
-        logger.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges
@@ -2276,14 +1357,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # solve the UD inner x-centers and pair the UD oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
-        self.print_cube()
+        self.print_cube(
+            "%s: UD inner x-center solved and oblique edges paired, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_666_UD_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: UD inner x-center solved and oblique edges paired, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # phase 6
@@ -2291,39 +1371,14 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # solve the FB inner x-centers and pair the FB oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve_via_c()
-        self.print_cube()
-        self.solution.append(
-            "COMMENT_%d_steps_666_LR_FB_reduced_to_555"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
+        self.print_cube(
             "%s: LFRB inner x-center and oblique edges paired, %d steps in"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-
-    def phase(self):
-        if self._phase is None:
-            self._phase = "Stage UD centers"
-            return self._phase
-
-        if self._phase == "Stage UD centers":
-            if self.UD_centers_staged():
-                self._phase = "Stage LR centers"
-            return self._phase
-
-        if self._phase == "Stage LR centers":
-            if self.LR_centers_staged():
-                self._phase = "Solve Centers"
-
-        if self._phase == "Solve Centers":
-            if self.centers_solved():
-                self._phase = "Pair Edges"
-
-        if self._phase == "Pair Edges":
-            if not self.get_non_paired_edges():
-                self._phase = "Solve 3x3x3"
-
-        return self._phase
+        self.solution.append(
+            "COMMENT_%d_steps_666_reduced_to_555"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
 
 
 def rotate_666(cube, step):

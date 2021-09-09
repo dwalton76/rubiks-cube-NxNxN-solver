@@ -1,5 +1,6 @@
 # standard libraries
 import logging
+import re
 import subprocess
 from typing import List
 
@@ -31,6 +32,10 @@ def remove_failed_ida_output(lines: List[str]) -> List[str]:
                 result.extend(ida_output)
 
             ida_output = []
+
+    if ida_output and "IDA failed with range" not in "".join(ida_output):
+        result.extend(ida_output)
+        ida_output = []
 
     return result
 
@@ -71,6 +76,8 @@ class LookupTableIDAViaGraph(LookupTable):
         pt1_state_max: int = None,
         pt2_state_max: int = None,
         centers_only: bool = False,
+        use_uthash: bool = False,
+        C_ida_type: str = None,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -84,6 +91,8 @@ class LookupTableIDAViaGraph(LookupTable):
         self.main_table_max_depth = main_table_max_depth
         self.main_table_prune_tables = main_table_prune_tables
         self.centers_only = centers_only
+        self.use_uthash = use_uthash
+        self.C_ida_type = C_ida_type
 
         if perfect_hash01_filename:
             self.perfect_hash01_filename = "lookup-tables/" + perfect_hash01_filename
@@ -102,13 +111,15 @@ class LookupTableIDAViaGraph(LookupTable):
             assert (
                 self.perfect_hash01_filename and self.pt1_state_max
             ), "both perfect_hash01_filename and pt1_state_max must be specified"
-            download_file_if_needed(self.perfect_hash01_filename, self.parent.size)
+            # rm_file_if_mismatch(self.perfect_hash01_filename, md5_hash01)
+            download_file_if_needed(self.perfect_hash01_filename)
 
         if self.perfect_hash02_filename or self.pt2_state_max:
             assert (
                 self.perfect_hash02_filename and self.pt2_state_max
             ), "both perfect_hash02_filename and pt2_state_max must be specified"
-            download_file_if_needed(self.perfect_hash02_filename, self.parent.size)
+            # rm_file_if_mismatch(self.perfect_hash02_filename, md5_hash02)
+            download_file_if_needed(self.perfect_hash02_filename)
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -235,14 +246,16 @@ class LookupTableIDAViaGraph(LookupTable):
                 fh_pt_state.write("\n".join(to_write) + "\n")
                 to_write = []
 
-    def solve_via_c(self, pt_states=[], line_index_pre_steps={}, max_ida_threshold: int = None):
+    def solutions_via_c(
+        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None
+    ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
         my_pt_state_filename = "my-pt-states.txt"
 
         if pt_states:
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
-                cmd.append(pt.filename.replace(".txt", ".bin"))
+                cmd.append(pt.filename_bin)
 
             with open(my_pt_state_filename, "w") as fh:
                 for x in pt_states:
@@ -254,7 +267,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
-                cmd.append(pt.filename.replace(".txt", ".bin"))
+                cmd.append(pt.filename_bin)
 
                 if not pt_states:
                     cmd.append("--prune-table-%d-state" % index)
@@ -303,6 +316,17 @@ class LookupTableIDAViaGraph(LookupTable):
         if self.centers_only:
             cmd.append("--centers-only")
 
+        if self.use_uthash:
+            cmd.append("--uthash")
+
+        if self.C_ida_type is not None:
+            cmd.append("--type")
+            cmd.append(self.C_ida_type)
+
+        if solution_count is not None:
+            cmd.append("--solution-count")
+            cmd.append(str(solution_count))
+
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
 
@@ -316,28 +340,49 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        logger.info("solve_via_c:\n    %s\n" % cmd_string)
+        logger.info("%s: solving via C ida_search\n%s\n" % (self, cmd_string))
+        output = subprocess.check_output(cmd).decode("utf-8")
+        output = "\n".join(remove_failed_ida_output(output.splitlines()))
+        self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
+        logger.info(f"\n{output}\n\n")
+        solutions = []
+        pt0_state = None
+        pt1_state = None
+        pt2_state = None
+        pt3_state = None
+        pt4_state = None
+        RE_PT_STATES = re.compile(
+            r"pt0_state (\d+), pt1_state (\d+), pt2_state (\d+), pt3_state (\d+), pt4_state (\d+)"
+        )
 
-        output = subprocess.check_output(cmd).decode("utf-8").splitlines()
-        last_solution = None
-        last_solution_line_index = None
+        for line in output.splitlines():
+            match = RE_PT_STATES.search(line)
 
-        for line in output:
-            if line.startswith("SOLUTION:"):
-                last_solution = line
-            elif line.startswith("LINE INDEX"):
-                last_solution_line_index = int(line.strip().split()[-1])
+            if match:
+                pt0_state = int(match.group(1))
+                pt1_state = int(match.group(2))
+                pt2_state = int(match.group(3))
+                pt3_state = int(match.group(4))
+                pt4_state = int(match.group(5))
 
-        if last_solution:
-            self.parent.solve_via_c_output = "\n" + "\n".join(remove_failed_ida_output(output)) + "\n"
-            logger.info(self.parent.solve_via_c_output)
+            elif line.startswith("SOLUTION"):
+                solution = line.split(":")[1].strip().split()
+                solutions.append((len(solution), solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state)))
 
-            for step in line_index_pre_steps.get(last_solution_line_index, []):
-                self.parent.rotate(step)
+        if solutions:
+            # sort so the shortest solutions are first
+            solutions.sort()
 
-            solution = last_solution.strip().split(":")[1].split()
-            for step in solution:
-                self.parent.rotate(step)
-            return last_solution_line_index
+            # chop the solutions length
+            solutions = [x[1:3] for x in solutions]
+            return solutions
+        else:
+            raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % output)
 
-        raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % "\n".join(output))
+    def solve_via_c(self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None) -> None:
+        solution = self.solutions_via_c(
+            pt_states=pt_states, max_ida_threshold=max_ida_threshold, solution_count=solution_count
+        )[0][0]
+
+        for step in solution:
+            self.parent.rotate(step)

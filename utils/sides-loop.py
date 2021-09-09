@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Used to generate misc list of squares for each side
 """

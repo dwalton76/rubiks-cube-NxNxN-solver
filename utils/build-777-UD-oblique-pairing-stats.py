@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Print stats to correlate how many unpaired 7x7x7 UD oblique edges there are to a move count.
 This was used to build the switch statement in rubikscubennnsolver/ida_search_777.c ida_heuristic_UD_oblique_edges_stage_777()
@@ -6,11 +8,10 @@ This was used to build the switch statement in rubikscubennnsolver/ida_search_77
 import json
 import logging
 import random
-from statistics import median
-from typing import Dict
 
 # rubiks cube libraries
 from rubikscubennnsolver import configure_logging
+from rubikscubennnsolver.misc import print_stats_median
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 
 logger = logging.getLogger(__name__)
@@ -69,16 +70,6 @@ def unpaired_obliques_count_777(cube: RubiksCube777) -> int:
     return left_unpaired_obliques + right_unpaired_obliques
 
 
-def print_stats(data: Dict) -> None:
-    print("\n{")
-
-    for total_count in sorted(data.keys()):
-        step_counts = data[(total_count)]
-        print(f"    {total_count}: {int(median(step_counts))},  # {len(step_counts)} entries")
-
-    print("}\n")
-
-
 def main():
     data = {}
 
@@ -126,10 +117,12 @@ def main():
                 data[total_count] = []
             data[total_count].append(UD_oblique_solution_len - step_index - 1)
 
-        if (index + 1) % 10 == 0:
-            print_stats(data)
+        if index and index % 100 == 0:
+            logger.warning(f"INDEX {index}")
+            print_stats_median(data)
+            print("\n\n")
 
-    print_stats(data)
+    print_stats_median(data)
 
 
 if __name__ == "__main__":

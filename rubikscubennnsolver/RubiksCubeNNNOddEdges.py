@@ -137,9 +137,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 start_nnn += self.size * self.size
                 start_555 += 25
 
-        self.print_cube()
         fake_555.enable_print_cube = True
-        fake_555.print_cube()
         fake_555.sanity_check()
         fake_555.avoid_pll = False
         fake_555.reduce_333()
@@ -212,5 +210,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         for orbit in reversed(list(range(0, max_orbit))):
             self.pair_edge_orbit_via_555(orbit)
 
-        self.print_cube()
-        logger.info("%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube(
+            "%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )

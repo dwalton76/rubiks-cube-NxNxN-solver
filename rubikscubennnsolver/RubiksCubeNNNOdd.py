@@ -32,9 +32,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
     RubiksCubeNNNOdd RubiksCube777
     """
 
-    def phase(self):
-        return "Solve Odd NxNxN"
-
     def get_fake_777(self):
         if self.fake_777 is None:
             self.fake_777 = RubiksCube777(solved_777, "URFDLB")
@@ -256,7 +253,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             start_NNN += self.size * self.size
 
         # fake_777.sanity_check()
-        fake_777.print_cube()
+        # fake_777.print_cube()
 
         # Apply the 7x7x7 solution to our cube
         half_size = str(ceil(self.size / 2) - 1 - cycle)
@@ -287,8 +284,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             else:
                 self.rotate(step)
 
-        self.print_cube()
-        logger.info(
+        self.print_cube(
             "%s: End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
             % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
         )
@@ -307,8 +303,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                     center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
                 )
 
-        self.print_cube()
-        logger.warning(
+        self.print_cube(
             "%s: LR centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -322,8 +317,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                     center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_UD_centers"
                 )
 
-        self.print_cube()
-        logger.warning(
+        self.print_cube(
             "%s: UD centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -337,8 +331,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                     center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_t_centers"
                 )
 
-        self.print_cube()
-        logger.info(
+        self.print_cube(
             "%s: t-centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -350,8 +343,9 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         cycle = max_cycle
         self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers")
 
-        self.print_cube()
-        logger.info("%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube(
+            "%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

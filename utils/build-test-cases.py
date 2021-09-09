@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Used to generate the test cubes in utils/10k-444-cubes.json, etc
 """

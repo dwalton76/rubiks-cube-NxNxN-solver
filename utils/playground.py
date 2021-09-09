@@ -1,12 +1,15 @@
+#!/usr/bin/env python3
+
 """
 Used for doing misc testing
 """
 
 # rubiks cube libraries
-from rubikscubennnsolver import configure_logging
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+from rubikscubennnsolver import RubiksCube, configure_logging
+from rubikscubennnsolver.RubiksCubeNNNOdd import solved_171717
 
 configure_logging()
-cube = RubiksCube555(solved_555, "URFDLB")
-cube.lt_init()
-cube.lt_foo_UD_x_centers_stage.build_ida_graph()
+cube = RubiksCube(solved_171717, "URFDLB")
+cube.randomize(count=2000)
+cube.print_cube()
+print((cube.get_kociemba_string(True)))

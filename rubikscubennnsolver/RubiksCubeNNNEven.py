@@ -200,9 +200,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     RubiksCubeNNNEven RubiksCube666
     """
 
-    def phase(self):
-        return "Solve Even NxNxN"
-
     def get_fake_666(self):
         if self.fake_666 is None:
             self.fake_666 = RubiksCube666(solved_666, "URFDLB")
@@ -287,9 +284,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             fake_666.sanity_check()
 
             # Group LR centers (in turn groups FB)
-            fake_666.print_cube()
             fake_666.group_centers_guts(oblique_edges_only=True)
-            fake_666.print_cube()
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))
@@ -307,10 +302,9 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         fake_666 = None
         gc.collect()
-        logger.info(
+        self.print_cube(
             "%s: Big plus sign formed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        self.print_cube()
 
     def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
         fake_777 = self.get_fake_777()
@@ -463,7 +457,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             start_NNN += self.size * self.size
 
         # fake_777.sanity_check()
-        fake_777.print_cube()
+        # fake_777.print_cube()
 
         # Apply the 7x7x7 solution to our cube
         half_size = str(ceil(self.size / 2) - 1 - cycle)
@@ -496,8 +490,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             else:
                 self.rotate(step)
 
-        self.print_cube()
-        logger.info(
+        self.print_cube(
             "%s: End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
             % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
         )
@@ -517,8 +510,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                     center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
                 )
 
-        self.print_cube()
-        logger.warning(
+        self.print_cube(
             "%s: LR centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -532,8 +524,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                     center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_UD_centers"
                 )
 
-        self.print_cube()
-        logger.warning(
+        self.print_cube(
             "%s: UD centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
@@ -557,8 +548,9 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-        self.print_cube()
-        logger.info("%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube(
+            "%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

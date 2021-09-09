@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Used to print cube rotate logic
 """

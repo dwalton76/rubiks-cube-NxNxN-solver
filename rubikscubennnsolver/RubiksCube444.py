@@ -1,9 +1,10 @@
 # standard libraries
+import itertools
 import logging
 from typing import Dict, List, Tuple
 
 # rubiks cube libraries
-from rubikscubennnsolver import RubiksCube, wing_str_map
+from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
 from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.misc import pre_steps_to_try
@@ -504,24 +505,18 @@ class LookupTable444Reduce333FirstTwoCenters(LookupTable):
             linecount=840,
             max_depth=5,
             all_moves=moves_444,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Rw",
-                "Rw'",
-                "Bw",
-                "Bw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
             ),
+            # fmt: on
             use_state_index=False,
             build_state_index=build_state_index,
         )
@@ -568,40 +563,55 @@ class LookupTable444Reduce333FirstFourEdges(LookupTable):
             linecount=5880600,
             max_depth=11,
             all_moves=moves_444,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Rw",
-                "Rw'",
-                "Bw",
-                "Bw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
             ),
+            # fmt: on
             use_state_index=False,
             build_state_index=build_state_index,
         )
 
-        """
-    # dwalton
     def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in CUBE_POSITION_LIST])
+        assert self.only_colors and len(self.only_colors) == 4, "You must specify which 4-edges"
+        state = edges_recolor_pattern_444(self.parent.state[:], self.only_colors)
+        return "".join([state[index] for index in wings_444])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
+        # fmt: off
+        non_x_plane_edges_444 = (
+            2, 3, 5, 8, 9, 12, 14, 15,  # Upper
+            18, 19, 30, 31,  # Left
+            34, 35, 46, 47,  # Front
+            50, 51, 62, 63,  # Right
+            66, 67, 78, 79,  # Back
+            82, 83, 85, 88, 89, 92, 94, 95,  # Down
+        )
+        # fmt: on
 
-        for (pos, pos_state) in zip(CUBE_POSITION_LIST, state):
-            cube[pos] = pos_state
-        """
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        # start with a solved cube
+        self.parent.state = ["x"]
+        self.parent.state.extend(
+            list("UUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDD")
+        )
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+
+        for pos in non_x_plane_edges_444:
+            self.parent.state[pos] = "."
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
 
 
 # phase 4
@@ -633,30 +643,22 @@ class LookupTable444Reduce333Centers(LookupTable):
             linecount=2520,
             max_depth=7,
             all_moves=moves_444,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Rw",
-                "Rw'",
-                "Bw",
-                "Bw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
                 "Uw2",
                 "Dw2",
-                "F",
-                "F'",
-                "B",
-                "B'",
+                "F", "F'",
+                "B", "B'",
             ),
+            # fmt: on
             use_state_index=False,
             build_state_index=build_state_index,
         )
@@ -703,46 +705,62 @@ class LookupTable444Reduce333LastEightEdges(LookupTable):
             linecount=20160,
             max_depth=10,
             all_moves=moves_444,
+            # fmt: off
             illegal_moves=(
-                "Uw",
-                "Uw'",
-                "Lw",
-                "Lw'",
-                "Fw",
-                "Fw'",
-                "Rw",
-                "Rw'",
-                "Bw",
-                "Bw'",
-                "Dw",
-                "Dw'",
-                "L",
-                "L'",
-                "R",
-                "R'",
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
                 "Uw2",
                 "Dw2",
-                "F",
-                "F'",
-                "B",
-                "B'",
+                "F", "F'",
+                "B", "B'",
             ),
+            # fmt: on
             use_state_index=False,
             build_state_index=build_state_index,
         )
 
-        """
-    # dwalton
     def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in CUBE_POSITION_LIST])
+        last_eight_colors = []
+
+        for wing_str_combo in wing_strs_all:
+            if wing_str_combo not in self.parent.lt_phase3_edges.only_colors:
+                last_eight_colors.append(wing_str_combo)
+
+        state = edges_recolor_pattern_444(self.parent.state[:], last_eight_colors)
+        return "".join([state[index] for index in wings_444])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
+        # fmt: off
+        x_plane_edges_444 = (
+            21, 24, 25, 28,  # Left
+            37, 40, 41, 44,  # Front
+            53, 56, 57, 60,  # Right
+            69, 72, 73, 76,  # Back
+        )
+        # fmt: on
 
-        for (pos, pos_state) in zip(CUBE_POSITION_LIST, state):
-            cube[pos] = pos_state
-        """
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        # start with a solved cube
+        self.parent.state = ["x"]
+        self.parent.state.extend(
+            list("UUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDD")
+        )
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+
+        for pos in x_plane_edges_444:
+            self.parent.state[pos] = "."
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
 
 
 class RubiksCube444(RubiksCube):
@@ -1018,15 +1036,16 @@ class RubiksCube444(RubiksCube):
         # self.lt_phase3_centers.solve_old_school()
         # self.print_cube()
 
+        self.lt_phase3_edges.only_colors = list(itertools.combinations(wing_strs_all, 4))[0]
         self.lt_phase3_edges.solve_old_school()
         self.print_cube()
-        raise Exception("DONE")
 
-        self.lt_phase4_centers.solve_old_school()
-        self.print_cube()
+        # self.lt_phase4_centers.solve_old_school()
+        # self.print_cube()
 
         self.lt_phase4_edges.solve_old_school()
         self.print_cube()
+        raise Exception("DONE")
 
         if self.state[6] != "U" or self.state[38] != "F":
             self.rotate_U_to_U()

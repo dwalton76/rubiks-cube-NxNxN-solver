@@ -613,7 +613,7 @@ class LookupTable444Reduce333FirstFourEdges(LookupTable):
         self.parent.nuke_centers()
 
         for pos in non_x_plane_edges_444:
-            self.parent.state[pos] = "."
+            self.parent.state[pos] = "-"
 
         for step in steps_to_scramble:
             self.parent.rotate(step)

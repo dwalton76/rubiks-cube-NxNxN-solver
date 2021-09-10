@@ -1,5 +1,4 @@
 # standard libraries
-import itertools
 import logging
 from typing import Dict, List, Tuple
 
@@ -517,7 +516,7 @@ class LookupTable444Reduce333FirstTwoCenters(LookupTable):
                 "R", "R'",
             ),
             # fmt: on
-            use_state_index=False,
+            use_state_index=True,
             build_state_index=build_state_index,
         )
 
@@ -575,7 +574,7 @@ class LookupTable444Reduce333FirstFourEdges(LookupTable):
                 "R", "R'",
             ),
             # fmt: on
-            use_state_index=False,
+            use_state_index=True,
             build_state_index=build_state_index,
         )
         self.only_colors = []
@@ -617,6 +616,28 @@ class LookupTable444Reduce333FirstFourEdges(LookupTable):
 
         for step in steps_to_scramble:
             self.parent.rotate(step)
+
+
+class LookupTableIDA444Phase3(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+            ),
+            # fmt: on
+            prune_tables=[parent.lt_phase3_centers, parent.lt_phase3_edges],
+        )
 
 
 # phase 4
@@ -664,7 +685,7 @@ class LookupTable444Reduce333Centers(LookupTable):
                 "B", "B'",
             ),
             # fmt: on
-            use_state_index=False,
+            use_state_index=True,
             build_state_index=build_state_index,
         )
 
@@ -726,7 +747,7 @@ class LookupTable444Reduce333LastEightEdges(LookupTable):
                 "B", "B'",
             ),
             # fmt: on
-            use_state_index=False,
+            use_state_index=True,
             build_state_index=build_state_index,
         )
 
@@ -769,6 +790,32 @@ class LookupTable444Reduce333LastEightEdges(LookupTable):
 
         for step in steps_to_scramble:
             self.parent.rotate(step)
+
+
+class LookupTableIDA444Phase4(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+                "Bw", "Bw'",
+                "Dw", "Dw'",
+                "L", "L'",
+                "R", "R'",
+                "Uw2",
+                "Dw2",
+                "F", "F'",
+                "B", "B'",
+            ),
+            # fmt: on
+            prune_tables=[parent.lt_phase4_centers, parent.lt_phase4_edges],
+        )
 
 
 class RubiksCube444(RubiksCube):
@@ -922,8 +969,11 @@ class RubiksCube444(RubiksCube):
 
         self.lt_phase3_centers = LookupTable444Reduce333FirstTwoCenters(self)
         self.lt_phase3_edges = LookupTable444Reduce333FirstFourEdges(self)
+        self.lt_phase3 = LookupTableIDA444Phase3(self)
+
         self.lt_phase4_centers = LookupTable444Reduce333Centers(self)
         self.lt_phase4_edges = LookupTable444Reduce333LastEightEdges(self)
+        self.lt_phase4 = LookupTableIDA444Phase4(self)
 
     def tsai_phase2(self) -> None:
         # Pick the best edge_mapping
@@ -1038,32 +1088,29 @@ class RubiksCube444(RubiksCube):
 
         self.tsai_phase2()
 
-        phase2_solution_len = len(self.solution)
-
-        # dwalton solve the prune tables
         # self.lt_phase3_centers.solve_old_school()
         # self.print_cube()
-
-        self.lt_phase3_edges.only_colors = list(itertools.combinations(wing_strs_all, 4))[0]
-        self.lt_phase3_edges.solve_old_school()
-        self.print_cube()
-
+        # self.lt_phase3_edges.only_colors = list(itertools.combinations(wing_strs_all, 4))[0]
+        # self.lt_phase3_edges.solve_old_school()
+        # self.print_cube()
         # self.lt_phase4_centers.solve_old_school()
         # self.print_cube()
+        # self.lt_phase4_edges.solve_old_school()
+        # self.print_cube()
 
-        self.lt_phase4_edges.solve_old_school()
-        self.print_cube()
-        raise Exception("DONE")
-
-        if self.state[6] != "U" or self.state[38] != "F":
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-
+        tmp_solution_len = len(self.solution)
+        self.lt_phase3.solve_via_c()
         self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
         self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase2_solution_len:])}_steps_444_phase3"
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase3"
         )
-        logger.info("")
+
+        tmp_solution_len = len(self.solution)
+        self.lt_phase4.solve_via_c()
+        self.print_cube(f"{self}: end of phase4 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
+        )
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

@@ -1460,11 +1460,6 @@ class RubiksCube(object):
         side_name_index = 0
         rows = []
         row_index = 0
-        logger.info("")
-
-        if title:
-            logger.info(title)
-            logger.info("=" * len(title))
 
         for x in range(self.size * 3):
             rows.append([])
@@ -1525,17 +1520,25 @@ class RubiksCube(object):
                     row_index = self.size
                 side_name_index += 1
 
+        output = ["", ""]
+
+        if title:
+            output.append(title)
+            output.append("=" * len(title))
+
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):
                 if all_digits:
-                    logger.info(" " * (self.size * 3) + " ".join(row))
+                    output.append(" " * (self.size * 3) + " ".join(row))
                 else:
-                    logger.info(" " * (self.size + self.size + 1) + " ".join(row))
+                    output.append(" " * (self.size + self.size + 1) + " ".join(row))
             else:
-                logger.info((" ".join(row)))
+                output.append((" ".join(row)))
 
             if ((row_index + 1) % self.size) == 0:
-                logger.info("")
+                output.append("")
+
+        logger.info("\n".join(output))
 
     def print_case_statement_C(self, case: str, first_step: bool) -> None:
         """
@@ -3448,6 +3451,7 @@ class RubiksCube(object):
             raise SolveError(f"PLL should never happen on a {self}, the cube given to us to solve is invalid")
 
         pll_id = None
+        tmp_solution_len = len(self.solution)
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -3582,6 +3586,9 @@ class RubiksCube(object):
 
             for step in pll_solution.split():
                 self.rotate(step)
+            self.solution.append(
+                f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_solve_PLL"
+            )
 
         else:
             raise NotImplementedError(f"pll_id {pll_id}")

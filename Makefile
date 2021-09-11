@@ -4,7 +4,7 @@ clean:
 	find . -name __pycache__ | xargs rm -rf
 
 init: clean
-	gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/xxhash.c -lm
+	gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c -lm
 	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search_via_graph.c -lm
 	python3 -m venv venv
 	@./venv/bin/python3 -m pip install -U pip==20.3.1

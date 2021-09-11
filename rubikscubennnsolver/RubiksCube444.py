@@ -1,7 +1,6 @@
 # standard libraries
 import itertools
 import logging
-import subprocess
 from typing import Dict, List, Tuple
 
 # rubiks cube libraries
@@ -1111,58 +1110,132 @@ class RubiksCube444(RubiksCube):
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
         )
 
-    def phase3_and_4(self):
+    def phase3_and_4(self, consider_solve_333: bool):
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
+        pt_state_indexes = []
+        phase3_pt_state_indexes_to_wing_str_combo = {}
 
-        # disable INFO messages as we try many phase2 solutions
-        logging.getLogger().setLevel(logging.WARNING)
-        min_phase34_solution_len = None
-        min_phase34_wing_str_combo = None
-
-        # dwalton this needs to use my-pt-states that will be a million times faster
-        for index, wing_str_combo in enumerate(itertools.combinations(wing_strs_all, 4)):
+        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            self.phase3(wing_str_combo)
-            # -1 for the comment in the solution
-            phase3_solution_len = len(self.solution[original_solution_len:]) - 1
+            self.lt_phase3_edges.only_colors = wing_str_combo
+            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase3.prune_tables])
+            phase3_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
+            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
 
-            if min_phase34_solution_len is not None:
-                max_phase4_ida_threshold = min_phase34_solution_len - phase3_solution_len - 1
-            else:
-                max_phase4_ida_threshold = None
-
-            try:
-                self.phase4(max_phase4_ida_threshold)
-            except subprocess.CalledProcessError:
-                continue
-
-            # -2 for the two comments in the solution
-            phase34_solution_len = len(self.solution[original_solution_len:]) - 2
-            phase4_solution_len = phase34_solution_len - phase3_solution_len
-
-            if self.edge_solution_leads_to_pll_parity():
-                phase34_solution_len += 12
-
-            desc = f"{self}: {index+1}/495 {wing_str_combo} phase3+4 solution is {phase34_solution_len} steps ({phase3_solution_len} + {phase4_solution_len})"
-
-            if min_phase34_solution_len is None or phase34_solution_len < min_phase34_solution_len:
-                min_phase34_solution_len = phase34_solution_len
-                min_phase34_wing_str_combo = wing_str_combo
-                logger.warning(f"{desc} (NEW MIN)")
-            elif phase34_solution_len == min_phase34_solution_len:
-                logger.warning(f"{desc} (TIE)")
-            else:
-                logger.warning(f"{desc}")
-
-        logging.getLogger().setLevel(logging.INFO)
         self.state = original_state[:]
         self.solution = original_solution[:]
-        self.phase3(min_phase34_wing_str_combo)
-        self.phase4()
+        phase3_solutions = self.lt_phase3.solutions_via_c(pt_states=pt_state_indexes, solution_count=500)
+
+        pt_state_indexes = []
+        phase4_pt_state_indexes_to_phase3_solution = {}
+        phase4_pt_state_indexes_to_wing_str_combo = {}
+
+        for phase3_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase3_solutions:
+            wing_str_combo = phase3_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in phase3_solution:
+                self.rotate(step)
+
+            self.lt_phase3_edges.only_colors = wing_str_combo
+            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase4.prune_tables])
+            phase4_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
+            phase4_pt_state_indexes_to_phase3_solution[wing_str_combo_pt_state_indexes] = phase3_solution
+            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
+
+        logger.info("\n" * 50)
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        phase4_solutions = self.lt_phase4.solutions_via_c(pt_states=pt_state_indexes, solution_count=500)
+        solutions_with_pll = []
+        solutions_without_pll = []
+
+        for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
+            wing_str_combo = phase4_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
+            phase3_solution = phase4_pt_state_indexes_to_phase3_solution[(pt0_state, pt1_state)]
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in phase3_solution:
+                self.rotate(step)
+
+            for step in phase4_solution:
+                self.rotate(step)
+
+            if self.edge_solution_leads_to_pll_parity():
+                solutions_with_pll.append((phase3_solution, phase4_solution))
+            else:
+                solutions_without_pll.append((phase3_solution, phase4_solution))
+
+        logger.info(f"{len(solutions_without_pll)} solutions without PLL")
+        logger.info(f"{len(solutions_with_pll)} solutions with PLL")
+
+        if solutions_without_pll:
+            solutions_to_check = solutions_without_pll
+        else:
+            solutions_to_check = solutions_with_pll
+
+        # dwalton
+        if consider_solve_333:
+            min_solve_333_solution = []
+            min_solve_333_solution_len = None
+            already_solved_333 = set()
+
+            for (phase3_solution, phase4_solution) in solutions_to_check:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in phase3_solution:
+                    self.rotate(step)
+
+                for step in phase4_solution:
+                    self.rotate(step)
+
+                if tuple(self.state) in already_solved_333:
+                    continue
+
+                already_solved_333.add(tuple(self.state))
+                tmp_solution_len = len(self.solution)
+                self.solve_333()
+                solve_333_solution_len = len(self.solution[tmp_solution_len:])
+                # logger.info((phase3_solution, phase4_solution))
+
+                if min_solve_333_solution_len is None or solve_333_solution_len < min_solve_333_solution_len:
+                    logger.info(f"solve 333 in {solve_333_solution_len} steps (NEW MIN)")
+                    min_solve_333_solution_len = solve_333_solution_len
+                    min_solve_333_solution = (phase3_solution, phase4_solution)
+                else:
+                    logger.info(f"solve 333 in {solve_333_solution_len} steps")
+            min_phase34_solution = min_solve_333_solution
+        else:
+            min_phase34_solution = solutions_to_check[0]
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        (phase3_solution, phase4_solution) = min_phase34_solution
+
+        # apply the phase 3 solution
+        tmp_solution_len = len(self.solution)
+        for step in phase3_solution:
+            self.rotate(step)
+        self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase3"
+        )
+
+        # apply the phase 4 solution
+        tmp_solution_len = len(self.solution)
+        for step in phase4_solution:
+            self.rotate(step)
+        self.print_cube(f"{self}: end of phase4 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
+        )
 
     def reduce_333(self) -> None:
 
@@ -1193,7 +1266,7 @@ class RubiksCube444(RubiksCube):
         self.phase2()
         # self.phase3()
         # self.phase4()
-        self.phase3_and_4()
+        self.phase3_and_4(consider_solve_333=True)
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

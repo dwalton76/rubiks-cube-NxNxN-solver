@@ -757,8 +757,8 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
     min_ida_threshold = ctg.cost_to_goal;
     search_result.found_solution = 0;
 
-    // LOG("min_ida_threshold %d\n", min_ida_threshold);
     if (min_ida_threshold >= max_ida_threshold) {
+        // LOG("min_ida_threshold %d >= max_ida_threshold %d\n", min_ida_threshold, max_ida_threshold);
         return search_result;
     }
 
@@ -1159,7 +1159,7 @@ int main(int argc, char *argv[]) {
         min_search_result.f_cost = 99;
 
         for (unsigned char i_max_ida_threshold = 0; i_max_ida_threshold <= max_ida_threshold; i_max_ida_threshold++) {
-            LOG("loop %d\n", i_max_ida_threshold);
+            // LOG("loop %d\n", i_max_ida_threshold);
 
             fh_read = fopen(prune_table_states_filename, "r");
             while ((read = getline(&line, &len, fh_read)) != -1) {
@@ -1192,7 +1192,6 @@ int main(int argc, char *argv[]) {
                 if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
                     min_search_result = search_result;
                     max_ida_threshold = search_result.f_cost;
-                    break;
                 }
 
                 line_index++;

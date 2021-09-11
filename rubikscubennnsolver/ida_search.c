@@ -715,8 +715,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    if (cube_size_kociemba < 2 || cube_size_kociemba > 7) {
-        printf("ERROR: only 2x2x2 through 7x7x7 cubes are supported, yours is %dx%dx%d\n", cube_size_kociemba,
+    if (cube_size_kociemba < 6 || cube_size_kociemba > 7) {
+        printf("ERROR: only 6x6x6 and 7x7x7 cubes are supported, yours is %dx%dx%d\n", cube_size_kociemba,
                cube_size_kociemba, cube_size_kociemba);
         exit(1);
     }

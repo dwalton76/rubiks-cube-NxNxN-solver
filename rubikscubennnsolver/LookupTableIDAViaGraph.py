@@ -247,7 +247,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 to_write = []
 
     def solutions_via_c(
-        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None
+        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None, find_extra: bool = False
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
         my_pt_state_filename = "my-pt-states.txt"
@@ -327,6 +327,9 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--solution-count")
             cmd.append(str(solution_count))
 
+        if find_extra:
+            cmd.append("--find-extra")
+
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
 
@@ -340,7 +343,7 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        logger.info("%s: solving via C ida_search\n%s\n" % (self, cmd_string))
+        logger.warning("%s: solving via C ida_search\n%s\n" % (self, cmd_string))
         output = subprocess.check_output(cmd).decode("utf-8")
         output = "\n".join(remove_failed_ida_output(output.splitlines()))
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
@@ -379,9 +382,14 @@ class LookupTableIDAViaGraph(LookupTable):
         else:
             raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % output)
 
-    def solve_via_c(self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None) -> None:
+    def solve_via_c(
+        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None, find_extra: bool = False
+    ) -> None:
         solution = self.solutions_via_c(
-            pt_states=pt_states, max_ida_threshold=max_ida_threshold, solution_count=solution_count
+            pt_states=pt_states,
+            max_ida_threshold=max_ida_threshold,
+            solution_count=solution_count,
+            find_extra=find_extra,
         )[0][0]
 
         for step in solution:

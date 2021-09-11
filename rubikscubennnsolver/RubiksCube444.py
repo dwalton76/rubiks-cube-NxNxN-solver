@@ -1113,6 +1113,8 @@ class RubiksCube444(RubiksCube):
     def phase3_and_4(self, consider_solve_333: bool):
         original_state = self.state[:]
         original_solution = self.solution[:]
+
+        # phase 3 - search for all wing_strs
         pt_state_indexes = []
         phase3_pt_state_indexes_to_wing_str_combo = {}
 
@@ -1127,8 +1129,12 @@ class RubiksCube444(RubiksCube):
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        phase3_solutions = self.lt_phase3.solutions_via_c(pt_states=pt_state_indexes, solution_count=500)
+        phase3_solutions = self.lt_phase3.solutions_via_c(
+            pt_states=pt_state_indexes, solution_count=5000, find_extra=False
+        )
+        logger.info(f"found {len(phase3_solutions)} phase3 solutions")
 
+        # phase 4 - search for all of the phase3 wing_strs
         pt_state_indexes = []
         phase4_pt_state_indexes_to_phase3_solution = {}
         phase4_pt_state_indexes_to_wing_str_combo = {}
@@ -1147,38 +1153,48 @@ class RubiksCube444(RubiksCube):
             phase4_pt_state_indexes_to_phase3_solution[wing_str_combo_pt_state_indexes] = phase3_solution
             pt_state_indexes.append(wing_str_combo_pt_state_indexes)
 
-        logger.info("\n" * 50)
+        # dwalton
+        # find more and more phase 4 solutions until we find some that are PLL free
         self.state = original_state[:]
         self.solution = original_solution[:]
-        phase4_solutions = self.lt_phase4.solutions_via_c(pt_states=pt_state_indexes, solution_count=500)
-        solutions_with_pll = []
         solutions_without_pll = []
+        find_extra = False
+        solution_count = 1000
 
-        for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
-            wing_str_combo = phase4_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
-            phase3_solution = phase4_pt_state_indexes_to_phase3_solution[(pt0_state, pt1_state)]
+        # disable INFO messages as we try many phase2 solutions
+        logging.getLogger().setLevel(logging.WARNING)
 
-            self.state = original_state[:]
-            self.solution = original_solution[:]
+        while not solutions_without_pll:
+            phase4_solutions = self.lt_phase4.solutions_via_c(
+                pt_states=pt_state_indexes, solution_count=solution_count, find_extra=find_extra
+            )
+            logger.warning(
+                f"found {len(phase4_solutions)} phase4 solutions, find_extra {find_extra}, solution_count {solution_count}"
+            )
 
-            for step in phase3_solution:
-                self.rotate(step)
+            for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
+                wing_str_combo = phase4_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
+                phase3_solution = phase4_pt_state_indexes_to_phase3_solution[(pt0_state, pt1_state)]
 
-            for step in phase4_solution:
-                self.rotate(step)
+                self.state = original_state[:]
+                self.solution = original_solution[:]
 
-            if self.edge_solution_leads_to_pll_parity():
-                solutions_with_pll.append((phase3_solution, phase4_solution))
+                for step in phase3_solution:
+                    self.rotate(step)
+
+                for step in phase4_solution:
+                    self.rotate(step)
+
+                if not self.edge_solution_leads_to_pll_parity():
+                    solutions_without_pll.append((phase3_solution, phase4_solution))
+
+            logger.warning(f"{len(solutions_without_pll)} solutions without PLL")
+
+            if solutions_without_pll:
+                break
             else:
-                solutions_without_pll.append((phase3_solution, phase4_solution))
-
-        logger.info(f"{len(solutions_without_pll)} solutions without PLL")
-        logger.info(f"{len(solutions_with_pll)} solutions with PLL")
-
-        if solutions_without_pll:
-            solutions_to_check = solutions_without_pll
-        else:
-            solutions_to_check = solutions_with_pll
+                find_extra = True
+                solution_count += 1000
 
         # dwalton
         if consider_solve_333:
@@ -1186,7 +1202,7 @@ class RubiksCube444(RubiksCube):
             min_solve_333_solution_len = None
             already_solved_333 = set()
 
-            for (phase3_solution, phase4_solution) in solutions_to_check:
+            for (phase3_solution, phase4_solution) in solutions_without_pll:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
@@ -1202,19 +1218,20 @@ class RubiksCube444(RubiksCube):
                 already_solved_333.add(tuple(self.state))
                 tmp_solution_len = len(self.solution)
                 self.solve_333()
-                solve_333_solution_len = len(self.solution[tmp_solution_len:])
-                # logger.info((phase3_solution, phase4_solution))
+                # -1 for the comment
+                solve_333_solution_len = len(self.solution[tmp_solution_len:]) - 1
 
                 if min_solve_333_solution_len is None or solve_333_solution_len < min_solve_333_solution_len:
-                    logger.info(f"solve 333 in {solve_333_solution_len} steps (NEW MIN)")
+                    logger.warning(f"solve 333 in {solve_333_solution_len} steps (NEW MIN)")
                     min_solve_333_solution_len = solve_333_solution_len
                     min_solve_333_solution = (phase3_solution, phase4_solution)
                 else:
-                    logger.info(f"solve 333 in {solve_333_solution_len} steps")
+                    logger.warning(f"solve 333 in {solve_333_solution_len} steps")
             min_phase34_solution = min_solve_333_solution
         else:
-            min_phase34_solution = solutions_to_check[0]
+            min_phase34_solution = solutions_without_pll[0]
 
+        logging.getLogger().setLevel(logging.INFO)
         self.state = original_state[:]
         self.solution = original_solution[:]
         (phase3_solution, phase4_solution) = min_phase34_solution

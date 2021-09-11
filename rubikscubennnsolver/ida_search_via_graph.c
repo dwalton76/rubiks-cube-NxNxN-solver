@@ -784,13 +784,17 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
         LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count, ms / 1000,
             nodes_per_sec);
 
+        // dwalton
         if (search_result.found_solution) {
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n\n", ida_count_total,
                 ms / 1000, nodes_per_sec);
-            return search_result;
+
+            if (solution_count >= min_solution_count) {
+                return search_result;
+            }
         }
     }
 
@@ -850,6 +854,7 @@ int main(int argc, char *argv[]) {
     unsigned char max_ida_threshold = 30;
     unsigned char centers_only = 0;
     unsigned char use_uthash = 0;
+    unsigned char find_extra = 0;
     char *prune_table_states_filename = NULL;
     lookup_table_type type = GENERIC;
 
@@ -958,6 +963,9 @@ int main(int argc, char *argv[]) {
 
             // } else if (strmatch(argv[i], "--uthash")) {
             //     use_uthash = 1;
+
+        } else if (strmatch(argv[i], "--find-extra")) {
+            find_extra = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;
@@ -1159,7 +1167,7 @@ int main(int argc, char *argv[]) {
         min_search_result.f_cost = 99;
 
         for (unsigned char i_max_ida_threshold = 0; i_max_ida_threshold <= max_ida_threshold; i_max_ida_threshold++) {
-            // LOG("loop %d\n", i_max_ida_threshold);
+            LOG("loop %d/%d\n", i_max_ida_threshold, max_ida_threshold);
 
             fh_read = fopen(prune_table_states_filename, "r");
             while ((read = getline(&line, &len, fh_read)) != -1) {
@@ -1191,7 +1199,7 @@ int main(int argc, char *argv[]) {
 
                 if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
                     min_search_result = search_result;
-                    max_ida_threshold = search_result.f_cost;
+                    // max_ida_threshold = search_result.f_cost;
                 }
 
                 line_index++;
@@ -1201,7 +1209,13 @@ int main(int argc, char *argv[]) {
             search_result = min_search_result;
 
             if (search_result.found_solution) {
-                break;
+                if (find_extra) {
+                    if (solution_count >= min_solution_count) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
             }
         }
 

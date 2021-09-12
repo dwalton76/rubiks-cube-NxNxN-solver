@@ -1430,7 +1430,7 @@ class LookupTableIDAViaC(object):
         if not os.path.isfile("ida_search"):
             logger.info("ida_search is missing...compiling it now")
             subprocess.check_output(
-                "gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c -lm"
+                "gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c -lm".split()
             )
 
         kociemba_string = self.parent.get_kociemba_string(True)

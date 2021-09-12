@@ -343,7 +343,7 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        logger.warning("%s: solving via C ida_search\n%s\n" % (self, cmd_string))
+        logger.info("%s: solving via C ida_search\n%s\n" % (self, cmd_string))
         output = subprocess.check_output(cmd).decode("utf-8")
         output = "\n".join(remove_failed_ida_output(output.splitlines()))
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
@@ -369,7 +369,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 pt4_state = int(match.group(5))
 
             elif line.startswith("SOLUTION"):
-                solution = line.split(":")[1].strip().split()
+                solution = tuple(line.split(":")[1].strip().split())
                 solutions.append((len(solution), solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state)))
 
         if solutions:

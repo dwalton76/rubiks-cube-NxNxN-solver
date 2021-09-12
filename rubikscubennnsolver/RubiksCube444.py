@@ -1153,28 +1153,28 @@ class RubiksCube444(RubiksCube):
             phase4_pt_state_indexes_to_phase3_solution[wing_str_combo_pt_state_indexes] = phase3_solution
             pt_state_indexes.append(wing_str_combo_pt_state_indexes)
 
-        # dwalton
-        # find more and more phase 4 solutions until we find some that are PLL free
+        # find a phase 4 solution that does NOT lead to PLL
         self.state = original_state[:]
         self.solution = original_solution[:]
         solutions_without_pll = []
-        find_extra = False
+        solutions_with_pll = set()
         solution_count = 1000
 
-        # disable INFO messages as we try many phase2 solutions
+        # disable INFO messages as we try many phase4 solutions
         logging.getLogger().setLevel(logging.WARNING)
 
         while not solutions_without_pll:
             phase4_solutions = self.lt_phase4.solutions_via_c(
-                pt_states=pt_state_indexes, solution_count=solution_count, find_extra=find_extra
+                pt_states=pt_state_indexes, solution_count=solution_count, find_extra=True
             )
-            logger.warning(
-                f"found {len(phase4_solutions)} phase4 solutions, find_extra {find_extra}, solution_count {solution_count}"
-            )
+            logger.warning(f"found {len(phase4_solutions)} phase4 solutions with --solution-count {solution_count}")
 
             for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
                 wing_str_combo = phase4_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
                 phase3_solution = phase4_pt_state_indexes_to_phase3_solution[(pt0_state, pt1_state)]
+
+                if (phase3_solution, phase4_solution) in solutions_with_pll:
+                    continue
 
                 self.state = original_state[:]
                 self.solution = original_solution[:]
@@ -1185,7 +1185,9 @@ class RubiksCube444(RubiksCube):
                 for step in phase4_solution:
                     self.rotate(step)
 
-                if not self.edge_solution_leads_to_pll_parity():
+                if self.edge_solution_leads_to_pll_parity():
+                    solutions_with_pll.add((phase3_solution, phase4_solution))
+                else:
                     solutions_without_pll.append((phase3_solution, phase4_solution))
 
             logger.warning(f"{len(solutions_without_pll)} solutions without PLL")
@@ -1193,7 +1195,6 @@ class RubiksCube444(RubiksCube):
             if solutions_without_pll:
                 break
             else:
-                find_extra = True
                 solution_count += 1000
 
         # dwalton

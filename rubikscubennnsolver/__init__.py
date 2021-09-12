@@ -3602,11 +3602,10 @@ class RubiksCube(object):
             return
 
         kociemba_string = self.get_kociemba_string(False)
+        cmd = ["kociemba", kociemba_string]
 
         try:
-            steps = (
-                subprocess.check_output(["kociemba", kociemba_string]).decode("ascii").splitlines()[-1].strip().split()
-            )
+            steps = subprocess.check_output(cmd).decode("utf-8").splitlines()[-1].strip().split()
             kociemba_ok = True
         except Exception:
             kociemba_ok = False

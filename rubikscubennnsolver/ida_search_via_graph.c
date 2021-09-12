@@ -784,7 +784,6 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
         LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'d nodes-per-sec\n", threshold, ida_count, ms / 1000,
             nodes_per_sec);
 
-        // dwalton
         if (search_result.found_solution) {
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
             float nodes_per_ms = ida_count_total / ms;

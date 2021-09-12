@@ -374,16 +374,26 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
 
 class LookupTable444HighLowEdges(LookupTable):
     """
+    I only kept up to depth-6 but this is the move count for the entire table.
+    2,704,156 * 70 = 189,209,920
+
     lookup-table-4x4x4-step20-highlow-edges.txt
     ===========================================
-    1 steps has 36 entries (0 percent, 0.00x previous step)
-    2 steps has 348 entries (0 percent, 9.67x previous step)
+    0 steps has 2 entries (0 percent, 0.00x previous step)
+    1 steps has 34 entries (0 percent, 17.00x previous step)
+    2 steps has 348 entries (0 percent, 10.24x previous step)
     3 steps has 3,416 entries (0 percent, 9.82x previous step)
-    4 steps has 26,260 entries (1 percent, 7.69x previous step)
-    5 steps has 226,852 entries (9 percent, 8.64x previous step)
-    6 steps has 2,048,086 entries (88 percent, 9.03x previous step)
+    4 steps has 26,260 entries (0 percent, 7.69x previous step)
+    5 steps has 226,852 entries (0 percent, 8.64x previous step)
+    6 steps has 2,048,086 entries (1 percent, 9.03x previous step)
+    7 steps has 15,247,140 entries (8 percent, 7.44x previous step)
+    8 steps has 62,786,582 entries (33 percent, 4.12x previous step)
+    9 steps has 87,604,424 entries (46 percent, 1.40x previous step)
+    10 steps has 21,114,568 entries (11 percent, 0.24x previous step)
+    11 steps has 233,208 entries (0 percent, 0.01x previous step)
 
-    Total: 2,304,998 entries
+    Total: 189,290,920 entries
+    Average: 8.58 moves
     """
 
     def __init__(self, parent):
@@ -1030,8 +1040,8 @@ class RubiksCube444(RubiksCube):
             # for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
             for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
                 for edge_mapping in edges_to_flip_sets:
-                    self.state[:] = tmp_state[:]
-                    self.solution[:] = tmp_solution[:]
+                    self.state = tmp_state[:]
+                    self.solution = tmp_solution[:]
 
                     self.edge_mapping = edge_mapping
                     phase2_state = self.lt_highlow_edges.state()
@@ -1056,7 +1066,9 @@ class RubiksCube444(RubiksCube):
                     min_phase2_steps = list(pre_steps) + phase2_steps[:]
                     logger.info(f"{desc} (NEW MIN)")
                 elif phase2_cost == min_phase2_cost:
-                    logger.debug(f"{desc} (TIE)")
+                    logger.info(f"{desc} (TIE)")
+                else:
+                    logger.info(desc)
 
             if min_edge_mapping:
                 if pre_steps:

@@ -1157,17 +1157,19 @@ class RubiksCube444(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
         solutions_without_pll = []
+        solutions_without_pll_states = set()
         solutions_with_pll = set()
         solution_count = 1000
 
         # disable INFO messages as we try many phase4 solutions
         logging.getLogger().setLevel(logging.WARNING)
 
+        # If we did not find a PLL free solution then increase solution_count by 1000 and try again.
+        # We do this until we evaluate enough phase4 solutions that one of them happens to be PLL free.
         while not solutions_without_pll:
             phase4_solutions = self.lt_phase4.solutions_via_c(
                 pt_states=pt_state_indexes, solution_count=solution_count, find_extra=True
             )
-            logger.warning(f"found {len(phase4_solutions)} phase4 solutions with --solution-count {solution_count}")
 
             for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
                 wing_str_combo = phase4_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
@@ -1188,22 +1190,30 @@ class RubiksCube444(RubiksCube):
                 if self.edge_solution_leads_to_pll_parity():
                     solutions_with_pll.add((phase3_solution, phase4_solution))
                 else:
-                    solutions_without_pll.append((phase3_solution, phase4_solution))
+                    if tuple(self.state) in solutions_without_pll_states:
+                        continue
+                    else:
+                        solutions_without_pll.append((phase3_solution, phase4_solution))
+                        solutions_without_pll_states.add(tuple(self.state))
 
-            logger.warning(f"{len(solutions_without_pll)} solutions without PLL")
+            logger.warning(
+                f"found {len(phase4_solutions)} phase4 solutions with --solution-count {solution_count}, {len(solutions_without_pll)} solutions without PLL"
+            )
+            solution_count += 1000
 
-            if solutions_without_pll:
-                break
-            else:
-                solution_count += 1000
+        # sort solutions_without_pll by shortest phase3 + phase4 length
+        by_length = []
+        for (phase3_solution, phase4_solution) in solutions_without_pll:
+            by_length.append((len(phase3_solution) + len(phase4_solution), (phase3_solution, phase4_solution)))
+        by_length.sort()
+        solutions_without_pll = [x[1] for x in by_length]
 
-        # dwalton
         if consider_solve_333:
-            min_solve_333_solution = []
-            min_solve_333_solution_len = None
-            already_solved_333 = set()
+            min_solution = []
+            min_solution_len = None
+            PHASE_34_SOLUTIONS_TO_EVALUATE = 5
 
-            for (phase3_solution, phase4_solution) in solutions_without_pll:
+            for (phase3_solution, phase4_solution) in solutions_without_pll[:PHASE_34_SOLUTIONS_TO_EVALUATE]:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
@@ -1213,22 +1223,20 @@ class RubiksCube444(RubiksCube):
                 for step in phase4_solution:
                     self.rotate(step)
 
-                if tuple(self.state) in already_solved_333:
-                    continue
-
-                already_solved_333.add(tuple(self.state))
                 tmp_solution_len = len(self.solution)
                 self.solve_333()
-                # -1 for the comment
-                solve_333_solution_len = len(self.solution[tmp_solution_len:]) - 1
+                solve_333_solution_len = len(self.solution[tmp_solution_len:]) - 1  # -1 for the comment
+                solution_len = len(phase3_solution) + len(phase4_solution) + solve_333_solution_len
+                desc = f"phase 3 is {len(phase3_solution)} steps, phase 4 is {len(phase4_solution)} steps, solve 333 in {solve_333_solution_len} steps, total {solution_len}"
 
-                if min_solve_333_solution_len is None or solve_333_solution_len < min_solve_333_solution_len:
-                    logger.warning(f"solve 333 in {solve_333_solution_len} steps (NEW MIN)")
-                    min_solve_333_solution_len = solve_333_solution_len
-                    min_solve_333_solution = (phase3_solution, phase4_solution)
+                if min_solution_len is None or solution_len < min_solution_len:
+                    logger.warning(f"{desc} (NEW MIN)")
+                    min_solution_len = solution_len
+                    min_solution = (phase3_solution, phase4_solution)
                 else:
-                    logger.warning(f"solve 333 in {solve_333_solution_len} steps")
-            min_phase34_solution = min_solve_333_solution
+                    logger.warning(desc)
+
+            min_phase34_solution = min_solution
         else:
             min_phase34_solution = solutions_without_pll[0]
 

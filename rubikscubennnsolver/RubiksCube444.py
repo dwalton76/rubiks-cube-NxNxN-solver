@@ -1062,28 +1062,37 @@ class RubiksCube444(RubiksCube):
         self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
     def phase3(self, wing_str_combo: List[str] = None):
-        self.lt_phase3_edges.only_colors = wing_str_combo
-        tmp_solution_len = len(self.solution)
-        phase3_solutions = self.lt_phase3.solutions_via_c(solution_count=500)
         original_state = self.state[:]
         original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
 
-        for phase3_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase3_solutions:
+        # phase 3 - search for all wing_strs
+        pt_state_indexes = []
+        phase3_pt_state_indexes_to_wing_str_combo = {}
+
+        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            for step in phase3_solution:
-                self.rotate(step)
+            self.lt_phase3_edges.only_colors = wing_str_combo
+            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase3.prune_tables])
+            phase3_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
+            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
 
-            if not self.edge_solution_leads_to_pll_parity():
-                logger.info(f"{self}: {phase3_solution} avoids PLL")
-                break
-        else:
-            logger.info(f"{self}: could not find a phase3 solution that avoids PLL")
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        phase3_solutions = self.lt_phase3.solutions_via_c(pt_states=pt_state_indexes)
+
+        phase3_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase3_solutions[0]
+        wing_str_combo = phase3_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
+        self.lt_phase3_edges.only_colors = wing_str_combo
+
+        for step in phase3_solution:
+            self.rotate(step)
 
         self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
         self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase3"
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[original_solution_len:])}_steps_444_phase3"
         )
 
     def phase4(self, max_ida_threshold: int = None):
@@ -1263,9 +1272,7 @@ class RubiksCube444(RubiksCube):
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
         )
 
-    def reduce_333(self) -> None:
-
-        # save cube state
+    def phase1(self) -> None:
         self.original_state = self.state[:]
         self.original_solution = self.solution[:]
 
@@ -1289,6 +1296,8 @@ class RubiksCube444(RubiksCube):
                 f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_prevent_OLL"
             )
 
+    def reduce_333(self) -> None:
+        self.phase1()
         self.phase2()
         # self.phase3()
         # self.phase4()

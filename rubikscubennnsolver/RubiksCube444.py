@@ -976,6 +976,30 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4_edges = LookupTable444Reduce333LastEightEdges(self)
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
+    def phase1(self) -> None:
+        self.original_state = self.state[:]
+        self.original_solution = self.solution[:]
+
+        if not self.centers_staged():
+            self.lt_ULFRBD_centers_stage.solve_via_c()
+
+        self.rotate_for_best_centers_staging(centers_444)
+        phase1_solution_len = len(self.solution)
+        self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
+        self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+
+        # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
+        # We need the edge swaps to be even for our edges lookup table to work.
+        if self.edge_swaps_odd(False, 0, False):
+            logger.warning(f"{self}: edge swaps are odd, running prevent_OLL to correct")
+            self.prevent_OLL()
+            self.print_cube(
+                f"{self}: end of prevent_OLL ({self.get_solution_len_minus_rotates(self.solution)} steps in)"
+            )
+            self.solution.append(
+                f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_prevent_OLL"
+            )
+
     def phase2(self) -> None:
         # Pick the best edge_mapping
         # - an edge_mapping that gives us a hit in the phase2 table is ideal
@@ -1271,30 +1295,6 @@ class RubiksCube444(RubiksCube):
         self.solution.append(
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
         )
-
-    def phase1(self) -> None:
-        self.original_state = self.state[:]
-        self.original_solution = self.solution[:]
-
-        if not self.centers_staged():
-            self.lt_ULFRBD_centers_stage.solve_via_c()
-
-        self.rotate_for_best_centers_staging(centers_444)
-        phase1_solution_len = len(self.solution)
-        self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
-        self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-
-        # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
-        # We need the edge swaps to be even for our edges lookup table to work.
-        if self.edge_swaps_odd(False, 0, False):
-            logger.warning(f"{self}: edge swaps are odd, running prevent_OLL to correct")
-            self.prevent_OLL()
-            self.print_cube(
-                f"{self}: end of prevent_OLL ({self.get_solution_len_minus_rotates(self.solution)} steps in)"
-            )
-            self.solution.append(
-                f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_prevent_OLL"
-            )
 
     def reduce_333(self) -> None:
         self.phase1()

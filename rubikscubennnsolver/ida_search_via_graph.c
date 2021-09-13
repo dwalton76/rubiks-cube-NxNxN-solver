@@ -223,22 +223,20 @@ unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev
     }
 
     if (pt_perfect_hash01) {
-        unsigned char perfect_hash01_cost = 0;
-        unsigned int perfect_hash01_index = 0;
+        unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
+        unsigned char perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
 
-        perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
-        perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
+        // LOG("prev_pt0_state %d, prev_pt1_state %d, perfect_hash01_index %d, perfect_hash01_cost %d, cost_to_goal %d\n",
+        //     prev_pt0_state, prev_pt1_state, perfect_hash01_index, perfect_hash01_cost, cost_to_goal);
 
+        // dwalton
         if (perfect_hash01_cost > cost_to_goal) {
             cost_to_goal = perfect_hash01_cost;
         }
 
         if (pt_perfect_hash02) {
-            unsigned char perfect_hash02_cost = 0;
-            unsigned int perfect_hash02_index = 0;
-
-            perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
-            perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
+            unsigned int perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
+            unsigned char perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
 
             if (perfect_hash02_cost > cost_to_goal) {
                 cost_to_goal = perfect_hash02_cost;
@@ -385,11 +383,8 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
     }
 
     if (pt_perfect_hash01) {
-        unsigned char perfect_hash01_cost = 0;
-        unsigned int perfect_hash01_index = 0;
-
-        perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
-        perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
+        unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
+        unsigned char perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
 
         if (perfect_hash01_cost > result.cost_to_goal) {
             result.cost_to_goal = perfect_hash01_cost;
@@ -401,11 +396,8 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
     }
 
     if (pt_perfect_hash02) {
-        unsigned char perfect_hash02_cost = 0;
-        unsigned int perfect_hash02_index = 0;
-
-        perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
-        perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
+        unsigned int perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
+        unsigned char perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
 
         if (perfect_hash02_cost > result.cost_to_goal) {
             result.cost_to_goal = perfect_hash02_cost;

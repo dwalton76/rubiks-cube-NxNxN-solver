@@ -1191,6 +1191,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueStage(self)
         self.lt_UD_outer_x_centers_stage = LookupTable666UDOuterXCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
+        self.lt_UD_centers_stage.avoid_oll = 0
 
         # phase 5
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)

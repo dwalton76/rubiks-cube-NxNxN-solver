@@ -1068,7 +1068,7 @@ class RubiksCube444(RubiksCube):
                 elif phase2_cost == min_phase2_cost:
                     logger.info(f"{desc} (TIE)")
                 else:
-                    logger.info(desc)
+                    logger.debug(desc)
 
             if min_edge_mapping:
                 if pre_steps:
@@ -1308,12 +1308,12 @@ class RubiksCube444(RubiksCube):
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
         )
 
-    def reduce_333(self) -> None:
+    def reduce_333(self, consider_solve_333: bool = True) -> None:
         self.phase1()
         self.phase2()
         # self.phase3()
         # self.phase4()
-        self.phase3_and_4(consider_solve_333=True)
+        self.phase3_and_4(consider_solve_333=consider_solve_333)
 
         self.solution.append("CENTERS_SOLVED")
         self.solution.append("EDGES_GROUPED")

@@ -854,7 +854,6 @@ class LookupTable(object):
                 return len(steps)
 
     def solve_old_school(self) -> None:
-        # dwalton
 
         while True:
             state = self.state()

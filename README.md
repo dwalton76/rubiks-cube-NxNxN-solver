@@ -15,7 +15,7 @@ below.
 
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| 09/09/2021 | [722673f](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/722673f7c95e17768623185de0c847ed28ca2d52) | 50 | **77.5**  |  |  | |  | |
+| 09/09/2021 | [722673f](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/722673f7c95e17768623185de0c847ed28ca2d52) | 50 | **77.5** | **139** | **193** | | **393** | |
 | 10/5/2019 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | **79** | **145** | **202** | 353 | **406** | 618 |
 | 10/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | 88 | 156 | 218 | 344 | **430** | **601** |
 | 09/24/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | **88** | **156** | **218** | **344** | 454 | 630 |

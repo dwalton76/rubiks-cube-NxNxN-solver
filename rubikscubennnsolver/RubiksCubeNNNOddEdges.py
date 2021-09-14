@@ -150,53 +150,31 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             elif step.startswith("COMMENT"):
                 self.solution.append(step)
             else:
+                # fmt: off
                 # Rotate the entire cube
                 if step.startswith("5"):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw",
-                    "Uw'",
-                    "Uw2",
-                    "Lw",
-                    "Lw'",
-                    "Lw2",
-                    "Fw",
-                    "Fw'",
-                    "Fw2",
-                    "Rw",
-                    "Rw'",
-                    "Rw2",
-                    "Bw",
-                    "Bw'",
-                    "Bw2",
-                    "Dw",
-                    "Dw'",
-                    "Dw2",
+                    "Uw", "Uw'", "Uw2",
+                    "Lw", "Lw'", "Lw2",
+                    "Fw", "Fw'", "Fw2",
+                    "Rw", "Rw'", "Rw2",
+                    "Bw", "Bw'", "Bw2",
+                    "Dw", "Dw'", "Dw2",
                 ):
                     step = wide_str + step
 
                 elif step in (
-                    "2U",
-                    "2U'",
-                    "2U2",
-                    "2L",
-                    "2L'",
-                    "2L2",
-                    "2F",
-                    "2F'",
-                    "2F2",
-                    "2R",
-                    "2R'",
-                    "2R2",
-                    "2B",
-                    "2B'",
-                    "2B2",
-                    "2D",
-                    "2D'",
-                    "2D2",
+                    "2U", "2U'", "2U2",
+                    "2L", "2L'", "2L2",
+                    "2F", "2F'", "2F2",
+                    "2R", "2R'", "2R2",
+                    "2B", "2B'", "2B2",
+                    "2D", "2D'", "2D2",
                 ):
                     step = wide_str + step[1:]
+                # fmt: on
 
                 # logger.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))
                 self.rotate(step)

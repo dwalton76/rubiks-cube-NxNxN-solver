@@ -255,11 +255,10 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_NNN_row3 = start_NNN_row2 + self.size
                 start_NNN_row4 = start_NNN_row3 + self.size
 
-                # fake_666.state[start_666+8] = self.state[start_NNN_row1 - (center_orbit_id * self.size)]
+                # centers
                 fake_666.state[start_666 + 8] = side_name[x]
                 fake_666.state[start_666 + 9] = self.state[start_NNN_row1 + 1 - (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 10] = self.state[start_NNN_row1 + 2 - (center_orbit_id * self.size)]
-                # fake_666.state[start_666+11] = self.state[start_NNN_row1+3 - (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 11] = side_name[x]
 
                 fake_666.state[start_666 + 14] = self.state[start_NNN_row2 - center_orbit_id]
@@ -272,19 +271,70 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 fake_666.state[start_666 + 22] = self.state[start_NNN_row3 + 2]
                 fake_666.state[start_666 + 23] = self.state[start_NNN_row3 + 3 + center_orbit_id]
 
-                # fake_666.state[start_666+26] = self.state[start_NNN_row4 + (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 26] = side_name[x]
                 fake_666.state[start_666 + 27] = self.state[start_NNN_row4 + 1 + (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 28] = self.state[start_NNN_row4 + 2 + (center_orbit_id * self.size)]
-                # fake_666.state[start_666+29] = self.state[start_NNN_row4+3 + (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 29] = side_name[x]
+
+                # top edge
+                edge03 = start_NNN + center_orbit_count + 2
+                edge04 = edge03 + 1
+                edge05 = edge03 + 2
+                edge02 = edge03 - 1
+
+                # left_edge
+                edge13 = start_NNN + ((center_orbit_count + 1) * self.size) + 1
+                edge19 = edge13 + self.size
+                edge07 = edge13 - self.size
+                edge25 = edge19 + self.size
+
+                # right edge
+                edge18 = edge13 + self.size - 1
+                edge24 = edge18 + self.size
+                edge12 = edge18 - self.size
+                edge30 = edge24 + self.size
+
+                # bottom edge
+                edge33 = start_NNN + (self.size * self.size) - center_orbit_count - 2
+                edge34 = edge33 + 1
+                edge35 = edge33 + 2
+                edge32 = edge33 - 1
+
+                # top edge
+                fake_666.state[start_666 + 2] = self.state[edge02]
+                fake_666.state[start_666 + 3] = self.state[edge03]
+                fake_666.state[start_666 + 4] = self.state[edge04]
+                fake_666.state[start_666 + 5] = self.state[edge05]
+
+                # left edge
+                fake_666.state[start_666 + 7] = self.state[edge07]
+                fake_666.state[start_666 + 13] = self.state[edge13]
+                fake_666.state[start_666 + 19] = self.state[edge19]
+                fake_666.state[start_666 + 25] = self.state[edge25]
+
+                # right edge
+                fake_666.state[start_666 + 12] = self.state[edge12]
+                fake_666.state[start_666 + 18] = self.state[edge18]
+                fake_666.state[start_666 + 24] = self.state[edge24]
+                fake_666.state[start_666 + 30] = self.state[edge30]
+
+                # bottom edge
+                fake_666.state[start_666 + 32] = self.state[edge32]
+                fake_666.state[start_666 + 33] = self.state[edge33]
+                fake_666.state[start_666 + 34] = self.state[edge34]
+                fake_666.state[start_666 + 35] = self.state[edge35]
+
                 start_666 += 36
                 start_NNN += self.size * self.size
 
             fake_666.sanity_check()
+            # self.print_cube()
+            # fake_666.enable_print_cube = True
+            # fake_666.print_cube()
+            # raise Exception("DONE")
 
             # Group LR centers (in turn groups FB)
-            fake_666.group_centers_guts(oblique_edges_only=True)
+            fake_666.group_centers_guts()
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))

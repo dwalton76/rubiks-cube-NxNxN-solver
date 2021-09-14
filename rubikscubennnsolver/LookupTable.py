@@ -1133,7 +1133,7 @@ class LookupTableIDA(LookupTable):
         """
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
-            logger.info("%s: recolor" % self)
+            logger.info(f"{self}: recolor")
 
             if self.nuke_corners:
                 self.parent.nuke_corners()
@@ -1375,7 +1375,7 @@ class LookupTableIDAViaC(object):
         else:
             for x in illegal_moves:
                 if x not in all_moves:
-                    raise Exception("illegal move %s is not in the list of legal moves" % x)
+                    raise Exception(f"illegal move {x} is not in the list of legal moves")
 
             self.all_moves = []
 
@@ -1383,7 +1383,7 @@ class LookupTableIDAViaC(object):
                 if x not in illegal_moves:
                     self.all_moves.append(x)
 
-        logger.debug("%s: all_moves %s" % (self, ",".join(self.all_moves)))
+        logger.debug(f"{self}: all_moves {','.join(self.all_moves)}")
 
     def __str__(self) -> str:
         """
@@ -1398,7 +1398,7 @@ class LookupTableIDAViaC(object):
         """
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
-            logger.info("%s: recolor" % self)
+            logger.info(f"{self}: recolor")
 
             if self.nuke_corners:
                 self.parent.nuke_corners()
@@ -1477,7 +1477,7 @@ class LookupTableIDAViaC(object):
         cmd_string = cmd_string.replace("--legal-moves ", '--legal-moves "')
         cmd_string += '"'
 
-        logger.info("%s: solving via C ida_search\n%s" % (self, cmd_string))
+        logger.info(f"{self}: solving via C ida_search\n{cmd_string}")
         output = subprocess.check_output(cmd).decode("utf-8")
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
         logger.info(f"\n{output}")
@@ -1495,7 +1495,7 @@ class LookupTableIDAViaC(object):
         # apply the shortest solution
         solutions.sort()
         steps = solutions[0][1]
-        logger.info("%s: ida_search found solution %s" % (self, " ".join(steps)))
+        logger.info(f"{self}: ida_search found solution {' '.join(steps)}")
         self.parent.state = self.pre_recolor_state[:]
         self.parent.solution = self.pre_recolor_solution[:]
 

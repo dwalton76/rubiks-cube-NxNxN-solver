@@ -1545,7 +1545,7 @@ class LookupTable555Phase4(LookupTable):
             for step in steps:
                 self.parent.rotate(step)
                 if print_steps:
-                    logger.info("%s: step %s" % (self, step))
+                    logger.info(f"{self}: step {step}")
             return True
         else:
             return False

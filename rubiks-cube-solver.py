@@ -129,12 +129,12 @@ try:
     cube.solve(solution333)
 except NotSolving:
     if cube.heuristic_stats:
-        logger.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+        logger.info(f"{cube}: heuristic_stats raw\n{pformat(cube.heuristic_stats)}\n\n")
 
         for (key, value) in cube.heuristic_stats.items():
             cube.heuristic_stats[key] = int(median(value))
 
-        logger.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+        logger.info(f"{cube}: heuristic_stats median\n{pformat(cube.heuristic_stats)}\n\n")
         sys.exit(0)
     else:
         raise
@@ -177,8 +177,8 @@ if args.min_memory:
     print("****************************************\n\n")
 
 logger.info("rubiks-cube-solver.py end")
-logger.info("Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-logger.info("Time   : %s" % (end_time - start_time))
+logger.info(f"Memory : {resource.getrusage(resource.RUSAGE_SELF).ru_maxrss:,} bytes")
+logger.info(f"Time   : {end_time - start_time}")
 logger.info("")
 
 if not cube.solved():

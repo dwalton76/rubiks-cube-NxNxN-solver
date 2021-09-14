@@ -85,7 +85,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
         # fmt: on
 
     def recolor(self):
-        logger.info("%s: recolor (custom)" % self)
+        logger.info(f"{self}: recolor (custom)")
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 
@@ -142,7 +142,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
         # fmt: on
 
     def recolor(self):
-        logger.info("%s: recolor (custom)" % self)
+        logger.info(f"{self}: recolor (custom)")
 
         for x in centers_777:
             if x in self.UFBD_oblique_edges_777:

@@ -111,7 +111,7 @@ try:
             cube = RubiksCubeNNNOdd(solved_151515, order)
 
         else:
-            print("ERROR: Add support for %s" % size)
+            print(f"ERROR: Add support for {size}")
             sys.exit(1)
 
         kociemba_strings = test_cases[size]
@@ -145,12 +145,12 @@ try:
                     for (key, value) in cube.heuristic_stats.items():
                         tmp_heuristic_stats[key] = int(median(value))
 
-                    logger.info("%s: heuristic_stats median\n%s\n\n" % (size, pformat(tmp_heuristic_stats)))
+                    logger.info(f"{size}: heuristic_stats median\n{pformat(tmp_heuristic_stats)}\n\n")
 
                 continue
 
             except Exception as e:
-                results.append("\033[91m%s FAIL (exception) \033[0m: %s\n%s\n" % (size, kociemba_string, str(e)))
+                results.append(f"[91m{size} FAIL (exception) [0m: {kociemba_string}\n{str(e)}\n")
                 continue
 
             # Now put the cube back in its initial state and verify the solution solves it
@@ -160,10 +160,10 @@ try:
             #    cube.rotate(step)
 
             if cube.solved():
-                results.append("\033[92m%s PASS\033[0m: %s" % (size, kociemba_string))
+                results.append(f"[92m{size} PASS[0m: {kociemba_string}")
                 # cube.print_solution()
             else:
-                results.append("\033[91m%s FAIL (not solved)\033[0m: %s" % (size, kociemba_string))
+                results.append(f"[91m{size} FAIL (not solved)[0m: {kociemba_string}")
                 cube.print_cube()
                 cube.print_solution()
                 """
@@ -188,20 +188,18 @@ try:
                 max_solution_kociemba_string = kociemba_string
 
         if cube.heuristic_stats:
-            results.append("%s: FINAL heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+            results.append(f"{size}: FINAL heuristic_stats raw\n{pformat(cube.heuristic_stats)}\n\n")
 
             for (key, value) in cube.heuristic_stats.items():
                 cube.heuristic_stats[key] = int(median(value))
 
-            results.append("%s: FINAL heuristic_stats median\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
+            results.append(f"{size}: FINAL heuristic_stats median\n{pformat(cube.heuristic_stats)}\n\n")
 
-        results.append(
-            "%s avg centers solution %s steps" % (size, float(centers_solution_total / num_test_cases_executed))
-        )
-        results.append("%s avg edges solution %s steps" % (size, float(edges_solution_total / num_test_cases_executed)))
-        results.append("%s avg solution %s steps" % (size, float(solution_total / num_test_cases_executed)))
-        results.append("%s min solution %s steps (%s)" % (size, min_solution, min_solution_kociemba_string))
-        results.append("%s max solution %s steps (%s)" % (size, max_solution, max_solution_kociemba_string))
+        results.append(f"{size} avg centers solution {float(centers_solution_total / num_test_cases_executed)} steps")
+        results.append(f"{size} avg edges solution {float(edges_solution_total / num_test_cases_executed)} steps")
+        results.append(f"{size} avg solution {float(solution_total / num_test_cases_executed)} steps")
+        results.append(f"{size} min solution {min_solution} steps ({min_solution_kociemba_string})")
+        results.append(f"{size} max solution {max_solution} steps ({max_solution_kociemba_string})")
         results.append("")
 
     for result in results:

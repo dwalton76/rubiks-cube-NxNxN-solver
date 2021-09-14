@@ -318,7 +318,7 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
         )
 
     def recolor(self):
-        logger.info("%s: recolor (custom)" % self)
+        logger.info(f"{self}: recolor (custom)")
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 

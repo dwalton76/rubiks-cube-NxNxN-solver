@@ -38,22 +38,47 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
         start_nnn = 0
+        half_size = int(ceil(self.size / 2))
+        max_orbit = int((self.size - 3) / 2)
+
+        # center constants
+        centers_size = self.size - 2
+        half_centers_size = int(centers_size / 2)
+
+        centers_row1_col1 = self.size + 2
+        centers_row1_col2 = centers_row1_col1 + half_centers_size
+        centers_row1_col3 = centers_row1_col2 + half_centers_size
+
+        centers_row2_col2 = int(ceil((self.size * self.size) / 2))
+        centers_row2_col1 = centers_row2_col2 - half_centers_size
+        centers_row2_col3 = centers_row2_col2 + half_centers_size
+
+        centers_row3_col3 = (self.size * self.size) - self.size - 1
+        centers_row3_col2 = centers_row3_col3 - half_centers_size
+        centers_row3_col1 = centers_row3_col2 - half_centers_size
 
         for x in range(6):
+            # corners
             fake_555.state[start_555 + 1] = self.state[start_nnn + 1]
             fake_555.state[start_555 + 5] = self.state[start_nnn + self.size]
             fake_555.state[start_555 + 21] = self.state[start_nnn + (self.size * self.size) - self.size + 1]
             fake_555.state[start_555 + 25] = self.state[start_nnn + (self.size * self.size)]
-            start_nnn += self.size * self.size
-            start_555 += 25
 
-        # Fill in the edges
-        start_555 = 0
-        start_nnn = 0
-        half_size = int(ceil(self.size / 2))
-        max_orbit = int((self.size - 3) / 2)
+            # centers
+            if orbit == 0:
+                fake_555.state[start_555 + 7] = self.state[start_nnn + centers_row1_col1]
+                fake_555.state[start_555 + 8] = self.state[start_nnn + centers_row1_col2]
+                fake_555.state[start_555 + 9] = self.state[start_nnn + centers_row1_col3]
 
-        for x in range(6):
+                fake_555.state[start_555 + 12] = self.state[start_nnn + centers_row2_col1]
+                fake_555.state[start_555 + 13] = self.state[start_nnn + centers_row2_col2]
+                fake_555.state[start_555 + 14] = self.state[start_nnn + centers_row2_col3]
+
+                fake_555.state[start_555 + 17] = self.state[start_nnn + centers_row3_col1]
+                fake_555.state[start_555 + 18] = self.state[start_nnn + centers_row3_col2]
+                fake_555.state[start_555 + 19] = self.state[start_nnn + centers_row3_col3]
+
+            # edges
             row1_col2 = start_nnn + half_size
             row1_col1 = row1_col2 - (max_orbit - orbit)
             row1_col3 = row1_col2 + (max_orbit - orbit)
@@ -71,11 +96,11 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             row5_col2 = row1_col2 + ((self.size - 1) * self.size)
             row5_col3 = row1_col3 + ((self.size - 1) * self.size)
 
-            logger.debug("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
-            logger.debug("%d row2: %s, %s" % (x, row2_col1, row2_col3))
-            logger.debug("%d row3: %s, %s" % (x, row3_col1, row3_col3))
-            logger.debug("%d row4: %s, %s" % (x, row4_col1, row4_col3))
-            logger.debug("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
+            # logger.debug("%d row1: %s, %s, %s" % (x, row1_col1, row1_col2, row1_col3))
+            # logger.debug("%d row2: %s, %s" % (x, row2_col1, row2_col3))
+            # logger.debug("%d row3: %s, %s" % (x, row3_col1, row3_col3))
+            # logger.debug("%d row4: %s, %s" % (x, row4_col1, row4_col3))
+            # logger.debug("%d row5: %s, %s, %s" % (x, row5_col1, row5_col2, row5_col3))
 
             # row1
             fake_555.state[start_555 + 2] = self.state[row1_col1]
@@ -101,41 +126,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
 
             start_nnn += self.size * self.size
             start_555 += 25
-
-        # Fill in the centers
-        if orbit == 0:
-            start_555 = 0
-            start_nnn = 0
-            centers_size = self.size - 2
-            half_centers_size = int(centers_size / 2)
-
-            row1_col1 = self.size + 2
-            row1_col2 = row1_col1 + half_centers_size
-            row1_col3 = row1_col2 + half_centers_size
-
-            row2_col2 = int(ceil((self.size * self.size) / 2))
-            row2_col1 = row2_col2 - half_centers_size
-            row2_col3 = row2_col2 + half_centers_size
-
-            row3_col3 = (self.size * self.size) - self.size - 1
-            row3_col2 = row3_col3 - half_centers_size
-            row3_col1 = row3_col2 - half_centers_size
-
-            for x in range(6):
-                fake_555.state[start_555 + 7] = self.state[start_nnn + row1_col1]
-                fake_555.state[start_555 + 8] = self.state[start_nnn + row1_col2]
-                fake_555.state[start_555 + 9] = self.state[start_nnn + row1_col3]
-
-                fake_555.state[start_555 + 12] = self.state[start_nnn + row2_col1]
-                fake_555.state[start_555 + 13] = self.state[start_nnn + row2_col2]
-                fake_555.state[start_555 + 14] = self.state[start_nnn + row2_col3]
-
-                fake_555.state[start_555 + 17] = self.state[start_nnn + row3_col1]
-                fake_555.state[start_555 + 18] = self.state[start_nnn + row3_col2]
-                fake_555.state[start_555 + 19] = self.state[start_nnn + row3_col3]
-
-                start_nnn += self.size * self.size
-                start_555 += 25
 
         fake_555.enable_print_cube = True
         fake_555.sanity_check()

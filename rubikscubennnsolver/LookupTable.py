@@ -1420,20 +1420,13 @@ class LookupTableIDAViaC(object):
         """
         The goal is to find a sequence of moves that will put the cube in a state that is one of our state_targets
         """
-
-        # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
-        self.pre_recolor_state = self.parent.state[:]
-        self.pre_recolor_solution = self.parent.solution[:]
-        self.recolor()
-
         if not os.path.isfile("ida_search"):
             logger.info("ida_search is missing...compiling it now")
             subprocess.check_output(
                 "gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c -lm".split()
             )
 
-        kociemba_string = self.parent.get_kociemba_string(True)
-        cmd = ["./ida_search", "--kociemba", kociemba_string, "--type", self.C_ida_type]
+        cmd = ["./ida_search", "--type", self.C_ida_type]
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
@@ -1459,12 +1452,14 @@ class LookupTableIDAViaC(object):
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise ValueError(f"avoid_oll is only supported for orbits 0 or 1, not {self.avoid_oll}")
 
-        if self.avoid_pll:
-            # To avoid PLL the odd/even of edge swaps and corner swaps must agree...they
-            # must both be odd or both be even. In order to avoid OLL though (which we
-            # should have already done) the edge swaps must be even.
-            assert self.parent.size == 4, "avoid_pll should only be True for 4x4x4 cubes"
-            cmd.append("--avoid-pll")
+        # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
+        self.pre_recolor_state = self.parent.state[:]
+        self.pre_recolor_solution = self.parent.solution[:]
+        self.recolor()
+
+        kociemba_string = self.parent.get_kociemba_string(True)
+        cmd.append("--kociemba")
+        cmd.append(kociemba_string)
 
         if self.centers_only:
             cmd.append("--centers-only")

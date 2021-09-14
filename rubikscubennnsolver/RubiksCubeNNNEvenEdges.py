@@ -105,24 +105,17 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         half_size = int(self.size / 2)
         max_orbit = int((self.size - 2) / 2) - 1
 
-        # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
         start_nnn = 0
 
         for x in range(6):
+            # corners
             fake_555.state[start_555 + 1] = self.state[start_nnn + 1]
             fake_555.state[start_555 + 5] = self.state[start_nnn + self.size]
             fake_555.state[start_555 + 21] = self.state[start_nnn + (self.size * self.size) - self.size + 1]
             fake_555.state[start_555 + 25] = self.state[start_nnn + (self.size * self.size)]
-            start_nnn += self.size * self.size
-            start_555 += 25
 
-        # Fill in the centers
-        start_555 = 0
-        start_nnn = 0
-        logger.info(f"orbit {orbit}, max_orbit {max_orbit}")
-
-        for x in range(6):
+            # centers
             row1_col2 = start_nnn + half_size + self.size
             row1_col1 = row1_col2 - (max_orbit - orbit)
             row1_col3 = row1_col2 + (max_orbit - orbit) + 1
@@ -151,14 +144,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             fake_555.state[start_555 + 18] = self.state[row3_col2]
             fake_555.state[start_555 + 19] = self.state[row3_col3]
 
-            start_nnn += self.size * self.size
-            start_555 += 25
-
-        # Fill in the edges
-        start_555 = 0
-        start_nnn = 0
-
-        for x in range(6):
+            # edges
             row1_col2 = start_nnn + half_size
             row1_col1 = row1_col2 - (max_orbit - orbit)
             row1_col3 = row1_col2 + (max_orbit - orbit) + 1

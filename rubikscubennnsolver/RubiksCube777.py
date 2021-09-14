@@ -143,6 +143,8 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
 
         for x in centers_777:
             if x in self.UFBD_oblique_edges_777:
@@ -2363,6 +2365,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             offset_555 = side_index * 25
             offset_777 = side_index * 49
 
+            # corners
+            fake_555.state[1 + offset_555] = self.state[1 + offset_777]
+            fake_555.state[5 + offset_555] = self.state[7 + offset_777]
+            fake_555.state[21 + offset_555] = self.state[43 + offset_777]
+            fake_555.state[25 + offset_555] = self.state[49 + offset_777]
+
             # centers
             fake_555.state[7 + offset_555] = self.state[17 + offset_777]
             fake_555.state[8 + offset_555] = self.state[18 + offset_777]
@@ -2402,6 +2410,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         for side_index in range(6):
             offset_555 = side_index * 25
             offset_777 = side_index * 49
+
+            # corners
+            fake_555.state[1 + offset_555] = self.state[1 + offset_777]
+            fake_555.state[5 + offset_555] = self.state[7 + offset_777]
+            fake_555.state[21 + offset_555] = self.state[43 + offset_777]
+            fake_555.state[25 + offset_555] = self.state[49 + offset_777]
 
             # centers
             fake_555.state[7 + offset_555] = self.state[9 + offset_777]

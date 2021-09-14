@@ -3292,6 +3292,9 @@ class RubiksCube(object):
         """
         Solving OLL at the end takes 26 moves, preventing it takes 10
 
+        To avoid PLL, the odd/even of edge swaps and corner swaps must agree...they must both be odd or both be even.
+        To avoid OLL, the edge swaps must be even..
+
         Returns:
             True if any steps were applied
         """

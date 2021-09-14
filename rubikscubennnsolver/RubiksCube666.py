@@ -1191,6 +1191,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueStage(self)
         self.lt_UD_outer_x_centers_stage = LookupTable666UDOuterXCenterStage(self)
         self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
+        self.lt_UD_centers_stage.avoid_oll = (0, 1)
 
         # phase 5
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
@@ -1274,7 +1275,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.state[23 + offset_555] = side_name
             fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
-    def group_centers_guts(self, oblique_edges_only=False):
+    def group_centers_guts(self):
         self.lt_init()
 
         # phase 1
@@ -1282,10 +1283,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_444 = self.get_fake_444()
         self.populate_fake_444_for_inner_x_centers_stage()
         tmp_solution_len = len(self.solution)
-
-        if oblique_edges_only:
-            fake_444.lt_ULFRBD_centers_stage.avoid_oll = None
-
         fake_444.lt_ULFRBD_centers_stage.solve_via_c()
 
         for step in fake_444.solution:
@@ -1379,6 +1376,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             "COMMENT_%d_steps_666_reduced_to_555"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
+
+        self.pair_inside_edges_via_444()
 
 
 def rotate_666(cube, step):

@@ -19,8 +19,7 @@ from pprint import pformat
 from statistics import median
 
 # rubiks cube libraries
-from rubikscubennnsolver import InvalidCubeReduction, SolveError, StuckInALoop, configure_logging, reverse_steps
-from rubikscubennnsolver.LookupTable import NoPruneTableState, NoSteps
+from rubikscubennnsolver import SolveError, configure_logging, reverse_steps
 from rubikscubennnsolver.RubiksSide import NotSolving
 
 if sys.version_info < (3, 6):
@@ -69,129 +68,118 @@ if "G" in args.state:
 if args.debug:
     logger.setLevel(logging.DEBUG)
 
-try:
-    size = int(sqrt((len(args.state) / 6)))
+size = int(sqrt((len(args.state) / 6)))
 
-    if size == 2:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCube222 import RubiksCube222
+if size == 2:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCube222 import RubiksCube222
 
-        cube = RubiksCube222(args.state, args.order, args.colormap, args.debug)
-    elif size == 3:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCube333 import RubiksCube333
+    cube = RubiksCube222(args.state, args.order, args.colormap, args.debug)
+elif size == 3:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCube333 import RubiksCube333
 
-        cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
-    elif size == 4:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCube444 import RubiksCube444
+    cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
+elif size == 4:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
-        cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
-    elif size == 5:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCube555 import RubiksCube555
+    cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
+elif size == 5:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 
-        cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
-    elif size == 6:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCube666 import RubiksCube666
+    cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
+elif size == 6:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 
-        cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
-    elif size == 7:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCube777 import RubiksCube777
+    cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
+elif size == 7:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 
-        cube = RubiksCube777(args.state, args.order, args.colormap, args.debug)
-    elif size % 2 == 0:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
+    cube = RubiksCube777(args.state, args.order, args.colormap, args.debug)
+elif size % 2 == 0:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
 
-        cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
-    else:
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
+    cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
+else:
+    # rubiks cube libraries
+    from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
 
-        cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
 
-    if args.openwith:
-        cube.print_cube()
-        for step in args.openwith.split():
-            cube.rotate(step)
-
-    cube.sanity_check()
-    cube.print_cube("Initial Cube")
-    cube.www_header()
-    cube.www_write_cube("Initial Cube")
-
-    try:
-        if args.solution333:
-            solution333 = reverse_steps(args.solution333.split())
-        else:
-            solution333 = []
-        cube.solve(solution333)
-    except NotSolving:
-        if cube.heuristic_stats:
-            logger.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
-
-            for (key, value) in cube.heuristic_stats.items():
-                cube.heuristic_stats[key] = int(median(value))
-
-            logger.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
-            sys.exit(0)
-        else:
-            raise
-
-    end_time = dt.datetime.now()
-    cube.print_cube("Final Cube")
-    cube.print_solution(not args.no_comments)
-
-    logger.info("*********************************************************************************")
-    logger.info("See /tmp/rubiks-cube-NxNxN-solver/index.html for more detailed solve instructions")
-    logger.info("*********************************************************************************\n")
-
-    # Now put the cube back in its initial state and verify the solution solves it
-    solution = cube.solution
-    cube.re_init()
-    len_steps = len(solution)
-
-    for (i, step) in enumerate(solution):
-
-        if args.print_steps:
-            print(("Move %d/%d: %s" % (i + 1, len_steps, step)))
-
+if args.openwith:
+    cube.print_cube()
+    for step in args.openwith.split():
         cube.rotate(step)
 
-        www_desc = "Cube After Move %d/%d: %s<br>\n" % (i + 1, len_steps, step)
-        cube.www_write_cube(www_desc)
+cube.sanity_check()
+cube.print_cube("Initial Cube")
+cube.www_header()
+cube.www_write_cube("Initial Cube")
 
-        if args.print_steps:
-            cube.print_cube()
-            print("\n\n\n\n")
+try:
+    if args.solution333:
+        solution333 = reverse_steps(args.solution333.split())
+    else:
+        solution333 = []
+    cube.solve(solution333)
+except NotSolving:
+    if cube.heuristic_stats:
+        logger.info("%s: heuristic_stats raw\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
 
-    cube.www_footer()
+        for (key, value) in cube.heuristic_stats.items():
+            cube.heuristic_stats[key] = int(median(value))
+
+        logger.info("%s: heuristic_stats median\n%s\n\n" % (cube, pformat(cube.heuristic_stats)))
+        sys.exit(0)
+    else:
+        raise
+
+end_time = dt.datetime.now()
+cube.print_cube("Final Cube")
+cube.print_solution(not args.no_comments)
+
+logger.info("*********************************************************************************")
+logger.info("See /tmp/rubiks-cube-NxNxN-solver/index.html for more detailed solve instructions")
+logger.info("*********************************************************************************\n")
+
+# Now put the cube back in its initial state and verify the solution solves it
+solution = cube.solution
+cube.re_init()
+len_steps = len(solution)
+
+for (i, step) in enumerate(solution):
+
+    if args.print_steps:
+        print(("Move %d/%d: %s" % (i + 1, len_steps, step)))
+
+    cube.rotate(step)
+
+    www_desc = "Cube After Move %d/%d: %s<br>\n" % (i + 1, len_steps, step)
+    cube.www_write_cube(www_desc)
 
     if args.print_steps:
         cube.print_cube()
+        print("\n\n\n\n")
 
-    if args.min_memory:
-        print("\n\n****************************************")
-        print("--min-memory has been replaced by --fast")
-        print("****************************************\n\n")
+cube.www_footer()
 
-    logger.info("rubiks-cube-solver.py end")
-    logger.info("Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-    logger.info("Time   : %s" % (end_time - start_time))
-    logger.info("")
-
-    if not cube.solved():
-        raise SolveError("cube should be solved but is not")
-
-
-except (NotImplementedError, SolveError, StuckInALoop, NoSteps, KeyError, NoPruneTableState, InvalidCubeReduction):
-    cube.enable_print_cube = True
-    cube.print_cube_layout()
+if args.print_steps:
     cube.print_cube()
-    cube.print_solution(False)
-    print((cube.get_kociemba_string(True)))
-    logger.info("rubiks-cube-solver.py end")
-    raise
+
+if args.min_memory:
+    print("\n\n****************************************")
+    print("--min-memory has been replaced by --fast")
+    print("****************************************\n\n")
+
+logger.info("rubiks-cube-solver.py end")
+logger.info("Memory : {:,} bytes".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+logger.info("Time   : %s" % (end_time - start_time))
+logger.info("")
+
+if not cube.solved():
+    raise SolveError("cube should be solved but is not")

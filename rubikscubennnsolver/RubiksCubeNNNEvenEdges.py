@@ -65,7 +65,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
             start_444 += 16
 
         fake_444.sanity_check()
-        fake_444.reduce_333()
+        fake_444.reduce_333(consider_solve_333=False)
         half_size_str = str(half_size)
 
         for step in fake_444.solution:
@@ -76,30 +76,20 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                 self.solution.append(step)
             else:
                 # Rotate the entire cube
+                # fmt: off
                 if step.startswith("4"):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw",
-                    "Uw'",
-                    "Uw2",
-                    "Lw",
-                    "Lw'",
-                    "Lw2",
-                    "Fw",
-                    "Fw'",
-                    "Fw2",
-                    "Rw",
-                    "Rw'",
-                    "Rw2",
-                    "Bw",
-                    "Bw'",
-                    "Bw2",
-                    "Dw",
-                    "Dw'",
-                    "Dw2",
+                    "Uw", "Uw'", "Uw2",
+                    "Lw", "Lw'", "Lw2",
+                    "Fw", "Fw'", "Fw2",
+                    "Rw", "Rw'", "Rw2",
+                    "Bw", "Bw'", "Bw2",
+                    "Dw", "Dw'", "Dw2",
                 ):
                     step = half_size_str + step
+                # fmt: on
 
                 self.rotate(step)
 
@@ -231,58 +221,36 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                 self.solution.append(step)
             else:
                 # Rotate the entire cube
+                # fmt: off
                 if step.startswith("5"):
                     step = str(self.size) + step[1:]
 
                 elif step in (
-                    "Uw",
-                    "Uw'",
-                    "Uw2",
-                    "Lw",
-                    "Lw'",
-                    "Lw2",
-                    "Fw",
-                    "Fw'",
-                    "Fw2",
-                    "Rw",
-                    "Rw'",
-                    "Rw2",
-                    "Bw",
-                    "Bw'",
-                    "Bw2",
-                    "Dw",
-                    "Dw'",
-                    "Dw2",
+                    "Uw", "Uw'", "Uw2",
+                    "Lw", "Lw'", "Lw2",
+                    "Fw", "Fw'", "Fw2",
+                    "Rw", "Rw'", "Rw2",
+                    "Bw", "Bw'", "Bw2",
+                    "Dw", "Dw'", "Dw2",
                 ):
                     step = wide_str + step
 
                 elif step in (
-                    "2U",
-                    "2U'",
-                    "2U2",
-                    "2L",
-                    "2L'",
-                    "2L2",
-                    "2F",
-                    "2F'",
-                    "2F2",
-                    "2R",
-                    "2R'",
-                    "2R2",
-                    "2B",
-                    "2B'",
-                    "2B2",
-                    "2D",
-                    "2D'",
-                    "2D2",
+                    "2U", "2U'", "2U2",
+                    "2L", "2L'", "2L2",
+                    "2F", "2F'", "2F2",
+                    "2R", "2R'", "2R2",
+                    "2B", "2B'", "2B2",
+                    "2D", "2D'", "2D2",
                 ):
                     step = wide_str + step[1:]
+                # fmt: on
 
                 self.rotate(step)
 
     def group_edges(self):
-        # Pair the inside edges via fake 4x4x4
-        self.pair_inside_edges_via_444()
+        # For 6x6x6 the inside edges are already paired at the end of group_centers_guts
+        # For 8x8x8 and larger the inside edges were paired right after make_plus_sign
 
         # How many orbits of edges does this cube have?
         max_orbit = int((self.size / 2) - 1)

@@ -9,12 +9,10 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "ida_search_444.h"
 #include "ida_search_666.h"
 #include "ida_search_777.h"
 #include "ida_search_core.h"
 #include "uthash.h"
-#include "xxhash.h"
 
 // scratchpads that we do not want to allocate over and over again
 char *sp_cube_state;
@@ -32,9 +30,6 @@ move_type move_matrix[MOVE_MAX][MOVE_MAX];
 typedef enum {
     NONE,
 
-    // 4x4x4
-    REDUCE_333_444,
-
     // 6x6x6
     LR_OBLIQUE_EDGES_STAGE_666,
 
@@ -45,16 +40,6 @@ typedef enum {
 } lookup_table_type;
 
 struct key_value_pair *ida_explored = NULL;
-
-// 4x4x4
-struct key_value_pair *centers_cost_444 = NULL;
-char *UD_centers_cost_only_444 = NULL;
-char *LR_centers_cost_only_444 = NULL;
-char *FB_centers_cost_only_444 = NULL;
-
-char *reduce_333_edges_only = NULL;
-char *reduce_333_centers_only = NULL;
-struct wings_for_edges_recolor_pattern_444 *wings_for_recolor_444;
 
 void str_replace_for_binary(char *str, char *ones) {
     int i = 0;
@@ -143,9 +128,6 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
     // LOG("cube:\n%s\n\n", cube);
 
     switch (type) {
-        case REDUCE_333_444:
-            break;
-
         case LR_OBLIQUE_EDGES_STAGE_666:
             // Convert to 1s and 0s
             str_replace_for_binary(cube, ones_LR);
@@ -234,11 +216,6 @@ char *ida_cost_only_preload(char *filename, unsigned long size) {
 
 struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, unsigned int max_cost_to_goal) {
     switch (type) {
-        // 4x4x4
-        case REDUCE_333_444:
-            return ida_heuristic_reduce_333_444(cube, max_cost_to_goal, reduce_333_edges_only, reduce_333_centers_only,
-                                                wings_for_recolor_444);
-
         // 6x6x6
         case LR_OBLIQUE_EDGES_STAGE_666:
             return ida_heuristic_LR_oblique_edges_stage_666(cube);
@@ -307,61 +284,6 @@ unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned i
     }
 
     switch (type) {
-        // 4x4x4
-        case REDUCE_333_444:
-            result = ida_search_complete_reduce_333_444(cube);
-
-            if (result) {
-                // This will only be true when solving 4x4x4 phase3 where we must avoid PLL. To avoid
-                // PLL the edge parity and corner parity must match (both odd or both even).
-                if (avoid_pll) {
-                    FILE *fp;
-                    char path[64];
-                    char command[256];
-
-                    memset(command, '\0', 256);
-                    strcpy(command, "usr/bin/has_pll.py ");
-                    unsigned int command_i = strlen(command);
-
-                    for (unsigned int i = 1; i <= 96; i++) {
-                        command[command_i] = cube[i];
-                        command_i++;
-                    }
-
-                    /* Open the command for reading. */
-                    fp = popen(command, "r");
-                    if (fp == NULL) {
-                        printf("Failed to run command\n");
-                        exit(1);
-                    }
-
-                    /* Read the output a line at a time - output it. */
-                    while (fgets(path, sizeof(path) - 1, fp) != NULL) {
-                        if (strmatch(path, "True\n")) {
-                            LOG("Found solution but it has PLL\n");
-                            result = 0;
-                            break;
-                        } else if (strmatch(path, "False\n")) {
-                            LOG("Found solution without PLL\n");
-                            result = 1;
-                            break;
-                        } else {
-                            printf("ERROR: invalid has_pll.py output %s\n", path);
-                            exit(1);
-                        }
-                    }
-
-                    /* close */
-                    pclose(fp);
-
-                    return result;
-                }
-                return 1;
-
-            } else {
-                return 0;
-            }
-
         // 6x6x6
         case LR_OBLIQUE_EDGES_STAGE_666:
             return ida_search_complete_LR_oblique_edges_stage_666(cube);
@@ -456,9 +378,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         char cube_copy[array_size];
         memcpy(cube_copy, cube, array_size_char);
 
-        if (cube_size == 4) {
-            rotate_444(cube_copy, cube_tmp, array_size, move);
-        } else if (cube_size == 6) {
+        if (cube_size == 6) {
             rotate_666(cube_copy, cube_tmp, array_size, move);
         } else if (cube_size == 7) {
             rotate_777(cube_copy, cube_tmp, array_size, move);
@@ -492,103 +412,44 @@ void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_res
     char cube_copy[array_size];
     size_t array_size_char = sizeof(char) * array_size;
     unsigned int cost_to_goal = 0;
+    struct ida_heuristic_result heuristic;
 
     memcpy(cube_copy, cube, array_size_char);
 
-    if (type == REDUCE_333_444) {
-        char edges_state[NUM_EDGES_444 + 1];
-        char centers_state[NUM_CENTERS_444 + 1];
-        unsigned long edges_state_bucket = 0;
-        unsigned long centers_state_bucket = 0;
-        unsigned int edges_cost = 0;
-        unsigned int centers_cost = 0;
+    if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+        heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
+    } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
+        heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
+    } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
+        heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
+    }
 
-        unsigned int centers_edges_cost_444[10][13] = {
-            {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},   // centers cost 0
-            {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},   // centers cost 1
-            {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 12},   // centers cost 2
-            {3, 3, 3, 3, 4, 5, 6, 7, 8, 9, 12, 13, 12},   // centers cost 3
-            {4, 4, 4, 4, 4, 5, 6, 7, 8, 9, 12, 13, 14},   // centers cost 4
-            {5, 5, 5, 5, 5, 5, 6, 7, 8, 9, 12, 13, 14},   // centers cost 5
-            {6, 6, 6, 6, 6, 6, 6, 7, 8, 9, 12, 13, 12},   // centers cost 6
-            {7, 7, 7, 7, 7, 7, 7, 7, 8, 9, 12, 13, 12},   // centers cost 7
-            {8, 8, 8, 8, 8, 8, 8, 8, 8, 11, 12, 13, 12},  // centers cost 8
-            {9, 9, 9, 9, 9, 9, 9, 9, 13, 9, 10, 13, 12},  // centers cost 9
-        };
+    printf("\n\n");
+    printf("       UNPAIRED\n");
+    printf("          COUNT  CTG  TRU  IDX\n");
+    printf("       ========  ===  ===  ===\n");
+    printf(" INIT  %8d  %3d  %3d  %3d\n", heuristic.unpaired_count, heuristic.cost_to_goal, search_result.f_cost,
+           0);
 
-        centers_state_444(cube, centers_state);
-        centers_state_bucket = XXH32(centers_state, NUM_CENTERS_444, 0) % BUCKETSIZE_CENTERS_444;
-        centers_cost = hex_to_int(reduce_333_centers_only[centers_state_bucket]);
-
-        edges_state_444(cube, wings_for_recolor_444, edges_state);
-        edges_state_bucket = XXH32(edges_state, NUM_EDGES_444, 0) % BUCKETSIZE_EDGES_444;
-        edges_cost = hex_to_int(reduce_333_edges_only[edges_state_bucket]);
-        cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
-
-        printf("\n\n");
-        printf("       CENTERS  EDGES  CTG  TRU  IDX\n");
-        printf("       =======  =====  ===  ===  ===\n");
-        printf(" INIT  %7d  %5d  %3d  %3d  %3d\n", centers_cost, edges_cost, cost_to_goal, search_result.f_cost, 0);
-
-        for (unsigned char i = 0; i < solution_len; i++) {
-            rotate_444(cube, cube_tmp, array_size, search_result.solution[i]);
-            centers_state_444(cube, centers_state);
-            centers_state_bucket = XXH32(centers_state, NUM_CENTERS_444, 0) % BUCKETSIZE_CENTERS_444;
-            centers_cost = hex_to_int(reduce_333_centers_only[centers_state_bucket]);
-
-            edges_state_444(cube, wings_for_recolor_444, edges_state);
-            edges_state_bucket = XXH32(edges_state, NUM_EDGES_444, 0) % BUCKETSIZE_EDGES_444;
-            edges_cost = hex_to_int(reduce_333_edges_only[edges_state_bucket]);
-            cost_to_goal = centers_edges_cost_444[centers_cost][edges_cost];
-
-            printf("%5s  %7d  %5d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], centers_cost, edges_cost,
-                   cost_to_goal, search_result.f_cost - i - 1, i + 1);
-        }
-        printf("\n");
-
-    } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_STAGE_777 ||
-               type == UD_OBLIQUE_EDGES_STAGE_777) {
-        struct ida_heuristic_result heuristic;
-
+    for (unsigned char i = 0; i < solution_len; i++) {
         if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+            rotate_666(cube, cube_tmp, array_size, search_result.solution[i]);
             heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
         } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
+            rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
             heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
         } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
+            rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
             heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
+        } else {
+            printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
+            exit(1);
         }
 
-        printf("\n\n");
-        printf("       UNPAIRED\n");
-        printf("          COUNT  CTG  TRU  IDX\n");
-        printf("       ========  ===  ===  ===\n");
-        printf(" INIT  %8d  %3d  %3d  %3d\n", heuristic.unpaired_count, heuristic.cost_to_goal, search_result.f_cost,
-               0);
-
-        for (unsigned char i = 0; i < solution_len; i++) {
-            if (type == LR_OBLIQUE_EDGES_STAGE_666) {
-                rotate_666(cube, cube_tmp, array_size, search_result.solution[i]);
-                heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
-            } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
-                rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
-                heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
-            } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
-                rotate_777(cube, cube_tmp, array_size, search_result.solution[i]);
-                heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
-            } else {
-                printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
-                exit(1);
-            }
-
-            printf("%5s  %8d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], heuristic.unpaired_count,
-                   heuristic.cost_to_goal, search_result.f_cost - i - 1, i + 1);
-        }
-        printf("\n");
-
-    } else {
-        printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
-        exit(1);
+        printf("%5s  %8d  %3d  %3d  %3d\n", move2str[search_result.solution[i]], heuristic.unpaired_count,
+               heuristic.cost_to_goal, search_result.f_cost - i - 1, i + 1);
     }
+    printf("\n");
 }
 
 int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
@@ -609,14 +470,6 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
         LOG("cube already solved\n");
         printf("SOLUTION:\n");
         return 1;
-    }
-
-    if (type == REDUCE_333_444) {
-        reduce_333_edges_only = ida_cost_only_preload(
-            "lookup-tables/lookup-table-4x4x4-step31-reduce333-edges.hash-cost-only.txt", 239500848);
-        reduce_333_centers_only = ida_cost_only_preload(
-            "lookup-tables/lookup-table-4x4x4-step32-reduce333-centers.hash-cost-only.txt", 58832);
-        wings_for_recolor_444 = init_wings_for_edges_recolor_pattern_444();
     }
 
     heuristic_result = ida_heuristic(cube, type, 99);
@@ -680,17 +533,10 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
-            // 4x4x4
-            if (strmatch(argv[i], "4x4x4-reduce-333")) {
-                type = REDUCE_333_444;
-                cube_size_type = 4;
-
-                // 6x6x6
-            } else if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
+            if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_666;
                 cube_size_type = 6;
 
-                // 7x7x7
             } else if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_777;
                 cube_size_type = 7;
@@ -869,8 +715,8 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    if (cube_size_kociemba < 2 || cube_size_kociemba > 7) {
-        printf("ERROR: only 2x2x2 through 7x7x7 cubes are supported, yours is %dx%dx%d\n", cube_size_kociemba,
+    if (cube_size_kociemba < 6 || cube_size_kociemba > 7) {
+        printf("ERROR: only 6x6x6 and 7x7x7 cubes are supported, yours is %dx%dx%d\n", cube_size_kociemba,
                cube_size_kociemba, cube_size_kociemba);
         exit(1);
     }
@@ -917,8 +763,8 @@ int main(int argc, char *argv[]) {
     char cube[array_size];
     char cube_tmp[array_size];
 
-    if (orbit1_wide_quarter_turns && cube_size != 6) {
-        printf("ERROR cannot do avoid_oll on orbit1 for %dx%dx%d cubes", cube_size, cube_size, cube_size);
+    if (orbit1_wide_quarter_turns && cube_size != 6 && cube_size != 7) {
+        printf("ERROR cannot do avoid_oll on orbit1 for %dx%dx%d cubes\n", cube_size, cube_size, cube_size);
         exit(1);
     }
 

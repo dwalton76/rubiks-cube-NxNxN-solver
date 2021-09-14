@@ -247,7 +247,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 to_write = []
 
     def solutions_via_c(
-        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None
+        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None, find_extra: bool = False
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
         my_pt_state_filename = "my-pt-states.txt"
@@ -327,6 +327,9 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--solution-count")
             cmd.append(str(solution_count))
 
+        if find_extra:
+            cmd.append("--find-extra")
+
         cmd.append("--legal-moves")
         cmd.append(",".join(self.all_moves))
 
@@ -366,7 +369,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 pt4_state = int(match.group(5))
 
             elif line.startswith("SOLUTION"):
-                solution = line.split(":")[1].strip().split()
+                solution = tuple(line.split(":")[1].strip().split())
                 solutions.append((len(solution), solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state)))
 
         if solutions:
@@ -379,9 +382,14 @@ class LookupTableIDAViaGraph(LookupTable):
         else:
             raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % output)
 
-    def solve_via_c(self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None) -> None:
+    def solve_via_c(
+        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None, find_extra: bool = False
+    ) -> None:
         solution = self.solutions_via_c(
-            pt_states=pt_states, max_ida_threshold=max_ida_threshold, solution_count=solution_count
+            pt_states=pt_states,
+            max_ida_threshold=max_ida_threshold,
+            solution_count=solution_count,
+            find_extra=find_extra,
         )[0][0]
 
         for step in solution:

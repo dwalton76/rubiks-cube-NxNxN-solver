@@ -578,9 +578,9 @@ class LookupTable(object):
 
             if use_state_index:
                 if not build_state_index:
-                    assert md5_bin, f"need md5sum for {self.filename_bin}"
-                    assert md5_state_index, f"need md5sum for {self.filename_state_index}"
                     # It takes a long time to calculate the md5 signatures...need to think of a better way
+                    # assert md5_bin, f"need md5sum for {self.filename_bin}"
+                    # assert md5_state_index, f"need md5sum for {self.filename_state_index}"
                     # rm_file_if_mismatch(self.filename_bin, md5_bin)
                     # rm_file_if_mismatch(self.filename_state_index, md5_state_index)
                     download_file_if_needed(self.filename_bin)
@@ -588,7 +588,7 @@ class LookupTable(object):
                 self.state_width = len(list(self.state_target)[0])
 
             else:
-                assert md5_txt, f"need md5sum for {self.filename}"
+                # assert md5_txt, f"need md5sum for {self.filename}"
                 # rm_file_if_mismatch(self.filename, md5_txt)
                 download_file_if_needed(self.filename)
 
@@ -852,6 +852,22 @@ class LookupTable(object):
                 return int(steps[0])
             else:
                 return len(steps)
+
+    def solve_old_school(self) -> None:
+
+        while True:
+            state = self.state()
+
+            if state in self.state_target:
+                break
+
+            steps = self.steps(state)
+
+            if steps:
+                for step in steps:
+                    self.parent.rotate(step)
+            else:
+                raise NoSteps(f"{self}: state {state} does not have steps")
 
     def solve(self) -> None:
 
@@ -1413,7 +1429,7 @@ class LookupTableIDAViaC(object):
         if not os.path.isfile("ida_search"):
             logger.info("ida_search is missing...compiling it now")
             subprocess.check_output(
-                "gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_444.c ida_search_666.c ida_search_777.c xxhash.c -lm".split()
+                "gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c -lm".split()
             )
 
         kociemba_string = self.parent.get_kociemba_string(True)

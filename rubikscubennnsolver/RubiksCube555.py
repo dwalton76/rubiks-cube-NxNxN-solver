@@ -3325,6 +3325,11 @@ class RubiksCube555(RubiksCube):
         self.solution.append("COMMENT_%d_steps_555_centers_staged" % len(min_phase2_solution))
 
     def pair_edges(self):
+
+        # We need the edge swaps to be even for our phase6 lookup tables to work.
+        if self.edge_swaps_odd(False, 0, False):
+            raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
+
         # phase 4
         # phase 5
         original_state = self.state[:]

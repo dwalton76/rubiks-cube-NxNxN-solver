@@ -5,8 +5,9 @@
 
 #include "ida_search_core.h"
 
+/*
 void rotate_222(char *cube, char *cube_tmp, int array_size, move_type move) {
-    /* This was contructed using utils/rotate-printer.py */
+    // This was contructed using utils/rotate-printer.py
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
 
     switch (move) {
@@ -449,7 +450,7 @@ void rotate_222(char *cube, char *cube_tmp, int array_size, move_type move) {
 }
 
 void rotate_333(char *cube, char *cube_tmp, int array_size, move_type move) {
-    /* This was contructed using utils/rotate-printer.py */
+    // This was contructed using utils/rotate-printer.py
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
 
     switch (move) {
@@ -1204,7 +1205,7 @@ void rotate_333(char *cube, char *cube_tmp, int array_size, move_type move) {
 }
 
 void rotate_444(char *cube, char *cube_tmp, int array_size, move_type move) {
-    /* This was contructed using utils/rotate-printer.py */
+    // This was contructed using utils/rotate-printer.py
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
 
     switch (move) {
@@ -3357,7 +3358,7 @@ void rotate_444(char *cube, char *cube_tmp, int array_size, move_type move) {
 }
 
 void rotate_555(char *cube, char *cube_tmp, int array_size, move_type move) {
-    /* This was contructed using utils/rotate-printer.py */
+    // This was contructed using utils/rotate-printer.py
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
 
     switch (move) {
@@ -6324,9 +6325,10 @@ void rotate_555(char *cube, char *cube_tmp, int array_size, move_type move) {
             exit(1);
     }
 }
+*/
 
 void rotate_666(char *cube, char *cube_tmp, int array_size, move_type move) {
-    /* This was contructed using utils/rotate-printer.py */
+    // This was contructed using utils/rotate-printer.py
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
 
     switch (move) {
@@ -12349,7 +12351,7 @@ void rotate_666(char *cube, char *cube_tmp, int array_size, move_type move) {
 }
 
 void rotate_777(char *cube, char *cube_tmp, int array_size, move_type move) {
-    /* This was contructed using utils/rotate-printer.py */
+    // This was contructed using utils/rotate-printer.py
     memcpy(cube_tmp, cube, sizeof(char) * array_size);
 
     switch (move) {

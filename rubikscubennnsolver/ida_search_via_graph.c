@@ -223,22 +223,20 @@ unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev
     }
 
     if (pt_perfect_hash01) {
-        unsigned char perfect_hash01_cost = 0;
-        unsigned int perfect_hash01_index = 0;
+        unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
+        unsigned char perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
 
-        perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
-        perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
+        // LOG("prev_pt0_state %d, prev_pt1_state %d, perfect_hash01_index %d, perfect_hash01_cost %d, cost_to_goal %d\n",
+        //     prev_pt0_state, prev_pt1_state, perfect_hash01_index, perfect_hash01_cost, cost_to_goal);
 
+        // dwalton
         if (perfect_hash01_cost > cost_to_goal) {
             cost_to_goal = perfect_hash01_cost;
         }
 
         if (pt_perfect_hash02) {
-            unsigned char perfect_hash02_cost = 0;
-            unsigned int perfect_hash02_index = 0;
-
-            perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
-            perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
+            unsigned int perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
+            unsigned char perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
 
             if (perfect_hash02_cost > cost_to_goal) {
                 cost_to_goal = perfect_hash02_cost;
@@ -385,11 +383,8 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
     }
 
     if (pt_perfect_hash01) {
-        unsigned char perfect_hash01_cost = 0;
-        unsigned int perfect_hash01_index = 0;
-
-        perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
-        perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
+        unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
+        unsigned char perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
 
         if (perfect_hash01_cost > result.cost_to_goal) {
             result.cost_to_goal = perfect_hash01_cost;
@@ -401,11 +396,8 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
     }
 
     if (pt_perfect_hash02) {
-        unsigned char perfect_hash02_cost = 0;
-        unsigned int perfect_hash02_index = 0;
-
-        perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
-        perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
+        unsigned int perfect_hash02_index = (prev_pt0_state * pt2_state_max) + prev_pt2_state;
+        unsigned char perfect_hash02_cost = hash_cost_to_cost(pt_perfect_hash02[perfect_hash02_index]);
 
         if (perfect_hash02_cost > result.cost_to_goal) {
             result.cost_to_goal = perfect_hash02_cost;
@@ -757,8 +749,8 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
     min_ida_threshold = ctg.cost_to_goal;
     search_result.found_solution = 0;
 
-    // LOG("min_ida_threshold %d\n", min_ida_threshold);
     if (min_ida_threshold >= max_ida_threshold) {
+        // LOG("min_ida_threshold %d >= max_ida_threshold %d\n", min_ida_threshold, max_ida_threshold);
         return search_result;
     }
 
@@ -790,7 +782,10 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
             unsigned int nodes_per_sec = nodes_per_ms * 1000;
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n\n", ida_count_total,
                 ms / 1000, nodes_per_sec);
-            return search_result;
+
+            if (solution_count >= min_solution_count) {
+                return search_result;
+            }
         }
     }
 
@@ -850,6 +845,7 @@ int main(int argc, char *argv[]) {
     unsigned char max_ida_threshold = 30;
     unsigned char centers_only = 0;
     unsigned char use_uthash = 0;
+    unsigned char find_extra = 0;
     char *prune_table_states_filename = NULL;
     lookup_table_type type = GENERIC;
 
@@ -958,6 +954,9 @@ int main(int argc, char *argv[]) {
 
             // } else if (strmatch(argv[i], "--uthash")) {
             //     use_uthash = 1;
+
+        } else if (strmatch(argv[i], "--find-extra")) {
+            find_extra = 1;
 
         } else if (strmatch(argv[i], "--orbit0-need-odd-w")) {
             orbit0_wide_quarter_turns = 1;
@@ -1159,7 +1158,7 @@ int main(int argc, char *argv[]) {
         min_search_result.f_cost = 99;
 
         for (unsigned char i_max_ida_threshold = 0; i_max_ida_threshold <= max_ida_threshold; i_max_ida_threshold++) {
-            LOG("loop %d\n", i_max_ida_threshold);
+            LOG("loop %d/%d\n", i_max_ida_threshold, max_ida_threshold);
 
             fh_read = fopen(prune_table_states_filename, "r");
             while ((read = getline(&line, &len, fh_read)) != -1) {
@@ -1191,8 +1190,7 @@ int main(int argc, char *argv[]) {
 
                 if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
                     min_search_result = search_result;
-                    max_ida_threshold = search_result.f_cost;
-                    break;
+                    // max_ida_threshold = search_result.f_cost;
                 }
 
                 line_index++;
@@ -1202,7 +1200,13 @@ int main(int argc, char *argv[]) {
             search_result = min_search_result;
 
             if (search_result.found_solution) {
-                break;
+                if (find_extra) {
+                    if (solution_count >= min_solution_count) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
             }
         }
 

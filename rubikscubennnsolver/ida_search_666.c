@@ -6,7 +6,6 @@
 #include <stdlib.h>
 
 #include "ida_search_core.h"
-#include "xxhash.h"
 
 unsigned int oblique_edges_666[NUM_OBLIQUE_EDGES_666] = {9,   10,  14,  17,  20,  23,  27,  28,  45,  46,  50,  53,
                                                          56,  59,  63,  64,  81,  82,  86,  89,  92,  95,  99,  100,

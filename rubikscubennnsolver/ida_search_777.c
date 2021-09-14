@@ -5,7 +5,6 @@
 #include <stdlib.h>
 
 #include "ida_search_core.h"
-#include "xxhash.h"
 
 // ============================================================================
 // step20 - stage LR oblique edges

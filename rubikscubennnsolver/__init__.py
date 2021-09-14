@@ -1487,22 +1487,22 @@ class RubiksCube(object):
                 # end of the row
                 if square_index % self.size == 0:
                     if square_state.endswith("x") or square_state.endswith(".") or square_state.endswith("-"):
-                        rows[row_index].append("%s " % square_state)
+                        rows[row_index].append(f"{square_state} ")
                     else:
                         if all_digits:
                             rows[row_index].append("%02d" % int(square_state))
                         else:
-                            rows[row_index].append("%s" % square_state)
+                            rows[row_index].append(f"{square_state}")
 
                     row_index += 1
                 else:
                     if square_state.endswith("x") or square_state.endswith(".") or square_state.endswith("-"):
-                        rows[row_index].append("%s" % square_state)
+                        rows[row_index].append(f"{square_state}")
                     else:
                         if all_digits:
                             rows[row_index].append("%02d" % int(square_state))
                         else:
-                            rows[row_index].append("%s" % square_state)
+                            rows[row_index].append(f"{square_state}")
 
             # end of the side
             if square_index % self.squares_per_side == 0:
@@ -1543,13 +1543,13 @@ class RubiksCube(object):
             print("    switch (move) {")
 
         case = case.replace("'", "_PRIME").replace("3", "three").replace("x", "X").replace("y", "Y").replace("z", "Z")
-        print("    case %s:" % case)
+        print(f"    case {case}:")
 
         for (key, value) in enumerate(self.state[1:]):
             key += 1
 
             if str(key) != str(value):
-                print("        cube[%s] = cube_tmp[%s];" % (key, value))
+                print(f"        cube[{key}] = cube_tmp[{value}];")
         print("        break;")
         print("")
 
@@ -1592,7 +1592,7 @@ class RubiksCube(object):
             clockwise = random.randint(0, 1)
 
             if rows == 2:
-                move = "%sw" % side
+                move = f"{side}w"
             elif rows > 2:
                 move = "%d%sw" % (rows, side)
             else:
@@ -3285,7 +3285,7 @@ class RubiksCube(object):
                     foo.append(self.state[side.corner_pos[3]])
 
         kociemba_string = "".join(foo)
-        logger.debug("kociemba string: %s" % kociemba_string)
+        logger.debug(f"kociemba string: {kociemba_string}")
         return kociemba_string
 
     def prevent_OLL(self) -> bool:
@@ -3603,9 +3603,9 @@ class RubiksCube(object):
         if not kociemba_ok:
             raise SolveError(f"parity error made kociemba barf,  kociemba {kociemba_string}")
 
-        logger.debug("kociemba       : %s" % kociemba_string)
-        logger.info("kociemba steps            : %s" % " ".join(steps))
-        logger.info("kociemba steps (reversed) : %s" % " ".join(reverse_steps(steps)))
+        logger.debug(f"kociemba       : {kociemba_string}")
+        logger.info(f"kociemba steps            : {' '.join(steps)}")
+        logger.info(f"kociemba steps (reversed) : {' '.join(reverse_steps(steps))}")
         reduce_333_solution_len = len(self.solution)
 
         for step in steps:
@@ -3655,14 +3655,14 @@ class RubiksCube(object):
             current_corners.append(corner_str)
 
         if debug:
-            logger.info("to_check:\n%s" % pformat(to_check))
+            logger.info(f"to_check:\n{pformat(to_check)}")
             to_check_str = ""
             for (a, b, c) in to_check:
                 to_check_str += "%4s" % a
 
-            logger.info("to_check       :%s" % to_check_str)
-            logger.info("needed corners : %s" % " ".join(needed_corners))
-            logger.info("currnet corners: %s" % " ".join(current_corners))
+            logger.info(f"to_check       :{to_check_str}")
+            logger.info(f"needed corners : {' '.join(needed_corners)}")
+            logger.info(f"currnet corners: {' '.join(current_corners)}")
             logger.info("")
 
         return get_swap_count(needed_corners, current_corners, debug)
@@ -4419,26 +4419,26 @@ class RubiksCube(object):
 
                 # If the same half turn is done 2x in a row, remove it
                 if move.endswith("2"):
-                    solution_string = solution_string.replace(" %s %s " % (move, move), " ")
+                    solution_string = solution_string.replace(f" {move} {move} ", " ")
 
                 else:
                     # If the same quarter turn is done 4x in a row, remove it
-                    solution_string = solution_string.replace(" %s %s %s %s " % (move, move, move, move), " ")
+                    solution_string = solution_string.replace(f" {move} {move} {move} {move} ", " ")
 
                     # If the same quarter turn is done 3x in a row, replace it with one backwards move
-                    solution_string = solution_string.replace(" %s %s %s " % (move, move, move), " %s " % reverse_move)
+                    solution_string = solution_string.replace(f" {move} {move} {move} ", f" {reverse_move} ")
 
                     # If the same quarter turn is done 2x in a row, replace it with one half turn
                     # Do not bother doing this with whole cube rotations we will pull those out later
                     if not move.startswith(str(self.size)):
                         if move.endswith("'"):
-                            solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move[0:-1])
+                            solution_string = solution_string.replace(f" {move} {move} ", f" {move[0:-1]}2 ")
                         else:
-                            solution_string = solution_string.replace(" %s %s " % (move, move), " %s2 " % move)
+                            solution_string = solution_string.replace(f" {move} {move} ", f" {move}2 ")
 
                 # "F F'" and "F' F" will cancel each other out, remove them
-                solution_string = solution_string.replace(" %s %s " % (move, reverse_move), " ")
-                solution_string = solution_string.replace(" %s %s " % (reverse_move, move), " ")
+                solution_string = solution_string.replace(f" {move} {reverse_move} ", " ")
+                solution_string = solution_string.replace(f" {reverse_move} {move} ", " ")
 
                 # Uw U Uw' -> U
                 # Uw U2 Uw' -> U2
@@ -4533,7 +4533,7 @@ class RubiksCube(object):
         re-color the cube per use_nuke_edges, etd and recolor_positions
         """
         if self.use_nuke_corners or self.use_nuke_edges or self.use_nuke_centers or self.recolor_positions:
-            logger.info("%s: recolor" % self)
+            logger.info(f"{self}: recolor")
 
             if self.use_nuke_corners:
                 self.nuke_corners()
@@ -4710,9 +4710,9 @@ class RubiksCube(object):
         url += "&title=dwalton76"
         url = url.replace("'", "-")
         url = url.replace(" ", "_")
-        logger.info("\nURL     : %s" % url)
+        logger.info(f"\nURL     : {url}")
 
-        print("Solution: %s" % " ".join(self.solution))
+        print(f"Solution: {' '.join(self.solution)}")
 
         if self.steps_to_solve_centers:
             logger.info("%d steps to solve centers" % self.steps_to_solve_centers)
@@ -4907,11 +4907,11 @@ div#page_holder {
 
         with open(HTML_FILENAME, "a") as fh:
             fh.write("<div class='page' style='display: none;'>\n")
-            fh.write("<h1>%s</h1>\n" % desc)
+            fh.write(f"<h1>{desc}</h1>\n")
             for index in range(1, max_square + 1):
                 if index in first_squares:
                     side_index += 1
-                    fh.write("<div class='side' id='%s'>\n" % sides[side_index])
+                    fh.write(f"<div class='side' id='{sides[side_index]}'>\n")
 
                 (red, green, blue) = cube[index]
                 fh.write(

@@ -82,7 +82,7 @@ def main(c: bool) -> None:
             steps = moves_777
 
         else:
-            raise Exception("Add support for size %s" % size)
+            raise Exception(f"Add support for size {size}")
 
         steps = list(steps)
         steps.extend(["x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"])

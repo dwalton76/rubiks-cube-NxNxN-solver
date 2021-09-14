@@ -681,7 +681,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             fake_777.solve_centers()
 
         else:
-            raise Exception("Invalid action %s" % action)
+            raise Exception(f"Invalid action {action}")
 
         for step in fake_777.solution:
             if step.startswith("COMMENT"):

@@ -143,7 +143,7 @@ class Side(object):
         )
 
     def __str__(self):
-        return "side %s" % self.name
+        return f"side {self.name}"
 
     def get_face_as_2d_list(self):
         """
@@ -157,7 +157,7 @@ class Side(object):
         try:
             return self.wing_partner[wing_index]
         except KeyError:
-            logger.info("wing_partner\n%s\n" % pformat(self.wing_partner))
+            logger.info(f"wing_partner\n{pformat(self.wing_partner)}\n")
             raise
 
     def non_paired_wings(

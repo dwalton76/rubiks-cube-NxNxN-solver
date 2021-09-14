@@ -126,7 +126,7 @@ class LookupTableIDAViaGraph(LookupTable):
         else:
             for x in illegal_moves:
                 if x not in all_moves:
-                    raise Exception("illegal move %s is not in the list of legal moves" % x)
+                    raise Exception(f"illegal move {x} is not in the list of legal moves")
 
             self.all_moves = []
 
@@ -134,7 +134,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 if x not in illegal_moves:
                     self.all_moves.append(x)
 
-        logger.debug("%s: all_moves %s" % (self, ",".join(self.all_moves)))
+        logger.debug(f"{self}: all_moves {','.join(self.all_moves)}")
         COST_LENGTH = 1
         STATE_INDEX_LENGTH = 4
         self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.all_moves))
@@ -160,7 +160,7 @@ class LookupTableIDAViaGraph(LookupTable):
         """
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
-            logger.info("%s: recolor" % self)
+            logger.info(f"{self}: recolor")
             # self.parent.print_cube()
 
             if self.nuke_corners:
@@ -295,7 +295,7 @@ class LookupTableIDAViaGraph(LookupTable):
                     cmd.append("--orbit1-need-even-w")
 
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
-                raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
+                raise Exception(f"avoid_oll is only supported for orbits 0 or 1, not {self.avoid_oll}")
 
         if self.perfect_hash01_filename:
             cmd.append("--prune-table-perfect-hash01")
@@ -343,7 +343,7 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--multiplier")
             cmd.append(str(self.multiplier))
 
-        logger.info("%s: solving via C ida_search\n%s\n" % (self, cmd_string))
+        logger.info(f"{self}: solving via C ida_search\n{cmd_string}\n")
         output = subprocess.check_output(cmd).decode("utf-8")
         output = "\n".join(remove_failed_ida_output(output.splitlines()))
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
@@ -380,7 +380,7 @@ class LookupTableIDAViaGraph(LookupTable):
             solutions = [x[1:3] for x in solutions]
             return solutions
         else:
-            raise NoIDASolution("Did not find SOLUTION line in\n%s\n" % output)
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
 
     def solve_via_c(
         self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None, find_extra: bool = False

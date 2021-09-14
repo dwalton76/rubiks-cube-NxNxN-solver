@@ -57,7 +57,7 @@ class RubiksCubeHighLow333(RubiksCube333):
                 low_edge_index = 20
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "U":
                 result = "U"
@@ -94,7 +94,7 @@ class RubiksCubeHighLow333(RubiksCube333):
                 low_edge_index = 22
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "L":
                 result = "U"
@@ -131,7 +131,7 @@ class RubiksCubeHighLow333(RubiksCube333):
                 low_edge_index = 24
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "R":
                 result = "U"
@@ -177,7 +177,7 @@ class RubiksCubeHighLow333(RubiksCube333):
                 low_edge_index = 26
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "D":
                 result = "U"
@@ -201,7 +201,7 @@ class RubiksCubeHighLow333(RubiksCube333):
                     )
                 )
         else:
-            raise Exception("invalid wing_str %s" % wing_str)
+            raise Exception(f"invalid wing_str {wing_str}")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -231,7 +231,7 @@ class RubiksCubeHighLow333(RubiksCube333):
                 if wing_tuple not in new_highlow_edge_values:
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
-        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        print(f"new highlow_edge_values\n\n{pformat(new_highlow_edge_values)}\n\n")
         logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
 
 
@@ -275,7 +275,7 @@ class RubiksCubeHighLow444(RubiksCube444):
                 low_edge_index = 14
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "U":
                 result = "U"
@@ -316,7 +316,7 @@ class RubiksCubeHighLow444(RubiksCube444):
                 low_edge_index = 28
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "L":
                 result = "U"
@@ -357,7 +357,7 @@ class RubiksCubeHighLow444(RubiksCube444):
                 low_edge_index = 53
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "R":
                 result = "U"
@@ -407,7 +407,7 @@ class RubiksCubeHighLow444(RubiksCube444):
                 low_edge_index = 83
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "D":
                 result = "U"
@@ -436,7 +436,7 @@ class RubiksCubeHighLow444(RubiksCube444):
                 )
 
         else:
-            raise Exception("invalid wing_str %s" % wing_str)
+            raise Exception(f"invalid wing_str {wing_str}")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -462,7 +462,7 @@ class RubiksCubeHighLow444(RubiksCube444):
                 if wing_tuple not in new_highlow_edge_values:
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
-        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        print(f"new highlow_edge_values\n\n{pformat(new_highlow_edge_values)}\n\n")
         logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
 
 
@@ -531,7 +531,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                     low_edge_index = 22
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if is_midge:
                 if self.state[high_edge_index] == "U":
@@ -607,7 +607,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                     low_edge_index = 45
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if is_midge:
                 if self.state[high_edge_index] == "L":
@@ -682,7 +682,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                     low_edge_index = 81
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if is_midge:
                 if self.state[high_edge_index] == "R":
@@ -776,7 +776,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                     low_edge_index = 129
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if is_midge:
                 if self.state[high_edge_index] == "D":
@@ -829,7 +829,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                     )
 
         else:
-            raise Exception("invalid wing_str %s" % wing_str)
+            raise Exception(f"invalid wing_str {wing_str}")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -859,7 +859,7 @@ class RubiksCubeHighLow555(RubiksCube555):
                 if wing_tuple not in new_highlow_edge_values:
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
-        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        print(f"new highlow_edge_values\n\n{pformat(new_highlow_edge_values)}\n\n")
         logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))
 
 
@@ -924,7 +924,7 @@ class RubiksCubeHighLow666(RubiksCube666):
                     low_edge_index = 33
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "U":
                 result = "U"
@@ -975,7 +975,7 @@ class RubiksCubeHighLow666(RubiksCube666):
                     low_edge_index = 60
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "L":
                 result = "U"
@@ -1026,7 +1026,7 @@ class RubiksCubeHighLow666(RubiksCube666):
                     low_edge_index = 121
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "R":
                 result = "U"
@@ -1096,7 +1096,7 @@ class RubiksCubeHighLow666(RubiksCube666):
                     low_edge_index = 184
 
             else:
-                raise Exception("invalid wing_str %s" % wing_str)
+                raise Exception(f"invalid wing_str {wing_str}")
 
             if self.state[high_edge_index] == "D":
                 result = "U"
@@ -1125,7 +1125,7 @@ class RubiksCubeHighLow666(RubiksCube666):
                 )
 
         else:
-            raise Exception("invalid wing_str %s" % wing_str)
+            raise Exception(f"invalid wing_str {wing_str}")
 
         if orbit == 0:
             assert high_edge_index in edge_orbit_0_666, f"{high_edge_index} is not in edge_orbit_0_666"
@@ -1165,5 +1165,5 @@ class RubiksCubeHighLow666(RubiksCube666):
                 if wing_tuple not in new_highlow_edge_values:
                     new_highlow_edge_values[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str, orbit)
 
-        print("new highlow_edge_values\n\n%s\n\n" % pformat(new_highlow_edge_values))
+        print(f"new highlow_edge_values\n\n{pformat(new_highlow_edge_values)}\n\n")
         logger.info("new_highlow_edge_values has %d entries" % len(new_highlow_edge_values))

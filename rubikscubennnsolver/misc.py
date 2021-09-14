@@ -53,14 +53,14 @@ def get_swap_count(listA: List[int], listB: List[int], debug) -> int:
     index = 0
 
     if A_length != B_length:
-        logger.info("listA %s" % " ".join(listA))
-        logger.info("listB %s" % " ".join(listB))
+        logger.info(f"listA {' '.join(listA)}")
+        logger.info(f"listB {' '.join(listB)}")
         raise ValueError("listA (len %d) and listB (len %d) must be the same length" % (A_length, B_length))
 
     if debug:
         logger.info("INIT")
-        logger.info("listA: %s" % " ".join(listA))
-        logger.info("listB: %s" % " ".join(listB))
+        logger.info(f"listA: {' '.join(listA)}")
+        logger.info(f"listB: {' '.join(listB)}")
         logger.info("")
 
     while listA != listB:
@@ -74,8 +74,8 @@ def get_swap_count(listA: List[int], listB: List[int], debug) -> int:
 
             if debug:
                 logger.info("index %d, swaps %d" % (index, swaps))
-                logger.info("listA: %s" % " ".join(listA))
-                logger.info("listB: %s" % " ".join(listB))
+                logger.info(f"listA: {' '.join(listA)}")
+                logger.info(f"listB: {' '.join(listB)}")
                 logger.info("")
         index += 1
 

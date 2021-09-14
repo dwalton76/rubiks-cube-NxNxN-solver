@@ -249,8 +249,8 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                 self.rotate(step)
 
     def group_edges(self):
-        # Pair the inside edges via fake 4x4x4
-        self.pair_inside_edges_via_444()
+        # For 6x6x6 the inside edges are already paired at the end of group_centers_guts
+        # For 8x8x8 and larger the inside edges were paired right after make_plus_sign
 
         # How many orbits of edges does this cube have?
         max_orbit = int((self.size / 2) - 1)

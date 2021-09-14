@@ -1376,6 +1376,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
+        self.pair_inside_edges_via_444()
+
 
 def rotate_666(cube, step):
     return [cube[x] for x in swaps_666[step]]

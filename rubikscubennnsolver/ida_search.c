@@ -763,8 +763,8 @@ int main(int argc, char *argv[]) {
     char cube[array_size];
     char cube_tmp[array_size];
 
-    if (orbit1_wide_quarter_turns && cube_size != 6) {
-        printf("ERROR cannot do avoid_oll on orbit1 for %dx%dx%d cubes", cube_size, cube_size, cube_size);
+    if (orbit1_wide_quarter_turns && cube_size != 6 && cube_size != 7) {
+        printf("ERROR cannot do avoid_oll on orbit1 for %dx%dx%d cubes\n", cube_size, cube_size, cube_size);
         exit(1);
     }
 

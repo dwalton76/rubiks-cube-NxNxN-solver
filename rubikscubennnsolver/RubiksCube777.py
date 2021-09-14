@@ -2321,7 +2321,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # phase 5 - pair the oblique UD edges
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
-        self.lt_UD_oblique_edge_pairing.avoid_oll = [0, 1]
+        self.lt_UD_oblique_edge_pairing.avoid_oll = (0, 1)
 
         # phase 7 - LR centers to vertical bars
         self.lt_step41 = LookupTable777Step41(self)
@@ -2494,10 +2494,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.print_cube(
             "%s: UD inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-
-        # dwalton
-        self.enable_print_cube = True
-        self.print_cube("HERE 20")
 
         # phase 5 - pair the oblique UD edges
         tmp_solution_len = len(self.solution)

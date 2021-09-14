@@ -2321,7 +2321,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # phase 5 - pair the oblique UD edges
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
-        self.lt_UD_oblique_edge_pairing.avoid_oll = (0, 1)
 
         # phase 7 - LR centers to vertical bars
         self.lt_step41 = LookupTable777Step41(self)

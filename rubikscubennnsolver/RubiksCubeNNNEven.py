@@ -432,7 +432,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             # logger.info("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
             # logger.info("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
             # logger.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
-            # logger.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
+            # logger.info("%d: row5 %d, %d, %d, %d, %d" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
 
             if (center_orbit_id == 0 and cycle == 0) or (center_orbit_id == max_center_orbits and cycle == max_cycle):
                 fake_777.state[start_777 + 9] = self.state[row1_col1]
@@ -512,15 +512,30 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             # edges
             # top edge
             offset = self.size
-
             while row1_col1 - offset not in side.edge_north_pos:
                 offset += self.size
-
             edge02 = row1_col1 - offset
+
+            offset = self.size
+            while row1_col2 - offset not in side.edge_north_pos:
+                offset += self.size
             edge03 = row1_col2 - offset
+
+            offset = self.size
+            while row1_col3 - offset not in side.edge_north_pos:
+                offset += self.size
             edge04 = row1_col3 - offset
+
+            offset = self.size
+            while row1_col4 - offset not in side.edge_north_pos:
+                offset += self.size
             edge05 = row1_col4 - offset
+
+            offset = self.size
+            while row1_col5 - offset not in side.edge_north_pos:
+                offset += self.size
             edge06 = row1_col5 - offset
+
             fake_777.state[start_777 + 2] = self.state[edge02]
             fake_777.state[start_777 + 3] = self.state[edge03]
             fake_777.state[start_777 + 4] = self.state[edge04]
@@ -529,15 +544,30 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             # left edge
             offset = 1
-
             while row1_col1 - offset not in side.edge_west_pos:
                 offset += 1
-
             edge08 = row1_col1 - offset
+
+            offset = 1
+            while row2_col1 - offset not in side.edge_west_pos:
+                offset += 1
             edge15 = row2_col1 - offset
+
+            offset = 1
+            while row3_col1 - offset not in side.edge_west_pos:
+                offset += 1
             edge22 = row3_col1 - offset
+
+            offset = 1
+            while row4_col1 - offset not in side.edge_west_pos:
+                offset += 1
             edge29 = row4_col1 - offset
+
+            offset = 1
+            while row5_col1 - offset not in side.edge_west_pos:
+                offset += 1
             edge36 = row5_col1 - offset
+
             fake_777.state[start_777 + 8] = self.state[edge08]
             fake_777.state[start_777 + 15] = self.state[edge15]
             fake_777.state[start_777 + 22] = self.state[edge22]
@@ -546,32 +576,63 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             # right edge
             offset = 1
-
             while row1_col5 + offset not in side.edge_east_pos:
                 offset += 1
-
             edge14 = row1_col5 + offset
+
+            offset = 1
+            while row2_col5 + offset not in side.edge_east_pos:
+                offset += 1
             edge21 = row2_col5 + offset
+
+            offset = 1
+            while row3_col5 + offset not in side.edge_east_pos:
+                offset += 1
             edge28 = row3_col5 + offset
+
+            offset = 1
+            while row4_col5 + offset not in side.edge_east_pos:
+                offset += 1
             edge35 = row4_col5 + offset
+
+            offset = 1
+            while row5_col5 + offset not in side.edge_east_pos:
+                offset += 1
             edge42 = row5_col5 + offset
+
             fake_777.state[start_777 + 14] = self.state[edge14]
             fake_777.state[start_777 + 21] = self.state[edge21]
             fake_777.state[start_777 + 28] = self.state[edge28]
             fake_777.state[start_777 + 35] = self.state[edge35]
             fake_777.state[start_777 + 42] = self.state[edge42]
+            # logger.info(f"edge14 {edge14}, edge21 {edge21}, edge28 {edge28}, edge35 {edge35}, edge42 {edge42}, offset {offset}\n\n")
 
             # bottom edge
             offset = self.size
-
             while row5_col1 + offset not in side.edge_south_pos:
                 offset += self.size
-
             edge44 = row5_col1 + offset
+
+            offset = self.size
+            while row5_col2 + offset not in side.edge_south_pos:
+                offset += self.size
             edge45 = row5_col2 + offset
+
+            offset = self.size
+            while row5_col3 + offset not in side.edge_south_pos:
+                offset += self.size
             edge46 = row5_col3 + offset
+
+            offset = self.size
+            while row5_col4 + offset not in side.edge_south_pos:
+                offset += self.size
             edge47 = row5_col4 + offset
+
+            offset = self.size
+            while row5_col5 + offset not in side.edge_south_pos:
+                offset += self.size
             edge48 = row5_col5 + offset
+
             fake_777.state[start_777 + 44] = self.state[edge44]
             fake_777.state[start_777 + 45] = self.state[edge45]
             fake_777.state[start_777 + 46] = self.state[edge46]
@@ -591,8 +652,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             start_777 += 49
             start_NNN += self.size * self.size
 
-        # fake_777.sanity_check()
         """
+        # fake_777.sanity_check()
         self.print_cube_layout()
         self.print_cube("HERE 00")
         logger.info(f"center_orbit_id {center_orbit_id}, max_center_orbits {max_center_orbits}, width {width}, cycle {cycle}, max_cycle {max_cycle}, action {action}")
@@ -608,7 +669,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         if action == "stage_UD_centers":
             fake_777.create_fake_555_from_inside_centers()
-            fake_777.fake_555.lt_FB_centers_stage.avoid_oll = None
             fake_777.stage_UD_centers()
 
         elif action == "stage_LR_centers":

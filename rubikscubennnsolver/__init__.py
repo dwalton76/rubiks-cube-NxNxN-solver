@@ -1443,8 +1443,8 @@ class RubiksCube(object):
         if not self.enable_print_cube:
             return
 
-        if not title:
-            raise ValueError("no title")
+        # if not title:
+        #     raise ValueError("no title")
 
         side_names = ("U", "L", "F", "R", "B", "D")
         side_name_index = 0

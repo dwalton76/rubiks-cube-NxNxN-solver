@@ -3328,7 +3328,7 @@ class RubiksCube555(RubiksCube):
 
         # We need the edge swaps to be even for our phase6 lookup tables to work.
         if self.edge_swaps_odd(False, 0, False):
-            raise SolveError("edge swaps are odd, cannot pair last 8-edges")
+            raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
 
         # phase 4
         # phase 5

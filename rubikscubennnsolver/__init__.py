@@ -409,55 +409,42 @@ def orbit_matches(edges_per_side: int, orbit: int, edge_index: int) -> bool:
     if orbit is None:
         return True
 
-    # Even cube
-    if edges_per_side % 2 == 0:
+    if edges_per_side == 2:
+        if edge_index not in (0, 1):
+            raise ValueError(f"Invalid 4x4x4 edge_index {edge_index}")
 
-        if edges_per_side == 2:
-            if edge_index not in (0, 1):
-                raise ValueError(f"Invalid edge_index {edge_index}")
-
-        elif edges_per_side == 4:
-            if edge_index not in (0, 1, 2, 3):
-                raise ValueError(f"Invalid edge_index {edge_index}")
-
-        else:
-            assert False, "Only 4x4x4 and 6x6x6 supported"
-
-        if orbit == 0:
-            if edge_index == 0 or edge_index == edges_per_side - 1:
-                return True
-            return False
-
-        elif orbit == 1:
-            if edge_index == 1 or edge_index == edges_per_side - 2:
-                return True
-            return False
-
-        else:
-            raise ValueError(f"Invalid oribit {orbit}")
-
-    # Odd cube
-    else:
-        if edges_per_side != 3:
-            raise ValueError(f"Only 5x5x5 supported here, got {edges_per_side} edges per side")
-
+    elif edges_per_side == 3:
         if edge_index not in (0, 1, 2):
-            raise ValueError(f"Invalid edge_index {edge_index}")
+            raise ValueError(f"Invalid 5x5x5 edge_index {edge_index}")
 
-        if orbit == 0:
-            if edge_index == 0 or edge_index == 2:
-                return True
-            return False
+    elif edges_per_side == 4:
+        if edge_index not in (0, 1, 2, 3):
+            raise ValueError(f"Invalid 6x6x6 edge_index {edge_index}")
 
-        elif orbit == 1:
-            if edge_index == 1:
-                return True
-            return False
+    elif edges_per_side == 5:
+        if edge_index not in (0, 1, 2, 3, 4):
+            raise ValueError(f"Invalid 7x7x7 edge_index {edge_index}")
 
-        else:
-            raise ValueError(f"Invalid oribit {orbit}")
+    else:
+        raise ValueError("Only 4x4x4, 5x5x5, 6x6x6 and 7x7x7 supported")
 
-    return False
+    if orbit == 0:
+        if edge_index == 0 or edge_index == edges_per_side - 1:
+            return True
+        return False
+
+    elif orbit == 1:
+        if edge_index == 1 or edge_index == edges_per_side - 2:
+            return True
+        return False
+
+    elif orbit == 2:
+        if edge_index == 2 or edge_index == edges_per_side - 3:
+            return True
+        return False
+
+    else:
+        raise ValueError(f"Invalid oribit {orbit}")
 
 
 def _www_square_indexes(size: int) -> Tuple[List[int], List[int], List[int]]:
@@ -1455,6 +1442,9 @@ class RubiksCube(object):
         """
         if not self.enable_print_cube:
             return
+
+        if not title:
+            raise ValueError("no title")
 
         side_names = ("U", "L", "F", "R", "B", "D")
         side_name_index = 0
@@ -3960,9 +3950,13 @@ class RubiksCube(object):
                     target_side = self.sideD
 
                 else:
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
                     self.enable_print_cube = True
-                    self.print_cube()
-                    raise SolveError(f"invalid wing {wing_str} at ({square_index}, {partner_index})")
+                    self.print_cube_layout()
+                    msg = f"invalid wing {wing_str} at ({square_index}, {partner_index})"
+                    self.print_cube(msg)
+                    raise SolveError(msg)
 
                 for (edge_index, wing_index) in enumerate(edge_to_check):
                     wing_value = self.state[wing_index]
@@ -3976,11 +3970,13 @@ class RubiksCube(object):
 
                         break
                 else:
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
                     self.enable_print_cube = True
-                    self.print_cube()
-                    raise SolveError(
-                        f"Could not find wing {wing_str} ({square_index}, {partner_index}) among {edge_to_check}"
-                    )
+                    self.print_cube_layout()
+                    msg = f"Could not find wing {wing_str} ({square_index}, {partner_index}) among {edge_to_check}"
+                    self.print_cube(msg)
+                    raise SolveError(msg)
 
                 self.state = original_state[:]
                 self.solution = original_solution[:]

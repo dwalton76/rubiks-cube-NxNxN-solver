@@ -143,8 +143,6 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
     def recolor(self):
         logger.info("%s: recolor (custom)" % self)
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
 
         for x in centers_777:
             if x in self.UFBD_oblique_edges_777:
@@ -2323,6 +2321,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # phase 5 - pair the oblique UD edges
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
+        self.lt_UD_oblique_edge_pairing.avoid_oll = [0, 1]
 
         # phase 7 - LR centers to vertical bars
         self.lt_step41 = LookupTable777Step41(self)
@@ -2492,31 +2491,25 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def stage_UD_centers(self):
         # phase 4 - use 5x5x5 solver to stage the UD inner centers
         self.group_inside_UD_centers()
-        self.print_cube()
-        logger.info(
+        self.print_cube(
             "%s: UD inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        logger.info("")
-        logger.info("")
-        logger.info("")
-        logger.info("")
+
+        # dwalton
+        self.enable_print_cube = True
+        self.print_cube("HERE 20")
 
         # phase 5 - pair the oblique UD edges
         tmp_solution_len = len(self.solution)
         self.lt_UD_oblique_edge_pairing.solve()
-        self.print_cube()
+        self.print_cube(
+            "%s: UD oblique edges paired/staged, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_777_UD_oblique_edges_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-        logger.info(
-            "%s: UD oblique edges paired/staged, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        logger.info("")
-        logger.info("")
-        logger.info("")
-        logger.info("")
 
         # phase 6 - use 5x5x5 to stage the UD centers
         self.create_fake_555_from_outside_centers()
@@ -2532,41 +2525,31 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                     raise Exception("5x5x5 solution has 3 wide turn")
                 self.rotate(step)
 
-        self.print_cube()
-        logger.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        logger.info("")
-        logger.info("")
-        logger.info("")
-        logger.info("")
+        self.print_cube(
+            "%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
     def stage_LR_centers(self):
         # phase 1 - use 5x5x5 solver to stage the LR inner centers
         self.group_inside_LR_centers()
-        self.print_cube()
-        logger.info(
+        self.print_cube(
             "%s: LR inner centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        logger.info("")
-        logger.info("")
-        logger.info("")
-        logger.info("")
 
         # Test the pruning tables
         # self.lt_LR_left_right_oblique_edge_pairing.solve()
         # self.lt_LR_left_middle_oblique_edge_pairing.solve()
-        # self.print_cube()
-        # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # self.print_cube("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # phase 2 - pair LR oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_LR_oblique_edge_pairing.solve()
-        self.print_cube()
+        self.print_cube(
+            "%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_777_LR_oblique_edges_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # phase 3 - use 5x5x5 solver to stage the LR centers
@@ -2583,12 +2566,9 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                     raise Exception("5x5x5 solution has 3 wide turn")
                 self.rotate(step)
 
-        self.print_cube()
-        logger.info("%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        logger.info("")
-        logger.info("")
-        logger.info("")
-        logger.info("")
+        self.print_cube(
+            "%s: LR centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
 
     def LR_centers_vertical_bars(self):
 
@@ -2601,13 +2581,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 7 - LR centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step40.solve_via_c()
-        self.print_cube()
+        self.print_cube(
+            "%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_777_LR_centers_vertical_bars"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def UD_centers_vertical_bars(self):
@@ -2615,34 +2594,30 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # Test the pruning tables
         # self.lt_step51.solve()
         # self.lt_step52.solve()
-        # self.print_cube()
-        # logger.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        # self.print_cube("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # phase 8 - UD centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve_via_c()
-        self.print_cube()
+        self.print_cube(
+            "%s: LR solved, UD centers vertical bars, %d steps in"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_777_UD_centers_vertical_bars"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        logger.info(
-            "%s: LR solved, UD centers vertical bars, %d steps in"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def centers_daisy_solve(self):
         # phase 9 - centers daisy solve
         tmp_solution_len = len(self.solution)
         self.lt_step60.solve_via_c()
-        self.print_cube()
+        self.print_cube(
+            "%s: centers daisy solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
         self.solution.append(
             "COMMENT_%d_steps_777_centers_daisy_solved"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        logger.info(
-            "%s: centers daisy solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def group_centers_guts(self):
@@ -2673,8 +2648,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        self.print_cube()
-        logger.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
     def solve_centers(self):
         # This is only used when solving a cube larger than 777
@@ -2697,8 +2671,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        self.print_cube()
-        logger.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

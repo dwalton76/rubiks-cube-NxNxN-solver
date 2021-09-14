@@ -276,49 +276,42 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 fake_666.state[start_666 + 28] = self.state[start_NNN_row4 + 2 + (center_orbit_id * self.size)]
                 fake_666.state[start_666 + 29] = side_name[x]
 
+                # dwalton reference
                 # top edge
                 edge03 = start_NNN + center_orbit_count + 2
                 edge04 = edge03 + 1
                 edge05 = edge03 + 2
                 edge02 = edge03 - 1
+                fake_666.state[start_666 + 2] = self.state[edge02]
+                fake_666.state[start_666 + 3] = self.state[edge03]
+                fake_666.state[start_666 + 4] = self.state[edge04]
+                fake_666.state[start_666 + 5] = self.state[edge05]
 
                 # left_edge
                 edge13 = start_NNN + ((center_orbit_count + 1) * self.size) + 1
                 edge19 = edge13 + self.size
                 edge07 = edge13 - self.size
                 edge25 = edge19 + self.size
-
-                # right edge
-                edge18 = edge13 + self.size - 1
-                edge24 = edge18 + self.size
-                edge12 = edge18 - self.size
-                edge30 = edge24 + self.size
-
-                # bottom edge
-                edge33 = start_NNN + (self.size * self.size) - center_orbit_count - 2
-                edge34 = edge33 + 1
-                edge35 = edge33 + 2
-                edge32 = edge33 - 1
-
-                # top edge
-                fake_666.state[start_666 + 2] = self.state[edge02]
-                fake_666.state[start_666 + 3] = self.state[edge03]
-                fake_666.state[start_666 + 4] = self.state[edge04]
-                fake_666.state[start_666 + 5] = self.state[edge05]
-
-                # left edge
                 fake_666.state[start_666 + 7] = self.state[edge07]
                 fake_666.state[start_666 + 13] = self.state[edge13]
                 fake_666.state[start_666 + 19] = self.state[edge19]
                 fake_666.state[start_666 + 25] = self.state[edge25]
 
                 # right edge
+                edge18 = edge13 + self.size - 1
+                edge24 = edge18 + self.size
+                edge12 = edge18 - self.size
+                edge30 = edge24 + self.size
                 fake_666.state[start_666 + 12] = self.state[edge12]
                 fake_666.state[start_666 + 18] = self.state[edge18]
                 fake_666.state[start_666 + 24] = self.state[edge24]
                 fake_666.state[start_666 + 30] = self.state[edge30]
 
                 # bottom edge
+                edge33 = start_NNN + (self.size * self.size) - center_orbit_count - 2
+                edge34 = edge33 + 1
+                edge35 = edge33 + 2
+                edge32 = edge33 - 1
                 fake_666.state[start_666 + 32] = self.state[edge32]
                 fake_666.state[start_666 + 33] = self.state[edge33]
                 fake_666.state[start_666 + 34] = self.state[edge34]
@@ -374,6 +367,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         for x in range(6):
+
+            # centers
             mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
             start_NNN_row1 = mid_NNN_row1 - (2 + cycle)
             end_NNN_row1 = mid_NNN_row1 + (2 + cycle) + 1
@@ -469,12 +464,10 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 fake_777.state[start_777 + 41] = self.state[row5_col5]
 
             else:
-                # fake_777.state[start_777+9] = self.state[row1_col1]
                 fake_777.state[start_777 + 9] = side_name[x]
                 fake_777.state[start_777 + 10] = self.state[row1_col2]
                 fake_777.state[start_777 + 11] = self.state[row1_col3]
                 fake_777.state[start_777 + 12] = self.state[row1_col4]
-                # fake_777.state[start_777+13] = self.state[row1_col5]
                 fake_777.state[start_777 + 13] = side_name[x]
 
                 fake_777.state[start_777 + 16] = self.state[row2_col1]
@@ -495,19 +488,105 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 fake_777.state[start_777 + 33] = self.state[row4_col4]
                 fake_777.state[start_777 + 34] = self.state[row4_col5]
 
-                # fake_777.state[start_777+37] = self.state[row5_col1]
                 fake_777.state[start_777 + 37] = side_name[x]
                 fake_777.state[start_777 + 38] = self.state[row5_col2]
                 fake_777.state[start_777 + 39] = self.state[row5_col3]
                 fake_777.state[start_777 + 40] = self.state[row5_col4]
-                # fake_777.state[start_777+41] = self.state[row5_col5]
                 fake_777.state[start_777 + 41] = side_name[x]
+
+            if x == 0:
+                side = self.sideU
+            elif x == 1:
+                side = self.sideL
+            elif x == 2:
+                side = self.sideF
+            elif x == 3:
+                side = self.sideR
+            elif x == 4:
+                side = self.sideB
+            elif x == 5:
+                side = self.sideD
+
+            # edges
+            # top edge
+            offset = int(row1_col1 / self.size) * self.size
+            edge02 = row1_col1 - offset
+            edge03 = row1_col2 - offset
+            edge04 = row1_col3 - offset
+            edge05 = row1_col3 - offset
+            edge06 = row1_col4 - offset
+            fake_777.state[start_777 + 2] = self.state[edge02]
+            fake_777.state[start_777 + 3] = self.state[edge03]
+            fake_777.state[start_777 + 4] = self.state[edge04]
+            fake_777.state[start_777 + 5] = self.state[edge05]
+            fake_777.state[start_777 + 6] = self.state[edge06]
+
+            # left edge
+            offset = 1
+
+            while row1_col1 - offset not in side.edge_west_pos:
+                offset += 1
+
+            edge08 = row1_col1 - offset
+            edge15 = row2_col1 - offset
+            edge22 = row3_col1 - offset
+            edge29 = row4_col1 - offset
+            edge36 = row5_col1 - offset
+            fake_777.state[start_777 + 8] = self.state[edge08]
+            fake_777.state[start_777 + 15] = self.state[edge15]
+            fake_777.state[start_777 + 22] = self.state[edge22]
+            fake_777.state[start_777 + 29] = self.state[edge29]
+            fake_777.state[start_777 + 36] = self.state[edge36]
+
+            # right edge
+            offset = 1
+
+            while row1_col5 + offset not in side.edge_east_pos:
+                offset += 1
+
+            edge14 = row1_col5 + offset
+            edge21 = row2_col5 + offset
+            edge28 = row3_col5 + offset
+            edge35 = row4_col5 + offset
+            edge42 = row5_col5 + offset
+            fake_777.state[start_777 + 14] = self.state[edge14]
+            fake_777.state[start_777 + 21] = self.state[edge21]
+            fake_777.state[start_777 + 28] = self.state[edge28]
+            fake_777.state[start_777 + 35] = self.state[edge35]
+            fake_777.state[start_777 + 42] = self.state[edge42]
+
+            # bottom edge
+            offset = self.size
+
+            while row5_col1 + offset not in side.edge_south_pos:
+                offset += self.size
+
+            edge44 = row5_col1 + offset
+            edge45 = row5_col2 + offset
+            edge46 = row5_col3 + offset
+            edge47 = row5_col4 + offset
+            edge48 = row5_col5 + offset
+            fake_777.state[start_777 + 44] = self.state[edge44]
+            fake_777.state[start_777 + 45] = self.state[edge45]
+            fake_777.state[start_777 + 46] = self.state[edge46]
+            fake_777.state[start_777 + 47] = self.state[edge47]
+            fake_777.state[start_777 + 48] = self.state[edge48]
 
             start_777 += 49
             start_NNN += self.size * self.size
 
         # fake_777.sanity_check()
-        # fake_777.print_cube()
+        # dwalton
+        """
+        self.print_cube_layout()
+        self.print_cube()
+        logger.info(f"center_orbit_id {center_orbit_id}, max_center_orbits {max_center_orbits}, width {width}, cycle {cycle}, max_cycle {max_cycle}, action {action}")
+        fake_777.enable_print_cube = True
+        fake_777.print_cube_layout()
+        fake_777.print_cube("HERE 00")
+        import sys
+        sys.exit(0)
+        """
 
         # Apply the 7x7x7 solution to our cube
         half_size = str(ceil(self.size / 2) - 1 - cycle)
@@ -547,6 +626,9 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
     def group_centers_guts(self):
         self.make_plus_sign()
+
+        # dwalton if we pair midges here we can we solve via a series of reduced 5x5x5?
+        # self.pair_inside_edges_via_444()
 
         max_center_orbits = int((self.size - 3) / 2) - 2
 

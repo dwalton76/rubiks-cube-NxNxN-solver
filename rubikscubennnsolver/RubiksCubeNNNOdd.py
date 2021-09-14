@@ -249,6 +249,16 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             fake_777.state[start_777 + 47] = self.state[edge_row6_col4]
             fake_777.state[start_777 + 48] = self.state[edge_row6_col5]
 
+            # corners
+            corner01 = start_NNN + 1
+            corner07 = corner01 + self.size - 1
+            corner43 = start_NNN + (self.size * self.size)
+            corner49 = corner43 - self.size + 1
+            fake_777.state[start_777 + 1] = self.state[corner01]
+            fake_777.state[start_777 + 7] = self.state[corner07]
+            fake_777.state[start_777 + 43] = self.state[corner43]
+            fake_777.state[start_777 + 49] = self.state[corner49]
+
             start_777 += 49
             start_NNN += self.size * self.size
 

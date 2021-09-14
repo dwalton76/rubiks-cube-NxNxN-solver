@@ -234,7 +234,7 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type, un
 }
 
 unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
-                                  unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll,
+                                  unsigned int orbit1_wide_quarter_turns,
                                   move_type *moves_to_here) {
     struct key_value_pair *pt_entry = NULL;
     unsigned int orbit0_wide_quarter_turn_count = 0;
@@ -305,8 +305,7 @@ unsigned char ida_search_complete(char *cube, lookup_table_type type, unsigned i
 
 struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_to_here, unsigned int threshold,
                                     move_type prev_move, char *cube, unsigned int cube_size, lookup_table_type type,
-                                    unsigned int orbit0_wide_quarter_turns, unsigned int orbit1_wide_quarter_turns,
-                                    unsigned int avoid_pll) {
+                                    unsigned int orbit0_wide_quarter_turns, unsigned int orbit1_wide_quarter_turns) {
     unsigned int cost_to_goal = 0;
     unsigned int f_cost = 0;
     move_type move;
@@ -326,7 +325,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
     size_t array_size_char = sizeof(char) * array_size;
 
     if (cost_to_goal == 0 && ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns,
-                                                 avoid_pll, moves_to_here)) {
+                                                 moves_to_here)) {
         // We are finished!!
         LOG("IDA count %'llu, f_cost %d vs threshold %d (cost_to_here %d, cost_to_goal %d)\n", ida_count, f_cost,
             threshold, cost_to_here, cost_to_goal);
@@ -394,7 +393,7 @@ struct ida_search_result ida_search(unsigned int cost_to_here, move_type *moves_
         moves_to_here[cost_to_here] = move;
 
         tmp_search_result = ida_search(cost_to_here + 1, moves_to_here, threshold, move, cube_copy, cube_size, type,
-                                       orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+                                       orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
 
         if (tmp_search_result.found_solution) {
             return tmp_search_result;
@@ -453,7 +452,7 @@ void print_ida_summary(lookup_table_type type, char *cube, struct ida_search_res
 }
 
 int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int orbit0_wide_quarter_turns,
-              unsigned int orbit1_wide_quarter_turns, unsigned int avoid_pll) {
+              unsigned int orbit1_wide_quarter_turns) {
     move_type moves_to_here[MAX_IDA_THRESHOLD];
     int min_ida_threshold = 0;
     struct ida_heuristic_result heuristic_result;
@@ -465,8 +464,7 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
 
     memset(moves_to_here, MOVE_NONE, MAX_IDA_THRESHOLD);
 
-    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll,
-                            moves_to_here)) {
+    if (ida_search_complete(cube, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, moves_to_here)) {
         LOG("cube already solved\n");
         printf("SOLUTION:\n");
         return 1;
@@ -484,7 +482,7 @@ int ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsign
         hash_delete_all(&ida_explored);
 
         search_result = ida_search(0, moves_to_here, threshold, MOVE_NONE, cube, cube_size, type,
-                                   orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+                                   orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
@@ -518,7 +516,6 @@ int main(int argc, char *argv[]) {
     unsigned int cube_size_kociemba = 0;
     unsigned int orbit0_wide_quarter_turns = 0;
     unsigned int orbit1_wide_quarter_turns = 0;
-    unsigned int avoid_pll = 0;
     char kociemba[300];
     memset(kociemba, 0, sizeof(char) * 300);
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
@@ -561,9 +558,6 @@ int main(int argc, char *argv[]) {
 
         } else if (strmatch(argv[i], "--orbit1-need-even-w")) {
             orbit1_wide_quarter_turns = 2;
-
-        } else if (strmatch(argv[i], "--avoid-pll")) {
-            avoid_pll = 1;
 
         } else if (strmatch(argv[i], "--centers-only")) {
             centers_only = 1;
@@ -773,5 +767,5 @@ int main(int argc, char *argv[]) {
     init_cube(cube, cube_size, type, kociemba);
 
     // print_cube(cube, cube_size);
-    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns, avoid_pll);
+    ida_solve(cube, cube_size, type, orbit0_wide_quarter_turns, orbit1_wide_quarter_turns);
 }

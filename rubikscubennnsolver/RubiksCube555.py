@@ -3192,22 +3192,12 @@ class RubiksCube555(RubiksCube):
             raise SolveError("edge swaps are odd, cannot pair last 8-edges")
 
         self.edges_flip_orientation(wing_strs_all, [])
-        # self.highlow_edges_print()
-        # self.print_cube()
 
         yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
         self.lt_phase6_high_edge_midge.ida_graph_node = None
         self.lt_phase6_low_edge_midge.ida_graph_node = None
         self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
         self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
-
-        # Test the prune tables
-        # self.lt_phase6_high_edge_midge.load_ida_graph()
-        # self.lt_phase6_high_edge_midge.solve()
-        # self.lt_phase6_low_edge_midge.load_ida_graph()
-        # self.lt_phase6_low_edge_midge.solve()
-        # self.print_cube()
-        # sys.exit(0)
         self.lt_phase6.solve_via_c()
 
         pair_eight_edge_solution = self.solution[original_solution_len:]

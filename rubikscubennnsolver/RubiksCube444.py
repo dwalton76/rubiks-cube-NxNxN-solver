@@ -1081,13 +1081,6 @@ class RubiksCube444(RubiksCube):
         self.solution = original_solution[:]
         self.edge_mapping = min_edge_mapping
 
-        # Test the prune tables
-        # self.lt_highlow_edges_centers.solve()
-        # self.lt_highlow_edges_edges.solve()
-        # self.print_cube()
-        # self.highlow_edges_print()
-        # sys.exit(0)
-
         for step in min_phase2_steps:
             self.rotate(step)
 

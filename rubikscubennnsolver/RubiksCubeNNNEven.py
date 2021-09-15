@@ -254,7 +254,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         fake_666 = None
         gc.collect()
         self.print_cube(
-            "%s: Big plus sign formed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: Big plus sign formed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
     def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
@@ -621,7 +621,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 )
 
         self.print_cube(
-            "%s: LR centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: LR centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # Stage all UD centers
@@ -635,7 +635,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 )
 
         self.print_cube(
-            "%s: UD centers are staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: UD centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         # Solve all t-centers
@@ -659,7 +659,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
         self.print_cube(
-            "%s: centers are solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: centers are solved (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
 
         if not self.centers_solved():

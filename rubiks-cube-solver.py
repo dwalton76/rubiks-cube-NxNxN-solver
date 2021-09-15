@@ -111,15 +111,15 @@ else:
 
     cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
 
-if args.openwith:
-    cube.print_cube()
-    for step in args.openwith.split():
-        cube.rotate(step)
-
 cube.sanity_check()
 cube.print_cube("Initial Cube")
 cube.www_header()
 cube.www_write_cube("Initial Cube")
+
+if args.openwith:
+    for step in args.openwith.split():
+        cube.rotate(step)
+    cube.print_cube("post --openwith")
 
 try:
     if args.solution333:
@@ -163,13 +163,13 @@ for (i, step) in enumerate(solution):
     cube.www_write_cube(www_desc)
 
     if args.print_steps:
-        cube.print_cube()
+        cube.print_cube(f"--print-steps {step}")
         print("\n\n\n\n")
 
 cube.www_footer()
 
 if args.print_steps:
-    cube.print_cube()
+    cube.print_cube("--print-steps DONE")
 
 if args.min_memory:
     print("\n\n****************************************")

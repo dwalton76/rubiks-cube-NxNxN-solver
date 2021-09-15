@@ -1507,11 +1507,7 @@ class RubiksCube(object):
                     row_index = self.size
                 side_name_index += 1
 
-        output = ["", ""]
-
-        if title:
-            output.append(title)
-            output.append("=" * len(title))
+        output = ["", "", title, "=" * len(title)]
 
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):

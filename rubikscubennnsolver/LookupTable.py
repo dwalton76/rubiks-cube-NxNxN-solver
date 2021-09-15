@@ -476,11 +476,6 @@ class LookupTable(object):
     A base class for all lookup table classes
     """
 
-    heuristic_stats = {}
-
-    # This is for tweaking the valeus in heuristic_stats
-    heuristic_stats_error = 0
-
     def __init__(
         self,
         parent,
@@ -533,7 +528,6 @@ class LookupTable(object):
         self.cache = {}
         self.cache_set = set()
         self.cache_list = []
-        self.collect_stats = False
         self.use_isdigit = False
         self.only_colors = ()
         self.printed_disk_io_warning = False

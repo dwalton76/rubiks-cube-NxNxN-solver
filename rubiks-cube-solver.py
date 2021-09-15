@@ -15,12 +15,9 @@ import logging
 import resource
 import sys
 from math import sqrt
-from pprint import pformat
-from statistics import median
 
 # rubiks cube libraries
 from rubikscubennnsolver import SolveError, configure_logging, reverse_steps
-from rubikscubennnsolver.RubiksSide import NotSolving
 
 if sys.version_info < (3, 6):
     raise SystemError("Must be using Python 3.6 or higher")
@@ -121,24 +118,12 @@ if args.openwith:
         cube.rotate(step)
     cube.print_cube("post --openwith")
 
-try:
-    if args.solution333:
-        solution333 = reverse_steps(args.solution333.split())
-    else:
-        solution333 = []
-    cube.solve(solution333)
-except NotSolving:
-    if cube.heuristic_stats:
-        logger.info(f"{cube}: heuristic_stats raw\n{pformat(cube.heuristic_stats)}\n\n")
+if args.solution333:
+    solution333 = reverse_steps(args.solution333.split())
+else:
+    solution333 = []
 
-        for (key, value) in cube.heuristic_stats.items():
-            cube.heuristic_stats[key] = int(median(value))
-
-        logger.info(f"{cube}: heuristic_stats median\n{pformat(cube.heuristic_stats)}\n\n")
-        sys.exit(0)
-    else:
-        raise
-
+cube.solve(solution333)
 end_time = dt.datetime.now()
 cube.print_cube("Final Cube")
 cube.print_solution(not args.no_comments)

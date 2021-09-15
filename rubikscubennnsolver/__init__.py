@@ -507,7 +507,6 @@ class RubiksCube(object):
         self.fake_555 = None
         self.fake_666 = None
         self.fake_777 = None
-        self.heuristic_stats = {}
         self.enable_print_cube = True
         self.use_nuke_corners = False
         self.use_nuke_edges = False

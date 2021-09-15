@@ -161,18 +161,10 @@ try:
 
             if cube.solved():
                 results.append(f"[92m{size} PASS[0m: {kociemba_string}")
-                # cube.print_solution()
             else:
                 results.append(f"[91m{size} FAIL (not solved)[0m: {kociemba_string}")
-                cube.print_cube()
+                cube.print_cube("failed to solve")
                 cube.print_solution()
-                """
-                for result in results:
-                    print(result)
-
-                cube.print_cube()
-                assert False, "Cube should be solvd but it isn't"
-                """
 
             solution_length = cube.get_solution_len_minus_rotates(cube.solution)
             solution_total += solution_length
@@ -205,7 +197,7 @@ try:
     for result in results:
         print(result)
 
-except (NotImplementedError, SolveError, StuckInALoop):
+except (NotImplementedError, SolveError, StuckInALoop) as e:
     cube.print_cube_layout()
-    cube.print_cube()
-    raise
+    cube.print_cube(str(e))
+    raise e

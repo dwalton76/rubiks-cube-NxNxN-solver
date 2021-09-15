@@ -1436,15 +1436,12 @@ class RubiksCube(object):
         if self.enable_print_cube:
             logger.info("\n" + get_cube_layout(self.size) + "\n")
 
-    def print_cube(self, title: str = None, print_positions: bool = False) -> None:
+    def print_cube(self, title: str, print_positions: bool = False) -> None:
         """
         log the cube state
         """
         if not self.enable_print_cube:
             return
-
-        # if not title:
-        #     raise ValueError("no title")
 
         side_names = ("U", "L", "F", "R", "B", "D")
         side_name_index = 0
@@ -1510,11 +1507,7 @@ class RubiksCube(object):
                     row_index = self.size
                 side_name_index += 1
 
-        output = ["", ""]
-
-        if title:
-            output.append(title)
-            output.append("=" * len(title))
+        output = ["", "", title, "=" * len(title)]
 
         for (row_index, row) in enumerate(rows):
             if row_index < self.size or row_index >= (self.size * 2):
@@ -3506,7 +3499,7 @@ class RubiksCube(object):
         elif self.state[self.sideD.edge_west_pos[0]] != "D":
             raise NotImplementedError("pll")
         else:
-            self.print_cube()
+            self.print_cube("we should not be here")
             raise SolveError("we should not be here")
 
         if self.state[self.sideF.edge_north_pos[0]] == "F":
@@ -3870,8 +3863,9 @@ class RubiksCube(object):
                 continue
             else:
                 self.enable_print_cube = True
-                self.print_cube()
-                raise Exception(f"Could not determine wing_str for ({square1}, {square2})")
+                msg = f"Could not determine wing_str for ({square1}, {square2})"
+                self.print_cube(msg)
+                raise Exception(msg)
 
             if not edges_paired:
 

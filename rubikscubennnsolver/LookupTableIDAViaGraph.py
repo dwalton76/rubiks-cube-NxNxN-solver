@@ -161,7 +161,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
             logger.info(f"{self}: recolor")
-            # self.parent.print_cube()
+            # self.parent.print_cube("pre recolor")
 
             if self.nuke_corners:
                 self.parent.nuke_corners()
@@ -179,7 +179,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 if x_new_color:
                     self.parent.state[x] = x_new_color
 
-            # self.parent.print_cube()
+            # self.parent.print_cube("post recolor")
             # sys.exit(0)
 
     def build_ida_graph_set_cube_state(self, state, steps_to_scramble) -> None:

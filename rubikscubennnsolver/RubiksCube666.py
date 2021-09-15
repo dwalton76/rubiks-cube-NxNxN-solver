@@ -33,12 +33,12 @@ solved_666 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 
 
 inner_x_centers_666 = (
-    15, 16, 21, 22,
-    51, 52, 57, 58,
-    87, 88, 93, 94,
-    123, 124, 129, 130,
-    159, 160, 165, 166,
-    195, 196, 201, 202,
+    15, 16, 21, 22,  # Upper
+    51, 52, 57, 58,  # Left
+    87, 88, 93, 94,  # Front
+    123, 124, 129, 130,  # Right
+    159, 160, 165, 166,  # Back
+    195, 196, 201, 202,  # Down
 )
 
 centers_666 = (
@@ -850,36 +850,49 @@ class LookupTable666UDObliqueEdges(LookupTable):
     """
     lookup-tables/lookup-table-6x6x6-step63-UD-oblique-edges.txt
     ============================================================
-    0 steps has 2 entries (2 percent, 0.00x previous step)
-    1 steps has 8 entries (11 percent, 4.00x previous step)
-    2 steps has 30 entries (42 percent, 3.75x previous step)
-    3 steps has 30 entries (42 percent, 1.00x previous step)
+    0 steps has 2 entries (0 percent, 0.00x previous step)
+    1 steps has 12 entries (0 percent, 6.00x previous step)
+    2 steps has 112 entries (0 percent, 9.33x previous step)
+    3 steps has 842 entries (0 percent, 7.52x previous step)
+    4 steps has 4,494 entries (1 percent, 5.34x previous step)
+    5 steps has 14,522 entries (4 percent, 3.23x previous step)
+    6 steps has 39,056 entries (11 percent, 2.69x previous step)
+    7 steps has 76,368 entries (22 percent, 1.96x previous step)
+    8 steps has 83,760 entries (24 percent, 1.10x previous step)
+    9 steps has 69,560 entries (20 percent, 0.83x previous step)
+    10 steps has 39,736 entries (11 percent, 0.57x previous step)
+    11 steps has 12,808 entries (3 percent, 0.32x previous step)
+    12 steps has 1,728 entries (0 percent, 0.13x previous step)
 
-    Total: 70 entries
-    Average: 2.26 moves
+    Total: 343,000 entries
+    Average: 7.92 moves
     """
 
     # fmt: off
     state_targets = (
-        "UUUUUUUUDDDDDDDD",
-        "DDDDDDDDUUUUUUUU",
+        "UUUUUUUULLLLFFFFRRRRBBBBDDDDDDDD",
+        "DDDDDDDDLLLLFFFFRRRRBBBBUUUUUUUU",
     )
 
-    UD_oblique_edges = (
+    UD_oblique_edges_LFRB_inner_x_centers = (
         9, 10, 14, 17, 20, 23, 27, 28,  # Upper
+        51, 52, 57, 58,  # Left
+        87, 88, 93, 94,  # Front
+        123, 124, 129, 130,  # Right
+        159, 160, 165, 166,  # Back
         189, 190, 194, 197, 200, 203, 207, 208,  # Down
     )
     # fmt: on
 
-    def __init__(self, parent, build_state_index=False):
+    def __init__(self, parent, build_state_index: bool = False):
         # fmt: off
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-6x6x6-step63-UD-oblique-edges.txt",
+            'lookup-table-6x6x6-step63-UD-oblique-edges.txt',
             self.state_targets,
-            linecount=70,
-            max_depth=3,
+            linecount=343000,
+            max_depth=12,
             all_moves=moves_666,
             illegal_moves=(
                 "3Rw", "3Rw'",
@@ -897,23 +910,21 @@ class LookupTable666UDObliqueEdges(LookupTable):
                 "3Rw2",
                 "3Lw2",
                 "3Fw2",
-                "3Bw2",
+                "3Bw2"
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="13c8edcae7332aa5936426a7001f0080",
-            md5_state_index="953f9d93e6a6b1680be76a68b3edf93b",
         )
         # fmt: on
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_oblique_edges])
+        return "".join([parent_state[x] for x in self.UD_oblique_edges_LFRB_inner_x_centers])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_oblique_edges, state):
+        for (pos, pos_state) in zip(self.UD_oblique_edges_LFRB_inner_x_centers, state):
             cube[pos] = pos_state
 
 
@@ -1240,13 +1251,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             offset_666 = side_index * 36
             side_name = side_names[side_index]
 
-            # Corners
+            # corners
             fake_555.state[1 + offset_555] = self.state[1 + offset_666]
             fake_555.state[5 + offset_555] = self.state[6 + offset_666]
             fake_555.state[21 + offset_555] = self.state[31 + offset_666]
             fake_555.state[25 + offset_555] = self.state[36 + offset_666]
 
-            # Centers
+            # centers
             fake_555.state[7 + offset_555] = self.state[8 + offset_666]
             fake_555.state[8 + offset_555] = self.state[9 + offset_666]
             fake_555.state[9 + offset_555] = self.state[11 + offset_666]
@@ -1257,7 +1268,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.state[18 + offset_555] = self.state[27 + offset_666]
             fake_555.state[19 + offset_555] = self.state[29 + offset_666]
 
-            # Edges
+            # edges
             fake_555.state[2 + offset_555] = self.state[2 + offset_666]
             fake_555.state[3 + offset_555] = side_name
             fake_555.state[4 + offset_555] = self.state[5 + offset_666]
@@ -1355,7 +1366,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         tmp_solution_len = len(self.solution)
         self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
         self.print_cube(
-            "%s: UD inner x-center solved and oblique edges paired, %d steps in"
+            "%s: UD inner x-center solved and oblique edges paired (%d steps in)"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         self.solution.append(
@@ -1369,7 +1380,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         tmp_solution_len = len(self.solution)
         self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve_via_c()
         self.print_cube(
-            "%s: LFRB inner x-center and oblique edges paired, %d steps in"
+            "%s: LFRB inner x-center and oblique edges paired (%d steps in)"
             % (self, self.get_solution_len_minus_rotates(self.solution))
         )
         self.solution.append(

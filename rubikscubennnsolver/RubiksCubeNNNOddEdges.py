@@ -179,5 +179,5 @@ class RubiksCubeNNNOddEdges(RubiksCube):
             self.pair_edge_orbit_via_555(orbit)
 
         self.print_cube(
-            "%s: Edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution))
+            "%s: Edges are paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )

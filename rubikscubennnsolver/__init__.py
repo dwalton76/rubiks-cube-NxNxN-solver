@@ -507,7 +507,6 @@ class RubiksCube(object):
         self.fake_555 = None
         self.fake_666 = None
         self.fake_777 = None
-        self.heuristic_stats = {}
         self.enable_print_cube = True
         self.use_nuke_corners = False
         self.use_nuke_edges = False
@@ -4514,8 +4513,6 @@ class RubiksCube(object):
                 self.steps_to_solve_centers = index - self.steps_to_rotate_cube
             elif step == "EDGES_GROUPED":
                 self.steps_to_group_edges = index - self.steps_to_rotate_cube - self.steps_to_solve_centers
-            elif step.startswith("COMMENT"):
-                pass
             else:
                 solution_minus_markers.append(step)
                 index += 1
@@ -4699,7 +4696,10 @@ class RubiksCube(object):
 
             elif x.startswith("COMMENT"):
                 if include_comments:
-                    url += r"""%2F%2F""" + x.replace("COMMENT", "") + "%0A%0A"
+                    if x == "COMMENT_":
+                        url += "%0A"
+                    else:
+                        url += r"""%2F%2F""" + x.replace("COMMENT", "") + "%0A%0A"
             else:
                 url += x + "_"
 
@@ -4709,7 +4709,13 @@ class RubiksCube(object):
         url = url.replace(" ", "_")
         logger.info(f"\nURL     : {url}")
 
-        print(f"Solution: {' '.join(self.solution)}")
+        # print the solution
+        solution_minus_comments = []
+        for step in self.solution:
+            if not step.startswith("COMMENT"):
+                solution_minus_comments.append(step)
+
+        print(f"Solution: {' '.join(solution_minus_comments)}")
 
         if self.steps_to_solve_centers:
             logger.info("%d steps to solve centers" % self.steps_to_solve_centers)

@@ -278,6 +278,18 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         elif action == "solve_centers":
             fake_777.solve_centers()
 
+        elif action == "daisy_solve_centers":
+            self.print_cube("HERE 100")
+            fake_777.enable_print_cube = True
+            fake_777.print_cube("HERE 100")
+            fake_777.enable_print_cube = False
+            fake_777.LR_centers_vertical_bars()
+            fake_777.UD_centers_vertical_bars()
+            fake_777.centers_daisy_solve()
+
+            # this should really be a "bullseye" solve of the centers
+            fake_777.solve_centers()
+
         else:
             raise Exception(f"Invalid action {action}")
 
@@ -295,38 +307,54 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             "%s: End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
             % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
         )
+        self.solution.append(
+            f"COMMENT_%d_steps_total_NNN_{action}_orbit_{center_orbit_id}/{max_center_orbits}_cycle_{cycle}/{max_cycle}"
+            % self.get_solution_len_minus_rotates(self.solution)
+        )
 
     def group_centers_guts(self):
+        if self.centers_solved():
+            return
 
         max_center_orbits = int((self.size - 3) / 2) - 2
 
         # Stage all LR centers
-        for center_orbit_id in range(max_center_orbits + 1):
-            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5) / 2)
+        if not self.LR_centers_staged():
+            for center_orbit_id in range(max_center_orbits + 1):
+                width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
+                max_cycle = int((width - 5) / 2)
 
-            for cycle in range(max_cycle + 1):
-                self.stage_or_solve_inside_777(
-                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
-                )
+                for cycle in range(max_cycle + 1):
+                    self.stage_or_solve_inside_777(
+                        center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
+                    )
 
-        self.print_cube(
-            "%s: LR centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+            self.print_cube(
+                "%s: LR centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
+            self.solution.append(
+                "COMMENT_%d_steps_total_NNN_LR_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
+            )
+            self.solution.append("COMMENT_")
 
         # Stage all UD centers
-        for center_orbit_id in range(max_center_orbits + 1):
-            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5) / 2)
+        if not self.UD_centers_staged():
+            for center_orbit_id in range(max_center_orbits + 1):
+                width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
+                max_cycle = int((width - 5) / 2)
 
-            for cycle in range(max_cycle + 1):
-                self.stage_or_solve_inside_777(
-                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_UD_centers"
-                )
+                for cycle in range(max_cycle + 1):
+                    self.stage_or_solve_inside_777(
+                        center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_UD_centers"
+                    )
 
-        self.print_cube(
-            "%s: UD centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+            self.print_cube(
+                "%s: UD centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
+            self.solution.append(
+                "COMMENT_%d_steps_total_NNN_UD_centers_staged" % self.get_solution_len_minus_rotates(self.solution)
+            )
+            self.solution.append("COMMENT_")
 
         # Solve all t-centers
         for center_orbit_id in range(max_center_orbits + 1):
@@ -337,10 +365,10 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 self.stage_or_solve_inside_777(
                     center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_t_centers"
                 )
-
-        self.print_cube(
-            "%s: t-centers are solved (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        self.solution.append(
+            "COMMENT_%d_steps_total_NNN_t_centers_solved" % self.get_solution_len_minus_rotates(self.solution)
         )
+        self.solution.append("COMMENT_")
 
         # Solve all centers
         center_orbit_id = max_center_orbits
@@ -353,6 +381,10 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         self.print_cube(
             "%s: centers are solved (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
+        self.solution.append(
+            "COMMENT_%d_steps_total_NNN_centers_solved" % self.get_solution_len_minus_rotates(self.solution)
+        )
+        self.solution.append("COMMENT_")
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

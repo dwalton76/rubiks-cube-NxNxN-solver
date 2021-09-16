@@ -1286,7 +1286,95 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.state[23 + offset_555] = side_name
             fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
-    def group_centers_guts(self):
+    def reduced_to_555(self) -> bool:
+
+        if not all([self.state[x] == "U" for x in (15, 16, 21, 22)]):  # Upper
+            return False
+
+        if not all([self.state[x] == "L" for x in (51, 52, 57, 58)]):  # Left
+            return False
+
+        if not all([self.state[x] == "F" for x in (87, 88, 93, 94)]):  # Front
+            return False
+
+        if not all([self.state[x] == "R" for x in (123, 124, 129, 130)]):  # Right
+            return False
+
+        if not all([self.state[x] == "B" for x in (159, 160, 165, 166)]):  # Back
+            return False
+
+        if not all([self.state[x] == "D" for x in (195, 196, 201, 202)]):  # Down
+            return False
+
+        # verify all oblique edges are paired
+        for (x, y) in (
+            (9, 10),
+            (20, 14),
+            (17, 23),
+            (28, 27),  # Upper
+            (45, 46),
+            (56, 50),
+            (53, 59),
+            (64, 63),  # Left
+            (81, 82),
+            (92, 86),
+            (89, 95),
+            (100, 99),  # Front
+            (117, 118),
+            (128, 122),
+            (125, 131),
+            (136, 135),  # Right
+            (153, 154),
+            (164, 158),
+            (161, 167),
+            (172, 171),  # Back
+            (189, 190),
+            (200, 194),
+            (197, 203),
+            (208, 207),  # Down
+        ):
+            if self.state[x] != self.state[y]:
+                return False
+
+        # verify the inside orbit of edges are paired
+        for (x, y) in (
+            (3, 4),
+            (18, 24),
+            (34, 33),
+            (19, 13),  # Upper
+            (39, 40),
+            (54, 60),
+            (70, 69),
+            (55, 49),  # Left
+            (75, 76),
+            (90, 96),
+            (106, 105),
+            (91, 85),  # Front
+            (111, 112),
+            (126, 132),
+            (142, 141),
+            (127, 121),  # Right
+            (147, 148),
+            (162, 168),
+            (178, 177),
+            (163, 157),  # Back
+            (183, 184),
+            (198, 204),
+            (214, 213),
+            (199, 193),  # Down
+        ):
+            if self.state[x] != self.state[y]:
+                return False
+
+        return True
+
+    def group_centers_guts(self, pair_inside_edges: bool = True):
+        """
+        reduce the 6x6x6 to a 5x5x5
+        """
+        if self.reduced_to_555():
+            return
+
         self.lt_init()
 
         # phase 1
@@ -1388,7 +1476,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-        self.pair_inside_edges_via_444()
+        if pair_inside_edges:
+            self.pair_inside_edges_via_444()
 
 
 def rotate_666(cube, step):

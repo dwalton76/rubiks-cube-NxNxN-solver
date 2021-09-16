@@ -169,6 +169,11 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 # logger.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))
                 self.rotate(step)
 
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_total_NNN_edges_paired_orbit_{orbit}"
+        )
+        self.solution.append("COMMENT_")
+
     def group_edges(self):
 
         # How many orbits of edges does this cube have?

@@ -32,10 +32,6 @@ class SolveError(Exception):
     pass
 
 
-class NotSolving(Exception):
-    pass
-
-
 class StuckInALoop(Exception):
     pass
 

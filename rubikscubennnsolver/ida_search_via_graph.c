@@ -229,7 +229,6 @@ unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev
         // LOG("prev_pt0_state %d, prev_pt1_state %d, perfect_hash01_index %d, perfect_hash01_cost %d, cost_to_goal %d\n",
         //     prev_pt0_state, prev_pt1_state, perfect_hash01_index, perfect_hash01_cost, cost_to_goal);
 
-        // dwalton
         if (perfect_hash01_cost > cost_to_goal) {
             cost_to_goal = perfect_hash01_cost;
         }

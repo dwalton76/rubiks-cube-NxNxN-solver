@@ -1301,7 +1301,63 @@ class RubiksCube444(RubiksCube):
             f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
         )
 
+    def reduced_to_333(self) -> bool:
+
+        if not all([self.state[x] == "U" for x in (6, 7, 10, 11)]):  # Upper
+            return False
+
+        if not all([self.state[x] == "L" for x in (22, 23, 26, 27)]):  # Left
+            return False
+
+        if not all([self.state[x] == "F" for x in (38, 39, 42, 43)]):  # Front
+            return False
+
+        if not all([self.state[x] == "R" for x in (54, 55, 58, 59)]):  # Right
+            return False
+
+        if not all([self.state[x] == "B" for x in (70, 71, 74, 75)]):  # Back
+            return False
+
+        if not all([self.state[x] == "D" for x in (86, 87, 90, 91)]):  # Down
+            return False
+
+        # verify the edges are paired
+        for (x, y) in (
+            (2, 3),
+            (8, 12),
+            (15, 14),
+            (9, 5),  # Upper
+            (18, 19),
+            (24, 28),
+            (31, 30),
+            (25, 21),  # Left
+            (34, 35),
+            (40, 44),
+            (47, 46),
+            (41, 37),  # Front
+            (50, 51),
+            (56, 60),
+            (62, 63),
+            (57, 53),  # Right
+            (66, 67),
+            (72, 76),
+            (79, 78),
+            (73, 69),  # Back
+            (82, 83),
+            (88, 92),
+            (95, 94),
+            (89, 85),  # Down
+        ):
+            if self.state[x] != self.state[y]:
+                return False
+
+        return True
+
     def reduce_333(self, consider_solve_333: bool = True) -> None:
+
+        if self.reduced_to_333():
+            return
+
         self.phase1()
         self.phase2()
         # self.phase3()

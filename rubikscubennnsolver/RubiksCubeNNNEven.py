@@ -1,13 +1,10 @@
 # standard libraries
-import gc
 import logging
-from math import ceil
 
 # rubiks cube libraries
-from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
-from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
+from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
 
 logger = logging.getLogger(__name__)
 
@@ -117,31 +114,17 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         return self.fake_666
 
-    def get_fake_777(self):
-        if self.fake_777 is None:
-            self.fake_777 = RubiksCube777(solved_777, "URFDLB")
-            self.fake_777.lt_init()
-            self.fake_777.enable_print_cube = False
-        else:
-            self.fake_777.re_init()
-
-        if self.fake_555:
-            self.fake_777.fake_555 = self.fake_555
-
-        return self.fake_777
-
     def make_plus_sign(self):
         """
-        Pair the middle two columns/rows in order to convert this Even cube into
-        an Odd cube...this allows us to use the 7x7x7 solver later.  It makes what
-        looks like a large "plus" sign on each cube face thus the name of this
-        method.
+        Pair the middle two columns/rows in order to convert this Even cube into an Odd cube...this
+        allows us to use the RubiksCubeNNNOdd solver later.  It makes what looks like a large "plus"
+        sign on each cube face thus the name of this method.
         """
         center_orbit_count = int((self.size - 4) / 2)
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
+        original_solution_len = len(self.solution)
 
-        # Make a big "plus" sign on each side, this will allow us to reduce the
-        # centers to a series of 7x7x7 centers
+        # Make a big "plus" sign on each side
         for center_orbit_id in range(center_orbit_count):
 
             # create a fake 6x6x6 to solve the inside 4x4 block
@@ -234,8 +217,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_666 += 36
                 start_NNN += self.size * self.size
 
-            # Group LR centers (in turn groups FB)
-            fake_666.group_centers_guts()
+            # reduce the centers to 5x5x5 centers
+            fake_666.group_centers_guts(pair_inside_edges=False)
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))
@@ -252,415 +235,42 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                     self.rotate(step)
 
         fake_666 = None
-        gc.collect()
-        self.print_cube(
-            "%s: Big plus sign formed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
 
-    def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
-        fake_777 = self.get_fake_777()
-
-        for index in range(1, 295):
-            fake_777.state[index] = "x"
-
-        start_777 = 0
-        start_NNN = 0
-        row0_midpoint = ceil(self.size / 2)
-
-        logger.info(
-            "%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
-            % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
-        )
-
-        side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
-
-        for x in range(6):
-
-            # centers
-            mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
-            start_NNN_row1 = mid_NNN_row1 - (2 + cycle)
-            end_NNN_row1 = mid_NNN_row1 + (2 + cycle) + 1
-
-            start_NNN_row5 = start_NNN_row1 + ((width - 1) * self.size)
-            mid_NNN_row5 = mid_NNN_row1 + ((width - 1) * self.size)
-            end_NNN_row5 = end_NNN_row1 + ((width - 1) * self.size)
-
-            mid_NNN_row3 = int(mid_NNN_row1 + ((width / 2) * self.size) - self.size)
-            start_NNN_row3 = mid_NNN_row3 - (2 + center_orbit_id)
-            end_NNN_row3 = mid_NNN_row3 + (2 + center_orbit_id) + 1
-
-            start_NNN_row2 = start_NNN_row3 - (self.size * (cycle + 1))
-            start_NNN_row4 = start_NNN_row3 + (self.size * (cycle + 1)) + self.size
-
-            end_NNN_row2 = end_NNN_row3 - (self.size * (cycle + 1))
-            end_NNN_row4 = end_NNN_row3 + (self.size * (cycle + 1)) + self.size
-
-            mid_NNN_row2 = int((start_NNN_row2 + end_NNN_row2) / 2)
-            mid_NNN_row4 = int((start_NNN_row4 + end_NNN_row4) / 2)
-
-            row1_col1 = start_NNN_row1
-            row1_col2 = start_NNN_row1 + 1
-            row1_col3 = mid_NNN_row1
-            row1_col4 = end_NNN_row1 - 1
-            row1_col5 = end_NNN_row1
-
-            row2_col1 = start_NNN_row2
-            row2_col2 = start_NNN_row2 + 1
-            row2_col3 = mid_NNN_row2
-            row2_col4 = end_NNN_row2 - 1
-            row2_col5 = end_NNN_row2
-
-            row3_col1 = start_NNN_row3
-            row3_col2 = start_NNN_row3 + 1
-            row3_col3 = mid_NNN_row3
-            row3_col4 = end_NNN_row3 - 1
-            row3_col5 = end_NNN_row3
-
-            row4_col1 = start_NNN_row4
-            row4_col2 = start_NNN_row4 + 1
-            row4_col3 = mid_NNN_row4
-            row4_col4 = end_NNN_row4 - 1
-            row4_col5 = end_NNN_row4
-
-            row5_col1 = start_NNN_row5
-            row5_col2 = start_NNN_row5 + 1
-            row5_col3 = mid_NNN_row5
-            row5_col4 = end_NNN_row5 - 1
-            row5_col5 = end_NNN_row5
-
-            # logger.info("%d: start_NNN_row1 %d, mid_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, mid_NNN_row1, end_NNN_row1))
-            # logger.info("%d: start_NNN_row2 %d, mid_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, mid_NNN_row2, end_NNN_row2))
-            # logger.info("%d: start_NNN_row3 %d, mid_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, mid_NNN_row3, end_NNN_row3))
-            # logger.info("%d: start_NNN_row4 %d, mid_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, mid_NNN_row4, end_NNN_row4))
-            # logger.info("%d: start_NNN_row5 %d, mid_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, mid_NNN_row5, end_NNN_row5))
-
-            # logger.info("%d: row1 %d, %d, %d, %d, %d" % (x, row1_col1, row1_col2, row1_col3, row1_col4, row1_col5))
-            # logger.info("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
-            # logger.info("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
-            # logger.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
-            # logger.info("%d: row5 %d, %d, %d, %d, %d" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
-
-            if (center_orbit_id == 0 and cycle == 0) or (center_orbit_id == max_center_orbits and cycle == max_cycle):
-                fake_777.state[start_777 + 9] = self.state[row1_col1]
-                fake_777.state[start_777 + 10] = self.state[row1_col2]
-                fake_777.state[start_777 + 11] = self.state[row1_col3]
-                fake_777.state[start_777 + 12] = self.state[row1_col4]
-                fake_777.state[start_777 + 13] = self.state[row1_col5]
-
-                fake_777.state[start_777 + 16] = self.state[row2_col1]
-                fake_777.state[start_777 + 17] = self.state[row2_col2]
-                fake_777.state[start_777 + 18] = self.state[row2_col3]
-                fake_777.state[start_777 + 19] = self.state[row2_col4]
-                fake_777.state[start_777 + 20] = self.state[row2_col5]
-
-                fake_777.state[start_777 + 23] = self.state[row3_col1]
-                fake_777.state[start_777 + 24] = self.state[row3_col2]
-                fake_777.state[start_777 + 25] = self.state[row3_col3]
-                fake_777.state[start_777 + 26] = self.state[row3_col4]
-                fake_777.state[start_777 + 27] = self.state[row3_col5]
-
-                fake_777.state[start_777 + 30] = self.state[row4_col1]
-                fake_777.state[start_777 + 31] = self.state[row4_col2]
-                fake_777.state[start_777 + 32] = self.state[row4_col3]
-                fake_777.state[start_777 + 33] = self.state[row4_col4]
-                fake_777.state[start_777 + 34] = self.state[row4_col5]
-
-                fake_777.state[start_777 + 37] = self.state[row5_col1]
-                fake_777.state[start_777 + 38] = self.state[row5_col2]
-                fake_777.state[start_777 + 39] = self.state[row5_col3]
-                fake_777.state[start_777 + 40] = self.state[row5_col4]
-                fake_777.state[start_777 + 41] = self.state[row5_col5]
-
-            else:
-                fake_777.state[start_777 + 9] = side_name[x]
-                fake_777.state[start_777 + 10] = self.state[row1_col2]
-                fake_777.state[start_777 + 11] = self.state[row1_col3]
-                fake_777.state[start_777 + 12] = self.state[row1_col4]
-                fake_777.state[start_777 + 13] = side_name[x]
-
-                fake_777.state[start_777 + 16] = self.state[row2_col1]
-                fake_777.state[start_777 + 17] = self.state[row2_col2]
-                fake_777.state[start_777 + 18] = self.state[row2_col3]
-                fake_777.state[start_777 + 19] = self.state[row2_col4]
-                fake_777.state[start_777 + 20] = self.state[row2_col5]
-
-                fake_777.state[start_777 + 23] = self.state[row3_col1]
-                fake_777.state[start_777 + 24] = self.state[row3_col2]
-                fake_777.state[start_777 + 25] = self.state[row3_col3]
-                fake_777.state[start_777 + 26] = self.state[row3_col4]
-                fake_777.state[start_777 + 27] = self.state[row3_col5]
-
-                fake_777.state[start_777 + 30] = self.state[row4_col1]
-                fake_777.state[start_777 + 31] = self.state[row4_col2]
-                fake_777.state[start_777 + 32] = self.state[row4_col3]
-                fake_777.state[start_777 + 33] = self.state[row4_col4]
-                fake_777.state[start_777 + 34] = self.state[row4_col5]
-
-                fake_777.state[start_777 + 37] = side_name[x]
-                fake_777.state[start_777 + 38] = self.state[row5_col2]
-                fake_777.state[start_777 + 39] = self.state[row5_col3]
-                fake_777.state[start_777 + 40] = self.state[row5_col4]
-                fake_777.state[start_777 + 41] = side_name[x]
-
-            if x == 0:
-                side = self.sideU
-            elif x == 1:
-                side = self.sideL
-            elif x == 2:
-                side = self.sideF
-            elif x == 3:
-                side = self.sideR
-            elif x == 4:
-                side = self.sideB
-            elif x == 5:
-                side = self.sideD
-
-            # edges
-            # top edge
-            offset = self.size
-            while row1_col1 - offset not in side.edge_north_pos:
-                offset += self.size
-            edge02 = row1_col1 - offset
-
-            offset = self.size
-            while row1_col2 - offset not in side.edge_north_pos:
-                offset += self.size
-            edge03 = row1_col2 - offset
-
-            offset = self.size
-            while row1_col3 - offset not in side.edge_north_pos:
-                offset += self.size
-            edge04 = row1_col3 - offset
-
-            offset = self.size
-            while row1_col4 - offset not in side.edge_north_pos:
-                offset += self.size
-            edge05 = row1_col4 - offset
-
-            offset = self.size
-            while row1_col5 - offset not in side.edge_north_pos:
-                offset += self.size
-            edge06 = row1_col5 - offset
-
-            fake_777.state[start_777 + 2] = self.state[edge02]
-            fake_777.state[start_777 + 3] = self.state[edge03]
-            fake_777.state[start_777 + 4] = self.state[edge04]
-            fake_777.state[start_777 + 5] = self.state[edge05]
-            fake_777.state[start_777 + 6] = self.state[edge06]
-
-            # left edge
-            offset = 1
-            while row1_col1 - offset not in side.edge_west_pos:
-                offset += 1
-            edge08 = row1_col1 - offset
-
-            offset = 1
-            while row2_col1 - offset not in side.edge_west_pos:
-                offset += 1
-            edge15 = row2_col1 - offset
-
-            offset = 1
-            while row3_col1 - offset not in side.edge_west_pos:
-                offset += 1
-            edge22 = row3_col1 - offset
-
-            offset = 1
-            while row4_col1 - offset not in side.edge_west_pos:
-                offset += 1
-            edge29 = row4_col1 - offset
-
-            offset = 1
-            while row5_col1 - offset not in side.edge_west_pos:
-                offset += 1
-            edge36 = row5_col1 - offset
-
-            fake_777.state[start_777 + 8] = self.state[edge08]
-            fake_777.state[start_777 + 15] = self.state[edge15]
-            fake_777.state[start_777 + 22] = self.state[edge22]
-            fake_777.state[start_777 + 29] = self.state[edge29]
-            fake_777.state[start_777 + 36] = self.state[edge36]
-
-            # right edge
-            offset = 1
-            while row1_col5 + offset not in side.edge_east_pos:
-                offset += 1
-            edge14 = row1_col5 + offset
-
-            offset = 1
-            while row2_col5 + offset not in side.edge_east_pos:
-                offset += 1
-            edge21 = row2_col5 + offset
-
-            offset = 1
-            while row3_col5 + offset not in side.edge_east_pos:
-                offset += 1
-            edge28 = row3_col5 + offset
-
-            offset = 1
-            while row4_col5 + offset not in side.edge_east_pos:
-                offset += 1
-            edge35 = row4_col5 + offset
-
-            offset = 1
-            while row5_col5 + offset not in side.edge_east_pos:
-                offset += 1
-            edge42 = row5_col5 + offset
-
-            fake_777.state[start_777 + 14] = self.state[edge14]
-            fake_777.state[start_777 + 21] = self.state[edge21]
-            fake_777.state[start_777 + 28] = self.state[edge28]
-            fake_777.state[start_777 + 35] = self.state[edge35]
-            fake_777.state[start_777 + 42] = self.state[edge42]
-            # logger.info(f"edge14 {edge14}, edge21 {edge21}, edge28 {edge28}, edge35 {edge35}, edge42 {edge42}, offset {offset}\n\n")
-
-            # bottom edge
-            offset = self.size
-            while row5_col1 + offset not in side.edge_south_pos:
-                offset += self.size
-            edge44 = row5_col1 + offset
-
-            offset = self.size
-            while row5_col2 + offset not in side.edge_south_pos:
-                offset += self.size
-            edge45 = row5_col2 + offset
-
-            offset = self.size
-            while row5_col3 + offset not in side.edge_south_pos:
-                offset += self.size
-            edge46 = row5_col3 + offset
-
-            offset = self.size
-            while row5_col4 + offset not in side.edge_south_pos:
-                offset += self.size
-            edge47 = row5_col4 + offset
-
-            offset = self.size
-            while row5_col5 + offset not in side.edge_south_pos:
-                offset += self.size
-            edge48 = row5_col5 + offset
-
-            fake_777.state[start_777 + 44] = self.state[edge44]
-            fake_777.state[start_777 + 45] = self.state[edge45]
-            fake_777.state[start_777 + 46] = self.state[edge46]
-            fake_777.state[start_777 + 47] = self.state[edge47]
-            fake_777.state[start_777 + 48] = self.state[edge48]
-
-            # corners
-            corner01 = start_NNN + 1
-            corner07 = corner01 + self.size - 1
-            corner43 = start_NNN + (self.size * self.size)
-            corner49 = corner43 - self.size + 1
-            fake_777.state[start_777 + 1] = self.state[corner01]
-            fake_777.state[start_777 + 7] = self.state[corner07]
-            fake_777.state[start_777 + 43] = self.state[corner43]
-            fake_777.state[start_777 + 49] = self.state[corner49]
-
-            start_777 += 49
-            start_NNN += self.size * self.size
-
-        """
-        # fake_777.sanity_check()
-        self.print_cube_layout()
-        self.print_cube("HERE 00")
-        logger.info(f"center_orbit_id {center_orbit_id}, max_center_orbits {max_center_orbits}, width {width}, cycle {cycle}, max_cycle {max_cycle}, action {action}")
-        fake_777.enable_print_cube = True
-        fake_777.print_cube_layout()
-        fake_777.print_cube("HERE 10")
-        raise Exception("DONE")
-        """
-
-        # Apply the 7x7x7 solution to our cube
-        half_size = str(ceil(self.size / 2) - 1 - cycle)
-        wide_size = str(ceil(self.size / 2) - 2 - center_orbit_id)
-
-        if action == "stage_UD_centers":
-            fake_777.create_fake_555_from_inside_centers()
-            fake_777.stage_UD_centers()
-
-        elif action == "stage_LR_centers":
-            fake_777.stage_LR_centers()
-
-        elif action == "solve_t_centers":
-            fake_777.solve_t_centers()
-
-        elif action == "solve_centers":
-            fake_777.solve_centers()
-
-        else:
-            raise Exception(f"Invalid action {action}")
-
-        for step in fake_777.solution:
-            if step.startswith("COMMENT"):
-                self.solution.append(step)
-            elif step.startswith("3"):
-                self.rotate(half_size + step[1:])
-            elif "w" in step:
-                self.rotate(wide_size + step)
-            else:
-                self.rotate(step)
-
-        self.print_cube(
-            "%s: End center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
-            % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
-        )
+        if len(self.solution) > original_solution_len:
+            self.print_cube(
+                "%s: Big plus sign formed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
 
     def group_centers_guts(self):
+
+        # Reduce this even cube to an odd cube
         self.make_plus_sign()
         self.pair_inside_edges_via_444()
-
-        max_center_orbits = int((self.size - 3) / 2) - 2
-
-        # Stage all LR centers
-        for center_orbit_id in range(max_center_orbits + 1):
-            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5) / 2)
-
-            for cycle in range(max_cycle + 1):
-                self.stage_or_solve_inside_777(
-                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
-                )
-
-        self.print_cube(
-            "%s: LR centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        self.solution.append(
+            "COMMENT_%d_steps_total_NNN_even_cube_reduce_to_odd_cube"
+            % self.get_solution_len_minus_rotates(self.solution)
         )
+        self.solution.append("COMMENT_")
+        self.print_cube("NNN even reduced to NNN odd cube")
 
-        # Stage all UD centers
-        for center_orbit_id in range(max_center_orbits + 1):
-            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5) / 2)
+        # create a state string we can use to create the reduced NNN odd cube
+        kociemba_string = []
+        midpoint = int(self.size / 2)
 
-            for cycle in range(max_cycle + 1):
-                self.stage_or_solve_inside_777(
-                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_UD_centers"
-                )
+        for side in (self.sideU, self.sideL, self.sideF, self.sideR, self.sideB, self.sideD):
+            for row in range(self.size):
+                if row == midpoint:
+                    continue
 
-        self.print_cube(
-            "%s: UD centers are staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+                for col in range(self.size):
+                    if col == midpoint:
+                        continue
+                    pos = side.min_pos + ((row * self.size) + col)
+                    kociemba_string.append(self.state[pos])
 
-        # Solve all t-centers
-        for center_orbit_id in range(max_center_orbits + 1):
-            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-            max_cycle = int((width - 5) / 2)
+        fake_odd = RubiksCubeNNNOdd("".join(kociemba_string), "ULFRBD")
+        fake_odd.print_cube("NNN odd cube")
+        fake_odd.solve()
 
-            for cycle in range(max_cycle + 1):
-                self.stage_or_solve_inside_777(
-                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_t_centers"
-                )
-
-        # Solve all centers
-        center_orbit_id = max_center_orbits
-        width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-        max_cycle = int((width - 5) / 2)
-
-        for cycle in range(max_cycle + 1):
-            self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers")
-
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-        self.print_cube(
-            "%s: centers are solved (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-        if not self.centers_solved():
-            raise SolveError("centers should be solved")
+        for step in fake_odd.solution:
+            self.rotate(step)

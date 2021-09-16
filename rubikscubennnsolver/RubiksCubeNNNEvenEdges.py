@@ -32,6 +32,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         return self.fake_555
 
     def pair_inside_edges_via_444(self):
+        original_solution_len = len(self.solution)
         fake_444 = self.get_fake_444()
 
         # Fill in the corners so that we can avoid PLL parity when pairing the edges
@@ -95,9 +96,11 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
-        self.print_cube(
-            "%s: inside edges are paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+
+        if len(self.solution) > original_solution_len:
+            self.print_cube(
+                "%s: inside edges are paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
 
     def pair_edge_orbit_via_555(self, orbit):
         logger.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
@@ -233,6 +236,11 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
                 # fmt: on
 
                 self.rotate(step)
+
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_total_NNN_edges_paired_orbit_{orbit}"
+        )
+        self.solution.append("COMMENT_")
 
     def group_edges(self):
         # For 6x6x6 the inside edges are already paired at the end of group_centers_guts

@@ -5,8 +5,6 @@ import argparse
 import json
 import logging
 import sys
-from pprint import pformat
-from statistics import median
 
 # rubiks cube libraries
 from rubikscubennnsolver import SolveError, StuckInALoop, configure_logging
@@ -30,7 +28,6 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import (
     solved_131313,
     solved_151515,
 )
-from rubikscubennnsolver.RubiksSide import NotSolving
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -136,19 +133,6 @@ try:
             try:
                 cube.solve()
                 solution = cube.solution
-            except NotSolving:
-
-                if num_test_cases_executed % 100 == 0:
-                    # logger.info("%s: heuristic_stats raw\n%s\n\n" % (size, pformat(cube.heuristic_stats)))
-                    tmp_heuristic_stats = {}
-
-                    for (key, value) in cube.heuristic_stats.items():
-                        tmp_heuristic_stats[key] = int(median(value))
-
-                    logger.info(f"{size}: heuristic_stats median\n{pformat(tmp_heuristic_stats)}\n\n")
-
-                continue
-
             except Exception as e:
                 results.append(f"[91m{size} FAIL (exception) [0m: {kociemba_string}\n{str(e)}\n")
                 continue
@@ -178,14 +162,6 @@ try:
             if max_solution is None or solution_length > max_solution:
                 max_solution = solution_length
                 max_solution_kociemba_string = kociemba_string
-
-        if cube.heuristic_stats:
-            results.append(f"{size}: FINAL heuristic_stats raw\n{pformat(cube.heuristic_stats)}\n\n")
-
-            for (key, value) in cube.heuristic_stats.items():
-                cube.heuristic_stats[key] = int(median(value))
-
-            results.append(f"{size}: FINAL heuristic_stats median\n{pformat(cube.heuristic_stats)}\n\n")
 
         results.append(f"{size} avg centers solution {float(centers_solution_total / num_test_cases_executed)} steps")
         results.append(f"{size} avg edges solution {float(edges_solution_total / num_test_cases_executed)} steps")

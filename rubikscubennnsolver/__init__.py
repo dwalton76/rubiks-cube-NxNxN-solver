@@ -4698,7 +4698,10 @@ class RubiksCube(object):
 
             elif x.startswith("COMMENT"):
                 if include_comments:
-                    url += r"""%2F%2F""" + x.replace("COMMENT", "") + "%0A%0A"
+                    if x == "COMMENT_":
+                        url += "%0A"
+                    else:
+                        url += r"""%2F%2F""" + x.replace("COMMENT", "") + "%0A%0A"
             else:
                 url += x + "_"
 

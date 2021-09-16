@@ -4,8 +4,6 @@
 Solve any size rubiks cube:
 - For 2x2x2 and 3x3x3 just solve it
 - For 4x4x4 and larger, reduce to 3x3x3 and then solve
-
-This is a work in progress
 """
 
 # standard libraries

@@ -234,6 +234,11 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
                 self.rotate(step)
 
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_total_NNN_edges_paired_orbit_{orbit}"
+        )
+        self.solution.append("COMMENT_")
+
     def group_edges(self):
         # For 6x6x6 the inside edges are already paired at the end of group_centers_guts
         # For 8x8x8 and larger the inside edges were paired right after make_plus_sign

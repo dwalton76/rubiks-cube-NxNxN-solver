@@ -2637,7 +2637,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         tmp_solution_len = len(self.solution)
         self.lt_step70.solve_via_c()
         self.solution.append(
-            "COMMENT_%d_steps_777_centers_solved"
+            "COMMENT_%d_steps_777_t_centers_solved"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 

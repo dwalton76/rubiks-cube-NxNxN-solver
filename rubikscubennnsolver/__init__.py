@@ -4513,8 +4513,6 @@ class RubiksCube(object):
                 self.steps_to_solve_centers = index - self.steps_to_rotate_cube
             elif step == "EDGES_GROUPED":
                 self.steps_to_group_edges = index - self.steps_to_rotate_cube - self.steps_to_solve_centers
-            elif step.startswith("COMMENT"):
-                pass
             else:
                 solution_minus_markers.append(step)
                 index += 1
@@ -4711,7 +4709,13 @@ class RubiksCube(object):
         url = url.replace(" ", "_")
         logger.info(f"\nURL     : {url}")
 
-        print(f"Solution: {' '.join(self.solution)}")
+        # print the solution
+        solution_minus_comments = []
+        for step in self.solution:
+            if not step.startswith("COMMENT"):
+                solution_minus_comments.append(step)
+
+        print(f"Solution: {' '.join(solution_minus_comments)}")
 
         if self.steps_to_solve_centers:
             logger.info("%d steps to solve centers" % self.steps_to_solve_centers)

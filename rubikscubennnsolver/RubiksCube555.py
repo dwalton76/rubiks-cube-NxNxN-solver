@@ -2338,27 +2338,40 @@ class LookupTable555UDCenterSolve(LookupTable):
     lookup-table-5x5x5-step34-UD-centers-solve.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 22 entries (0 percent, 5.50x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
+    1 steps has 6 entries (0 percent, 6.00x previous step)
+    2 steps has 71 entries (0 percent, 11.83x previous step)
+    3 steps has 560 entries (0 percent, 7.89x previous step)
+    4 steps has 3,136 entries (0 percent, 5.60x previous step)
+    5 steps has 15,246 entries (4 percent, 4.86x previous step)
+    6 steps has 58,108 entries (16 percent, 3.81x previous step)
+    7 steps has 130,214 entries (37 percent, 2.24x previous step)
+    8 steps has 109,626 entries (31 percent, 0.84x previous step)
+    9 steps has 24,832 entries (7 percent, 0.23x previous step)
+    10 steps has 1,200 entries (0 percent, 0.05x previous step)
 
-    Total: 4,900 entries
-    Average: 5.96 moves
+    Total: 343,000 entries
+    Average: 7.18 moves
     """
+
+    # fmt: off
+    UD_centers_LR_t_centers_555 = sorted([
+        7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
+        33, 37, 39, 43,  # Left
+        83, 87, 89, 93,  # Right
+        132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
+    ])
+    # fmt: on
+
+    state_targets = ("UUUUUUUUULLLLRRRRDDDDDDDDD",)
 
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-5x5x5-step34-UD-centers-solve.txt",
-            "TBD",
-            linecount=4900,
-            max_depth=8,
+            self.state_targets,
+            linecount=343000,
+            max_depth=10,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
@@ -2369,12 +2382,12 @@ class LookupTable555UDCenterSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in UD_centers_555])
+        return "".join([parent_state[x] for x in self.UD_centers_LR_t_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UD_centers_555, state):
+        for (pos, pos_state) in zip(self.UD_centers_LR_t_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2383,27 +2396,41 @@ class LookupTable555LRCenterSolve(LookupTable):
     lookup-table-5x5x5-step35-LR-centers-solve.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 22 entries (0 percent, 5.50x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
+    1 steps has 6 entries (0 percent, 6.00x previous step)
+    2 steps has 67 entries (0 percent, 11.17x previous step)
+    3 steps has 476 entries (0 percent, 7.10x previous step)
+    4 steps has 2,571 entries (0 percent, 5.40x previous step)
+    5 steps has 11,792 entries (3 percent, 4.59x previous step)
+    6 steps has 43,263 entries (12 percent, 3.67x previous step)
+    7 steps has 98,148 entries (28 percent, 2.27x previous step)
+    8 steps has 111,960 entries (32 percent, 1.14x previous step)
+    9 steps has 61,836 entries (18 percent, 0.55x previous step)
+    10 steps has 12,336 entries (3 percent, 0.20x previous step)
+    11 steps has 544 entries (0 percent, 0.04x previous step)
 
-    Total: 4,900 entries
-    Average: 5.96 moves
+    Total: 343,000 entries
+    Average: 7.58 moves
     """
+
+    # fmt: off
+    LR_centers_FB_x_centers_555 = sorted([
+        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+        57, 59, 67, 69,  # Front
+        107, 109, 117, 119,  # Back
+        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+    ])
+    # fmt: on
+
+    state_targets = ("LLLLLLLLLFFFFRRRRRRRRRBBBB",)
 
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-5x5x5-step35-LR-centers-solve.txt",
-            "TBD",
-            linecount=4900,
-            max_depth=8,
+            self.state_targets,
+            linecount=343000,
+            max_depth=10,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
@@ -2414,12 +2441,12 @@ class LookupTable555LRCenterSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in LR_centers_555])
+        return "".join([parent_state[x] for x in self.LR_centers_FB_x_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(LR_centers_555, state):
+        for (pos, pos_state) in zip(self.LR_centers_FB_x_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2428,27 +2455,41 @@ class LookupTable555FBCenterSolve(LookupTable):
     lookup-table-5x5x5-step36-FB-centers-solve.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 22 entries (0 percent, 5.50x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
+    1 steps has 6 entries (0 percent, 6.00x previous step)
+    2 steps has 71 entries (0 percent, 11.83x previous step)
+    3 steps has 560 entries (0 percent, 7.89x previous step)
+    4 steps has 3,136 entries (0 percent, 5.60x previous step)
+    5 steps has 15,246 entries (4 percent, 4.86x previous step)
+    6 steps has 58,108 entries (16 percent, 3.81x previous step)
+    7 steps has 130,214 entries (37 percent, 2.24x previous step)
+    8 steps has 109,626 entries (31 percent, 0.84x previous step)
+    9 steps has 24,832 entries (7 percent, 0.23x previous step)
+    10 steps has 1,200 entries (0 percent, 0.05x previous step)
 
-    Total: 4,900 entries
-    Average: 5.96 moves
+    Total: 343,000 entries
+    Average: 7.18 moves
     """
 
+    # fmt: off
+    FB_centers_UD_t_centers_555 = sorted([
+        8, 12, 14, 18,  # Upper
+        57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
+        107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
+        133, 137, 139, 143,  # Down
+    ])
+    # fmt: on
+
+    state_targets = ("UUUUFFFFFFFFFBBBBBBBBBDDDD",)
+
+    # dwalton
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-5x5x5-step36-FB-centers-solve.txt",
-            "TBD",
-            linecount=4900,
-            max_depth=8,
+            self.state_targets,
+            linecount=343000,
+            max_depth=10,
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
@@ -2459,12 +2500,12 @@ class LookupTable555FBCenterSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in FB_centers_555])
+        return "".join([parent_state[x] for x in self.FB_centers_UD_t_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(FB_centers_555, state):
+        for (pos, pos_state) in zip(self.FB_centers_UD_t_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2476,7 +2517,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
             all_moves=moves_555,
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
-            multiplier=1.09,
         )
 
 
@@ -2499,32 +2539,16 @@ class LookupTable555TCenterSolve(LookupTable):
     Average: 6.23 moves
     """
 
+    # fmt: off
     t_centers_555 = (
-        8,
-        12,
-        14,
-        18,
-        33,
-        37,
-        39,
-        43,
-        58,
-        62,
-        64,
-        68,
-        83,
-        87,
-        89,
-        93,
-        108,
-        112,
-        114,
-        118,
-        133,
-        137,
-        139,
-        143,
+        8, 12, 14, 18,
+        33, 37, 39, 43,
+        58, 62, 64, 68,
+        83, 87, 89, 93,
+        108, 112, 114, 118,
+        133, 137, 139, 143,
     )
+    # fmt: on
 
     def __init__(self, parent):
         LookupTable.__init__(

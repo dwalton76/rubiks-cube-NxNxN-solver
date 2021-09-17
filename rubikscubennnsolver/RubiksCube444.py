@@ -190,23 +190,21 @@ class LookupTable444UDCentersStage(LookupTable):
     Average: 6.02 moves
     """
 
-    state_targets: Tuple[str] = ("UUUUxxxxxxxxxxxxxxxxUUUU", "xxxxUUUUxxxxUUUUxxxxxxxx", "xxxxxxxxUUUUxxxxUUUUxxxx")
-
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-4x4x4-step11-UD-centers-stage.txt",
-            self.state_targets,
+            "UUUUxxxxxxxxxxxxxxxxUUUU",
             linecount=735471,
             max_depth=8,
             all_moves=moves_444,
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="2835d311466ad3fada95722fb676ec1a",
-            md5_state_index="d0b9bbb685a08bf985782daa78208330",
-            md5_txt="a26afb9be23495b3ec19abef686901ae",
+            # md5_bin="2835d311466ad3fada95722fb676ec1a",
+            # md5_state_index="d0b9bbb685a08bf985782daa78208330",
+            # md5_txt="a26afb9be23495b3ec19abef686901ae",
         )
 
     def state(self) -> str:
@@ -250,23 +248,21 @@ class LookupTable444LRCentersStage(LookupTable):
     Average: 6.02 moves
     """
 
-    state_targets: Tuple[str] = ("LLLLxxxxxxxxxxxxxxxxLLLL", "xxxxLLLLxxxxLLLLxxxxxxxx", "xxxxxxxxLLLLxxxxLLLLxxxx")
-
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-4x4x4-step12-LR-centers-stage.txt",
-            self.state_targets,
+            "xxxxLLLLxxxxLLLLxxxxxxxx",
             linecount=735471,
             max_depth=8,
             all_moves=moves_444,
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="2835d311466ad3fada95722fb676ec1a",
-            md5_state_index="79f362d800935a484dab4de8f655ca07",
-            md5_txt="b8609a899722c2c9132d21b09f98c5d9",
+            # md5_bin="2835d311466ad3fada95722fb676ec1a",
+            # md5_state_index="79f362d800935a484dab4de8f655ca07",
+            # md5_txt="b8609a899722c2c9132d21b09f98c5d9",
         )
 
     def state(self) -> str:
@@ -274,8 +270,7 @@ class LookupTable444LRCentersStage(LookupTable):
         Returns:
             the state of the cube per this lookup table
         """
-        parent_state = self.parent.state
-        return "".join(["L" if parent_state[x] in ("L", "R") else "x" for x in centers_444])
+        return "".join(["L" if self.parent.state[x] in ("L", "R") else "x" for x in centers_444])
 
     def populate_cube_from_state(self, state: str, cube: List[str], steps_to_solve: List[str]) -> None:
         """
@@ -292,6 +287,60 @@ class LookupTable444LRCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTable444LCentersStage(LookupTable):
+    """
+    lookup-table-4x4x4-step13-L-centers-stage.txt
+    =============================================
+    0 steps has 4 entries (0 percent, 0.00x previous step)
+    1 steps has 62 entries (0 percent, 15.50x previous step)
+    2 steps has 660 entries (6 percent, 10.65x previous step)
+    3 steps has 4,688 entries (44 percent, 7.10x previous step)
+    4 steps has 5,076 entries (47 percent, 1.08x previous step)
+    5 steps has 136 entries (1 percent, 0.03x previous step)
+
+    Total: 10,626 entries
+    Average: 3.43 moves
+    """
+
+    state_targets = (
+        "xxxxLLLLxxxxxxxxxxxxxxxx",
+        "xxxxLLxxxxxxLLxxxxxxxxxx",
+        "xxxxLLxxxxxxxxLLxxxxxxxx",
+        "xxxxLxLxxxxxLxLxxxxxxxxx",
+        "xxxxLxLxxxxxxLxLxxxxxxxx",
+        "xxxxLxxLxxxxxLLxxxxxxxxx",
+        "xxxxxLLxxxxxLxxLxxxxxxxx",
+        "xxxxxLxLxxxxLxLxxxxxxxxx",
+        "xxxxxLxLxxxxxLxLxxxxxxxx",
+        "xxxxxxLLxxxxLLxxxxxxxxxx",
+        "xxxxxxLLxxxxxxLLxxxxxxxx",
+        "xxxxxxxxxxxxLLLLxxxxxxxx",
+    )
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-4x4x4-step13-L-centers-stage.txt",
+            self.state_targets,
+            linecount=10626,
+            max_depth=5,
+            all_moves=moves_444,
+            illegal_moves=(),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["L" if self.parent.state[x] == "L" else "x" for x in centers_444])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(centers_444, state):
+            cube[pos] = pos_state
+
+
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -299,7 +348,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
             parent,
             all_moves=moves_444,
             illegal_moves=(),
-            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage],
+            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage, parent.lt_L_centers_stage],
         )
 
 
@@ -332,6 +381,13 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
             max_depth=10,
             md5_txt="70496f999f5de71e34164fc8fd17726c",
         )
+
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
+        return self.parent.highlow_edges_state(self.parent.edge_mapping)
 
 
 class LookupTable444HighLowEdgesCenters(LookupTable):
@@ -370,6 +426,13 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
             max_depth=4,
             md5_txt="8b9c6869ea131aeb20584f5632ae3084",
         )
+
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
+        return "".join([self.parent.state[x] for x in LR_centers_444])
 
 
 class LookupTable444HighLowEdges(LookupTable):
@@ -971,6 +1034,7 @@ class RubiksCube444(RubiksCube):
 
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
+        self.lt_L_centers_stage = LookupTable444LCentersStage(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
 
@@ -993,7 +1057,6 @@ class RubiksCube444(RubiksCube):
         if not self.centers_staged():
             self.lt_ULFRBD_centers_stage.solve_via_c()
 
-        self.rotate_for_best_centers_staging(centers_444)
         phase1_solution_len = len(self.solution)
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
         self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
@@ -1001,6 +1064,7 @@ class RubiksCube444(RubiksCube):
         # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
         # We need the edge swaps to be even for our edges lookup table to work.
         if self.edge_swaps_odd(False, 0, False):
+            raise Exception("yes this is still needed")
             logger.warning(f"{self}: edge swaps are odd, running prevent_OLL to correct")
             self.prevent_OLL()
             self.print_cube(
@@ -1322,34 +1386,18 @@ class RubiksCube444(RubiksCube):
             return False
 
         # verify the edges are paired
+        # fmt: off
         for (x, y) in (
-            (2, 3),
-            (8, 12),
-            (15, 14),
-            (9, 5),  # Upper
-            (18, 19),
-            (24, 28),
-            (31, 30),
-            (25, 21),  # Left
-            (34, 35),
-            (40, 44),
-            (47, 46),
-            (41, 37),  # Front
-            (50, 51),
-            (56, 60),
-            (62, 63),
-            (57, 53),  # Right
-            (66, 67),
-            (72, 76),
-            (79, 78),
-            (73, 69),  # Back
-            (82, 83),
-            (88, 92),
-            (95, 94),
-            (89, 85),  # Down
+            (2, 3), (8, 12), (15, 14), (9, 5),  # Upper
+            (18, 19), (24, 28), (31, 30), (25, 21),  # Left
+            (34, 35), (40, 44), (47, 46), (41, 37),  # Front
+            (50, 51), (56, 60), (62, 63), (57, 53),  # Right
+            (66, 67), (72, 76), (79, 78), (73, 69),  # Back
+            (82, 83), (88, 92), (95, 94), (89, 85),  # Down
         ):
             if self.state[x] != self.state[y]:
                 return False
+        # fmt: on
 
         return True
 

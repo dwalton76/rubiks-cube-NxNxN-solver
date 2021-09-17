@@ -1392,7 +1392,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                     step = "3" + step
                 self.rotate(step)
 
-        self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.solution.append(
             "COMMENT_%d_steps_666_inner_x_centers_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
@@ -1427,7 +1426,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             else:
                 self.rotate(step)
 
-        # self.rotate_for_best_centers_staging(inner_x_centers_666)
         self.print_cube(
             "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )

@@ -341,7 +341,71 @@ class LookupTable444LCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTable444HighLowEdgesEdgesPhase1(LookupTable):
+    """
+    lookup-table-4x4x4-step14-highlow-edges-edges.txt
+    =================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 8 entries (0 percent, 8.00x previous step)
+    2 steps has 168 entries (0 percent, 21.00x previous step)
+    3 steps has 3,218 entries (0 percent, 19.15x previous step)
+    4 steps has 58,587 entries (2 percent, 18.21x previous step)
+    5 steps has 776,568 entries (28 percent, 13.25x previous step)
+    6 steps has 1,843,774 entries (68 percent, 2.37x previous step)
+    7 steps has 21,832 entries (0 percent, 0.01x previous step)
+
+    Total: 2,704,156 entries
+    Average: 5.67 moves
+    """
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-4x4x4-step14-highlow-edges-edges.txt",
+            "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
+            linecount=2704156,
+            max_depth=7,
+            all_moves=moves_444,
+            illegal_moves=(),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self) -> str:
+        """
+        Returns:
+            the state of the cube per this lookup table
+        """
+        return self.parent.highlow_edges_state(self.parent.edge_mapping)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ["x"]
+        self.parent.state.extend(
+            list("UUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDD")
+        )
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            illegal_moves=(),
+            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage],
+        )
+
+
+class LookupTableIDA444ULFRBDCentersStageLCentersSpecial(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
@@ -1035,8 +1099,12 @@ class RubiksCube444(RubiksCube):
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
         self.lt_L_centers_stage = LookupTable444LCentersStage(self)
+        self.lt_highlow_edges_edges_phase1 = LookupTable444HighLowEdgesEdgesPhase1(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
+        self.lt_ULFRBD_centers_stage_l_centers_special = LookupTableIDA444ULFRBDCentersStageLCentersSpecial(self)
+        self.lt_ULFRBD_centers_stage_l_centers_special.avoid_oll = 0  # avoid OLL on orbit 0
+        # dwalton
 
         self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
@@ -1051,28 +1119,25 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
     def phase1(self) -> None:
-        self.original_state = self.state[:]
-        self.original_solution = self.solution[:]
-
         if not self.centers_staged():
-            self.lt_ULFRBD_centers_stage.solve_via_c()
 
-        phase1_solution_len = len(self.solution)
+            # what is the solution length if we do NOT put the LR centers in 12/70 states that can be solved without L L' R R'
+            phase1_solution = self.lt_ULFRBD_centers_stage.solutions_via_c(solution_count=1)[0][0]
+
+            # what is the solution length if we do put the LR centers in 12/70 states that can be solved without L L' R R'
+            phase1_solution_l_centers_special = self.lt_ULFRBD_centers_stage_l_centers_special.solutions_via_c(
+                solution_count=1
+            )[0][0]
+
+            if len(phase1_solution_l_centers_special) <= len(phase1_solution):
+                for step in phase1_solution_l_centers_special:
+                    self.rotate(step)
+            else:
+                for step in phase1_solution:
+                    self.rotate(step)
+
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
         self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-
-        # This can happen on the large NNN cubes that are using 444 to pair their inside orbit of edges.
-        # We need the edge swaps to be even for our edges lookup table to work.
-        if self.edge_swaps_odd(False, 0, False):
-            raise Exception("yes this is still needed")
-            logger.warning(f"{self}: edge swaps are odd, running prevent_OLL to correct")
-            self.prevent_OLL()
-            self.print_cube(
-                f"{self}: end of prevent_OLL ({self.get_solution_len_minus_rotates(self.solution)} steps in)"
-            )
-            self.solution.append(
-                f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_prevent_OLL"
-            )
 
     def phase2(self) -> None:
         # Pick the best edge_mapping
@@ -1408,6 +1473,7 @@ class RubiksCube444(RubiksCube):
 
         self.phase1()
         self.phase2()
+
         # self.phase3()
         # self.phase4()
         self.phase3_and_4(consider_solve_333=consider_solve_333)

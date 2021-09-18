@@ -1011,9 +1011,8 @@ class RubiksCube444(RubiksCube):
         (95, 78),
     )
 
-    def __init__(self, state: str, order: str, colormap: Dict = None, avoid_pll: bool = True, debug: bool = False):
+    def __init__(self, state: str, order: str, colormap: Dict = None, debug: bool = False):
         RubiksCube.__init__(self, state, order, colormap, debug)
-        self.avoid_pll = avoid_pll
         self.edge_mapping = {}
 
         if RubiksCube444.instantiated:

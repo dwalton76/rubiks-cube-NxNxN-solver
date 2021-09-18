@@ -253,6 +253,8 @@ class LookupTableIDAViaGraph(LookupTable):
         my_pt_state_filename = "my-pt-states.txt"
 
         if pt_states:
+            pt_states = sorted(set(pt_states))
+
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
                 cmd.append(pt.filename_bin)

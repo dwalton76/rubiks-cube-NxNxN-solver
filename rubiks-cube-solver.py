@@ -79,7 +79,7 @@ elif size == 4:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
-    cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
+    cube = RubiksCube444(args.state, args.order, args.colormap, debug=args.debug)
 elif size == 5:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube555 import RubiksCube555

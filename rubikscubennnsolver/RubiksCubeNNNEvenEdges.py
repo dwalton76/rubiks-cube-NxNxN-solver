@@ -198,7 +198,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         fake_555.sanity_check()
         fake_555.enable_print_cube = True
-        fake_555.avoid_pll = False
         fake_555.reduce_333()
 
         wide_str = str(orbit + 2)

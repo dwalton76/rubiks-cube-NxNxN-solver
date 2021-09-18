@@ -520,7 +520,6 @@ class LookupTable(object):
         self.linecount = linecount
         self.max_depth = max_depth
         self.avoid_oll = None
-        self.avoid_pll = False
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
         self.preloaded_cache_string = False
@@ -1350,7 +1349,6 @@ class LookupTableIDAViaC(object):
         centers_only: bool = False,
     ):
         self.avoid_oll = None
-        self.avoid_pll = False
         self.nuke_corners = False
         self.nuke_edges = False
         self.nuke_centers = False

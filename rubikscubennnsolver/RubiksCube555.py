@@ -1,7 +1,6 @@
 # standard libraries
 import itertools
 import logging
-import subprocess
 from typing import List
 
 # rubiks cube libraries
@@ -716,7 +715,7 @@ class LookupTable555FBTCenterStage(LookupTable):
             linecount=12870,
             max_depth=9,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
+            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
             md5_bin="688fa1df55afc811cd8286aae7ae27ce",
@@ -769,7 +768,7 @@ class LookupTable555FBXCenterStage(LookupTable):
             linecount=12870,
             max_depth=7,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
+            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
             md5_bin="fa7775fbd1dc684389ec32dc0e04b4b2",
@@ -796,16 +795,521 @@ class LookupTable555FBXCenterStage(LookupTable):
                 cube[pos] = "F"
 
 
+class LookupTable555Phase2LRCenterStage(LookupTable):
+    """
+    lookup-table-5x5x5-step23-LR-center-stage.txt
+    =============================================
+    0 steps has 27 entries (0 percent, 0.00x previous step)
+    1 steps has 801 entries (16 percent, 29.67x previous step)
+    2 steps has 1,064 entries (21 percent, 1.33x previous step)
+    3 steps has 1,692 entries (34 percent, 1.59x previous step)
+    4 steps has 1,220 entries (24 percent, 0.72x previous step)
+    5 steps has 96 entries (1 percent, 0.08x previous step)
+
+    Total: 4,900 entries
+    Average: 2.73 moves
+    """
+
+    state_targets = (
+        "LLLLLLLLLRRRRRRRRR",
+        "LLLLLLLRLRLRRRRRRR",
+        "LLLLLLLRLRRRRRRRLR",
+        "LLLLLLRLRLRLRRRRRR",
+        "LLLLLLRLRRRRRRRLRL",
+        "LLLLLLRRRLLLRRRRRR",
+        "LLLLLLRRRLRLRRRRLR",
+        "LLLLLLRRRRLRRRRLRL",
+        "LLLLLLRRRRRRRRRLLL",
+        "LLLLLRLLLRRRLRRRRR",
+        "LLLLLRLLLRRRRRLRRR",
+        "LLLLLRLRLRLRLRRRRR",
+        "LLLLLRLRLRLRRRLRRR",
+        "LLLLLRLRLRRRLRRRLR",
+        "LLLLLRLRLRRRRRLRLR",
+        "LLLLLRRLRLRLLRRRRR",
+        "LLLLLRRLRLRLRRLRRR",
+        "LLLLLRRLRRRRLRRLRL",
+        "LLLLLRRLRRRRRRLLRL",
+        "LLLLLRRRRLLLLRRRRR",
+        "LLLLLRRRRLLLRRLRRR",
+        "LLLLLRRRRLRLLRRRLR",
+        "LLLLLRRRRLRLRRLRLR",
+        "LLLLLRRRRRLRLRRLRL",
+        "LLLLLRRRRRLRRRLLRL",
+        "LLLLLRRRRRRRLRRLLL",
+        "LLLLLRRRRRRRRRLLLL",
+        "LLLRLLLLLRRRLRRRRR",
+        "LLLRLLLLLRRRRRLRRR",
+        "LLLRLLLRLRLRLRRRRR",
+        "LLLRLLLRLRLRRRLRRR",
+        "LLLRLLLRLRRRLRRRLR",
+        "LLLRLLLRLRRRRRLRLR",
+        "LLLRLLRLRLRLLRRRRR",
+        "LLLRLLRLRLRLRRLRRR",
+        "LLLRLLRLRRRRLRRLRL",
+        "LLLRLLRLRRRRRRLLRL",
+        "LLLRLLRRRLLLLRRRRR",
+        "LLLRLLRRRLLLRRLRRR",
+        "LLLRLLRRRLRLLRRRLR",
+        "LLLRLLRRRLRLRRLRLR",
+        "LLLRLLRRRRLRLRRLRL",
+        "LLLRLLRRRRLRRRLLRL",
+        "LLLRLLRRRRRRLRRLLL",
+        "LLLRLLRRRRRRRRLLLL",
+        "LLLRLRLLLRRRLRLRRR",
+        "LLLRLRLRLRLRLRLRRR",
+        "LLLRLRLRLRRRLRLRLR",
+        "LLLRLRRLRLRLLRLRRR",
+        "LLLRLRRLRRRRLRLLRL",
+        "LLLRLRRRRLLLLRLRRR",
+        "LLLRLRRRRLRLLRLRLR",
+        "LLLRLRRRRRLRLRLLRL",
+        "LLLRLRRRRRRRLRLLLL",
+        "LLRLLLLLRLRRRRRLRR",
+        "LLRLLLLLRRRLRRRRRL",
+        "LLRLLLLRRLLRRRRLRR",
+        "LLRLLLLRRLRRRRRLLR",
+        "LLRLLLLRRRLLRRRRRL",
+        "LLRLLLLRRRRLRRRRLL",
+        "LLRLLLRLLRRLRRRLRR",
+        "LLRLLLRRLRLLRRRLRR",
+        "LLRLLLRRLRRLRRRLLR",
+        "LLRLLRLLRLRRLRRLRR",
+        "LLRLLRLLRLRRRRLLRR",
+        "LLRLLRLLRRRLLRRRRL",
+        "LLRLLRLLRRRLRRLRRL",
+        "LLRLLRLRRLLRLRRLRR",
+        "LLRLLRLRRLLRRRLLRR",
+        "LLRLLRLRRLRRLRRLLR",
+        "LLRLLRLRRLRRRRLLLR",
+        "LLRLLRLRRRLLLRRRRL",
+        "LLRLLRLRRRLLRRLRRL",
+        "LLRLLRLRRRRLLRRRLL",
+        "LLRLLRLRRRRLRRLRLL",
+        "LLRLLRRLLRRLLRRLRR",
+        "LLRLLRRLLRRLRRLLRR",
+        "LLRLLRRRLRLLLRRLRR",
+        "LLRLLRRRLRLLRRLLRR",
+        "LLRLLRRRLRRLLRRLLR",
+        "LLRLLRRRLRRLRRLLLR",
+        "LLRRLLLLRLRRLRRLRR",
+        "LLRRLLLLRLRRRRLLRR",
+        "LLRRLLLLRRRLLRRRRL",
+        "LLRRLLLLRRRLRRLRRL",
+        "LLRRLLLRRLLRLRRLRR",
+        "LLRRLLLRRLLRRRLLRR",
+        "LLRRLLLRRLRRLRRLLR",
+        "LLRRLLLRRLRRRRLLLR",
+        "LLRRLLLRRRLLLRRRRL",
+        "LLRRLLLRRRLLRRLRRL",
+        "LLRRLLLRRRRLLRRRLL",
+        "LLRRLLLRRRRLRRLRLL",
+        "LLRRLLRLLRRLLRRLRR",
+        "LLRRLLRLLRRLRRLLRR",
+        "LLRRLLRRLRLLLRRLRR",
+        "LLRRLLRRLRLLRRLLRR",
+        "LLRRLLRRLRRLLRRLLR",
+        "LLRRLLRRLRRLRRLLLR",
+        "LLRRLRLLRLRRLRLLRR",
+        "LLRRLRLLRRRLLRLRRL",
+        "LLRRLRLRRLLRLRLLRR",
+        "LLRRLRLRRLRRLRLLLR",
+        "LLRRLRLRRRLLLRLRRL",
+        "LLRRLRLRRRRLLRLRLL",
+        "LLRRLRRLLRRLLRLLRR",
+        "LLRRLRRRLRLLLRLLRR",
+        "LLRRLRRRLRRLLRLLLR",
+        "LRLLLLLLLRLRRRRRRR",
+        "LRLLLLLLLRRRRRRRLR",
+        "LRLLLLLRLRLRRRRRLR",
+        "LRLLLLRLRLLLRRRRRR",
+        "LRLLLLRLRLRLRRRRLR",
+        "LRLLLLRLRRLRRRRLRL",
+        "LRLLLLRLRRRRRRRLLL",
+        "LRLLLLRRRLLLRRRRLR",
+        "LRLLLLRRRRLRRRRLLL",
+        "LRLLLRLLLRLRLRRRRR",
+        "LRLLLRLLLRLRRRLRRR",
+        "LRLLLRLLLRRRLRRRLR",
+        "LRLLLRLLLRRRRRLRLR",
+        "LRLLLRLRLRLRLRRRLR",
+        "LRLLLRLRLRLRRRLRLR",
+        "LRLLLRRLRLLLLRRRRR",
+        "LRLLLRRLRLLLRRLRRR",
+        "LRLLLRRLRLRLLRRRLR",
+        "LRLLLRRLRLRLRRLRLR",
+        "LRLLLRRLRRLRLRRLRL",
+        "LRLLLRRLRRLRRRLLRL",
+        "LRLLLRRLRRRRLRRLLL",
+        "LRLLLRRLRRRRRRLLLL",
+        "LRLLLRRRRLLLLRRRLR",
+        "LRLLLRRRRLLLRRLRLR",
+        "LRLLLRRRRRLRLRRLLL",
+        "LRLLLRRRRRLRRRLLLL",
+        "LRLRLLLLLRLRLRRRRR",
+        "LRLRLLLLLRLRRRLRRR",
+        "LRLRLLLLLRRRLRRRLR",
+        "LRLRLLLLLRRRRRLRLR",
+        "LRLRLLLRLRLRLRRRLR",
+        "LRLRLLLRLRLRRRLRLR",
+        "LRLRLLRLRLLLLRRRRR",
+        "LRLRLLRLRLLLRRLRRR",
+        "LRLRLLRLRLRLLRRRLR",
+        "LRLRLLRLRLRLRRLRLR",
+        "LRLRLLRLRRLRLRRLRL",
+        "LRLRLLRLRRLRRRLLRL",
+        "LRLRLLRLRRRRLRRLLL",
+        "LRLRLLRLRRRRRRLLLL",
+        "LRLRLLRRRLLLLRRRLR",
+        "LRLRLLRRRLLLRRLRLR",
+        "LRLRLLRRRRLRLRRLLL",
+        "LRLRLLRRRRLRRRLLLL",
+        "LRLRLRLLLRLRLRLRRR",
+        "LRLRLRLLLRRRLRLRLR",
+        "LRLRLRLRLRLRLRLRLR",
+        "LRLRLRRLRLLLLRLRRR",
+        "LRLRLRRLRLRLLRLRLR",
+        "LRLRLRRLRRLRLRLLRL",
+        "LRLRLRRLRRRRLRLLLL",
+        "LRLRLRRRRLLLLRLRLR",
+        "LRLRLRRRRRLRLRLLLL",
+        "LRRLLLLLRLLRRRRLRR",
+        "LRRLLLLLRLRRRRRLLR",
+        "LRRLLLLLRRLLRRRRRL",
+        "LRRLLLLLRRRLRRRRLL",
+        "LRRLLLLRRLLRRRRLLR",
+        "LRRLLLLRRRLLRRRRLL",
+        "LRRLLLRLLRLLRRRLRR",
+        "LRRLLLRLLRRLRRRLLR",
+        "LRRLLLRRLRLLRRRLLR",
+        "LRRLLRLLRLLRLRRLRR",
+        "LRRLLRLLRLLRRRLLRR",
+        "LRRLLRLLRLRRLRRLLR",
+        "LRRLLRLLRLRRRRLLLR",
+        "LRRLLRLLRRLLLRRRRL",
+        "LRRLLRLLRRLLRRLRRL",
+        "LRRLLRLLRRRLLRRRLL",
+        "LRRLLRLLRRRLRRLRLL",
+        "LRRLLRLRRLLRLRRLLR",
+        "LRRLLRLRRLLRRRLLLR",
+        "LRRLLRLRRRLLLRRRLL",
+        "LRRLLRLRRRLLRRLRLL",
+        "LRRLLRRLLRLLLRRLRR",
+        "LRRLLRRLLRLLRRLLRR",
+        "LRRLLRRLLRRLLRRLLR",
+        "LRRLLRRLLRRLRRLLLR",
+        "LRRLLRRRLRLLLRRLLR",
+        "LRRLLRRRLRLLRRLLLR",
+        "LRRRLLLLRLLRLRRLRR",
+        "LRRRLLLLRLLRRRLLRR",
+        "LRRRLLLLRLRRLRRLLR",
+        "LRRRLLLLRLRRRRLLLR",
+        "LRRRLLLLRRLLLRRRRL",
+        "LRRRLLLLRRLLRRLRRL",
+        "LRRRLLLLRRRLLRRRLL",
+        "LRRRLLLLRRRLRRLRLL",
+        "LRRRLLLRRLLRLRRLLR",
+        "LRRRLLLRRLLRRRLLLR",
+        "LRRRLLLRRRLLLRRRLL",
+        "LRRRLLLRRRLLRRLRLL",
+        "LRRRLLRLLRLLLRRLRR",
+        "LRRRLLRLLRLLRRLLRR",
+        "LRRRLLRLLRRLLRRLLR",
+        "LRRRLLRLLRRLRRLLLR",
+        "LRRRLLRRLRLLLRRLLR",
+        "LRRRLLRRLRLLRRLLLR",
+        "LRRRLRLLRLLRLRLLRR",
+        "LRRRLRLLRLRRLRLLLR",
+        "LRRRLRLLRRLLLRLRRL",
+        "LRRRLRLLRRRLLRLRLL",
+        "LRRRLRLRRLLRLRLLLR",
+        "LRRRLRLRRRLLLRLRLL",
+        "LRRRLRRLLRLLLRLLRR",
+        "LRRRLRRLLRRLLRLLLR",
+        "LRRRLRRRLRLLLRLLLR",
+        "RLLLLLLLRLRRRRRRRL",
+        "RLLLLLLRRLLRRRRRRL",
+        "RLLLLLLRRLRRRRRRLL",
+        "RLLLLLRLLLRRRRRLRR",
+        "RLLLLLRLLRRLRRRRRL",
+        "RLLLLLRRLLLRRRRLRR",
+        "RLLLLLRRLLRRRRRLLR",
+        "RLLLLLRRLRLLRRRRRL",
+        "RLLLLLRRLRRLRRRRLL",
+        "RLLLLRLLRLRRLRRRRL",
+        "RLLLLRLLRLRRRRLRRL",
+        "RLLLLRLRRLLRLRRRRL",
+        "RLLLLRLRRLLRRRLRRL",
+        "RLLLLRLRRLRRLRRRLL",
+        "RLLLLRLRRLRRRRLRLL",
+        "RLLLLRRLLLRRLRRLRR",
+        "RLLLLRRLLLRRRRLLRR",
+        "RLLLLRRLLRRLLRRRRL",
+        "RLLLLRRLLRRLRRLRRL",
+        "RLLLLRRRLLLRLRRLRR",
+        "RLLLLRRRLLLRRRLLRR",
+        "RLLLLRRRLLRRLRRLLR",
+        "RLLLLRRRLLRRRRLLLR",
+        "RLLLLRRRLRLLLRRRRL",
+        "RLLLLRRRLRLLRRLRRL",
+        "RLLLLRRRLRRLLRRRLL",
+        "RLLLLRRRLRRLRRLRLL",
+        "RLLRLLLLRLRRLRRRRL",
+        "RLLRLLLLRLRRRRLRRL",
+        "RLLRLLLRRLLRLRRRRL",
+        "RLLRLLLRRLLRRRLRRL",
+        "RLLRLLLRRLRRLRRRLL",
+        "RLLRLLLRRLRRRRLRLL",
+        "RLLRLLRLLLRRLRRLRR",
+        "RLLRLLRLLLRRRRLLRR",
+        "RLLRLLRLLRRLLRRRRL",
+        "RLLRLLRLLRRLRRLRRL",
+        "RLLRLLRRLLLRLRRLRR",
+        "RLLRLLRRLLLRRRLLRR",
+        "RLLRLLRRLLRRLRRLLR",
+        "RLLRLLRRLLRRRRLLLR",
+        "RLLRLLRRLRLLLRRRRL",
+        "RLLRLLRRLRLLRRLRRL",
+        "RLLRLLRRLRRLLRRRLL",
+        "RLLRLLRRLRRLRRLRLL",
+        "RLLRLRLLRLRRLRLRRL",
+        "RLLRLRLRRLLRLRLRRL",
+        "RLLRLRLRRLRRLRLRLL",
+        "RLLRLRRLLLRRLRLLRR",
+        "RLLRLRRLLRRLLRLRRL",
+        "RLLRLRRRLLLRLRLLRR",
+        "RLLRLRRRLLRRLRLLLR",
+        "RLLRLRRRLRLLLRLRRL",
+        "RLLRLRRRLRRLLRLRLL",
+        "RLRLLLLLLLRLRRRRRR",
+        "RLRLLLLLLRRRRRRLRL",
+        "RLRLLLLRLLLLRRRRRR",
+        "RLRLLLLRLLRLRRRRLR",
+        "RLRLLLLRLRLRRRRLRL",
+        "RLRLLLLRLRRRRRRLLL",
+        "RLRLLLRLRLRLRRRLRL",
+        "RLRLLLRRRLLLRRRLRL",
+        "RLRLLLRRRLRLRRRLLL",
+        "RLRLLRLLLLRLLRRRRR",
+        "RLRLLRLLLLRLRRLRRR",
+        "RLRLLRLLLRRRLRRLRL",
+        "RLRLLRLLLRRRRRLLRL",
+        "RLRLLRLRLLLLLRRRRR",
+        "RLRLLRLRLLLLRRLRRR",
+        "RLRLLRLRLLRLLRRRLR",
+        "RLRLLRLRLLRLRRLRLR",
+        "RLRLLRLRLRLRLRRLRL",
+        "RLRLLRLRLRLRRRLLRL",
+        "RLRLLRLRLRRRLRRLLL",
+        "RLRLLRLRLRRRRRLLLL",
+        "RLRLLRRLRLRLLRRLRL",
+        "RLRLLRRLRLRLRRLLRL",
+        "RLRLLRRRRLLLLRRLRL",
+        "RLRLLRRRRLLLRRLLRL",
+        "RLRLLRRRRLRLLRRLLL",
+        "RLRLLRRRRLRLRRLLLL",
+        "RLRRLLLLLLRLLRRRRR",
+        "RLRRLLLLLLRLRRLRRR",
+        "RLRRLLLLLRRRLRRLRL",
+        "RLRRLLLLLRRRRRLLRL",
+        "RLRRLLLRLLLLLRRRRR",
+        "RLRRLLLRLLLLRRLRRR",
+        "RLRRLLLRLLRLLRRRLR",
+        "RLRRLLLRLLRLRRLRLR",
+        "RLRRLLLRLRLRLRRLRL",
+        "RLRRLLLRLRLRRRLLRL",
+        "RLRRLLLRLRRRLRRLLL",
+        "RLRRLLLRLRRRRRLLLL",
+        "RLRRLLRLRLRLLRRLRL",
+        "RLRRLLRLRLRLRRLLRL",
+        "RLRRLLRRRLLLLRRLRL",
+        "RLRRLLRRRLLLRRLLRL",
+        "RLRRLLRRRLRLLRRLLL",
+        "RLRRLLRRRLRLRRLLLL",
+        "RLRRLRLLLLRLLRLRRR",
+        "RLRRLRLLLRRRLRLLRL",
+        "RLRRLRLRLLLLLRLRRR",
+        "RLRRLRLRLLRLLRLRLR",
+        "RLRRLRLRLRLRLRLLRL",
+        "RLRRLRLRLRRRLRLLLL",
+        "RLRRLRRLRLRLLRLLRL",
+        "RLRRLRRRRLLLLRLLRL",
+        "RLRRLRRRRLRLLRLLLL",
+        "RRLLLLLLRLLRRRRRRL",
+        "RRLLLLLLRLRRRRRRLL",
+        "RRLLLLLRRLLRRRRRLL",
+        "RRLLLLRLLLLRRRRLRR",
+        "RRLLLLRLLLRRRRRLLR",
+        "RRLLLLRLLRLLRRRRRL",
+        "RRLLLLRLLRRLRRRRLL",
+        "RRLLLLRRLLLRRRRLLR",
+        "RRLLLLRRLRLLRRRRLL",
+        "RRLLLRLLRLLRLRRRRL",
+        "RRLLLRLLRLLRRRLRRL",
+        "RRLLLRLLRLRRLRRRLL",
+        "RRLLLRLLRLRRRRLRLL",
+        "RRLLLRLRRLLRLRRRLL",
+        "RRLLLRLRRLLRRRLRLL",
+        "RRLLLRRLLLLRLRRLRR",
+        "RRLLLRRLLLLRRRLLRR",
+        "RRLLLRRLLLRRLRRLLR",
+        "RRLLLRRLLLRRRRLLLR",
+        "RRLLLRRLLRLLLRRRRL",
+        "RRLLLRRLLRLLRRLRRL",
+        "RRLLLRRLLRRLLRRRLL",
+        "RRLLLRRLLRRLRRLRLL",
+        "RRLLLRRRLLLRLRRLLR",
+        "RRLLLRRRLLLRRRLLLR",
+        "RRLLLRRRLRLLLRRRLL",
+        "RRLLLRRRLRLLRRLRLL",
+        "RRLRLLLLRLLRLRRRRL",
+        "RRLRLLLLRLLRRRLRRL",
+        "RRLRLLLLRLRRLRRRLL",
+        "RRLRLLLLRLRRRRLRLL",
+        "RRLRLLLRRLLRLRRRLL",
+        "RRLRLLLRRLLRRRLRLL",
+        "RRLRLLRLLLLRLRRLRR",
+        "RRLRLLRLLLLRRRLLRR",
+        "RRLRLLRLLLRRLRRLLR",
+        "RRLRLLRLLLRRRRLLLR",
+        "RRLRLLRLLRLLLRRRRL",
+        "RRLRLLRLLRLLRRLRRL",
+        "RRLRLLRLLRRLLRRRLL",
+        "RRLRLLRLLRRLRRLRLL",
+        "RRLRLLRRLLLRLRRLLR",
+        "RRLRLLRRLLLRRRLLLR",
+        "RRLRLLRRLRLLLRRRLL",
+        "RRLRLLRRLRLLRRLRLL",
+        "RRLRLRLLRLLRLRLRRL",
+        "RRLRLRLLRLRRLRLRLL",
+        "RRLRLRLRRLLRLRLRLL",
+        "RRLRLRRLLLLRLRLLRR",
+        "RRLRLRRLLLRRLRLLLR",
+        "RRLRLRRLLRLLLRLRRL",
+        "RRLRLRRLLRRLLRLRLL",
+        "RRLRLRRRLLLRLRLLLR",
+        "RRLRLRRRLRLLLRLRLL",
+        "RRRLLLLLLLLLRRRRRR",
+        "RRRLLLLLLLRLRRRRLR",
+        "RRRLLLLLLRLRRRRLRL",
+        "RRRLLLLLLRRRRRRLLL",
+        "RRRLLLLRLLLLRRRRLR",
+        "RRRLLLLRLRLRRRRLLL",
+        "RRRLLLRLRLLLRRRLRL",
+        "RRRLLLRLRLRLRRRLLL",
+        "RRRLLLRRRLLLRRRLLL",
+        "RRRLLRLLLLLLLRRRRR",
+        "RRRLLRLLLLLLRRLRRR",
+        "RRRLLRLLLLRLLRRRLR",
+        "RRRLLRLLLLRLRRLRLR",
+        "RRRLLRLLLRLRLRRLRL",
+        "RRRLLRLLLRLRRRLLRL",
+        "RRRLLRLLLRRRLRRLLL",
+        "RRRLLRLLLRRRRRLLLL",
+        "RRRLLRLRLLLLLRRRLR",
+        "RRRLLRLRLLLLRRLRLR",
+        "RRRLLRLRLRLRLRRLLL",
+        "RRRLLRLRLRLRRRLLLL",
+        "RRRLLRRLRLLLLRRLRL",
+        "RRRLLRRLRLLLRRLLRL",
+        "RRRLLRRLRLRLLRRLLL",
+        "RRRLLRRLRLRLRRLLLL",
+        "RRRLLRRRRLLLLRRLLL",
+        "RRRLLRRRRLLLRRLLLL",
+        "RRRRLLLLLLLLLRRRRR",
+        "RRRRLLLLLLLLRRLRRR",
+        "RRRRLLLLLLRLLRRRLR",
+        "RRRRLLLLLLRLRRLRLR",
+        "RRRRLLLLLRLRLRRLRL",
+        "RRRRLLLLLRLRRRLLRL",
+        "RRRRLLLLLRRRLRRLLL",
+        "RRRRLLLLLRRRRRLLLL",
+        "RRRRLLLRLLLLLRRRLR",
+        "RRRRLLLRLLLLRRLRLR",
+        "RRRRLLLRLRLRLRRLLL",
+        "RRRRLLLRLRLRRRLLLL",
+        "RRRRLLRLRLLLLRRLRL",
+        "RRRRLLRLRLLLRRLLRL",
+        "RRRRLLRLRLRLLRRLLL",
+        "RRRRLLRLRLRLRRLLLL",
+        "RRRRLLRRRLLLLRRLLL",
+        "RRRRLLRRRLLLRRLLLL",
+        "RRRRLRLLLLLLLRLRRR",
+        "RRRRLRLLLLRLLRLRLR",
+        "RRRRLRLLLRLRLRLLRL",
+        "RRRRLRLLLRRRLRLLLL",
+        "RRRRLRLRLLLLLRLRLR",
+        "RRRRLRLRLRLRLRLLLL",
+        "RRRRLRRLRLLLLRLLRL",
+        "RRRRLRRLRLRLLRLLLL",
+        "RRRRLRRRRLLLLRLLLL",
+    )
+
+    # fmt: off
+    LR_centers_555 = (
+        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step23-LR-center-stage.txt",
+            self.state_targets,
+            linecount=4900,
+            max_depth=5,
+            all_moves=moves_555,
+            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in self.LR_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.LR_centers_555, state):
+            cube[pos] = pos_state
+
+
 class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
+        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "L", "L'", "L2", "Fw", "Fw'", "R", "R'", "R2", "Bw", "Bw'", "Dw", "Dw'"),
-            prune_tables=[parent.lt_FB_t_centers_stage, parent.lt_FB_x_centers_stage],
+            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            prune_tables=[
+                parent.lt_FB_t_centers_stage,
+                parent.lt_FB_x_centers_stage,
+            ],
             centers_only=True,
         )
+        # fmt: on
+
+
+class LookupTableIDA555FBCentersStageLRCentersSpecial(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_555,
+            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            prune_tables=[
+                parent.lt_FB_t_centers_stage,
+                parent.lt_FB_x_centers_stage,
+                parent.lt_phase2_lr_center_stage,
+            ],
+            centers_only=True,
+        )
+        # fmt: on
 
 
 # phase 3
@@ -1259,7 +1763,12 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
         "RRRRLRRRRLLLLRLLLL",
     )
 
-    LR_centers_555 = (32, 33, 34, 37, 38, 39, 42, 43, 44, 82, 83, 84, 87, 88, 89, 92, 93, 94)  # Left  # Right
+    # fmt: off
+    LR_centers_555 = (
+        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+    )
+    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
@@ -2008,8 +2517,8 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
     # There could be 4 perfect hashes for this phase
     # - LR centers x high-edge-and-midge - this would be small as there are only 432 LR center states
     # - LR centers x low-edge-and-midge - this would be small as there are only 432 LR center states
-    # - FB centers x high-edge-and-midge (DONE)
-    # - FB centers x low-edge-and-midge (DONE)
+    # - FB centers x high-edge-and-midge
+    # - FB centers x low-edge-and-midge
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
@@ -2481,7 +2990,6 @@ class LookupTable555FBCenterSolve(LookupTable):
 
     state_targets = ("UUUUFFFFFFFFFBBBBBBBBBDDDD",)
 
-    # dwalton
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
@@ -2656,10 +3164,6 @@ class RubiksCube555(RubiksCube):
     def __init__(self, state, order, colormap=None, debug=False):
         RubiksCube.__init__(self, state, order, colormap)
 
-        # This will be True when an even cube is using the 555 edge solver
-        # to pair an orbit of edges
-        self.avoid_pll = False
-
         if RubiksCube555.instantiated:
             # raise Exception("Another 5x5x5 instance is being created")
             # logger.warning("Another 5x5x5 instance is being created")
@@ -2758,12 +3262,17 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
+        self.lt_LR_centers_stage.avoid_oll = 0
 
         # phase 2
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
+        self.lt_phase2_lr_center_stage = LookupTable555Phase2LRCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
+
+        self.lt_FB_centers_stage_LR_centers_special = LookupTableIDA555FBCentersStageLRCentersSpecial(self)
+        self.lt_FB_centers_stage_LR_centers_special.avoid_oll = 0
 
         # phase 3
         self.lt_phase3_lr_center_stage = LookupTable555Phase3LRCenterStage(self)
@@ -2961,8 +3470,10 @@ class RubiksCube555(RubiksCube):
         """
         Stage FB centers
         """
-
-        if not self.FB_centers_staged():
+        if self.FB_centers_staged():
+            if self.edge_swaps_odd(False, 0, False):
+                self.prevent_OLL()
+        else:
             tmp_solution_len = len(self.solution)
             self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
             self.print_cube(
@@ -2972,14 +3483,6 @@ class RubiksCube555(RubiksCube):
                 "COMMENT_%d_steps_555_centers_staged"
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
-        else:
-            try:
-                if self.edge_swaps_odd(False, 0, False):
-                    self.prevent_OLL()
-            # This can happen when large NxNxN cubes are using us but they have not
-            # populated the edges on their fake_555 object
-            except ValueError:
-                pass
 
     def eo_edges(self):
         """
@@ -3241,97 +3744,89 @@ class RubiksCube555(RubiksCube):
 
         logger.info("%s: reduced to 3x3x3 (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-    def group_centers_phase1_and_2(self, rotations: List[str]) -> None:
+    def group_centers_phase1_and_2(self) -> None:
         """
         phase1 stages the centers on sides L and R
-        phase2 stages the centers on sides F and B
-        rotations will be a list containing None, x, y, and/or z
+        phase2 stages the centers on sides F and B and put the LR centers in one of 495 states that can
+            be solved without L L' R R'...this is prep work for phase 3
         """
-        if self.LR_centers_staged() and self.FB_centers_staged():
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
+        if self.centers_staged():
             return
 
         original_state = self.state[:]
         original_solution = self.solution[:]
 
-        # build a list of pt_state tuples to solve for
+        # find multiple phase1 solutions
+        phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=100)
         pt_state_indexes = []
-        pt_state_indexes_to_pre_step = {}
+        pt_state_indexes_LR_centers_special = []
+        phase2_pt_state_indexes_to_phase1_solution = {}
+        logger.info(f"found {len(phase1_solutions)} phase1 solutions")
 
-        for pre_step in rotations:
-            self.rotate(pre_step)
-            this_pre_step_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_LR_centers_stage.prune_tables])
-            pt_state_indexes_to_pre_step[this_pre_step_pt_state_indexes] = pre_step
-            pt_state_indexes.append(this_pre_step_pt_state_indexes)
+        # find the phase2 solution for each phase1 solution
+        for phase1_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase1_solutions:
             self.state = original_state[:]
             self.solution = original_solution[:]
-
-        # find the shortest phase1 solutions
-        phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(pt_states=pt_state_indexes, solution_count=50)
-
-        # disable INFO messages as we try many phase2 solutions
-        logging.getLogger().setLevel(logging.WARNING)
-
-        min_phase2_solution = []
-        min_phase2_solution_len = None
-        min_phase2_solutions_output = None
-        max_phase2_ida_threshold = None
-        min_phase1_solutions_pre_step = None
-        min_phase1_solution_for_phase2 = None
-
-        # find the phase1 solution that leads to the shortest phase2 solution
-        for phase1_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase1_solutions:
-            phase1_solution_str = " ".join(phase1_solution)
-            pre_step = pt_state_indexes_to_pre_step[(pt0_state, pt1_state)]
-            self.rotate(pre_step)
 
             for step in phase1_solution:
                 self.rotate(step)
 
-            post_phase1_solution = self.solution[:]
-            post_phase1_solution_len = len(post_phase1_solution)
+            # stage the LR centers
+            phase2_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_FB_centers_stage.prune_tables])
+            pt_state_indexes.append(phase2_pt_state_indexes)
+            phase2_pt_state_indexes_to_phase1_solution[phase2_pt_state_indexes] = phase1_solution
 
-            try:
-                self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_phase2_ida_threshold)
-            except subprocess.CalledProcessError:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-                continue
+            # stage the LR centers and put them into one of 495 states solveable with L L' R R'
+            phase2_pt_state_indexes = tuple(
+                [pt.state_index() for pt in self.lt_FB_centers_stage_LR_centers_special.prune_tables]
+            )
+            pt_state_indexes_LR_centers_special.append(phase2_pt_state_indexes)
+            phase2_pt_state_indexes_to_phase1_solution[phase2_pt_state_indexes] = phase1_solution
 
-            phase2_solution = self.solution[post_phase1_solution_len:]
-            phase2_solution_str = " ".join(phase2_solution)
-            phase2_solution_len = len(phase2_solution)
-            desc = f"pre_step {min_phase1_solutions_pre_step} phase1_solution {phase1_solution_str} leads to phase2_solution {phase2_solution_str} length {len(phase2_solution)}"
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
-            if min_phase2_solution_len is None or phase2_solution_len < min_phase2_solution_len:
-                logger.warning(f"{desc} (NEW MIN)")
-                min_phase2_solution_len = phase2_solution_len
-                min_phase2_solution = phase2_solution
-                min_phase1_solutions_pre_step = pre_step
-                min_phase1_solution_for_phase2 = phase1_solution
-                max_phase2_ida_threshold = phase2_solution_len - 1
-                min_phase2_solutions_output = self.solve_via_c_output
-            else:
-                logger.warning(desc)
+        # stage the FB centers
+        phase2_solutions = self.lt_FB_centers_stage.solutions_via_c(pt_states=pt_state_indexes, solution_count=1)
+        phase2_solution = phase2_solutions[0][0]
 
-            self.state = original_state[:]
-            self.solution = original_solution[:]
+        # stage the FB centers and put LR centers into one of 495 states solveable with L L' R R'
+        phase2_solutions_lr_centers_special = self.lt_FB_centers_stage_LR_centers_special.solutions_via_c(
+            pt_states=pt_state_indexes_LR_centers_special, solution_count=1
+        )
+        phase2_solution_lr_centers_special = phase2_solutions_lr_centers_special[0][0]
 
-        logging.getLogger().setLevel(logging.INFO)
-        self.rotate(min_phase1_solutions_pre_step)
+        # if we can put the LR centers into one of 495 states without adding to the move count, make it so
+        if len(phase2_solution_lr_centers_special) <= len(phase2_solution):
+            min_phase2_solution, (
+                pt0_state,
+                pt1_state,
+                pt2_state,
+                pt3_state,
+                pt4_state,
+            ) = phase2_solutions_lr_centers_special[0]
+            min_phase1_solution = phase2_pt_state_indexes_to_phase1_solution[pt0_state, pt1_state, pt2_state]
+        else:
+            min_phase2_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase2_solutions[0]
+            min_phase1_solution = phase2_pt_state_indexes_to_phase1_solution[pt0_state, pt1_state]
 
-        for step in min_phase1_solution_for_phase2:
+        logger.info(
+            f"phase2 solution length {len(phase2_solution)}, phase2_lr_centers_special solution length {len(phase2_solution_lr_centers_special)}"
+        )
+
+        for step in min_phase1_solution:
             self.rotate(step)
 
         self.print_cube(
             "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
-        self.solution.append("COMMENT_%d_steps_555_two_centers_staged" % len(min_phase1_solution_for_phase2))
+        self.solution.append("COMMENT_%d_steps_555_two_centers_staged" % len(min_phase1_solution))
 
-        logger.info("\n" + min_phase2_solutions_output)
         for step in min_phase2_solution:
             self.rotate(step)
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
 
         self.print_cube(
             "%s: FB centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
@@ -3467,12 +3962,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_F_to_F()
 
         if True:
-            # There are three different combinations of colors we can put on sides LR (colors LR, UD or FB).
-            # Try all three combinations and see which leads to the shortest phase1 + phase2 solution length.
-            #
-            # z will move LR to UD and vice versa
-            # y will move LR to FB and vice versa
-            self.group_centers_phase1_and_2(rotations=[None, "z", "y"])
+            self.group_centers_phase1_and_2()
 
         else:
             # phase 1

@@ -730,7 +730,7 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
 
 struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state,
                                    unsigned int pt2_state, unsigned int pt3_state, unsigned int pt4_state,
-                                   unsigned char max_ida_threshold, unsigned char use_uthash) {
+                                   unsigned char max_ida_threshold, unsigned char use_uthash, unsigned char find_extra) {
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
     unsigned char min_ida_threshold = 0;
@@ -782,7 +782,8 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n\n", ida_count_total,
                 ms / 1000, nodes_per_sec);
 
-            if (solution_count >= min_solution_count) {
+            /// dwalton
+            if (solution_count >= min_solution_count || !find_extra) {
                 return search_result;
             }
         }
@@ -1185,11 +1186,20 @@ int main(int argc, char *argv[]) {
                 }
 
                 search_result = ida_solve(type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                          prune_table_3_state, prune_table_4_state, i_max_ida_threshold, use_uthash);
+                                          prune_table_3_state, prune_table_4_state, i_max_ida_threshold, use_uthash, find_extra);
 
-                if (search_result.found_solution && search_result.f_cost < min_search_result.f_cost) {
-                    min_search_result = search_result;
-                    // max_ida_threshold = search_result.f_cost;
+                if (search_result.found_solution) {
+                    if (search_result.f_cost < min_search_result.f_cost) {
+                        min_search_result = search_result;
+                    }
+
+                    if (find_extra) {
+                        if (solution_count >= min_solution_count) {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
                 }
 
                 line_index++;
@@ -1215,7 +1225,7 @@ int main(int argc, char *argv[]) {
 
     } else {
         search_result = ida_solve(type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                  prune_table_3_state, prune_table_4_state, max_ida_threshold, use_uthash);
+                                  prune_table_3_state, prune_table_4_state, max_ida_threshold, use_uthash, find_extra);
 
         if (search_result.found_solution) {
             print_ida_summary(type, prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state,

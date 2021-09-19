@@ -247,7 +247,12 @@ class LookupTableIDAViaGraph(LookupTable):
                 to_write = []
 
     def solutions_via_c(
-        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None, find_extra: bool = False
+        self,
+        pt_states=[],
+        min_ida_threshold: int = None,
+        max_ida_threshold: int = None,
+        solution_count: int = None,
+        find_extra: bool = False,
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
         my_pt_state_filename = "my-pt-states.txt"
@@ -310,6 +315,10 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append(self.perfect_hash02_filename)
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
+
+        if min_ida_threshold is not None:
+            cmd.append("--min-ida-threshold")
+            cmd.append(str(min_ida_threshold))
 
         if max_ida_threshold is not None:
             cmd.append("--max-ida-threshold")
@@ -385,10 +394,16 @@ class LookupTableIDAViaGraph(LookupTable):
             raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
 
     def solve_via_c(
-        self, pt_states=[], max_ida_threshold: int = None, solution_count: int = None, find_extra: bool = False
+        self,
+        pt_states=[],
+        min_ida_threshold: int = None,
+        max_ida_threshold: int = None,
+        solution_count: int = None,
+        find_extra: bool = False,
     ) -> None:
         solution = self.solutions_via_c(
             pt_states=pt_states,
+            min_ida_threshold=min_ida_threshold,
             max_ida_threshold=max_ida_threshold,
             solution_count=solution_count,
             find_extra=find_extra,

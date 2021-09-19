@@ -416,6 +416,24 @@ class LookupTableIDA444ULFRBDCentersStageLCentersSpecial(LookupTableIDAViaGraph)
         )
 
 
+class LookupTableIDA444Phase1And2(LookupTableIDAViaGraph):
+    # dwalton
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            illegal_moves=(),
+            prune_tables=[
+                parent.lt_UD_centers_stage,
+                parent.lt_LR_centers_stage,
+                parent.lt_L_centers_stage,
+                parent.lt_highlow_edges_edges_phase1,
+            ],
+            C_ida_type="4x4x4-phase1and2",
+        )
+
+
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
     lookup-table-4x4x4-step21-highlow-edges-edges.txt
@@ -1103,7 +1121,8 @@ class RubiksCube444(RubiksCube):
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
         self.lt_ULFRBD_centers_stage_l_centers_special = LookupTableIDA444ULFRBDCentersStageLCentersSpecial(self)
         self.lt_ULFRBD_centers_stage_l_centers_special.avoid_oll = 0  # avoid OLL on orbit 0
-        # dwalton
+        self.lt_phase1and2 = LookupTableIDA444Phase1And2(self)
+        self.lt_phase1and2.avoid_oll = 0
 
         self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
@@ -1127,6 +1146,10 @@ class RubiksCube444(RubiksCube):
             phase1_solution_l_centers_special = self.lt_ULFRBD_centers_stage_l_centers_special.solutions_via_c(
                 solution_count=1
             )[0][0]
+
+            logger.info(
+                f"phase1 solution length {len(phase1_solution)}, phase1_lr_centers_special solution length {len(phase1_solution_l_centers_special)}"
+            )
 
             if len(phase1_solution_l_centers_special) <= len(phase1_solution):
                 for step in phase1_solution_l_centers_special:
@@ -1217,6 +1240,38 @@ class RubiksCube444(RubiksCube):
         )
         self.highlow_edges_print()
         self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+
+    def phase1and2(self) -> None:
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+
+        # what is the phase 1 solution length if we put the LR centers in 12/70 states
+        # that can be solved without L L' R R'. We know that the phase1and2 solution will
+        # need to be at least this long.
+        phase1_solution_l_centers_special = self.lt_ULFRBD_centers_stage_l_centers_special.solutions_via_c(
+            solution_count=1
+        )[0][0]
+        phase1_solution_l_centers_special_len = len(phase1_solution_l_centers_special)
+        logger.info(f"phase1_solution_l_centers_special {phase1_solution_l_centers_special_len} steps")
+
+        pt_state_indexes = []
+
+        for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
+            for edge_mapping in edges_to_flip_sets:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                self.edge_mapping = edge_mapping
+                pt_state_indexes.append(tuple([pt.state_index() for pt in self.lt_phase1and2.prune_tables]))
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        self.lt_phase1and2.solve_via_c(
+            pt_states=pt_state_indexes, min_ida_threshold=phase1_solution_l_centers_special_len
+        )
+        self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[:])}_steps_444_phase1and2")
+        self.print_cube(f"{self}: end of phase1and2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+
+        raise Exception("DONE")
 
     def phase3(self, wing_str_combo: List[str] = None):
         original_state = self.state[:]
@@ -1470,8 +1525,10 @@ class RubiksCube444(RubiksCube):
         if self.reduced_to_333():
             return
 
-        self.phase1()
-        self.phase2()
+        # dwalton
+        # self.phase1()
+        # self.phase2()
+        self.phase1and2()
 
         # self.phase3()
         # self.phase4()

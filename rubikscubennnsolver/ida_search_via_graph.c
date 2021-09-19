@@ -45,7 +45,7 @@ struct key_value_pair *ida_explored = NULL;
 // Supported IDA searches
 typedef enum {
     GENERIC,
-    LR_CENTERS_STAGE_555,
+    PHASE1AND2_444,
     CENTERS_STAGE_555,
 
 } lookup_table_type;
@@ -189,8 +189,15 @@ unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev
                                        unsigned char init_cost_to_goal) {
     unsigned char cost_to_goal = init_cost_to_goal;
 
-    if (type == LR_CENTERS_STAGE_555) {
-        cost_to_goal = lr_centers_stage_555[pt0_cost][pt1_cost];
+    // dwalton
+    if (type == PHASE1AND2_444) {
+        unsigned char ud_x_centers_cost = pt0_cost;
+        unsigned char lr_x_centers_cost = pt1_cost;
+
+        if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > cost_to_goal) {
+            cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
+        }
+
     } else if (type == CENTERS_STAGE_555) {
         unsigned char lr_t_centers_cost = pt0_cost;
         unsigned char lr_x_centers_cost = pt1_cost;
@@ -272,12 +279,8 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
-            if (type == LR_CENTERS_STAGE_555) {
-                result.cost_to_goal = lr_centers_stage_555[result.pt0_cost][result.pt1_cost];
-            } else {
-                if (result.pt1_cost > result.cost_to_goal) {
-                    result.cost_to_goal = result.pt1_cost;
-                }
+            if (result.pt1_cost > result.cost_to_goal) {
+                result.cost_to_goal = result.pt1_cost;
             }
             break;
 
@@ -306,7 +309,16 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
-            if (type == CENTERS_STAGE_555) {
+            // dwalton
+            if (type == PHASE1AND2_444) {
+                unsigned char ud_x_centers_cost = result.pt0_cost;
+                unsigned char lr_x_centers_cost = result.pt1_cost;
+
+                if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
+                    result.cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
+                }
+
+            } else if (type == CENTERS_STAGE_555) {
                 unsigned char lr_t_centers_cost = result.pt0_cost;
                 unsigned char lr_x_centers_cost = result.pt1_cost;
                 unsigned char ud_t_centers_cost = result.pt2_cost;
@@ -730,29 +742,33 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
 
 struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state,
                                    unsigned int pt2_state, unsigned int pt3_state, unsigned int pt4_state,
-                                   unsigned char max_ida_threshold, unsigned char use_uthash, unsigned char find_extra) {
+                                   unsigned char min_ida_threshold, unsigned char max_ida_threshold,
+                                   unsigned char use_uthash, unsigned char find_extra) {
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
-    unsigned char min_ida_threshold = 0;
     unsigned char pt0_cost = 0;
     unsigned char pt1_cost = 0;
     unsigned char pt2_cost = 0;
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
     unsigned char cost_to_goal = 0;
+    struct cost_to_goal_result ctg;
 
     // For printing commas via %'d
     setlocale(LC_NUMERIC, "");
-
-    struct cost_to_goal_result ctg = pt_states_to_cost(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-    min_ida_threshold = ctg.cost_to_goal;
     search_result.found_solution = 0;
 
-    if (min_ida_threshold >= max_ida_threshold) {
-        // LOG("min_ida_threshold %d >= max_ida_threshold %d\n", min_ida_threshold, max_ida_threshold);
+    if (min_ida_threshold > max_ida_threshold) {
+        LOG("min_ida_threshold %d > max_ida_threshold %d\n", min_ida_threshold, max_ida_threshold);
         return search_result;
     }
 
+    ctg = pt_states_to_cost(type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+
+    if (ctg.cost_to_goal > max_ida_threshold) {
+        // LOG("ctg.cost_to_goal %d > min_ida_threshold %d\n", ctg.cost_to_goal, min_ida_threshold);
+        return search_result;
+    }
     LOG("pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n",
         pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 
@@ -782,7 +798,6 @@ struct ida_search_result ida_solve(lookup_table_type type, unsigned int pt0_stat
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'d nodes-per-sec\n\n", ida_count_total,
                 ms / 1000, nodes_per_sec);
 
-            /// dwalton
             if (solution_count >= min_solution_count || !find_extra) {
                 return search_result;
             }
@@ -842,6 +857,7 @@ int main(int argc, char *argv[]) {
     unsigned long prune_table_2_state = 0;
     unsigned long prune_table_3_state = 0;
     unsigned long prune_table_4_state = 0;
+    unsigned char min_ida_threshold = 0;
     unsigned char max_ida_threshold = 30;
     unsigned char centers_only = 0;
     unsigned char use_uthash = 0;
@@ -856,11 +872,11 @@ int main(int argc, char *argv[]) {
         if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
-            if (strmatch(argv[i], "5x5x5-centers-stage")) {
-                type = CENTERS_STAGE_555;
+            if (strmatch(argv[i], "4x4x4-phase1and2")) {
+                type = PHASE1AND2_444;
 
-            } else if (strmatch(argv[i], "5x5x5-lr-centers-stage")) {
-                type = LR_CENTERS_STAGE_555;
+            } else if (strmatch(argv[i], "5x5x5-centers-stage")) {
+                type = CENTERS_STAGE_555;
 
             } else {
                 printf("ERROR: %s is an invalid --type\n", argv[i]);
@@ -944,6 +960,10 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--solution-count")) {
             i++;
             min_solution_count = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--min-ida-threshold")) {
+            i++;
+            min_ida_threshold = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--max-ida-threshold")) {
             i++;
@@ -1104,7 +1124,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (type == LR_CENTERS_STAGE_555 || type == CENTERS_STAGE_555 || pt_perfect_hash01 || cost_to_goal_multiplier) {
+    if (type == PHASE1AND2_444 || type == CENTERS_STAGE_555 || pt_perfect_hash01 || cost_to_goal_multiplier) {
         call_pt_simple = 1;
     }
 
@@ -1157,8 +1177,8 @@ int main(int argc, char *argv[]) {
         min_search_result.found_solution = 0;
         min_search_result.f_cost = 99;
 
-        for (unsigned char i_max_ida_threshold = 0; i_max_ida_threshold <= max_ida_threshold; i_max_ida_threshold++) {
-            LOG("loop %d/%d\n", i_max_ida_threshold, max_ida_threshold);
+        for (unsigned char i_ida_threshold = min_ida_threshold; i_ida_threshold <= max_ida_threshold; i_ida_threshold++) {
+            LOG("loop %d/%d\n", i_ida_threshold, max_ida_threshold);
 
             fh_read = fopen(prune_table_states_filename, "r");
             while ((read = getline(&line, &len, fh_read)) != -1) {
@@ -1186,7 +1206,8 @@ int main(int argc, char *argv[]) {
                 }
 
                 search_result = ida_solve(type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                          prune_table_3_state, prune_table_4_state, i_max_ida_threshold, use_uthash, find_extra);
+                                          prune_table_3_state, prune_table_4_state,
+                                          i_ida_threshold, i_ida_threshold, use_uthash, find_extra);
 
                 if (search_result.found_solution) {
                     if (search_result.f_cost < min_search_result.f_cost) {
@@ -1224,8 +1245,19 @@ int main(int argc, char *argv[]) {
         }
 
     } else {
-        search_result = ida_solve(type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                  prune_table_3_state, prune_table_4_state, max_ida_threshold, use_uthash, find_extra);
+        if (!min_ida_threshold) {
+            struct cost_to_goal_result ctg = pt_states_to_cost(type, prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state, prune_table_4_state);
+            min_ida_threshold = ctg.cost_to_goal;
+        }
+
+        search_result = ida_solve(type,
+                                  prune_table_0_state,
+                                  prune_table_1_state,
+                                  prune_table_2_state,
+                                  prune_table_3_state,
+                                  prune_table_4_state,
+                                  min_ida_threshold, max_ida_threshold,
+                                  use_uthash, find_extra);
 
         if (search_result.found_solution) {
             print_ida_summary(type, prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state,

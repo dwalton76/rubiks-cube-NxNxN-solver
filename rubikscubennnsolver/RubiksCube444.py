@@ -7,7 +7,6 @@ from typing import Dict, List, Tuple
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
 from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
-from rubikscubennnsolver.misc import pre_steps_to_try
 from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinations
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_444
 from rubikscubennnsolver.swaps import swaps_444
@@ -281,61 +280,6 @@ class LookupTable444LRCentersStage(LookupTable):
             cube: the cube to manipulate
             steps_to_solve: N/A for this table
         """
-        state = list(state)
-
-        for (pos, pos_state) in zip(centers_444, state):
-            cube[pos] = pos_state
-
-
-# dwalton I think we can chop this table
-class LookupTable444LCentersStage(LookupTable):
-    """
-    lookup-table-4x4x4-step13-L-centers-stage.txt
-    =============================================
-    0 steps has 4 entries (0 percent, 0.00x previous step)
-    1 steps has 62 entries (0 percent, 15.50x previous step)
-    2 steps has 660 entries (6 percent, 10.65x previous step)
-    3 steps has 4,688 entries (44 percent, 7.10x previous step)
-    4 steps has 5,076 entries (47 percent, 1.08x previous step)
-    5 steps has 136 entries (1 percent, 0.03x previous step)
-
-    Total: 10,626 entries
-    Average: 3.43 moves
-    """
-
-    state_targets = (
-        "xxxxLLLLxxxxxxxxxxxxxxxx",
-        "xxxxLLxxxxxxLLxxxxxxxxxx",
-        "xxxxLLxxxxxxxxLLxxxxxxxx",
-        "xxxxLxLxxxxxLxLxxxxxxxxx",
-        "xxxxLxLxxxxxxLxLxxxxxxxx",
-        "xxxxLxxLxxxxxLLxxxxxxxxx",
-        "xxxxxLLxxxxxLxxLxxxxxxxx",
-        "xxxxxLxLxxxxLxLxxxxxxxxx",
-        "xxxxxLxLxxxxxLxLxxxxxxxx",
-        "xxxxxxLLxxxxLLxxxxxxxxxx",
-        "xxxxxxLLxxxxxxLLxxxxxxxx",
-        "xxxxxxxxxxxxLLLLxxxxxxxx",
-    )
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-4x4x4-step13-L-centers-stage.txt",
-            self.state_targets,
-            linecount=10626,
-            max_depth=5,
-            all_moves=moves_444,
-            illegal_moves=(),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        return "".join(["L" if self.parent.state[x] == "L" else "x" for x in centers_444])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
         for (pos, pos_state) in zip(centers_444, state):
@@ -1038,7 +982,6 @@ class RubiksCube444(RubiksCube):
 
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
-        self.lt_L_centers_stage = LookupTable444LCentersStage(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
         self.lt_phase1 = LookupTableIDA444LRCentersStage(self)
@@ -1057,184 +1000,45 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
     def phase1(self) -> None:
-        # original_state = self.state[:]
-        # original_solution = self.solution[:]
-
         if not self.LR_centers_staged():
             self.lt_phase1.solve_via_c()
-
-            """
-            phase1_solutions = self.lt_phase1.solutions_via_c(solution_count=5000)
-
-            # dwalton
-            for phase1_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase1_solutions:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-
-                for step in phase1_solution:
-                    self.rotate(step)
-
-                phase2_centers_state = self.lt_phase2_centers.state()
-                logger.info(f"phase1 solution {phase1_solution} has phase2 cost {self.lt_phase2_centers.heuristic(phase2_centers_state)}")
-            """
 
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
         self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
     def phase2(self) -> None:
-        phase1_solution_len = len(self.solution)
-        self.lt_phase2.solve_via_c()
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_444_phase2"
-        )
-        self.highlow_edges_print()
-        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-
-        return
-        # raise Exception("DONE 20")
-
-        # Pick the best edge_mapping
-        # - an edge_mapping that gives us a hit in the phase2 table is ideal
-        #     - pick the best among those
-        # - if not pick the one that has the lowest edges_cost
-        # - build the phase2 table out to 7-deep to help here
         original_state = self.state[:]
         original_solution = self.solution[:]
-        phase1_solution_len = len(self.solution)
+        original_solution_len = len(self.solution)
+        pt_state_indexes_to_edge_mapping = {}
 
-        for pre_steps in pre_steps_to_try:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in pre_steps:
-                self.rotate(step)
-
-            tmp_state = self.state[:]
-            tmp_solution = self.solution[:]
-
-            # Build a list of all 2048 states we need to find in the step20-highlow-edges table.
-            # We do this so we can leverage binary_search_multiple() which runs about a million
-            # times faster than binary searching for all 2048 states one at a time. This allows
-            # us to NOT load this file into memory.
-            high_low_states_to_find = []
-            edge_mapping_for_phase2_state = {}
-
-            # for (edges_to_flip_count, edges_to_flip_sets) in highlow_edge_mapping_combinations.items():
-            for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
-                for edge_mapping in edges_to_flip_sets:
-                    self.state = tmp_state[:]
-                    self.solution = tmp_solution[:]
-
-                    self.edge_mapping = edge_mapping
-                    phase2_state = self.lt_highlow_edges.state()
-                    edge_mapping_for_phase2_state[phase2_state] = edge_mapping
-                    high_low_states_to_find.append(phase2_state)
-
-            high_low_states = self.lt_highlow_edges.binary_search_multiple(high_low_states_to_find)
-            min_edge_mapping = None
-            min_phase2_cost = None
-            min_phase2_steps = None
-
-            for (phase2_state, phase2_steps) in sorted(high_low_states.items()):
-                self.state = tmp_state[:]
-                self.solution = tmp_solution[:]
-                phase2_steps = phase2_steps.split()
-                phase2_cost = len(phase2_steps)
-                desc = f"{self}: edge_mapping {min_edge_mapping}, phase2 cost {phase2_cost}"
-
-                if min_phase2_cost is None or phase2_cost < min_phase2_cost:
-                    min_phase2_cost = phase2_cost
-                    min_edge_mapping = edge_mapping_for_phase2_state[phase2_state]
-                    min_phase2_steps = list(pre_steps) + phase2_steps[:]
-                    logger.info(f"{desc} (NEW MIN)")
-                elif phase2_cost == min_phase2_cost:
-                    logger.info(f"{desc} (TIE)")
-                else:
-                    logger.debug(desc)
-
-            if min_edge_mapping:
-                if pre_steps:
-                    logger.info(f"pre-steps {pre_steps} required to find a hit")
-                break
-        else:
-            assert False, "write some code to find the best edge_mapping when there is no phase2 hit"
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        self.edge_mapping = min_edge_mapping
-
-        for step in min_phase2_steps:
-            self.rotate(step)
-
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_444_phase2"
-        )
-        self.highlow_edges_print()
-        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-
-    def phase1and2(self) -> None:
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        # what is the phase 1 solution length if we put the LR centers in 12/70 states
-        # that can be solved without L L' R R'. We know that the phase1and2 solution will
-        # need to be at least this long.
-        phase1_solution_l_centers_special = self.lt_ULFRBD_centers_stage_l_centers_special.solutions_via_c(
-            solution_count=1
-        )[0][0]
-        phase1_solution_l_centers_special_len = len(phase1_solution_l_centers_special)
-        logger.info(f"phase1_solution_l_centers_special {phase1_solution_l_centers_special_len} steps")
-
-        # Apply a phase1 solution that does everything except high/low the edges and see which edge_mappings
-        # have the lowest high/low cost. We use this to avoid searching for all 2048 combinations.
-        for step in phase1_solution_l_centers_special:
-            self.rotate(step)
-
-        self.lt_highlow_edges_edges_phase1.load_ida_graph()
-        edge_mappings_to_search = []
-
+        # try all 2048 edge mappings
         for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
             for edge_mapping in edges_to_flip_sets:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
                 self.edge_mapping = edge_mapping
-                edge_mapping_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase1and2.prune_tables])
-                # logger.info(edge_mapping_pt_state_indexes)
-                state_index = self.lt_highlow_edges_edges_phase1.state_index()
-                state_cost = self.lt_highlow_edges_edges_phase1.state_index_cost(state_index)
-
-                if state_cost <= 4:
-                    logger.info(f"edge_mapping {edge_mapping} has highlow edges cost {state_cost}")
-                    edge_mappings_to_search.append(edge_mapping)
-
-        logger.info(f"phase1and2 searching {len(edge_mappings_to_search)} edge mappings")
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        pt_state_indexes = []
-        pt_state_indexes_to_edge_mapping = {}
-
-        for edge_mapping in edge_mappings_to_search:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            self.edge_mapping = edge_mapping
-            edge_mapping_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase1and2.prune_tables])
-            # logger.info(edge_mapping_pt_state_indexes)
-            # state_index = self.lt_highlow_edges_edges_phase1.state_index()
-            # state_cost = self.lt_highlow_edges_edges_phase1.state_index_cost(state_index)
-
-            pt_state_indexes.append(edge_mapping_pt_state_indexes)
-            pt_state_indexes_to_edge_mapping[edge_mapping_pt_state_indexes] = edge_mapping
+                pt_state_indexes_to_edge_mapping[
+                    tuple([pt.state_index() for pt in self.lt_phase2.prune_tables])
+                ] = edge_mapping
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        self.lt_phase1and2.solve_via_c(
-            pt_states=pt_state_indexes, min_ida_threshold=phase1_solution_l_centers_special_len
+        phase2_solutions = self.lt_phase2.solutions_via_c(
+            pt_states=pt_state_indexes_to_edge_mapping.keys(), solution_count=1
         )
-        self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[:])}_steps_444_phase1and2")
-        self.print_cube(f"{self}: end of phase1and2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
-        raise Exception("DONE phase1and2")
+        phase2_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase2_solutions[0]
+        self.edge_mapping = pt_state_indexes_to_edge_mapping[(pt0_state, pt1_state)]
+
+        for step in phase2_solution:
+            self.rotate(step)
+
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[original_solution_len:])}_steps_444_phase2"
+        )
+        self.highlow_edges_print()
+        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
     def phase3(self, wing_str_combo: List[str] = None):
         original_state = self.state[:]
@@ -1276,7 +1080,6 @@ class RubiksCube444(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
 
-        # dwalton reference
         for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
             self.state = original_state[:]
             self.solution = original_solution[:]

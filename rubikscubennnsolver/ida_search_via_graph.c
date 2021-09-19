@@ -371,6 +371,10 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
 
         case 0:
             result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
+            result.pt1_cost = 0;
+            result.pt2_cost = 0;
+            result.pt3_cost = 0;
+            result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
             break;
 

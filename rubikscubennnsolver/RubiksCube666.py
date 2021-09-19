@@ -1382,7 +1382,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         fake_444 = self.get_fake_444()
         self.populate_fake_444_for_inner_x_centers_stage()
         tmp_solution_len = len(self.solution)
-        fake_444.phase1()
+        fake_444.lt_ULFRBD_centers_stage.solve_via_c()
 
         for step in fake_444.solution:
             if step.startswith("COMMENT"):

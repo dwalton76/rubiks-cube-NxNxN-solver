@@ -612,7 +612,7 @@ class LookupTable(object):
 
         COST_LENGTH = 1
         STATE_INDEX_LENGTH = 4
-        self.ROW_LENGTH = COST_LENGTH + (STATE_INDEX_LENGTH * len(self.legal_moves))
+        self.ROW_LENGTH = COST_LENGTH + ((STATE_INDEX_LENGTH + COST_LENGTH) * len(self.legal_moves))
 
     def __str__(self) -> str:
         if self.desc:

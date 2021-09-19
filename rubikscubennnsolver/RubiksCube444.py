@@ -341,33 +341,73 @@ class LookupTable444LCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable444HighLowEdgesEdgesPhase1(LookupTable):
+class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            illegal_moves=(),
+            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage],
+        )
+
+
+class LookupTableIDA444ULFRBDCentersStageLCentersSpecial(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            illegal_moves=(),
+            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage, parent.lt_L_centers_stage],
+        )
+
+
+class LookupTableIDA444Phase1And2(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            illegal_moves=(),
+            prune_tables=[
+                parent.lt_UD_centers_stage,
+                parent.lt_LR_centers_stage,
+                parent.lt_L_centers_stage,
+                parent.lt_highlow_edges_edges_phase1,
+            ],
+            C_ida_type="4x4x4-phase1and2",
+        )
+
+
+class LookupTable444HighLowEdgesEdges(LookupTable):
     """
-    lookup-table-4x4x4-step14-highlow-edges-edges.txt
+    lookup-table-4x4x4-step21-highlow-edges-edges.txt
     =================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 8 entries (0 percent, 8.00x previous step)
-    2 steps has 168 entries (0 percent, 21.00x previous step)
-    3 steps has 3,218 entries (0 percent, 19.15x previous step)
-    4 steps has 58,587 entries (2 percent, 18.21x previous step)
-    5 steps has 776,568 entries (28 percent, 13.25x previous step)
-    6 steps has 1,843,774 entries (68 percent, 2.37x previous step)
-    7 steps has 21,832 entries (0 percent, 0.01x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 62 entries (0 percent, 15.50x previous step)
+    3 steps has 906 entries (0 percent, 14.61x previous step)
+    4 steps has 11,163 entries (0 percent, 12.32x previous step)
+    5 steps has 127,148 entries (4 percent, 11.39x previous step)
+    6 steps has 889,398 entries (32 percent, 6.99x previous step)
+    7 steps has 1,553,434 entries (57 percent, 1.75x previous step)
+    8 steps has 122,040 entries (4 percent, 0.08x previous step)
 
     Total: 2,704,156 entries
-    Average: 5.67 moves
+    Average: 6.61 moves
     """
 
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-4x4x4-step14-highlow-edges-edges.txt",
+            "lookup-table-4x4x4-step21-highlow-edges-edges.txt",
             "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
             linecount=2704156,
-            max_depth=7,
+            max_depth=8,
             all_moves=moves_444,
-            illegal_moves=(),
+            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -394,206 +434,77 @@ class LookupTable444HighLowEdgesEdgesPhase1(LookupTable):
             self.parent.rotate(step)
 
 
-class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_444,
-            illegal_moves=(),
-            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage],
-        )
-
-
-class LookupTableIDA444ULFRBDCentersStageLCentersSpecial(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_444,
-            illegal_moves=(),
-            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage, parent.lt_L_centers_stage],
-        )
-
-
-class LookupTableIDA444Phase1And2(LookupTableIDAViaGraph):
-    # dwalton
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_444,
-            illegal_moves=(),
-            prune_tables=[
-                parent.lt_UD_centers_stage,
-                parent.lt_LR_centers_stage,
-                parent.lt_L_centers_stage,
-                parent.lt_highlow_edges_edges_phase1,
-            ],
-            C_ida_type="4x4x4-phase1and2",
-        )
-
-
-class LookupTable444HighLowEdgesEdges(LookupTable):
-    """
-    lookup-table-4x4x4-step21-highlow-edges-edges.txt
-    =================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 29 entries (0 percent, 9.67x previous step)
-    3 steps has 278 entries (0 percent, 9.59x previous step)
-    4 steps has 1,934 entries (0 percent, 6.96x previous step)
-    5 steps has 15,640 entries (0 percent, 8.09x previous step)
-    6 steps has 124,249 entries (4 percent, 7.94x previous step)
-    7 steps has 609,241 entries (22 percent, 4.90x previous step)
-    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
-    9 steps has 688,124 entries (25 percent, 0.56x previous step)
-    10 steps has 40,560 entries (1 percent, 0.06x previous step)
-
-    Total: 2,704,156 entries
-    Average: 7.95 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-4x4x4-step21-highlow-edges-edges.txt",
-            "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-            linecount=2704156,
-            max_depth=10,
-            md5_txt="70496f999f5de71e34164fc8fd17726c",
-        )
-
-    def state(self) -> str:
-        """
-        Returns:
-            the state of the cube per this lookup table
-        """
-        return self.parent.highlow_edges_state(self.parent.edge_mapping)
-
-
 class LookupTable444HighLowEdgesCenters(LookupTable):
     """
     lookup-table-4x4x4-step22-highlow-edges-centers.txt
     ===================================================
-    1 steps has 22 entries (31 percent, 0.00x previous step)
-    2 steps has 16 entries (22 percent, 0.73x previous step)
-    3 steps has 16 entries (22 percent, 1.00x previous step)
-    4 steps has 16 entries (22 percent, 1.00x previous step)
+    0 steps has 2 entries (0 percent, 0.00x previous step)
+    1 steps has 44 entries (0 percent, 22.00x previous step)
+    2 steps has 384 entries (0 percent, 8.73x previous step)
+    3 steps has 3,354 entries (0 percent, 8.73x previous step)
+    4 steps has 22,324 entries (2 percent, 6.66x previous step)
+    5 steps has 113,276 entries (12 percent, 5.07x previous step)
+    6 steps has 338,860 entries (37 percent, 2.99x previous step)
+    7 steps has 388,352 entries (43 percent, 1.15x previous step)
+    8 steps has 34,048 entries (3 percent, 0.09x previous step)
+    9 steps has 256 entries (0 percent, 0.01x previous step)
 
-    Total: 70 entries
-    Average: 2.37 moves
+    Total: 900,900 entries
+    Average: 6.32 moves
     """
 
-    def __init__(self, parent):
+    state_targets = (
+        "UUUULLLLxxxxRRRRxxxxUUUU",
+        "UUUULLRRxxxxLLRRxxxxUUUU",
+        "UUUULLRRxxxxRRLLxxxxUUUU",
+        "UUUULRLRxxxxLRLRxxxxUUUU",
+        "UUUULRLRxxxxRLRLxxxxUUUU",
+        "UUUULRRLxxxxRLLRxxxxUUUU",
+        "UUUURLLRxxxxLRRLxxxxUUUU",
+        "UUUURLRLxxxxLRLRxxxxUUUU",
+        "UUUURLRLxxxxRLRLxxxxUUUU",
+        "UUUURRLLxxxxLLRRxxxxUUUU",
+        "UUUURRLLxxxxRRLLxxxxUUUU",
+        "UUUURRRRxxxxLLLLxxxxUUUU",
+    )
+
+    def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
             "lookup-table-4x4x4-step22-highlow-edges-centers.txt",
-            (
-                "LLLLRRRR",
-                "LLRRLLRR",
-                "LLRRRRLL",
-                "LRLRLRLR",
-                "LRLRRLRL",
-                "LRRLRLLR",
-                "RLLRLRRL",
-                "RLRLLRLR",
-                "RLRLRLRL",
-                "RRLLLLRR",
-                "RRLLRRLL",
-                "RRRRLLLL",
-            ),
-            linecount=70,
-            max_depth=4,
-            md5_txt="8b9c6869ea131aeb20584f5632ae3084",
-        )
-
-    def state(self) -> str:
-        """
-        Returns:
-            the state of the cube per this lookup table
-        """
-        return "".join([self.parent.state[x] for x in LR_centers_444])
-
-
-class LookupTable444HighLowEdges(LookupTable):
-    """
-    I only kept up to depth-6 but this is the move count for the entire table.
-    2,704,156 * 70 = 189,209,920
-
-    lookup-table-4x4x4-step20-highlow-edges.txt
-    ===========================================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 34 entries (0 percent, 17.00x previous step)
-    2 steps has 348 entries (0 percent, 10.24x previous step)
-    3 steps has 3,416 entries (0 percent, 9.82x previous step)
-    4 steps has 26,260 entries (0 percent, 7.69x previous step)
-    5 steps has 226,852 entries (0 percent, 8.64x previous step)
-    6 steps has 2,048,086 entries (1 percent, 9.03x previous step)
-    7 steps has 15,247,140 entries (8 percent, 7.44x previous step)
-    8 steps has 62,786,582 entries (33 percent, 4.12x previous step)
-    9 steps has 87,604,424 entries (46 percent, 1.40x previous step)
-    10 steps has 21,114,568 entries (11 percent, 0.24x previous step)
-    11 steps has 233,208 entries (0 percent, 0.01x previous step)
-
-    Total: 189,290,920 entries
-    Average: 8.58 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-4x4x4-step20-highlow-edges.txt",
-            (
-                "LLLLRRRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "LLRRLLRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "LLRRRRLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "LRLRLRLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "LRLRRLRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "LRRLRLLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "RLLRLRRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "RLRLLRLRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "RLRLRLRLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "RRLLLLRRUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "RRLLRRLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-                "RRRRLLLLUDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-            ),
+            self.state_targets,
+            linecount=900900,
+            max_depth=9,
             all_moves=moves_444,
-            legal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            linecount=2304998,
-            max_depth=6,
-            md5_txt="17d09599ec9d8a6b590628dd3ad60f42",
+            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
+            use_state_index=True,
+            build_state_index=build_state_index,
         )
 
+    # dwalton fix this
     def state(self) -> str:
         """
         Returns:
             the state of the cube per this lookup table
         """
-        parent_state = self.parent.state
-        LR_centers = "".join([parent_state[x] for x in LR_centers_444])
-        edges = self.parent.highlow_edges_state(self.parent.edge_mapping)
-        return LR_centers + edges
+        result = []
 
-    def ida_heuristic(self) -> Tuple[str, int]:
-        """
-        Returns:
-            the lookup table state
-            the cost to goal
-        """
-        parent_state = self.parent.state
-        LR_centers = "".join([parent_state[x] for x in LR_centers_444])
-        edges_state = self.parent.highlow_edges_state(self.parent.edge_mapping)
-        lt_state = LR_centers + edges_state
+        for x in centers_444:
+            if self.parent.state[x] == "L" or self.parent.state[x] == "R":
+                result.append(self.parent.state[x])
+            elif self.parent.state[x] == "U" or self.parent.state[x] == "D":
+                result.append("U")
+            else:
+                result.append("x")
 
-        cost_to_goal = max(
-            self.parent.lt_highlow_edges_edges.heuristic(edges_state),
-            self.parent.lt_highlow_edges_centers.heuristic(LR_centers),
-        )
+        return "".join(result)
 
-        return (lt_state, cost_to_goal)
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(centers_444, state):
+            cube[pos] = pos_state
 
 
 # phase 3
@@ -1116,7 +1027,6 @@ class RubiksCube444(RubiksCube):
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
         self.lt_L_centers_stage = LookupTable444LCentersStage(self)
-        self.lt_highlow_edges_edges_phase1 = LookupTable444HighLowEdgesEdgesPhase1(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
         self.lt_ULFRBD_centers_stage_l_centers_special = LookupTableIDA444ULFRBDCentersStageLCentersSpecial(self)
@@ -1126,7 +1036,7 @@ class RubiksCube444(RubiksCube):
 
         self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
         self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
-        self.lt_highlow_edges = LookupTable444HighLowEdges(self)
+        # self.lt_highlow_edges = LookupTable444HighLowEdges(self)
 
         self.lt_phase3_centers = LookupTable444Reduce333FirstTwoCenters(self)
         self.lt_phase3_edges = LookupTable444Reduce333FirstFourEdges(self)
@@ -1254,14 +1164,46 @@ class RubiksCube444(RubiksCube):
         phase1_solution_l_centers_special_len = len(phase1_solution_l_centers_special)
         logger.info(f"phase1_solution_l_centers_special {phase1_solution_l_centers_special_len} steps")
 
-        pt_state_indexes = []
+        # Apply a phase1 solution that does everything except high/low the edges and see which edge_mappings
+        # have the lowest high/low cost. We use this to avoid searching for all 2048 combinations.
+        for step in phase1_solution_l_centers_special:
+            self.rotate(step)
+
+        self.lt_highlow_edges_edges_phase1.load_ida_graph()
+        edge_mappings_to_search = []
 
         for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
             for edge_mapping in edges_to_flip_sets:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
                 self.edge_mapping = edge_mapping
-                pt_state_indexes.append(tuple([pt.state_index() for pt in self.lt_phase1and2.prune_tables]))
+                edge_mapping_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase1and2.prune_tables])
+                # logger.info(edge_mapping_pt_state_indexes)
+                state_index = self.lt_highlow_edges_edges_phase1.state_index()
+                state_cost = self.lt_highlow_edges_edges_phase1.state_index_cost(state_index)
+
+                if state_cost <= 4:
+                    logger.info(f"edge_mapping {edge_mapping} has highlow edges cost {state_cost}")
+                    edge_mappings_to_search.append(edge_mapping)
+
+        logger.info(f"phase1and2 searching {len(edge_mappings_to_search)} edge mappings")
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        pt_state_indexes = []
+        pt_state_indexes_to_edge_mapping = {}
+
+        for edge_mapping in edge_mappings_to_search:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            self.edge_mapping = edge_mapping
+            edge_mapping_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase1and2.prune_tables])
+            # logger.info(edge_mapping_pt_state_indexes)
+            # state_index = self.lt_highlow_edges_edges_phase1.state_index()
+            # state_cost = self.lt_highlow_edges_edges_phase1.state_index_cost(state_index)
+
+            pt_state_indexes.append(edge_mapping_pt_state_indexes)
+            pt_state_indexes_to_edge_mapping[edge_mapping_pt_state_indexes] = edge_mapping
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -1525,7 +1467,6 @@ class RubiksCube444(RubiksCube):
         if self.reduced_to_333():
             return
 
-        # dwalton
         # self.phase1()
         # self.phase2()
         self.phase1and2()

@@ -353,6 +353,13 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
         )
 
 
+class LookupTableIDA444LRCentersStage(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self, parent, all_moves=moves_444, illegal_moves=(), prune_tables=[parent.lt_LR_centers_stage]
+        )
+
+
 # phase 2
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
@@ -384,9 +391,9 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
             # fmt: off
             illegal_moves=(
                 "Uw", "Uw'",
-                "Lw", "Lw'",
+                "Dw", "Dw'",
                 "Fw", "Fw'",
-                "Rw", "Rw'",
+                "Bw", "Bw'",
             ),
             # fmt: on
             use_state_index=True,
@@ -461,9 +468,9 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
             # fmt: off
             illegal_moves=(
                 "Uw", "Uw'",
-                "Lw", "Lw'",
+                "Dw", "Dw'",
                 "Fw", "Fw'",
-                "Rw", "Rw'",
+                "Bw", "Bw'",
             ),
             # fmt: on
             use_state_index=True,
@@ -503,9 +510,9 @@ class LookupTableIDA444Phase2(LookupTableIDAViaGraph):
             # fmt: off
             illegal_moves=(
                 "Uw", "Uw'",
-                "Lw", "Lw'",
+                "Dw", "Dw'",
                 "Fw", "Fw'",
-                "Rw", "Rw'",
+                "Bw", "Bw'",
             ),
             # fmt: on
             prune_tables=[parent.lt_phase2_centers, parent.lt_phase2_edges],
@@ -1029,17 +1036,17 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-        # phase 1
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
         self.lt_L_centers_stage = LookupTable444LCentersStage(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
+        self.lt_phase1 = LookupTableIDA444LRCentersStage(self)
 
-        # phase 2
-        # self.lt_phase2_centers = LookupTable444HighLowEdgesCenters(self)
-        # self.lt_phase2_edges = LookupTable444HighLowEdgesEdges(self)
-        # self.lt_phase2 = LookupTableIDA444Phase2(self)
+        self.lt_phase2_centers = LookupTable444HighLowEdgesCenters(self)
+        self.lt_phase2_edges = LookupTable444HighLowEdgesEdges(self)
+        self.lt_phase2 = LookupTableIDA444Phase2(self)
+        self.lt_phase2.avoid_oll = 0
 
         self.lt_phase3_centers = LookupTable444Reduce333FirstTwoCenters(self)
         self.lt_phase3_edges = LookupTable444Reduce333FirstFourEdges(self)
@@ -1050,16 +1057,42 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
     def phase1(self) -> None:
-        # dwalton
+        # original_state = self.state[:]
+        # original_solution = self.solution[:]
+
         if not self.LR_centers_staged():
-            self.lt_LR_centers_stage.load_ida_graph()
-            self.lt_LR_centers_stage.solve()
+            self.lt_phase1.solve_via_c()
+
+            """
+            phase1_solutions = self.lt_phase1.solutions_via_c(solution_count=5000)
+
+            # dwalton
+            for phase1_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase1_solutions:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in phase1_solution:
+                    self.rotate(step)
+
+                phase2_centers_state = self.lt_phase2_centers.state()
+                logger.info(f"phase1 solution {phase1_solution} has phase2 cost {self.lt_phase2_centers.heuristic(phase2_centers_state)}")
+            """
 
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
         self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        raise Exception("DONE 10")
 
     def phase2(self) -> None:
+        phase1_solution_len = len(self.solution)
+        self.lt_phase2.solve_via_c()
+        self.solution.append(
+            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[phase1_solution_len:])}_steps_444_phase2"
+        )
+        self.highlow_edges_print()
+        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+
+        return
+        # raise Exception("DONE 20")
+
         # Pick the best edge_mapping
         # - an edge_mapping that gives us a hit in the phase2 table is ideal
         #     - pick the best among those
@@ -1243,6 +1276,7 @@ class RubiksCube444(RubiksCube):
         original_state = self.state[:]
         original_solution = self.solution[:]
 
+        # dwalton reference
         for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
             self.state = original_state[:]
             self.solution = original_solution[:]

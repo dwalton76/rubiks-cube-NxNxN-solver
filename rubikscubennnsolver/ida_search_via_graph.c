@@ -45,7 +45,6 @@ struct key_value_pair *ida_explored = NULL;
 // Supported IDA searches
 typedef enum {
     GENERIC,
-    PHASE1AND2_444,
     CENTERS_STAGE_555,
 
 } lookup_table_type;
@@ -189,16 +188,7 @@ unsigned char pt_states_to_cost_simple(lookup_table_type type, unsigned int prev
                                        unsigned char init_cost_to_goal) {
     unsigned char cost_to_goal = init_cost_to_goal;
 
-    // dwalton
-    if (type == PHASE1AND2_444) {
-        unsigned char ud_x_centers_cost = pt0_cost;
-        unsigned char lr_x_centers_cost = pt1_cost;
-
-        if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > cost_to_goal) {
-            cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
-        }
-
-    } else if (type == CENTERS_STAGE_555) {
+    if (type == CENTERS_STAGE_555) {
         unsigned char lr_t_centers_cost = pt0_cost;
         unsigned char lr_x_centers_cost = pt1_cost;
         unsigned char ud_t_centers_cost = pt2_cost;
@@ -309,16 +299,7 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
-            // dwalton
-            if (type == PHASE1AND2_444) {
-                unsigned char ud_x_centers_cost = result.pt0_cost;
-                unsigned char lr_x_centers_cost = result.pt1_cost;
-
-                if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
-                }
-
-            } else if (type == CENTERS_STAGE_555) {
+            if (type == CENTERS_STAGE_555) {
                 unsigned char lr_t_centers_cost = result.pt0_cost;
                 unsigned char lr_x_centers_cost = result.pt1_cost;
                 unsigned char ud_t_centers_cost = result.pt2_cost;
@@ -386,6 +367,11 @@ struct cost_to_goal_result pt_states_to_cost(lookup_table_type type, unsigned in
             if (result.pt4_cost > result.cost_to_goal) {
                 result.cost_to_goal = result.pt4_cost;
             }
+            break;
+
+        case 0:
+            result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
+            result.cost_to_goal = result.pt0_cost;
             break;
 
         default:
@@ -717,6 +703,12 @@ struct ida_search_result ida_search(lookup_table_type type, unsigned int init_pt
                     cost_to_goal = max(cost_to_goal, pt4_cost);
                     break;
 
+                case 0:
+                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    cost_to_goal = pt0_cost;
+                    break;
+
                 default:
                     printf("ERROR: invalid pt_max %d\n", pt_max);
                     exit(1);
@@ -872,10 +864,7 @@ int main(int argc, char *argv[]) {
         if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
-            if (strmatch(argv[i], "4x4x4-phase1and2")) {
-                type = PHASE1AND2_444;
-
-            } else if (strmatch(argv[i], "5x5x5-centers-stage")) {
+            if (strmatch(argv[i], "5x5x5-centers-stage")) {
                 type = CENTERS_STAGE_555;
 
             } else {
@@ -1124,7 +1113,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (type == PHASE1AND2_444 || type == CENTERS_STAGE_555 || pt_perfect_hash01 || cost_to_goal_multiplier) {
+    if (type == CENTERS_STAGE_555 || pt_perfect_hash01 || cost_to_goal_multiplier) {
         call_pt_simple = 1;
     }
 

@@ -176,18 +176,18 @@ class LookupTable444UDCentersStage(LookupTable):
     """
     lookup-table-4x4x4-step11-UD-centers-stage.txt
     ==============================================
-    0 steps has 3 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 2.00x previous step)
-    2 steps has 108 entries (0 percent, 18.00x previous step)
-    3 steps has 1,434 entries (0 percent, 13.28x previous step)
-    4 steps has 15,210 entries (2 percent, 10.61x previous step)
-    5 steps has 126,306 entries (17 percent, 8.30x previous step)
-    6 steps has 420,312 entries (57 percent, 3.33x previous step)
-    7 steps has 171,204 entries (23 percent, 0.41x previous step)
-    8 steps has 888 entries (0 percent, 0.01x previous step)
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
 
     Total: 735,471 entries
-    Average: 6.02 moves
+    Average: 6.03 moves
     """
 
     def __init__(self, parent, build_state_index: bool = False):
@@ -234,18 +234,18 @@ class LookupTable444LRCentersStage(LookupTable):
     """
     lookup-table-4x4x4-step12-LR-centers-stage.txt
     ==============================================
-    0 steps has 3 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 2.00x previous step)
-    2 steps has 108 entries (0 percent, 18.00x previous step)
-    3 steps has 1,434 entries (0 percent, 13.28x previous step)
-    4 steps has 15,210 entries (2 percent, 10.61x previous step)
-    5 steps has 126,306 entries (17 percent, 8.30x previous step)
-    6 steps has 420,312 entries (57 percent, 3.33x previous step)
-    7 steps has 171,204 entries (23 percent, 0.41x previous step)
-    8 steps has 888 entries (0 percent, 0.01x previous step)
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
 
     Total: 735,471 entries
-    Average: 6.02 moves
+    Average: 6.03 moves
     """
 
     def __init__(self, parent, build_state_index: bool = False):
@@ -287,6 +287,7 @@ class LookupTable444LRCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
+# dwalton I think we can chop this table
 class LookupTable444LCentersStage(LookupTable):
     """
     lookup-table-4x4x4-step13-L-centers-stage.txt
@@ -352,34 +353,7 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDAViaGraph):
         )
 
 
-class LookupTableIDA444ULFRBDCentersStageLCentersSpecial(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_444,
-            illegal_moves=(),
-            prune_tables=[parent.lt_UD_centers_stage, parent.lt_LR_centers_stage, parent.lt_L_centers_stage],
-        )
-
-
-class LookupTableIDA444Phase1And2(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_444,
-            illegal_moves=(),
-            prune_tables=[
-                parent.lt_UD_centers_stage,
-                parent.lt_LR_centers_stage,
-                parent.lt_L_centers_stage,
-                parent.lt_highlow_edges_edges_phase1,
-            ],
-            C_ida_type="4x4x4-phase1and2",
-        )
-
-
+# phase 2
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
     lookup-table-4x4x4-step21-highlow-edges-edges.txt
@@ -407,7 +381,14 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
             linecount=2704156,
             max_depth=8,
             all_moves=moves_444,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+            ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -477,12 +458,18 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
             linecount=900900,
             max_depth=9,
             all_moves=moves_444,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'"),
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+            ),
+            # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
         )
 
-    # dwalton fix this
     def state(self) -> str:
         """
         Returns:
@@ -505,6 +492,24 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
 
         for (pos, pos_state) in zip(centers_444, state):
             cube[pos] = pos_state
+
+
+class LookupTableIDA444Phase2(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_444,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Rw", "Rw'",
+            ),
+            # fmt: on
+            prune_tables=[parent.lt_phase2_centers, parent.lt_phase2_edges],
+        )
 
 
 # phase 3
@@ -1024,19 +1029,17 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
+        # phase 1
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
         self.lt_L_centers_stage = LookupTable444LCentersStage(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
-        self.lt_ULFRBD_centers_stage_l_centers_special = LookupTableIDA444ULFRBDCentersStageLCentersSpecial(self)
-        self.lt_ULFRBD_centers_stage_l_centers_special.avoid_oll = 0  # avoid OLL on orbit 0
-        self.lt_phase1and2 = LookupTableIDA444Phase1And2(self)
-        self.lt_phase1and2.avoid_oll = 0
 
-        self.lt_highlow_edges_centers = LookupTable444HighLowEdgesCenters(self)
-        self.lt_highlow_edges_edges = LookupTable444HighLowEdgesEdges(self)
-        # self.lt_highlow_edges = LookupTable444HighLowEdges(self)
+        # phase 2
+        # self.lt_phase2_centers = LookupTable444HighLowEdgesCenters(self)
+        # self.lt_phase2_edges = LookupTable444HighLowEdgesEdges(self)
+        # self.lt_phase2 = LookupTableIDA444Phase2(self)
 
         self.lt_phase3_centers = LookupTable444Reduce333FirstTwoCenters(self)
         self.lt_phase3_edges = LookupTable444Reduce333FirstFourEdges(self)
@@ -1047,29 +1050,14 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
     def phase1(self) -> None:
-        if not self.centers_staged():
-
-            # what is the solution length if we do NOT put the LR centers in 12/70 states that can be solved without L L' R R'
-            phase1_solution = self.lt_ULFRBD_centers_stage.solutions_via_c(solution_count=1)[0][0]
-
-            # what is the solution length if we do put the LR centers in 12/70 states that can be solved without L L' R R'
-            phase1_solution_l_centers_special = self.lt_ULFRBD_centers_stage_l_centers_special.solutions_via_c(
-                solution_count=1
-            )[0][0]
-
-            logger.info(
-                f"phase1 solution length {len(phase1_solution)}, phase1_lr_centers_special solution length {len(phase1_solution_l_centers_special)}"
-            )
-
-            if len(phase1_solution_l_centers_special) <= len(phase1_solution):
-                for step in phase1_solution_l_centers_special:
-                    self.rotate(step)
-            else:
-                for step in phase1_solution:
-                    self.rotate(step)
+        # dwalton
+        if not self.LR_centers_staged():
+            self.lt_LR_centers_stage.load_ida_graph()
+            self.lt_LR_centers_stage.solve()
 
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
         self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        raise Exception("DONE 10")
 
     def phase2(self) -> None:
         # Pick the best edge_mapping
@@ -1213,7 +1201,7 @@ class RubiksCube444(RubiksCube):
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[:])}_steps_444_phase1and2")
         self.print_cube(f"{self}: end of phase1and2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 
-        raise Exception("DONE")
+        raise Exception("DONE phase1and2")
 
     def phase3(self, wing_str_combo: List[str] = None):
         original_state = self.state[:]
@@ -1467,9 +1455,8 @@ class RubiksCube444(RubiksCube):
         if self.reduced_to_333():
             return
 
-        # self.phase1()
-        # self.phase2()
-        self.phase1and2()
+        self.phase1()
+        self.phase2()
 
         # self.phase3()
         # self.phase4()

@@ -30,6 +30,12 @@ unsigned int right_oblique_edges_666[NUM_RIGHT_OBLIQUE_EDGES_666] = {
     190, 194, 203, 207,  // Down
 };
 
+unsigned int lr_inner_x_centers_666[NUM_LR_INNER_X_CENTERS_666] = {
+    51, 52, 57, 58,  // Left
+    123, 124, 129, 130,  // Right
+};
+
+
 unsigned int get_unpaired_obliques_count_666(char *cube) {
     unsigned int unpaired_obliques = 8;
     unsigned int left_cube_index = 0;
@@ -101,6 +107,7 @@ unsigned char ida_search_complete_LR_oblique_edges_stage_666(char *cube) {
 
         if ((cube[left_cube_index] == '1' && cube[right_cube_index] == '0') ||
             (cube[left_cube_index] == '0' && cube[right_cube_index] == '1')) {
+            // LOG("cube[%d] %d, cube[%d] %d\n", left_cube_index, cube[left_cube_index], right_cube_index, cube[right_cube_index]);
             return 0;
         }
     }

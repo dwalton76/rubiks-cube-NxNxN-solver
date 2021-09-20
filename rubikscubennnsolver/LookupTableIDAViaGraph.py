@@ -253,9 +253,15 @@ class LookupTableIDAViaGraph(LookupTable):
         max_ida_threshold: int = None,
         solution_count: int = None,
         find_extra: bool = False,
+        use_kociemba_string: bool = False,
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
         my_pt_state_filename = "my-pt-states.txt"
+
+        # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
+        pre_recolor_state = self.parent.state[:]
+        pre_recolor_solution = self.parent.solution[:]
+        self.recolor()
 
         if pt_states:
             pt_states = sorted(set(pt_states))
@@ -303,6 +309,11 @@ class LookupTableIDAViaGraph(LookupTable):
 
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise Exception(f"avoid_oll is only supported for orbits 0 or 1, not {self.avoid_oll}")
+
+        if use_kociemba_string:
+            kociemba_string = self.parent.get_kociemba_string(True)
+            cmd.append("--kociemba")
+            cmd.append(kociemba_string)
 
         if self.perfect_hash01_filename:
             cmd.append("--prune-table-perfect-hash01")
@@ -365,6 +376,8 @@ class LookupTableIDAViaGraph(LookupTable):
         pt2_state = None
         pt3_state = None
         pt4_state = None
+        self.parent.state = pre_recolor_state[:]
+        self.parent.solution = pre_recolor_solution[:]
         RE_PT_STATES = re.compile(
             r"pt0_state (\d+), pt1_state (\d+), pt2_state (\d+), pt3_state (\d+), pt4_state (\d+)"
         )
@@ -400,6 +413,7 @@ class LookupTableIDAViaGraph(LookupTable):
         max_ida_threshold: int = None,
         solution_count: int = None,
         find_extra: bool = False,
+        use_kociemba_string: bool = False,
     ) -> None:
         solution = self.solutions_via_c(
             pt_states=pt_states,
@@ -407,6 +421,7 @@ class LookupTableIDAViaGraph(LookupTable):
             max_ida_threshold=max_ida_threshold,
             solution_count=solution_count,
             find_extra=find_extra,
+            use_kociemba_string=use_kociemba_string,
         )[0][0]
 
         for step in solution:

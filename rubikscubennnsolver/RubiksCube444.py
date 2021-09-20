@@ -1000,9 +1000,10 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
     def phase1(self) -> None:
-        if not self.LR_centers_staged():
-            self.lt_phase1.solve_via_c()
+        if self.LR_centers_staged():
+            return
 
+        self.lt_phase1.solve_via_c()
         self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
         self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
 

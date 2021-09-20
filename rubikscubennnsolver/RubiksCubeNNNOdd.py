@@ -312,7 +312,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             % self.get_solution_len_minus_rotates(self.solution)
         )
 
-    def group_centers_guts(self):
+    def reduce_555(self):
         if self.centers_solved():
             return
 

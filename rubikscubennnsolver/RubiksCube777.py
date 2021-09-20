@@ -2613,7 +2613,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-    def group_centers_guts(self):
+    def reduce_555(self):
         self.lt_init()
 
         if not self.LR_centers_staged():

@@ -218,7 +218,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_NNN += self.size * self.size
 
             # reduce the centers to 5x5x5 centers
-            fake_666.group_centers_guts(pair_inside_edges=False)
+            fake_666.reduce_555(pair_inside_edges=False)
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))
@@ -241,7 +241,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 "%s: Big plus sign formed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
             )
 
-    def group_centers_guts(self):
+    def reduce_555(self):
 
         # Reduce this even cube to an odd cube
         self.make_plus_sign()

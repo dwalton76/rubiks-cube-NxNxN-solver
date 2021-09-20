@@ -4296,8 +4296,8 @@ class RubiksCube(object):
         """
         return self.rotate_for_best_centers(False, centers)
 
-    def group_centers_guts(self) -> None:
-        raise NotImplementedError("Child class must implement group_centers_guts")
+    def reduce_555(self) -> None:
+        raise NotImplementedError("Child class must implement reduce_555")
 
     def get_solution_len_minus_rotates(self, solution: List[str]) -> int:
         """
@@ -4549,10 +4549,10 @@ class RubiksCube(object):
         """
         Solve the centers and pair the edges to reduce the cube to a 3x3x3
         """
-        if self.centers_solved():
-            logger.info("centers are already solved")
+        if self.centers_solved() and self.edges_paired():
+            logger.info("already reduced to 5x5x5")
         else:
-            self.group_centers_guts()
+            self.reduce_555()
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()

@@ -1368,10 +1368,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         return True
 
-    def group_centers_guts(self, pair_inside_edges: bool = True):
-        """
-        reduce the 6x6x6 to a 5x5x5
-        """
+    def reduce_555(self, pair_inside_edges: bool = True):
+
         if self.reduced_to_555():
             return
 

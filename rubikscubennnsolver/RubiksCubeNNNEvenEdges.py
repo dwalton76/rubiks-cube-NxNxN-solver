@@ -242,7 +242,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         self.solution.append("COMMENT_")
 
     def group_edges(self):
-        # For 6x6x6 the inside edges are already paired at the end of group_centers_guts
+        # For 6x6x6 the inside edges are already paired at the end of reduce_555
         # For 8x8x8 and larger the inside edges were paired right after make_plus_sign
 
         # How many orbits of edges does this cube have?

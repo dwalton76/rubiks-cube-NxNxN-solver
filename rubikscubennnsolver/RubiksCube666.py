@@ -379,7 +379,7 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaGraph):
 # phase 3
 class LookupTable666UDInnerXCentersStage(LookupTable):
     """
-    lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt
+    lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt
     ======================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
@@ -394,31 +394,19 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
     Average: 5.45 moves
     """
 
+    # fmt: off
     UFBD_inner_x_centers_666 = (
-        15,
-        16,
-        21,
-        22,  # Upper
-        87,
-        88,
-        93,
-        94,  # Front
-        159,
-        160,
-        165,
-        166,  # Back
-        195,
-        196,
-        201,
-        202,  # Down
+        15, 16, 21, 22,  # Upper
+        87, 88, 93, 94,  # Front
+        159, 160, 165, 166,  # Back
+        195, 196, 201, 202,  # Down
     )
 
     def __init__(self, parent, build_state_index: bool = False):
-        # fmt: off
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-6x6x6-step10-UD-inner-x-centers-stage.txt",
+            "lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt",
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=7,
@@ -438,11 +426,10 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             use_state_index=True,
             build_state_index=build_state_index,
         )
-        # fmt: on
+    # fmt: on
 
     def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UFBD_inner_x_centers_666])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_inner_x_centers_666])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
@@ -451,10 +438,178 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTable666UDXCentersStage(LookupTable):
+    """
+    lookup-table-6x6x6-step12-UD-x-centers.txt
+    ==========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+
+    Total: 12,870 entries
+    Average: 5.45 moves
+    """
+
+    # fmt: off
+    UFBD_outer_x_centers_666 = [
+        8, 11, 26, 29,
+        80, 83, 98, 101,
+        152, 155, 170, 173,
+        188, 191, 206, 209,
+    ]
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step12-UD-x-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=7,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_outer_x_centers_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UFBD_outer_x_centers_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDLeftObliqueCentersStage(LookupTable):
+    """
+    lookup-table-6x6x6-step13-UD-left-oblique-centers.txt
+    =====================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step13-UD-left-oblique-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UDFB_left_oblique_edges])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UDFB_left_oblique_edges, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDRightObliqueCentersStage(LookupTable):
+    """
+    lookup-table-6x6x6-step14-UD-right-oblique-centers.txt
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step14-UD-right-oblique-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UDFB_right_oblique_edges])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UDFB_right_oblique_edges, state):
+            cube[pos] = pos_state
+
+
 class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
     """
-    All we care about is getting the UD oblique edges paired, we do
-    not need them to be placed on sides UD at this point.
+    Use the inner-x-centers table to pair the UDFB inner-x-centers while using an "unpaired oblique edges" heuristic
+    to get the UD oblique edges paired anywhere on sides UFDB.  We do not need these obliques to be placed on sides
+    UD at this point.
     """
 
     # fmt: off
@@ -466,11 +621,9 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
         153, 154, 158, 161, 164, 167, 171, 172,
         189, 190, 194, 197, 200, 203, 207, 208,
     )
-    # fmt: on
 
     def __init__(self, parent):
 
-        # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
@@ -485,7 +638,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
                 "Fw", "Fw'",
                 "Bw", "Bw'",
                 "L", "L'", "L2",
-                "R", "R'", "R2"
+                "R", "R'", "R2",
             ),
             centers_only=True,
             prune_tables=[
@@ -493,7 +646,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
             ],
             C_ida_type="6x6x6-UD-oblique-edges-stage",  # C_ida_type
         )
-        # fmt: on
+    # fmt: on
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
@@ -510,6 +663,38 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
                     self.parent.state[x] = "x"
             else:
                 self.parent.state[x] = "."
+
+
+# dwalton
+# - create a class that stages UD inner-x-centers and obliques
+# - create a class that stages UD (everything)
+class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+            ),
+            prune_tables=(
+                parent.lt_UD_inner_x_centers_stage,
+                parent.lt_UD_left_oblique_edges_stage,
+                parent.lt_UD_right_oblique_edges_stage,
+            ),
+            centers_only=True,
+        )
+        # fmt: on
 
 
 # phase 5
@@ -1076,8 +1261,16 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         # phase 2
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
+        self.lt_UD_x_centers_stage = LookupTable666UDXCentersStage(self)
+        self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
+        self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
+
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
         self.lt_UD_oblique_edge_stage.avoid_oll = (0, 1)
+
+        # dwalton
+        self.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(self)
+        self.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
 
         # This is the case if a 777 is using 666 to pair its LR oblique edges
         # TODO is this still needed?
@@ -1226,8 +1419,22 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         logger.info(self.get_kociemba_string(True))
 
         if not self.UD_centers_staged():
+            tmp_solution_len = len(self.solution)
+            self.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
+            self.print_cube(
+                "%s: UD oblique edges and inner x-centers staged (%d steps in)"
+                % (self, self.get_solution_len_minus_rotates(self.solution))
+            )
+            self.solution.append(
+                "COMMENT_%d_steps_666_UD_oblique_edges_inner_x_centers_staged"
+                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+            )
+            # dwalton the two phase approach below takes 9 + 9 = 18 steps but 100% stages UD centers
+            # the one phase approach above takes X steps but does not stage the outer x-centers
+
             # phase 3
             # pair the UD oblique edges and outer x-centers
+            """
             tmp_solution_len = len(self.solution)
             self.lt_UD_oblique_edge_stage.solve_via_c(use_kociemba_string=True)
             self.print_cube(
@@ -1252,6 +1459,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.print_cube(
                 "%s: UD centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
             )
+            """
+            raise Exception("DONE")
 
         # Reduce the centers to 5x5x5 centers
         # - solve the UD inner x-centers and pair the UD oblique edges

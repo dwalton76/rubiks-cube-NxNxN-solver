@@ -368,9 +368,8 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         } else if (type == LR_OBLIQUE_EDGES_STAGE_666) {
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
-            // LOG("cost_to_goal %u, heuristic_result.cost_to_goal %u\n", cost_to_goal, heuristic_result.cost_to_goal);
             cost_to_goal = max(heuristic_result.cost_to_goal, cost_to_goal);
-            // exit(1);
+
         } else {
             printf("ERROR: pt_states_to_cost_simple() does not yet support this --type\n");
             exit(1);
@@ -550,7 +549,7 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         if (type == LR_OBLIQUE_EDGES_STAGE_666) {
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
-            result.cost_to_goal = heuristic_result.cost_to_goal;
+            result.cost_to_goal = max(result.cost_to_goal, heuristic_result.cost_to_goal);
 
         } else {
             printf("ERROR: pt_states_to_cost() does not yet support this --type\n");
@@ -602,14 +601,82 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     unsigned char pt3_cost = 0;
     unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
+    unsigned char header_row0[64];
+    unsigned char header_row1[64];
+    unsigned char header_row2[64];
+    unsigned char header_row0_index = 0;
+    unsigned char header_row1_index = 0;
+    unsigned char header_row2_index = 0;
+    memset(&header_row0, 0, sizeof(char) * 64);
+    memset(&header_row1, 0, sizeof(char) * 64);
+    memset(&header_row2, 0, sizeof(char) * 64);
+    char cube_tmp[array_size];
+    char cube_copy[array_size];
+    size_t array_size_char = sizeof(char) * array_size;
+    struct ida_heuristic_result heuristic;
 
-    if (type == LR_OBLIQUE_EDGES_STAGE_666) {
-        char cube_tmp[array_size];
-        char cube_copy[array_size];
-        size_t array_size_char = sizeof(char) * array_size;
-        unsigned int cost_to_goal = 0;
-        struct ida_heuristic_result heuristic;
+    printf("\n\n");
+    printf("       ");
 
+    // header
+    if (type) {
+        printf("UNPAIRED  EST  ");
+    }
+
+    if (pt_max == 4) {
+        printf("PT0  PT1  PT2  PT3  PT4  ");
+    } else if (pt_max == 3) {
+        printf("PT0  PT1  PT2  PT3  ");
+    } else if (pt_max == 2) {
+        printf("PT0  PT1  PT2  ");
+    } else if (pt_max == 1) {
+        printf("PT0  PT1  ");
+    } else if (pt_max == 0) {
+        printf("PT0  ");
+    }
+
+    if (pt_perfect_hash01 && pt_perfect_hash02) {
+        printf("PER01  PER02  ");
+    } else if (pt_perfect_hash01) {
+        printf("PER01  ");
+    }
+    printf("CTG  TRU  IDX\n");
+
+    // divider line
+    printf("       ");
+    if (type) {
+        printf("========  ===  ");
+    }
+
+    if (pt_max == 4) {
+        printf("===  ===  ===  ===  ===  ");
+    } else if (pt_max == 3) {
+        printf("===  ===  ===  ===  ");
+    } else if (pt_max == 2) {
+        printf("===  ===  ===  ");
+    } else if (pt_max == 1) {
+        printf("===  ===  ");
+    } else if (pt_max == 0) {
+        printf("===  ");
+    }
+
+    if (pt_perfect_hash01 && pt_perfect_hash02) {
+        printf("=====  =====  ");
+    } else if (pt_perfect_hash01) {
+        printf("=====  ");
+    }
+    printf("===  ===  ===\n");
+
+    ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    pt0_cost = ctg.pt0_cost;
+    pt1_cost = ctg.pt1_cost;
+    pt2_cost = ctg.pt2_cost;
+    pt3_cost = ctg.pt3_cost;
+    pt4_cost = ctg.pt4_cost;
+
+    printf(" INIT  ");
+
+    if (type) {
         memcpy(cube_copy, cube, array_size_char);
 
         if (type == LR_OBLIQUE_EDGES_STAGE_666) {
@@ -620,13 +687,57 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
             heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
         }
 
-        printf("\n\n");
-        printf("       UNPAIRED\n");
-        printf("          COUNT  CTG  TRU  IDX\n");
-        printf("       ========  ===  ===  ===\n");
-        printf(" INIT  %8d  %3d  %3d  %3d\n", heuristic.unpaired_count, heuristic.cost_to_goal, steps_to_solved, 0);
+        printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
+    }
 
-        for (unsigned char i = 0; i < solution_len; i++) {
+    if (pt_max >= 0) {printf("%3d  ", pt0_cost);}
+    if (pt_max >= 1) {printf("%3d  ", pt1_cost);}
+    if (pt_max >= 2) {printf("%3d  ", pt2_cost);}
+    if (pt_max >= 3) {printf("%3d  ", pt3_cost);}
+    if (pt_max >= 4) {printf("%3d  ", pt4_cost);}
+    if (pt_perfect_hash01) {printf("%3d  ", ctg.perfect_hash01_cost);}
+    if (pt_perfect_hash02) {printf("%3d  ", ctg.perfect_hash02_cost);}
+    printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, 0);
+
+    for (unsigned char i = 0; i < solution_len; i++) {
+        unsigned char j = 0;
+
+        while (j < legal_move_count) {
+            if (legal_moves[j] == solution[i]) {
+                break;
+            }
+            j++;
+        }
+        unsigned int offset = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * j);
+
+        if (pt_max == 0) {
+            pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
+
+        } else if (pt_max == 1) {
+            pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
+
+        } else if (pt_max == 2) {
+            pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
+            pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
+
+        } else if (pt_max == 3) {
+            pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
+            pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
+            pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
+
+        } else if (pt_max == 4) {
+            pt4_state = read_state(pt4, (pt4_state * ROW_LENGTH) + offset);
+            pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
+            pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
+            pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
+            pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
+        }
+
+        printf("%5s  ", move2str[solution[i]]);
+        if (type) {
             if (type == LR_OBLIQUE_EDGES_STAGE_666) {
                 rotate_666(cube, cube_tmp, array_size, solution[i]);
                 heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
@@ -640,79 +751,28 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
                 printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
                 exit(1);
             }
-
-            printf("%5s  %8d  %3d  %3d  %3d\n", move2str[solution[i]], heuristic.unpaired_count,
-                   heuristic.cost_to_goal, steps_to_solved, i + 1);
-            steps_to_solved--;
+            printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
         }
-        printf("\n");
 
-    } else {
         ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+        cost_to_goal = ctg.cost_to_goal;
         pt0_cost = ctg.pt0_cost;
         pt1_cost = ctg.pt1_cost;
         pt2_cost = ctg.pt2_cost;
         pt3_cost = ctg.pt3_cost;
         pt4_cost = ctg.pt4_cost;
+        steps_to_solved--;
 
-        printf("\n");
-        printf("       PT0  PT1  PT2  PT3  PT4  PER01  PER02  CTG  TRU  IDX\n");
-        printf("       ===  ===  ===  ===  ===  =====  =====  ===  ===  ===\n");
-        printf("  INIT %3d  %3d  %3d  %3d  %3d    %3d    %3d  %3d  %3d  %3d\n", pt0_cost, pt1_cost, pt2_cost, pt3_cost,
-               pt4_cost, ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal, steps_to_solved, 0);
-
-        for (unsigned char i = 0; i < solution_len; i++) {
-            unsigned char j = 0;
-
-            while (j < legal_move_count) {
-                if (legal_moves[j] == solution[i]) {
-                    break;
-                }
-                j++;
-            }
-            unsigned int offset = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * j);
-
-            if (pt_max == 0) {
-                pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-
-            } else if (pt_max == 1) {
-                pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
-                pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-
-            } else if (pt_max == 2) {
-                pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
-                pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
-                pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-
-            } else if (pt_max == 3) {
-                pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
-                pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
-                pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
-                pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-
-            } else if (pt_max == 4) {
-                pt4_state = read_state(pt4, (pt4_state * ROW_LENGTH) + offset);
-                pt3_state = read_state(pt3, (pt3_state * ROW_LENGTH) + offset);
-                pt2_state = read_state(pt2, (pt2_state * ROW_LENGTH) + offset);
-                pt1_state = read_state(pt1, (pt1_state * ROW_LENGTH) + offset);
-                pt0_state = read_state(pt0, (pt0_state * ROW_LENGTH) + offset);
-            }
-
-            ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-            cost_to_goal = ctg.cost_to_goal;
-            pt0_cost = ctg.pt0_cost;
-            pt1_cost = ctg.pt1_cost;
-            pt2_cost = ctg.pt2_cost;
-            pt3_cost = ctg.pt3_cost;
-            pt4_cost = ctg.pt4_cost;
-            steps_to_solved--;
-            printf("%5s  %3d  %3d  %3d  %3d  %3d  %5d  %5d  %3d  %3d  %3d\n", move2str[solution[i]], pt0_cost, pt1_cost,
-                   pt2_cost, pt3_cost, pt4_cost, ctg.perfect_hash01_cost, ctg.perfect_hash02_cost, cost_to_goal,
-                   steps_to_solved, i + 1);
-        }
-        printf("\n");
-
+        if (pt_max >= 0) {printf("%3d  ", pt0_cost);}
+        if (pt_max >= 1) {printf("%3d  ", pt1_cost);}
+        if (pt_max >= 2) {printf("%3d  ", pt2_cost);}
+        if (pt_max >= 3) {printf("%3d  ", pt3_cost);}
+        if (pt_max >= 4) {printf("%3d  ", pt4_cost);}
+        if (pt_perfect_hash01) {printf("%3d  ", ctg.perfect_hash01_cost);}
+        if (pt_perfect_hash02) {printf("%3d  ", ctg.perfect_hash02_cost);}
+        printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, i + 1);
     }
+    printf("\n");
 }
 
 unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_here) {
@@ -993,12 +1053,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                     cube_copy = NULL;
                     continue;
                 }
-                // print_cube(cube_copy, cube_size);
-                // exit(1);
             }
-
-            // dwalton here now
-            // LOG("move %s, pt0_cost %d, pt0_state %lu\n", move2str[move], pt0_cost, pt0_state);
 
             if (call_pt_simple) {
                 cost_to_goal = pt_states_to_cost_simple(cube_copy, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state,
@@ -1495,8 +1550,6 @@ int main(int argc, char *argv[]) {
     }
 
     ROW_LENGTH = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * legal_move_count);
-    LOG("legal_move_count %d, ROW_LENGTH %d\n", legal_move_count, ROW_LENGTH);
-
     struct ida_search_result search_result;
     search_result.found_solution = 0;
     search_result.f_cost = 99;

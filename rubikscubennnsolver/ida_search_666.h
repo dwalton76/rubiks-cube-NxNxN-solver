@@ -5,10 +5,8 @@
 #define NUM_OBLIQUE_EDGES_666 48
 #define NUM_LEFT_OBLIQUE_EDGES_666 24
 #define NUM_RIGHT_OBLIQUE_EDGES_666 24
-#define NUM_LR_INNER_X_CENTERS_666 8
 
 struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube);
 unsigned char ida_search_complete_LR_oblique_edges_stage_666(char *cube);
-unsigned char ida_search_complete_LR_inner_x_centers_stage_666(char *cube);
 
 #endif /* _IDA_SEARCH_666_H */

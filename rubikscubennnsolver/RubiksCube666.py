@@ -1132,7 +1132,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         if RubiksCube666.instantiated:
             # raise Exception("Another 6x6x6 instance is being created")
-            logger.warning("Another 6x6x6 instance is being created")
+            # logger.warning("Another 6x6x6 instance is being created")
+            pass
         else:
             RubiksCube666.instantiated = True
 

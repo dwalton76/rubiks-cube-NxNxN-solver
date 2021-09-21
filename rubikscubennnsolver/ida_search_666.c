@@ -50,7 +50,7 @@ unsigned int get_unpaired_obliques_count_666(char *cube) {
 // ============================================================================
 // step20
 // ============================================================================
-struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube) {
+struct ida_heuristic_result ida_heuristic_oblique_edges_stage_666(char *cube) {
     int unpaired_count = get_unpaired_obliques_count_666(cube);
     struct ida_heuristic_result result;
     unsigned long long state = 0;
@@ -91,7 +91,7 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube)
     return result;
 }
 
-unsigned char ida_search_complete_LR_oblique_edges_stage_666(char *cube) {
+unsigned char ida_search_complete_oblique_edges_stage_666(char *cube) {
     unsigned int left_cube_index = 0;
     unsigned int right_cube_index = 0;
 

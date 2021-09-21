@@ -54,6 +54,7 @@ typedef enum {
 
     // 6x6x6
     LR_OBLIQUE_EDGES_STAGE_666,
+    UD_OBLIQUE_EDGES_STAGE_666,
 
     // 7x7x7
     LR_OBLIQUE_EDGES_STAGE_777,
@@ -114,6 +115,18 @@ unsigned int x_centers_stage_555[9][9] = {
     {6, 6, 6, 6, 7, 7, 8, 9, 9},    // LR x-centers cost 6
     {7, 7, 7, 7, 7, 8, 9, 9, 8},    // LR x-centers cost 7
     {8, 8, 8, 8, 8, 8, 10, 10, 8},  // LR x-centers cost 8
+};
+
+unsigned int LR_centers_stage_666[9][8] = {
+    {0, 1, 2, 3, 4, 5, 6, 7}, // x unpaired obliques (0), y LR centers cost
+    {1, 1, 2, 3, 4, 5, 6, 7}, // x unpaired obliques (1), y LR centers cost
+    {2, 1, 2, 3, 4, 5, 7, 7}, // x unpaired obliques (2), y LR centers cost
+    {3, 3, 4, 3, 4, 6, 7, 8}, // x unpaired obliques (3), y LR centers cost
+    {4, 3, 4, 5, 4, 6, 8, 8}, // x unpaired obliques (4), y LR centers cost
+    {5, 4, 5, 5, 6, 7, 8, 9}, // x unpaired obliques (5), y LR centers cost
+    {6, 6, 6, 7, 8, 8, 9, 9}, // x unpaired obliques (6), y LR centers cost
+    {7, 7, 7, 8, 9, 8, 9, 9}, // x unpaired obliques (7), y LR centers cost
+    {8, 8, 8, 8, 8, 8, 10, 10}, // x unpaired obliques (8), y LR centers cost
 };
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
@@ -250,6 +263,12 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
             print_cube(cube, size);
             break;
 
+        case UD_OBLIQUE_EDGES_STAGE_666:
+            // Convert to 1s and 0s
+            str_replace_for_binary(cube, ones_UD);
+            print_cube(cube, size);
+            break;
+
         case LR_OBLIQUE_EDGES_STAGE_777:
             // Convert to 1s and 0s
             str_replace_for_binary(cube, ones_LR);
@@ -272,7 +291,8 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type) {
     switch (type) {
         // 6x6x6
         case LR_OBLIQUE_EDGES_STAGE_666:
-            return ida_heuristic_LR_oblique_edges_stage_666(cube);
+        case UD_OBLIQUE_EDGES_STAGE_666:
+            return ida_heuristic_oblique_edges_stage_666(cube);
 
         // 7x7x7
         case LR_OBLIQUE_EDGES_STAGE_777:
@@ -365,10 +385,10 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
                 cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
             }
 
-        } else if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666) {
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
-            cost_to_goal = max(heuristic_result.cost_to_goal, cost_to_goal);
+            cost_to_goal = LR_centers_stage_666[heuristic_result.unpaired_count][pt0_cost];
 
         } else {
             printf("ERROR: pt_states_to_cost_simple() does not yet support this --type\n");
@@ -546,7 +566,7 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
     }
 
     if (type) {
-        if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+        if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666) {
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
             result.cost_to_goal = max(result.cost_to_goal, heuristic_result.cost_to_goal);
@@ -679,8 +699,8 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     if (type) {
         memcpy(cube_copy, cube, array_size_char);
 
-        if (type == LR_OBLIQUE_EDGES_STAGE_666) {
-            heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
+        if (type == LR_OBLIQUE_EDGES_STAGE_666 || UD_OBLIQUE_EDGES_STAGE_666) {
+            heuristic = ida_heuristic_oblique_edges_stage_666(cube);
         } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
             heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
         } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
@@ -738,9 +758,9 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
 
         printf("%5s  ", move2str[solution[i]]);
         if (type) {
-            if (type == LR_OBLIQUE_EDGES_STAGE_666) {
+            if (type == LR_OBLIQUE_EDGES_STAGE_666 || UD_OBLIQUE_EDGES_STAGE_666) {
                 rotate_666(cube, cube_tmp, array_size, solution[i]);
-                heuristic = ida_heuristic_LR_oblique_edges_stage_666(cube);
+                heuristic = ida_heuristic_oblique_edges_stage_666(cube);
             } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
                 rotate_777(cube, cube_tmp, array_size, solution[i]);
                 heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
@@ -824,7 +844,8 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
     switch (type) {
         // 6x6x6
         case LR_OBLIQUE_EDGES_STAGE_666:
-            return ida_search_complete_LR_oblique_edges_stage_666(cube);
+        case UD_OBLIQUE_EDGES_STAGE_666:
+            return ida_search_complete_oblique_edges_stage_666(cube);
 
         // 7x7x7
         case LR_OBLIQUE_EDGES_STAGE_777:
@@ -1232,6 +1253,10 @@ int main(int argc, char *argv[]) {
 
             } else if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_666;
+                cube_size_type = 6;
+
+            } else if (strmatch(argv[i], "6x6x6-UD-oblique-edges-stage")) {
+                type = UD_OBLIQUE_EDGES_STAGE_666;
                 cube_size_type = 6;
 
             } else if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {

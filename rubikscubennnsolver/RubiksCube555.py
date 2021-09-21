@@ -3484,6 +3484,9 @@ class RubiksCube555(RubiksCube):
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
 
+    def group_centers_stage_UD(self, max_ida_threshold: int = None):
+        self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
+
     def eo_edges(self):
         """
         Our goal is to get the edges split into high/low groups but we do not care what

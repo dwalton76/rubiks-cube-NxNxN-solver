@@ -1268,7 +1268,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
         self.lt_UD_oblique_edge_stage.avoid_oll = (0, 1)
 
-        # dwalton
         self.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(self)
         self.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
 

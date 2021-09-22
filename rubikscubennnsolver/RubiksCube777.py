@@ -2,7 +2,7 @@
 import logging
 
 # rubiks cube libraries
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDAViaC
+from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
@@ -51,7 +51,7 @@ ULRD_centers_777 = (
 # ===============================
 # phase 2 - pair LR oblique edges
 # ===============================
-class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
+class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
 
     # fmt: off
     oblique_edges_777 = (
@@ -67,7 +67,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
     def __init__(self, parent):
 
         # fmt: off
-        LookupTableIDAViaC.__init__(
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
             # Needed tables and their md5 signatures
@@ -102,7 +102,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
 # ===================================
 # phase 5 - pair the oblique UD edges
 # ===================================
-class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
+class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
 
     # fmt: off
     UFBD_oblique_edges_777 = (
@@ -116,7 +116,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
     def __init__(self, parent):
 
         # fmt: off
-        LookupTableIDAViaC.__init__(
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
             # Needed tables and their md5 signatures

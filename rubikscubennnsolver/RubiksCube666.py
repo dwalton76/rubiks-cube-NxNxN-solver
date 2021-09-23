@@ -66,32 +66,32 @@ UFBD_centers_666 = (
     188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,
 )
 
-UDFB_left_oblique_edges = (
+UFBD_left_oblique_edges = (
     9, 17, 28, 20,  # Upper
-    189, 197, 208, 200,  # Down
     81, 89, 100, 92,  # Front
     153, 161, 172, 164,  # Back
+    189, 197, 208, 200,  # Down
 )
 
-UDFB_right_oblique_edges = (
+UFBD_right_oblique_edges = (
     10, 23, 27, 14,  # Upper
-    190, 203, 207, 194,  # Down
     82, 95, 99, 86,  # Front
     154, 167, 171, 158,  # Back
+    190, 203, 207, 194,  # Down
 )
 
-UDFB_outer_x_centers = (
+UFBD_outer_x_centers = (
     8, 11, 26, 29,  # Upper
-    188, 191, 206, 209,  # Down
     80, 83, 98, 101,  # Front
     152, 155, 170, 173,  # Back
+    188, 191, 206, 209,  # Down
 )
 
-UDFB_inner_x_centers = (
+UFBD_inner_x_centers = (
     15, 16, 21, 22,  # Upper
-    195, 196, 201, 202,  # Down
     87, 88, 93, 94,  # Front
     159, 160, 165, 166,  # Back
+    195, 196, 201, 202,  # Down
 )
 
 UFBD_outer_x_centers = (
@@ -330,8 +330,9 @@ class LookupTable666LRInnerXCentersStage(LookupTable):
 
 class LookupTable666LRObliquEdgeStage(LookupTableIDAViaGraph):
     """
-    All we care about is getting the LR oblique edges paired, we do
-    not need them to be placed on sides LR at this point.
+    Use the inner-x-centers table to pair the LR inner-x-centers while using an "unpaired oblique edges" heuristic
+    to get the LR oblique edges paired anywhere.  We do not need these obliques to be placed on sides
+    LR at this point.
     """
 
     # fmt: off
@@ -543,12 +544,12 @@ class LookupTable666UDLeftObliqueCentersStage(LookupTable):
     # fmt: on
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UDFB_left_oblique_edges])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UDFB_left_oblique_edges, state):
+        for (pos, pos_state) in zip(UFBD_left_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -596,18 +597,18 @@ class LookupTable666UDRightObliqueCentersStage(LookupTable):
     # fmt: on
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UDFB_right_oblique_edges])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UDFB_right_oblique_edges, state):
+        for (pos, pos_state) in zip(UFBD_right_oblique_edges, state):
             cube[pos] = pos_state
 
 
 class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
     """
-    Use the inner-x-centers table to pair the UDFB inner-x-centers while using an "unpaired oblique edges" heuristic
+    Use the inner-x-centers table to pair the UFBD inner-x-centers while using an "unpaired oblique edges" heuristic
     to get the UD oblique edges paired anywhere on sides UFDB.  We do not need these obliques to be placed on sides
     UD at this point.
     """
@@ -665,9 +666,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
                 self.parent.state[x] = "."
 
 
-# dwalton
 # - create a class that stages UD inner-x-centers and obliques
-# - create a class that stages UD (everything)
 class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
     def __init__(self, parent):
         # fmt: off
@@ -693,9 +692,17 @@ class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
                 parent.lt_UD_right_oblique_edges_stage,
             ),
             centers_only=True,
+            perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
+            perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
+            perfect_hash03_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
+            pt1_state_max=12870,
+            pt2_state_max=12870,
+            # pt3_state_max=12870,
         )
         # fmt: on
 
+
+# TODO - create a class that stages UD (everything)
 
 # phase 5
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):

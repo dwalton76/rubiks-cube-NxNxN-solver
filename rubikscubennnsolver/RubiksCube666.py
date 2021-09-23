@@ -30,7 +30,6 @@ moves_666 = (
 )
 solved_666 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
-
 inner_x_centers_666 = (
     15, 16, 21, 22,  # Upper
     51, 52, 57, 58,  # Left
@@ -49,122 +48,33 @@ centers_666 = (
     188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,  # Down
 )
 
-UD_centers_666 = (
-    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29,
-    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,
+UFBD_left_oblique_edges_666 = (
+    9, 17, 20, 28,  # Upper
+    81, 89, 92, 100,  # Front
+    153, 161, 164, 172,  # Back
+    189, 197, 200, 208,  # Down
 )
 
-FB_centers_666 = (
-    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
-    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
+UFBD_right_oblique_edges_666 = (
+    10, 14, 23, 27,  # Upper
+    82, 86, 95, 99,  # Front
+    154, 158, 167, 171,  # Back
+    190, 194, 203, 207,  # Down
 )
 
-UFBD_centers_666 = (
-    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29, 80,
-    81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
-    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
-    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,
-)
-
-UFBD_left_oblique_edges = (
-    9, 17, 28, 20,  # Upper
-    81, 89, 100, 92,  # Front
-    153, 161, 172, 164,  # Back
-    189, 197, 208, 200,  # Down
-)
-
-UFBD_right_oblique_edges = (
-    10, 23, 27, 14,  # Upper
-    82, 95, 99, 86,  # Front
-    154, 167, 171, 158,  # Back
-    190, 203, 207, 194,  # Down
-)
-
-UFBD_outer_x_centers = (
+UFBD_outer_x_centers_666 = (
     8, 11, 26, 29,  # Upper
     80, 83, 98, 101,  # Front
     152, 155, 170, 173,  # Back
     188, 191, 206, 209,  # Down
 )
 
-UFBD_inner_x_centers = (
+UFBD_inner_x_centers_666 = (
     15, 16, 21, 22,  # Upper
     87, 88, 93, 94,  # Front
     159, 160, 165, 166,  # Back
     195, 196, 201, 202,  # Down
 )
-
-UFBD_outer_x_centers = (
-    8, 11, 26, 29,  # Upper
-    80, 83, 98, 101,  # Front
-    152, 155, 170, 173,  # Back
-    188, 191, 206, 209,  # Down
-)
-
-UFBD_inner_x_centers = (
-    15, 16, 21, 22,  # Upper
-    87, 88, 93, 94,  # Front
-    159, 160, 165, 166,  # Back
-    195, 196, 201, 202,  # Down
-)
-
-LR_left_oblique_edges = (45, 53, 64, 56, 117, 125, 136, 128)
-LR_right_oblique_edges = (46, 59, 63, 50, 118, 131, 135, 122)
-LR_outer_x_centers = (44, 47, 62, 65, 116, 119, 134, 137)
-LR_inner_x_centers = (51, 52, 57, 58, 123, 124, 129, 130)
-
-
-outer_x_centers_666 = set(
-    (8, 11, 26, 29, 44, 47, 62, 65, 80, 83, 98, 101, 116, 119, 134, 137, 152, 155, 170, 173, 188, 191, 206, 209)
-)
-
-outer_x_center_inner_x_centers_666 = (
-    8, 11, 26, 29, 44, 47, 62, 65, 80, 83, 98, 101, 116, 119, 134, 137, 152, 155, 170, 173, 188, 191, 206, 209,  # outer x-centers
-    15, 16, 21, 22, 51, 52, 57, 58, 87, 88, 93, 94, 123, 124, 129, 130, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
-)
-
-UFBD_inner_x_centers_left_oblique_edges_666 = (
-    15, 16, 21, 22, 87, 88, 93, 94, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
-    9, 17, 20, 28, 81, 89, 92, 100, 153, 161, 164, 172, 189, 197, 200, 208,  # left oblique edges
-)
-
-UFBD_inner_x_centers_right_oblique_edges_666 = (
-    15, 16, 21, 22, 87, 88, 93, 94, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
-    10, 14, 23, 27, 82, 86, 95, 99, 154, 158, 167, 171, 190, 194, 203, 207,  # right oblique edges
-)
-
-UFBD_oblique_edges_666 = (
-    9, 10, 14, 17, 20, 23, 27, 28,
-    81, 82, 86, 89, 92, 95, 99, 100,
-    153, 154, 158, 161, 164, 167, 171, 172,
-    189, 190, 194, 197, 200, 203, 207, 208,
-)
-
-UFBD_left_oblique_edges_666 = (9, 17, 20, 28, 81, 89, 92, 100, 153, 161, 164, 172, 189, 197, 200, 208)
-
-UFBD_right_oblique_edges_666 = (10, 14, 23, 27, 82, 86, 95, 99, 154, 158, 167, 171, 190, 194, 203, 207)
-
-left_oblique_edges_666 = (
-    9, 17, 20, 28,
-    45, 53, 56, 64,
-    81, 89, 92, 100,
-    117, 125, 128, 136,
-    153, 161, 164, 172,
-    189, 197, 200, 208,
-)
-
-right_oblique_edges_666 = (
-    10, 14, 23, 27,
-    46, 50, 59, 63,
-    82, 86, 95, 99,
-    118, 122, 131, 135,
-    154, 158, 167, 171,
-    190, 194, 203, 207,
-)
-
-LFRB_left_oblique_edges_666 = (45, 53, 56, 64, 81, 89, 92, 100, 117, 125, 128, 136, 153, 161, 164, 172)
-
-LFRB_right_oblique_edges_666 = (46, 50, 59, 63, 82, 86, 95, 99, 118, 122, 131, 135, 154, 158, 167, 171)
 
 edge_orbit_0 = (
     2, 5, 12, 30, 35, 32, 25, 7,
@@ -396,13 +306,6 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
     """
 
     # fmt: off
-    UFBD_inner_x_centers_666 = (
-        15, 16, 21, 22,  # Upper
-        87, 88, 93, 94,  # Front
-        159, 160, 165, 166,  # Back
-        195, 196, 201, 202,  # Down
-    )
-
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
@@ -430,12 +333,12 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
     # fmt: on
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_inner_x_centers_666])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_inner_x_centers_666])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UFBD_inner_x_centers_666, state):
+        for (pos, pos_state) in zip(UFBD_inner_x_centers_666, state):
             cube[pos] = pos_state
 
 
@@ -457,13 +360,6 @@ class LookupTable666UDXCentersStage(LookupTable):
     """
 
     # fmt: off
-    UFBD_outer_x_centers_666 = [
-        8, 11, 26, 29,
-        80, 83, 98, 101,
-        152, 155, 170, 173,
-        188, 191, 206, 209,
-    ]
-
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
@@ -491,12 +387,12 @@ class LookupTable666UDXCentersStage(LookupTable):
     # fmt: on
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_outer_x_centers_666])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_outer_x_centers_666])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UFBD_outer_x_centers_666, state):
+        for (pos, pos_state) in zip(UFBD_outer_x_centers_666, state):
             cube[pos] = pos_state
 
 
@@ -544,12 +440,12 @@ class LookupTable666UDLeftObliqueCentersStage(LookupTable):
     # fmt: on
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_edges])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_edges_666])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_left_oblique_edges, state):
+        for (pos, pos_state) in zip(UFBD_left_oblique_edges_666, state):
             cube[pos] = pos_state
 
 
@@ -597,12 +493,12 @@ class LookupTable666UDRightObliqueCentersStage(LookupTable):
     # fmt: on
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_edges])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_edges_666])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_right_oblique_edges, state):
+        for (pos, pos_state) in zip(UFBD_right_oblique_edges_666, state):
             cube[pos] = pos_state
 
 

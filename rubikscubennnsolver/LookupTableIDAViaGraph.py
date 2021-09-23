@@ -73,6 +73,7 @@ class LookupTableIDAViaGraph(LookupTable):
         main_table_prune_tables=None,
         perfect_hash01_filename: str = None,
         perfect_hash02_filename: str = None,
+        perfect_hash03_filename: str = None,
         pt1_state_max: int = None,
         pt2_state_max: int = None,
         centers_only: bool = False,
@@ -104,22 +105,34 @@ class LookupTableIDAViaGraph(LookupTable):
         else:
             self.perfect_hash02_filename = perfect_hash02_filename
 
+        if perfect_hash03_filename:
+            self.perfect_hash03_filename = "lookup-tables/" + perfect_hash03_filename
+        else:
+            self.perfect_hash03_filename = perfect_hash03_filename
+
         self.pt1_state_max = pt1_state_max
         self.pt2_state_max = pt2_state_max
 
-        if self.perfect_hash01_filename or self.pt1_state_max:
+        if self.perfect_hash01_filename:
             assert (
                 self.perfect_hash01_filename and self.pt1_state_max
             ), "both perfect_hash01_filename and pt1_state_max must be specified"
             # rm_file_if_mismatch(self.perfect_hash01_filename, md5_hash01)
             download_file_if_needed(self.perfect_hash01_filename)
 
-        if self.perfect_hash02_filename or self.pt2_state_max:
+        if self.perfect_hash02_filename:
             assert (
                 self.perfect_hash02_filename and self.pt2_state_max
             ), "both perfect_hash02_filename and pt2_state_max must be specified"
             # rm_file_if_mismatch(self.perfect_hash02_filename, md5_hash02)
             download_file_if_needed(self.perfect_hash02_filename)
+
+        if self.perfect_hash03_filename:
+            assert (
+                self.perfect_hash03_filename and self.pt2_state_max
+            ), "both perfect_hash03_filename and pt2_state_max must be specified"
+            # rm_file_if_mismatch(self.perfect_hash03_filename, md5_hash03)
+            download_file_if_needed(self.perfect_hash03_filename)
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -324,6 +337,12 @@ class LookupTableIDAViaGraph(LookupTable):
         if self.perfect_hash02_filename:
             cmd.append("--prune-table-perfect-hash02")
             cmd.append(self.perfect_hash02_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash03_filename:
+            cmd.append("--prune-table-perfect-hash03")
+            cmd.append(self.perfect_hash03_filename)
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
 

@@ -692,12 +692,11 @@ class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
                 parent.lt_UD_right_oblique_edges_stage,
             ),
             centers_only=True,
-            perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
-            perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
-            perfect_hash03_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
-            pt1_state_max=12870,
-            pt2_state_max=12870,
-            # pt3_state_max=12870,
+            # perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
+            # perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
+            # perfect_hash03_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
+            # pt1_state_max=12870,
+            # pt2_state_max=12870,
         )
         # fmt: on
 

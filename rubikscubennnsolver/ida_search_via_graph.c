@@ -27,7 +27,7 @@ unsigned char *pt3 = NULL;
 unsigned char *pt4 = NULL;
 unsigned char *pt_perfect_hash01 = NULL;
 unsigned char *pt_perfect_hash02 = NULL;
-unsigned char *pt_perfect_hash03 = NULL;
+unsigned char *pt_perfect_hash12 = NULL;
 unsigned int pt1_state_max = 0;
 unsigned int pt2_state_max = 0;
 unsigned int call_pt_simple = 0;
@@ -72,7 +72,7 @@ struct cost_to_goal_result {
     unsigned char pt4_cost;
     unsigned char perfect_hash01_cost;
     unsigned char perfect_hash02_cost;
-    unsigned char perfect_hash03_cost;
+    unsigned char perfect_hash12_cost;
 };
 
 unsigned int lr_centers_stage_555[9][9] = {
@@ -419,12 +419,12 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         }
     }
 
-    if (pt_perfect_hash03) {
-        unsigned int perfect_hash03_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash03_cost = hash_cost_to_cost(pt_perfect_hash03[perfect_hash03_index]);
+    if (pt_perfect_hash12) {
+        unsigned int perfect_hash12_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
+        unsigned char perfect_hash12_cost = hash_cost_to_cost(pt_perfect_hash12[perfect_hash12_index]);
 
-        if (perfect_hash03_cost > cost_to_goal) {
-            cost_to_goal = perfect_hash03_cost;
+        if (perfect_hash12_cost > cost_to_goal) {
+            cost_to_goal = perfect_hash12_cost;
         }
     }
 
@@ -614,17 +614,17 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         result.perfect_hash02_cost = 0;
     }
 
-    if (pt_perfect_hash03) {
-        unsigned int perfect_hash03_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash03_cost = hash_cost_to_cost(pt_perfect_hash03[perfect_hash03_index]);
+    if (pt_perfect_hash12) {
+        unsigned int perfect_hash12_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
+        unsigned char perfect_hash12_cost = hash_cost_to_cost(pt_perfect_hash12[perfect_hash12_index]);
 
-        if (perfect_hash03_cost > result.cost_to_goal) {
-            result.cost_to_goal = perfect_hash03_cost;
+        if (perfect_hash12_cost > result.cost_to_goal) {
+            result.cost_to_goal = perfect_hash12_cost;
         }
 
-        result.perfect_hash03_cost = perfect_hash03_cost;
+        result.perfect_hash12_cost = perfect_hash12_cost;
     } else {
-        result.perfect_hash03_cost = 0;
+        result.perfect_hash12_cost = 0;
     }
 
     if (cost_to_goal_multiplier) {
@@ -687,8 +687,8 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         printf("PER02  ");
     }
 
-    if (pt_perfect_hash03) {
-        printf("PER03  ");
+    if (pt_perfect_hash12) {
+        printf("PER12  ");
     }
 
     printf("CTG  TRU  IDX\n");
@@ -719,7 +719,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         printf("=====  ");
     }
 
-    if (pt_perfect_hash03) {
+    if (pt_perfect_hash12) {
         printf("=====  ");
     }
 
@@ -753,9 +753,9 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     if (pt_max >= 2) {printf("%3d  ", pt2_cost);}
     if (pt_max >= 3) {printf("%3d  ", pt3_cost);}
     if (pt_max >= 4) {printf("%3d  ", pt4_cost);}
-    if (pt_perfect_hash01) {printf("%3d  ", ctg.perfect_hash01_cost);}
-    if (pt_perfect_hash02) {printf("%3d  ", ctg.perfect_hash02_cost);}
-    if (pt_perfect_hash03) {printf("%3d  ", ctg.perfect_hash03_cost);}
+    if (pt_perfect_hash01) {printf("%5d  ", ctg.perfect_hash01_cost);}
+    if (pt_perfect_hash02) {printf("%5d  ", ctg.perfect_hash02_cost);}
+    if (pt_perfect_hash12) {printf("%5d  ", ctg.perfect_hash12_cost);}
     printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, 0);
     // printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
 
@@ -828,9 +828,9 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         if (pt_max >= 2) {printf("%3d  ", pt2_cost);}
         if (pt_max >= 3) {printf("%3d  ", pt3_cost);}
         if (pt_max >= 4) {printf("%3d  ", pt4_cost);}
-        if (pt_perfect_hash01) {printf("%3d  ", ctg.perfect_hash01_cost);}
-        if (pt_perfect_hash02) {printf("%3d  ", ctg.perfect_hash02_cost);}
-        if (pt_perfect_hash03) {printf("%3d  ", ctg.perfect_hash03_cost);}
+        if (pt_perfect_hash01) {printf("%5d  ", ctg.perfect_hash01_cost);}
+        if (pt_perfect_hash02) {printf("%5d  ", ctg.perfect_hash02_cost);}
+        if (pt_perfect_hash12) {printf("%5d  ", ctg.perfect_hash12_cost);}
         printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, i + 1);
         // printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
     }
@@ -1372,9 +1372,9 @@ int main(int argc, char *argv[]) {
             i++;
             pt_perfect_hash02 = read_file(argv[i]);
 
-        } else if (strmatch(argv[i], "--prune-table-perfect-hash03")) {
+        } else if (strmatch(argv[i], "--prune-table-perfect-hash12")) {
             i++;
-            pt_perfect_hash03 = read_file(argv[i]);
+            pt_perfect_hash12 = read_file(argv[i]);
 
         } else if (strmatch(argv[i], "--pt1-state-max")) {
             i++;
@@ -1559,7 +1559,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (type || pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash03 || cost_to_goal_multiplier) {
+    if (type || pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash12 || cost_to_goal_multiplier) {
         call_pt_simple = 1;
     }
 

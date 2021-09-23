@@ -757,8 +757,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     if (pt_perfect_hash02) {printf("%3d  ", ctg.perfect_hash02_cost);}
     if (pt_perfect_hash03) {printf("%3d  ", ctg.perfect_hash03_cost);}
     printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, 0);
-
-    printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
+    // printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
 
     for (unsigned char i = 0; i < solution_len; i++) {
         unsigned char j = 0;
@@ -833,7 +832,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         if (pt_perfect_hash02) {printf("%3d  ", ctg.perfect_hash02_cost);}
         if (pt_perfect_hash03) {printf("%3d  ", ctg.perfect_hash03_cost);}
         printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, i + 1);
-        printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
+        // printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
     }
     printf("\n");
 }

@@ -586,13 +586,15 @@ class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
                 parent.lt_UD_inner_x_centers_stage,
                 parent.lt_UD_left_oblique_edges_stage,
                 parent.lt_UD_right_oblique_edges_stage,
+                parent.lt_UD_outer_x_centers_stage,
             ),
             centers_only=True,
-            # perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
-            # perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
-            # perfect_hash03_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
-            # pt1_state_max=12870,
-            # pt2_state_max=12870,
+            # dwalton
+            perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
+            perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
+            perfect_hash03_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
+            pt1_state_max=12870,
+            pt2_state_max=12870,
         )
         # fmt: on
 
@@ -1163,7 +1165,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         # phase 2
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
-        self.lt_UD_x_centers_stage = LookupTable666UDXCentersStage(self)
+        self.lt_UD_outer_x_centers_stage = LookupTable666UDXCentersStage(self)
         self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
 

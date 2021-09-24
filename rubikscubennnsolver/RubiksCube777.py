@@ -70,9 +70,6 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            # Needed tables and their md5 signatures
-            (),
-            "7x7x7-LR-oblique-edges-stage",  # C_ida_type
             all_moves=moves_777,
             illegal_moves=[
                 "3Uw", "3Uw'",
@@ -81,6 +78,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
                 "3Bw", "3Bw'",
             ],
             centers_only=True,
+            C_ida_type="7x7x7-LR-oblique-edges-stage",
         )
         # fmt: on
 
@@ -119,9 +117,6 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
         LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            # Needed tables and their md5 signatures
-            (),
-            "7x7x7-UD-oblique-edges-stage",  # C_ida_type
             all_moves=moves_777,
             illegal_moves=[
                 "3Uw", "3Uw'",
@@ -138,6 +133,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
                 "R", "R'", "R2",
             ],
             centers_only=True,
+            C_ida_type="7x7x7-UD-oblique-edges-stage",
         )
         # fmt: on
 
@@ -2445,32 +2441,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             fake_555.state[23 + offset_555] = self.state[46 + offset_777]
             fake_555.state[24 + offset_555] = self.state[48 + offset_777]
 
-    def UD_inside_centers_staged(self):
-        state = self.state
-
-        for x in (17, 18, 19, 24, 25, 26, 31, 32, 33, 262, 263, 264, 269, 270, 271, 276, 277, 278):
-            if state[x] not in ("U", "D"):
-                return False
-        return True
-
-    def group_inside_UD_centers(self):
-        self.create_fake_555_from_inside_centers()
-        self.fake_555.group_centers_stage_FB()
-
-        for step in self.fake_555.solution:
-
-            if step.startswith("COMMENT"):
-                self.solution.append(step)
-            else:
-                if step.startswith("5"):
-                    step = "7" + step[1:]
-                elif step.startswith("3"):
-                    step = "4" + step[1:]
-                elif "w" in step:
-                    step = "3" + step
-
-                self.rotate(step)
-
+    # LR centers
     def LR_inside_centers_staged(self):
         state = self.state
 
@@ -2501,44 +2472,16 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
                 self.rotate(step)
 
-    def stage_UD_centers(self):
-        # phase 4 - use 5x5x5 solver to stage the UD inner centers
-        self.group_inside_UD_centers()
-        self.print_cube(
-            "%s: UD inner x-centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-        # phase 5 - pair the oblique UD edges
-        tmp_solution_len = len(self.solution)
-        self.lt_UD_oblique_edge_pairing.solve()
-        self.print_cube(
-            "%s: UD oblique edges paired/staged (%d steps in)"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_777_UD_oblique_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        # phase 6 - use 5x5x5 to stage the UD centers
-        self.create_fake_555_from_outside_centers()
-        self.fake_555.group_centers_stage_FB()
-
-        for step in self.fake_555.solution:
-            if step.startswith("COMMENT"):
-                self.solution.append(step)
-            else:
-                if step.startswith("5"):
-                    step = "7" + step[1:]
-                elif step.startswith("3"):
-                    raise Exception("5x5x5 solution has 3 wide turn")
-                self.rotate(step)
-
-        self.print_cube(
-            "%s: UD centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
     def stage_LR_centers(self):
+        """
+        phase 1 - use 5x5x5 solver to stage the LR inner centers (10 moves)
+        phase 2 - pair LR oblique edges (13 moves)
+        phase 3 - use 5x5x5 solver to stage the LR centers (10 moves)
+        """
+
+        if self.LR_centers_staged():
+            return
+
         # phase 1 - use 5x5x5 solver to stage the LR inner centers
         self.group_inside_LR_centers()
         self.print_cube(
@@ -2547,7 +2490,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # phase 2 - pair LR oblique edges
         tmp_solution_len = len(self.solution)
-        self.lt_LR_oblique_edge_pairing.solve()
+        self.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
         self.print_cube(
             "%s: LR oblique edges staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
         )
@@ -2587,6 +2530,80 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
+    # UD centers
+    def UD_inside_centers_staged(self):
+        state = self.state
+
+        for x in (17, 18, 19, 24, 25, 26, 31, 32, 33, 262, 263, 264, 269, 270, 271, 276, 277, 278):
+            if state[x] not in ("U", "D"):
+                return False
+        return True
+
+    def group_inside_UD_centers(self):
+        self.create_fake_555_from_inside_centers()
+        self.fake_555.group_centers_stage_FB()
+
+        for step in self.fake_555.solution:
+
+            if step.startswith("COMMENT"):
+                self.solution.append(step)
+            else:
+                if step.startswith("5"):
+                    step = "7" + step[1:]
+                elif step.startswith("3"):
+                    step = "4" + step[1:]
+                elif "w" in step:
+                    step = "3" + step
+
+                self.rotate(step)
+
+    def stage_UD_centers(self):
+        """
+        phase 4 - use 5x5x5 solver to stage the UD inner centers (10 moves)
+        phase 5 - pair the oblique UD edges (13 moves)
+        phase 6 - use 5x5x5 to stage the UD centers (10 moves)
+
+        Could phase5+6 be combined? This would be 12870^4 which is too large of a search space
+        Could phase4+5 be combined? This would be 555 phase2 but with an unpaired count heurisic
+            phase4 is a super fast search though so this might be feasible
+        """
+
+        # phase 4 - use 5x5x5 solver to stage the UD inner centers
+        self.group_inside_UD_centers()
+        self.print_cube(
+            "%s: UD inner x-centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+
+        # phase 5 - pair the oblique UD edges
+        tmp_solution_len = len(self.solution)
+        self.lt_UD_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
+        self.print_cube(
+            "%s: UD oblique edges paired/staged (%d steps in)"
+            % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+        self.solution.append(
+            "COMMENT_%d_steps_777_UD_oblique_edges_staged"
+            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
+        )
+
+        # phase 6 - use 5x5x5 to stage the UD centers
+        self.create_fake_555_from_outside_centers()
+        self.fake_555.group_centers_stage_FB()
+
+        for step in self.fake_555.solution:
+            if step.startswith("COMMENT"):
+                self.solution.append(step)
+            else:
+                if step.startswith("5"):
+                    step = "7" + step[1:]
+                elif step.startswith("3"):
+                    raise Exception("5x5x5 solution has 3 wide turn")
+                self.rotate(step)
+
+        self.print_cube(
+            "%s: UD centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
+        )
+
     def UD_centers_vertical_bars(self):
 
         # phase 8 - UD centers to vertical bars
@@ -2612,19 +2629,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             "COMMENT_%d_steps_777_centers_daisy_solved"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-
-    def reduce_555(self):
-        self.lt_init()
-
-        if not self.LR_centers_staged():
-            self.stage_LR_centers()
-
-        if not self.UD_centers_staged():
-            self.stage_UD_centers()
-
-        self.LR_centers_vertical_bars()
-        self.UD_centers_vertical_bars()
-        self.centers_daisy_solve()
 
     def solve_t_centers(self):
         # This is only used when solving a cube larger than 777
@@ -2668,6 +2672,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")
+
+    def reduce_555(self):
+        self.lt_init()
+        self.stage_LR_centers()
+        self.stage_UD_centers()
+        self.LR_centers_vertical_bars()
+        self.UD_centers_vertical_bars()
+        self.centers_daisy_solve()
 
 
 def rotate_777(cube, step):

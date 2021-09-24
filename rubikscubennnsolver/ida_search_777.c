@@ -78,13 +78,13 @@ unsigned char get_unpaired_obliques_count_777(char *cube) {
 }
 
 struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube) {
-    unsigned char unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
-    unsigned long long state = 0;
-
-    result.unpaired_count = unpaired_count;
+    result.unpaired_count = get_unpaired_obliques_count_777(cube);
 
     // Get the state of the oblique edges
+    /*
+    unsigned long long state = 0;
+
     for (int i = 0; i < NUM_OBLIQUE_EDGES_777; i++) {
         if (cube[oblique_edges_777[i]] == '1') {
             state |= 0x1;
@@ -95,6 +95,7 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube)
     // state takes 18 chars in hex
     state >>= 1;
     sprintf(result.lt_state, "%018llx", state);
+    */
 
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
     /*
@@ -109,13 +110,13 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube)
     // switch statement that maps unpaired_count to a move count. The results of this are
     // not a huge difference from the xyzzy heuristic but it does speed up the search a good
     // bit for some problematic cubes.
-    switch (unpaired_count) {
+    switch (result.unpaired_count) {
         case 0:
         case 1:
         case 9:
         case 10:
         case 11:
-            result.cost_to_goal = unpaired_count;
+            result.cost_to_goal = result.unpaired_count;
             break;
         case 2:
         case 3:
@@ -124,7 +125,7 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube)
         case 6:
         case 7:
         case 8:
-            result.cost_to_goal = unpaired_count + 1;
+            result.cost_to_goal = result.unpaired_count + 1;
             break;
         case 12:
             result.cost_to_goal = 11;
@@ -136,7 +137,7 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube)
             result.cost_to_goal = 12;
             break;
         default:
-            printf("invalid case %d\n", unpaired_count);
+            printf("invalid case %d\n", result.unpaired_count);
             exit(1);
             break;
     }
@@ -196,7 +197,7 @@ unsigned int UFBD_right_oblique_edges_777[NUM_RIGHT_OBLIQUE_EDGES_777] = {
     257, 261, 279, 283,  // Down
 };
 
-unsigned int get_UFBD_unpaired_obliques_count_777(char *cube) {
+unsigned char get_UFBD_unpaired_obliques_count_777(char *cube) {
     int left_paired_obliques = 0;
     int left_unpaired_obliques = 8;
     int right_paired_obliques = 0;
@@ -229,13 +230,13 @@ unsigned int get_UFBD_unpaired_obliques_count_777(char *cube) {
 }
 
 struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube) {
-    unsigned char unpaired_count = get_unpaired_obliques_count_777(cube);
     struct ida_heuristic_result result;
-    unsigned long long state = 0;
-
-    result.unpaired_count = unpaired_count;
+    result.unpaired_count = get_unpaired_obliques_count_777(cube);
 
     // Get the state of the oblique edges
+    /*
+    unsigned long long state = 0;
+
     for (int i = 0; i < UFBD_NUM_OBLIQUE_EDGES_777; i++) {
         if (cube[UFBD_oblique_edges_777[i]] == '1') {
             state |= 0x1;
@@ -246,6 +247,7 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube)
     // state takes 12 chars in hex
     state >>= 1;
     sprintf(result.lt_state, "%012llx", state);
+    */
 
     // inadmissable heuristic but fast...kudos to xyzzy for this formula
     /*
@@ -260,18 +262,18 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube)
     // switch statement that maps unpaired_count to a move count. The results of this are
     // not a huge difference from the xyzzy heuristic but it does speed up the search a good
     // bit for some problematic cubes.
-    switch (unpaired_count) {
+    switch (result.unpaired_count) {
         case 0:
         case 1:
         case 2:
         case 3:
-            result.cost_to_goal = unpaired_count;
+            result.cost_to_goal = result.unpaired_count;
             break;
         case 4:
         case 5:
         case 6:
         case 7:
-            result.cost_to_goal = unpaired_count + 1;
+            result.cost_to_goal = result.unpaired_count + 1;
             break;
         case 8:
         case 9:
@@ -289,7 +291,7 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube)
             result.cost_to_goal = 12;
             break;
         default:
-            printf("invalid case %d\n", unpaired_count);
+            printf("invalid case %d\n", result.unpaired_count);
             exit(1);
             break;
     }

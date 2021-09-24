@@ -125,7 +125,7 @@ unsigned int x_centers_stage_555[9][9] = {
     {8, 8, 8, 8, 8, 8, 10, 10, 8},  // LR x-centers cost 8
 };
 
-unsigned int LR_centers_stage_666[9][8] = {
+unsigned int unpaired_count_inner_x_centers_666[9][8] = {
     {0, 1, 2, 3, 4, 5, 6, 7}, // x unpaired obliques (0), y LR centers cost
     {1, 1, 2, 3, 4, 5, 6, 7}, // x unpaired obliques (1), y LR centers cost
     {2, 1, 2, 3, 4, 5, 7, 7}, // x unpaired obliques (2), y LR centers cost
@@ -220,7 +220,6 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
     int R_start = F_start + squares_per_side;
     int B_start = R_start + squares_per_side;
     int D_start = B_start + squares_per_side;
-    char cube_copy[array_size];
 
     // kociemba_string is in URFDLB order
     int U_start_kociemba = 0;
@@ -393,10 +392,17 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
                 cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
             }
 
-        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666) {
+        } else if (pt_max == 0 && (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666)) {
+            // only use this special unpaired_count_inner_x_centers_666 2D array if we are staging inner x-centers
+            // and pairing oblique edges. pt_max will be 0 in that scenario.
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
-            cost_to_goal = LR_centers_stage_666[heuristic_result.unpaired_count][pt0_cost];
+            cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
+
+        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777) {
+            struct ida_heuristic_result heuristic_result;
+            heuristic_result = ida_heuristic(cube, type);
+            cost_to_goal = max(cost_to_goal, heuristic_result.cost_to_goal);
 
         } else {
             printf("ERROR: pt_states_to_cost_simple() does not yet support this --type\n");
@@ -480,14 +486,12 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
                                              unsigned int prev_pt1_state, unsigned int prev_pt2_state,
                                              unsigned int prev_pt3_state, unsigned int prev_pt4_state) {
     struct cost_to_goal_result result;
+    memset(&result, 0, sizeof(struct cost_to_goal_result));
 
     switch (pt_max) {
         case 1:
             result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
             result.pt1_cost = read_cost(pt1, prev_pt1_state * ROW_LENGTH);
-            result.pt2_cost = 0;
-            result.pt3_cost = 0;
-            result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
             if (result.pt1_cost > result.cost_to_goal) {
@@ -499,8 +503,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
             result.pt1_cost = read_cost(pt1, prev_pt1_state * ROW_LENGTH);
             result.pt2_cost = read_cost(pt2, prev_pt2_state * ROW_LENGTH);
-            result.pt3_cost = 0;
-            result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
             if (result.pt1_cost > result.cost_to_goal) {
@@ -517,7 +519,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             result.pt1_cost = read_cost(pt1, prev_pt1_state * ROW_LENGTH);
             result.pt2_cost = read_cost(pt2, prev_pt2_state * ROW_LENGTH);
             result.pt3_cost = read_cost(pt3, prev_pt3_state * ROW_LENGTH);
-            result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
 
             if (type == CENTERS_STAGE_555) {
@@ -592,25 +593,22 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
 
         case 0:
             result.pt0_cost = read_cost(pt0, prev_pt0_state * ROW_LENGTH);
-            result.pt1_cost = 0;
-            result.pt2_cost = 0;
-            result.pt3_cost = 0;
-            result.pt4_cost = 0;
             result.cost_to_goal = result.pt0_cost;
             break;
 
         default:
-            result.pt0_cost = 0;
-            result.pt1_cost = 0;
-            result.pt2_cost = 0;
-            result.pt3_cost = 0;
-            result.pt4_cost = 0;
-            result.cost_to_goal = 0;
             break;
     }
 
     if (type) {
-        if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666) {
+        if (pt_max == 0 && (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666)) {
+            // only use this special unpaired_count_inner_x_centers_666 2D array if we are staging inner x-centers
+            // and pairing oblique edges. pt_max will be 0 in that scenario.
+            struct ida_heuristic_result heuristic_result;
+            heuristic_result = ida_heuristic(cube, type);
+            result.cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
+
+        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777) {
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
             result.cost_to_goal = max(result.cost_to_goal, heuristic_result.cost_to_goal);
@@ -630,8 +628,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         }
 
         result.perfect_hash01_cost = perfect_hash01_cost;
-    } else {
-        result.perfect_hash01_cost = 0;
     }
 
     if (pt_perfect_hash02) {
@@ -643,8 +639,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         }
 
         result.perfect_hash02_cost = perfect_hash02_cost;
-    } else {
-        result.perfect_hash02_cost = 0;
     }
 
     if (pt_perfect_hash12) {
@@ -656,8 +650,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         }
 
         result.perfect_hash12_cost = perfect_hash12_cost;
-    } else {
-        result.perfect_hash12_cost = 0;
     }
 
     if (pt_perfect_hash03) {
@@ -669,8 +661,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         }
 
         result.perfect_hash03_cost = perfect_hash03_cost;
-    } else {
-        result.perfect_hash03_cost = 0;
     }
 
     if (pt_perfect_hash31) {
@@ -682,8 +672,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         }
 
         result.perfect_hash31_cost = perfect_hash31_cost;
-    } else {
-        result.perfect_hash31_cost = 0;
     }
 
     if (pt_perfect_hash32) {
@@ -695,8 +683,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         }
 
         result.perfect_hash32_cost = perfect_hash32_cost;
-    } else {
-        result.perfect_hash32_cost = 0;
     }
 
     if (cost_to_goal_multiplier) {
@@ -710,12 +696,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
                        unsigned int pt3_state, unsigned int pt4_state, move_type *solution,
                        unsigned char solution_len) {
     struct cost_to_goal_result ctg;
-    unsigned char cost_to_goal = 0;
-    unsigned char pt0_cost = 0;
-    unsigned char pt1_cost = 0;
-    unsigned char pt2_cost = 0;
-    unsigned char pt3_cost = 0;
-    unsigned char pt4_cost = 0;
     unsigned char steps_to_solved = solution_len;
     unsigned char header_row0[64];
     unsigned char header_row1[64];
@@ -727,7 +707,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     memset(&header_row1, 0, sizeof(char) * 64);
     memset(&header_row2, 0, sizeof(char) * 64);
     char cube_tmp[array_size];
-    char cube_copy[array_size];
     size_t array_size_char = sizeof(char) * array_size;
     struct ida_heuristic_result heuristic;
 
@@ -822,42 +801,26 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     printf("===  ===  ===\n");
 
     ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-    pt0_cost = ctg.pt0_cost;
-    pt1_cost = ctg.pt1_cost;
-    pt2_cost = ctg.pt2_cost;
-    pt3_cost = ctg.pt3_cost;
-    pt4_cost = ctg.pt4_cost;
 
     printf(" INIT  ");
 
     if (type) {
-        memcpy(cube_copy, cube, array_size_char);
-
-        if (type == LR_OBLIQUE_EDGES_STAGE_666 || UD_OBLIQUE_EDGES_STAGE_666) {
-            heuristic = ida_heuristic_oblique_edges_stage_666(cube);
-        } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
-            heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
-        } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
-            heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
-        }
-
+        heuristic = ida_heuristic(cube, type);
         printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
     }
 
-    if (pt_max >= 0) {printf("%3d  ", pt0_cost);}
-    if (pt_max >= 1) {printf("%3d  ", pt1_cost);}
-    if (pt_max >= 2) {printf("%3d  ", pt2_cost);}
-    if (pt_max >= 3) {printf("%3d  ", pt3_cost);}
-    if (pt_max >= 4) {printf("%3d  ", pt4_cost);}
+    if (pt_max >= 0) {printf("%3d  ", ctg.pt0_cost);}
+    if (pt_max >= 1) {printf("%3d  ", ctg.pt1_cost);}
+    if (pt_max >= 2) {printf("%3d  ", ctg.pt2_cost);}
+    if (pt_max >= 3) {printf("%3d  ", ctg.pt3_cost);}
+    if (pt_max >= 4) {printf("%3d  ", ctg.pt4_cost);}
     if (pt_perfect_hash01) {printf("%5d  ", ctg.perfect_hash01_cost);}
     if (pt_perfect_hash02) {printf("%5d  ", ctg.perfect_hash02_cost);}
     if (pt_perfect_hash12) {printf("%5d  ", ctg.perfect_hash12_cost);}
     if (pt_perfect_hash03) {printf("%5d  ", ctg.perfect_hash03_cost);}
     if (pt_perfect_hash31) {printf("%5d  ", ctg.perfect_hash31_cost);}
     if (pt_perfect_hash32) {printf("%5d  ", ctg.perfect_hash32_cost);}
-
-    printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, 0);
-    // printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
+    printf("%3d  %3d  %3d\n", ctg.cost_to_goal, steps_to_solved, 0);
 
     for (unsigned char i = 0; i < solution_len; i++) {
         unsigned char j = 0;
@@ -898,36 +861,27 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
 
         printf("%5s  ", move2str[solution[i]]);
         if (type) {
-            if (type == LR_OBLIQUE_EDGES_STAGE_666 || UD_OBLIQUE_EDGES_STAGE_666) {
+            if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666) {
                 rotate_666(cube, cube_tmp, array_size, solution[i]);
-                heuristic = ida_heuristic_oblique_edges_stage_666(cube);
-            } else if (type == LR_OBLIQUE_EDGES_STAGE_777) {
+            } else if (type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777) {
                 rotate_777(cube, cube_tmp, array_size, solution[i]);
-                heuristic = ida_heuristic_LR_oblique_edges_stage_777(cube);
-            } else if (type == UD_OBLIQUE_EDGES_STAGE_777) {
-                rotate_777(cube, cube_tmp, array_size, solution[i]);
-                heuristic = ida_heuristic_UD_oblique_edges_stage_777(cube);
             } else {
                 printf("ERROR: print_ida_summary %d is an invalid --type\n", type);
                 exit(1);
             }
+
+            heuristic = ida_heuristic(cube, type);
             printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
         }
 
         ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
-        cost_to_goal = ctg.cost_to_goal;
-        pt0_cost = ctg.pt0_cost;
-        pt1_cost = ctg.pt1_cost;
-        pt2_cost = ctg.pt2_cost;
-        pt3_cost = ctg.pt3_cost;
-        pt4_cost = ctg.pt4_cost;
         steps_to_solved--;
 
-        if (pt_max >= 0) {printf("%3d  ", pt0_cost);}
-        if (pt_max >= 1) {printf("%3d  ", pt1_cost);}
-        if (pt_max >= 2) {printf("%3d  ", pt2_cost);}
-        if (pt_max >= 3) {printf("%3d  ", pt3_cost);}
-        if (pt_max >= 4) {printf("%3d  ", pt4_cost);}
+        if (pt_max >= 0) {printf("%3d  ", ctg.pt0_cost);}
+        if (pt_max >= 1) {printf("%3d  ", ctg.pt1_cost);}
+        if (pt_max >= 2) {printf("%3d  ", ctg.pt2_cost);}
+        if (pt_max >= 3) {printf("%3d  ", ctg.pt3_cost);}
+        if (pt_max >= 4) {printf("%3d  ", ctg.pt4_cost);}
         if (pt_perfect_hash01) {printf("%5d  ", ctg.perfect_hash01_cost);}
         if (pt_perfect_hash02) {printf("%5d  ", ctg.perfect_hash02_cost);}
         if (pt_perfect_hash12) {printf("%5d  ", ctg.perfect_hash12_cost);}
@@ -935,8 +889,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         if (pt_perfect_hash31) {printf("%5d  ", ctg.perfect_hash31_cost);}
         if (pt_perfect_hash32) {printf("%5d  ", ctg.perfect_hash32_cost);}
 
-        printf("%3d  %3d  %3d\n", cost_to_goal, steps_to_solved, i + 1);
-        // printf("python ./utils/read-perfect-hash-index.py lookup-tables/lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash %lu %lu 12870\n\n", pt0_state, pt1_state);
+        printf("%3d  %3d  %3d\n", ctg.cost_to_goal, steps_to_solved, i + 1);
     }
     printf("\n");
 }
@@ -1675,7 +1628,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (type ||
+    if (type != NONE ||
         pt_perfect_hash01 ||
         pt_perfect_hash02 ||
         pt_perfect_hash03 || 

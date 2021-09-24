@@ -140,9 +140,8 @@ struct ida_search_result {
 };
 
 struct ida_heuristic_result {
-    char lt_state[64];
-    unsigned int cost_to_goal;
-    unsigned int unpaired_count;
+    unsigned char cost_to_goal;
+    unsigned char unpaired_count;
 };
 
 // uthash references

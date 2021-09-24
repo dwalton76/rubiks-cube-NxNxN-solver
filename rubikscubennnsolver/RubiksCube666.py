@@ -632,7 +632,10 @@ class LookupTable666UDCentersStage(LookupTableIDAViaGraph):
             centers_only=True,
             perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
             perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
-            perfect_hash03_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
+            perfect_hash12_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
+            perfect_hash03_filename="lookup-table-6x6x6-step19-UD-inner-x-outer-x-centers.perfect-hash",
+            perfect_hash31_filename="lookup-table-6x6x6-step18-UD-left-oblique-outer-x-centers.perfect-hash",
+            perfect_hash32_filename="lookup-table-6x6x6-step19-UD-right-oblique-outer-x-centers.perfect-hash",
             pt1_state_max=12870,
             pt2_state_max=12870,
         )
@@ -1208,14 +1211,14 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
 
+        # not used
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
         self.lt_UD_oblique_edge_stage.avoid_oll = (0, 1)
-
         self.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(self)
         self.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
 
-        # self.lt_UD_all = LookupTable666UDCentersStage()
-        # self.lt_UD_all.avoid_oll = (0, 1)
+        self.lt_UD_all = LookupTable666UDCentersStage(self)
+        self.lt_UD_all.avoid_oll = (0, 1)
 
         # This is the case if a 777 is using 666 to pair its LR oblique edges
         # TODO is this still needed?
@@ -1478,7 +1481,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             # phase 3
             # pair the UD oblique edges and outer x-centers
             tmp_solution_len = len(self.solution)
-            self.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
+            # self.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
+            self.lt_UD_all.solve_via_c()
             self.print_cube(
                 "%s: UD oblique edges and inner x-centers staged (%d steps in)"
                 % (self, self.get_solution_len_minus_rotates(self.solution))

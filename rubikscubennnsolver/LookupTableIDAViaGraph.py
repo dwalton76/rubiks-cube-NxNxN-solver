@@ -74,6 +74,9 @@ class LookupTableIDAViaGraph(LookupTable):
         perfect_hash01_filename: str = None,
         perfect_hash02_filename: str = None,
         perfect_hash12_filename: str = None,
+        perfect_hash03_filename: str = None,
+        perfect_hash31_filename: str = None,
+        perfect_hash32_filename: str = None,
         pt1_state_max: int = None,
         pt2_state_max: int = None,
         centers_only: bool = False,
@@ -110,6 +113,21 @@ class LookupTableIDAViaGraph(LookupTable):
         else:
             self.perfect_hash12_filename = perfect_hash12_filename
 
+        if perfect_hash03_filename:
+            self.perfect_hash03_filename = "lookup-tables/" + perfect_hash03_filename
+        else:
+            self.perfect_hash03_filename = perfect_hash03_filename
+
+        if perfect_hash31_filename:
+            self.perfect_hash31_filename = "lookup-tables/" + perfect_hash31_filename
+        else:
+            self.perfect_hash31_filename = perfect_hash31_filename
+
+        if perfect_hash32_filename:
+            self.perfect_hash32_filename = "lookup-tables/" + perfect_hash32_filename
+        else:
+            self.perfect_hash32_filename = perfect_hash32_filename
+
         self.pt1_state_max = pt1_state_max
         self.pt2_state_max = pt2_state_max
 
@@ -133,6 +151,8 @@ class LookupTableIDAViaGraph(LookupTable):
             ), "both perfect_hash12_filename and pt2_state_max must be specified"
             # rm_file_if_mismatch(self.perfect_hash12_filename, md5_hash12)
             download_file_if_needed(self.perfect_hash12_filename)
+
+        # dwalton add this
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -343,6 +363,24 @@ class LookupTableIDAViaGraph(LookupTable):
         if self.perfect_hash12_filename:
             cmd.append("--prune-table-perfect-hash12")
             cmd.append(self.perfect_hash12_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash03_filename:
+            cmd.append("--prune-table-perfect-hash03")
+            cmd.append(self.perfect_hash03_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash31_filename:
+            cmd.append("--prune-table-perfect-hash31")
+            cmd.append(self.perfect_hash31_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash32_filename:
+            cmd.append("--prune-table-perfect-hash32")
+            cmd.append(self.perfect_hash32_filename)
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
 

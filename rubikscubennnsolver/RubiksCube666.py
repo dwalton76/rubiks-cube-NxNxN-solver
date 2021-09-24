@@ -600,49 +600,6 @@ class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
         # fmt: on
 
 
-class LookupTable666UDCentersStage(LookupTableIDAViaGraph):
-    """
-    Stage all of UD in a single phase!
-    """
-
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            prune_tables=(
-                parent.lt_UD_inner_x_centers_stage,
-                parent.lt_UD_left_oblique_edges_stage,
-                parent.lt_UD_right_oblique_edges_stage,
-                parent.lt_UD_outer_x_centers_stage,
-            ),
-            centers_only=True,
-            perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
-            perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
-            perfect_hash12_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
-            perfect_hash03_filename="lookup-table-6x6x6-step19-UD-inner-x-outer-x-centers.perfect-hash",
-            perfect_hash31_filename="lookup-table-6x6x6-step18-UD-left-oblique-outer-x-centers.perfect-hash",
-            perfect_hash32_filename="lookup-table-6x6x6-step19-UD-right-oblique-outer-x-centers.perfect-hash",
-            pt1_state_max=12870,
-            pt2_state_max=12870,
-        )
-        # fmt: on
-        # dwalton
-
-
 # phase 5
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     """
@@ -1211,14 +1168,12 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
 
-        # not used
+        # phase 3
         self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
         self.lt_UD_oblique_edge_stage.avoid_oll = (0, 1)
+
         self.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(self)
         self.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
-
-        self.lt_UD_all = LookupTable666UDCentersStage(self)
-        self.lt_UD_all.avoid_oll = (0, 1)
 
         # This is the case if a 777 is using 666 to pair its LR oblique edges
         # TODO is this still needed?
@@ -1339,7 +1294,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         This reduces our centers to 5x5x5 centers
         """
 
-        # Thoughts on other ways to tackle this problem:
+        # HMMM - thoughts on other ways to tackle this problem:
         #
         #   There are 70^3 per side so to do this in one phase would be a 70^9 search space!
         #   You could potentially do multiple 70^5 perfect-hash tables with 1,680,700,000 entries
@@ -1389,12 +1344,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
 
-    def daisy_solve_t_centers(self, pair_inside_edges: bool = True):
+    def stage_t_centers(self):
         """
         Used by RubiksCubeNNNEven.make_plus_sign
         """
-        self.lt_init()
-
         # phase 1
         # stage the LR inner-x centers and pair the LR oblique edges
         tmp_solution_len = len(self.solution)
@@ -1438,15 +1391,15 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             "COMMENT_%d_steps_666_UD_oblique_edges_inner_x_centers_staged"
             % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
         )
-        self.daisy_solve_centers()
 
-    def reduce_555(self):
-
-        if self.reduced_to_555():
-            return
-
-        self.lt_init()
-
+    def stage_centers(self):
+        """
+        Things I have tried here that did not work
+        - pair LR inner x-centers and pair oblique edges
+        - stage LR
+        - stage all of UD in a single phase. This is a 12870^4 search space though and even with six (yes six) 12870^2
+            (165 million entry) perfect-hash tables the IDA ran overnight before I killed it.
+        """
         if not self.LR_centers_staged():
             # phase 1
             # stage the LR inner-x centers and pair the LR oblique edges
@@ -1475,14 +1428,11 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                 "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
             )
 
-        logger.info(self.get_kociemba_string(True))
-
         if not self.UD_centers_staged():
             # phase 3
             # pair the UD oblique edges and outer x-centers
             tmp_solution_len = len(self.solution)
-            # self.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
-            self.lt_UD_all.solve_via_c()
+            self.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
             self.print_cube(
                 "%s: UD oblique edges and inner x-centers staged (%d steps in)"
                 % (self, self.get_solution_len_minus_rotates(self.solution))
@@ -1492,9 +1442,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                 % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
             )
 
-            # dwalton
-            raise Exception("DONE")
-            # TODO - once phase3 perfect-has tables are built we should be able to chop phase 4
             # phase 4
             # Stage UD centers via 555
             fake_555 = self.get_fake_555()
@@ -1509,6 +1456,13 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                 "%s: UD centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
             )
 
+    def reduce_555(self):
+
+        if self.reduced_to_555():
+            return
+
+        self.lt_init()
+        self.stage_centers()
         self.daisy_solve_centers()
         self.pair_inside_edges_via_444()
 

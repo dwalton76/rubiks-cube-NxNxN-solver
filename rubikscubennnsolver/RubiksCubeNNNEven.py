@@ -218,7 +218,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_NNN += self.size * self.size
 
             # reduce the centers to 5x5x5 centers
-            fake_666.daisy_solve_t_centers()
+            fake_666.stage_t_centers()
+            fake_666.daisy_solve_centers()
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))

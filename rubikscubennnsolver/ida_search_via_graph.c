@@ -126,15 +126,15 @@ unsigned int x_centers_stage_555[9][9] = {
 };
 
 unsigned int unpaired_count_inner_x_centers_666[9][8] = {
-    {0, 1, 2, 3, 4, 5, 6, 7}, // x unpaired obliques (0), y LR centers cost
-    {1, 1, 2, 3, 4, 5, 6, 7}, // x unpaired obliques (1), y LR centers cost
-    {2, 1, 2, 3, 4, 5, 7, 7}, // x unpaired obliques (2), y LR centers cost
-    {3, 3, 4, 3, 4, 6, 7, 8}, // x unpaired obliques (3), y LR centers cost
-    {4, 3, 4, 5, 4, 6, 8, 8}, // x unpaired obliques (4), y LR centers cost
-    {5, 4, 5, 5, 6, 7, 8, 9}, // x unpaired obliques (5), y LR centers cost
-    {6, 6, 6, 7, 8, 8, 9, 9}, // x unpaired obliques (6), y LR centers cost
-    {7, 7, 7, 8, 9, 8, 9, 9}, // x unpaired obliques (7), y LR centers cost
-    {8, 8, 8, 8, 8, 8, 10, 10}, // x unpaired obliques (8), y LR centers cost
+    {0, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (0), y LR centers cost
+    {1, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (1), y LR centers cost
+    {2, 1, 2, 3, 4, 5, 7, 7},    // x unpaired obliques (2), y LR centers cost
+    {3, 3, 4, 3, 4, 6, 7, 8},    // x unpaired obliques (3), y LR centers cost
+    {4, 3, 4, 5, 4, 6, 8, 8},    // x unpaired obliques (4), y LR centers cost
+    {5, 4, 5, 5, 6, 7, 8, 9},    // x unpaired obliques (5), y LR centers cost
+    {6, 6, 6, 7, 8, 8, 9, 9},    // x unpaired obliques (6), y LR centers cost
+    {7, 7, 7, 8, 9, 8, 9, 9},    // x unpaired obliques (7), y LR centers cost
+    {8, 8, 8, 8, 8, 8, 10, 10},  // x unpaired obliques (8), y LR centers cost
 };
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
@@ -176,7 +176,6 @@ unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
             exit(1);
     };
 }
-
 
 void str_replace_for_binary(char *str, char *ones) {
     int i = 0;
@@ -314,7 +313,6 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type) {
     }
 }
 
-
 // A structure to represent a stack
 struct StackNode {
     unsigned char cost_to_here;
@@ -354,11 +352,11 @@ struct StackNode *pop(struct StackNode **root) {
     return temp;
 }
 
-unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsigned int prev_pt0_state, unsigned int prev_pt1_state,
-                                       unsigned int prev_pt2_state, unsigned int prev_pt3_state,
-                                       unsigned int prev_pt4_state, unsigned char pt0_cost, unsigned char pt1_cost,
-                                       unsigned char pt2_cost, unsigned char pt3_cost, unsigned char pt4_cost,
-                                       unsigned char init_cost_to_goal) {
+unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsigned int prev_pt0_state,
+                                       unsigned int prev_pt1_state, unsigned int prev_pt2_state,
+                                       unsigned int prev_pt3_state, unsigned int prev_pt4_state, unsigned char pt0_cost,
+                                       unsigned char pt1_cost, unsigned char pt2_cost, unsigned char pt3_cost,
+                                       unsigned char pt4_cost, unsigned char init_cost_to_goal) {
     unsigned char cost_to_goal = init_cost_to_goal;
 
     if (type) {
@@ -399,7 +397,8 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
             heuristic_result = ida_heuristic(cube, type);
             cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
 
-        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777) {
+        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666 ||
+                   type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777) {
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
             cost_to_goal = max(cost_to_goal, heuristic_result.cost_to_goal);
@@ -414,7 +413,8 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
         unsigned char perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
 
-        // LOG("prev_pt0_state %d, prev_pt1_state %d, perfect_hash01_index %d, perfect_hash01_cost %d, cost_to_goal %d\n",
+        // LOG("prev_pt0_state %d, prev_pt1_state %d, perfect_hash01_index %d, perfect_hash01_cost %d, cost_to_goal
+        // %d\n",
         //     prev_pt0_state, prev_pt1_state, perfect_hash01_index, perfect_hash01_cost, cost_to_goal);
 
         if (perfect_hash01_cost > cost_to_goal) {
@@ -608,7 +608,8 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             heuristic_result = ida_heuristic(cube, type);
             result.cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
 
-        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777) {
+        } else if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == UD_OBLIQUE_EDGES_STAGE_666 ||
+                   type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777) {
             struct ida_heuristic_result heuristic_result;
             heuristic_result = ida_heuristic(cube, type);
             result.cost_to_goal = max(result.cost_to_goal, heuristic_result.cost_to_goal);
@@ -692,8 +693,8 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
     return result;
 }
 
-void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
-                       unsigned int pt3_state, unsigned int pt4_state, move_type *solution,
+void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state,
+                       unsigned int pt2_state, unsigned int pt3_state, unsigned int pt4_state, move_type *solution,
                        unsigned char solution_len) {
     struct cost_to_goal_result ctg;
     unsigned char steps_to_solved = solution_len;
@@ -809,17 +810,39 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
     }
 
-    if (pt_max >= 0) {printf("%3d  ", ctg.pt0_cost);}
-    if (pt_max >= 1) {printf("%3d  ", ctg.pt1_cost);}
-    if (pt_max >= 2) {printf("%3d  ", ctg.pt2_cost);}
-    if (pt_max >= 3) {printf("%3d  ", ctg.pt3_cost);}
-    if (pt_max >= 4) {printf("%3d  ", ctg.pt4_cost);}
-    if (pt_perfect_hash01) {printf("%5d  ", ctg.perfect_hash01_cost);}
-    if (pt_perfect_hash02) {printf("%5d  ", ctg.perfect_hash02_cost);}
-    if (pt_perfect_hash12) {printf("%5d  ", ctg.perfect_hash12_cost);}
-    if (pt_perfect_hash03) {printf("%5d  ", ctg.perfect_hash03_cost);}
-    if (pt_perfect_hash31) {printf("%5d  ", ctg.perfect_hash31_cost);}
-    if (pt_perfect_hash32) {printf("%5d  ", ctg.perfect_hash32_cost);}
+    if (pt_max >= 0) {
+        printf("%3d  ", ctg.pt0_cost);
+    }
+    if (pt_max >= 1) {
+        printf("%3d  ", ctg.pt1_cost);
+    }
+    if (pt_max >= 2) {
+        printf("%3d  ", ctg.pt2_cost);
+    }
+    if (pt_max >= 3) {
+        printf("%3d  ", ctg.pt3_cost);
+    }
+    if (pt_max >= 4) {
+        printf("%3d  ", ctg.pt4_cost);
+    }
+    if (pt_perfect_hash01) {
+        printf("%5d  ", ctg.perfect_hash01_cost);
+    }
+    if (pt_perfect_hash02) {
+        printf("%5d  ", ctg.perfect_hash02_cost);
+    }
+    if (pt_perfect_hash12) {
+        printf("%5d  ", ctg.perfect_hash12_cost);
+    }
+    if (pt_perfect_hash03) {
+        printf("%5d  ", ctg.perfect_hash03_cost);
+    }
+    if (pt_perfect_hash31) {
+        printf("%5d  ", ctg.perfect_hash31_cost);
+    }
+    if (pt_perfect_hash32) {
+        printf("%5d  ", ctg.perfect_hash32_cost);
+    }
     printf("%3d  %3d  %3d\n", ctg.cost_to_goal, steps_to_solved, 0);
 
     for (unsigned char i = 0; i < solution_len; i++) {
@@ -877,17 +900,39 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         steps_to_solved--;
 
-        if (pt_max >= 0) {printf("%3d  ", ctg.pt0_cost);}
-        if (pt_max >= 1) {printf("%3d  ", ctg.pt1_cost);}
-        if (pt_max >= 2) {printf("%3d  ", ctg.pt2_cost);}
-        if (pt_max >= 3) {printf("%3d  ", ctg.pt3_cost);}
-        if (pt_max >= 4) {printf("%3d  ", ctg.pt4_cost);}
-        if (pt_perfect_hash01) {printf("%5d  ", ctg.perfect_hash01_cost);}
-        if (pt_perfect_hash02) {printf("%5d  ", ctg.perfect_hash02_cost);}
-        if (pt_perfect_hash12) {printf("%5d  ", ctg.perfect_hash12_cost);}
-        if (pt_perfect_hash03) {printf("%5d  ", ctg.perfect_hash03_cost);}
-        if (pt_perfect_hash31) {printf("%5d  ", ctg.perfect_hash31_cost);}
-        if (pt_perfect_hash32) {printf("%5d  ", ctg.perfect_hash32_cost);}
+        if (pt_max >= 0) {
+            printf("%3d  ", ctg.pt0_cost);
+        }
+        if (pt_max >= 1) {
+            printf("%3d  ", ctg.pt1_cost);
+        }
+        if (pt_max >= 2) {
+            printf("%3d  ", ctg.pt2_cost);
+        }
+        if (pt_max >= 3) {
+            printf("%3d  ", ctg.pt3_cost);
+        }
+        if (pt_max >= 4) {
+            printf("%3d  ", ctg.pt4_cost);
+        }
+        if (pt_perfect_hash01) {
+            printf("%5d  ", ctg.perfect_hash01_cost);
+        }
+        if (pt_perfect_hash02) {
+            printf("%5d  ", ctg.perfect_hash02_cost);
+        }
+        if (pt_perfect_hash12) {
+            printf("%5d  ", ctg.perfect_hash12_cost);
+        }
+        if (pt_perfect_hash03) {
+            printf("%5d  ", ctg.perfect_hash03_cost);
+        }
+        if (pt_perfect_hash31) {
+            printf("%5d  ", ctg.perfect_hash31_cost);
+        }
+        if (pt_perfect_hash32) {
+            printf("%5d  ", ctg.perfect_hash32_cost);
+        }
 
         printf("%3d  %3d  %3d\n", ctg.cost_to_goal, steps_to_solved, i + 1);
     }
@@ -907,7 +952,7 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
                 return 0;
             }
 
-        // orbit0 must have an even number of wide quarter turns
+            // orbit0 must have an even number of wide quarter turns
         } else if (orbit0_wide_quarter_turns == 2) {
             if (orbit0_wide_quarter_turn_count % 2) {
                 return 0;
@@ -928,7 +973,7 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
                 return 0;
             }
 
-        // orbit1 must have an even number of wide quarter turns
+            // orbit1 must have an even number of wide quarter turns
         } else if (orbit1_wide_quarter_turns == 2) {
             if (orbit1_wide_quarter_turn_count % 2) {
                 return 0;
@@ -1004,7 +1049,6 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
         node = pop(&root);
 
         if (node->cost_to_goal == 0) {
-
             if (parity_ok(node->cube, type, node->moves_to_here)) {
                 // We found a solution!!
                 solution_count++;
@@ -1176,8 +1220,9 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
             }
 
             if (call_pt_simple) {
-                cost_to_goal = pt_states_to_cost_simple(cube_copy, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state,
-                                                        pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, cost_to_goal);
+                cost_to_goal =
+                    pt_states_to_cost_simple(cube_copy, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state,
+                                             pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, cost_to_goal);
             }
             ida_count++;
             moves_to_here[node->cost_to_here] = move;
@@ -1203,11 +1248,11 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
     return search_result;
 }
 
-struct ida_search_result ida_solve(char *cube, unsigned int cube_size,
-                                   lookup_table_type type, unsigned int pt0_state, unsigned int pt1_state,
-                                   unsigned int pt2_state, unsigned int pt3_state, unsigned int pt4_state,
-                                   unsigned char min_ida_threshold, unsigned char max_ida_threshold,
-                                   unsigned char use_uthash, unsigned char find_extra) {
+struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int pt0_state,
+                                   unsigned int pt1_state, unsigned int pt2_state, unsigned int pt3_state,
+                                   unsigned int pt4_state, unsigned char min_ida_threshold,
+                                   unsigned char max_ida_threshold, unsigned char use_uthash,
+                                   unsigned char find_extra) {
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
     unsigned char pt0_cost = 0;
@@ -1233,8 +1278,8 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size,
         // LOG("ctg.cost_to_goal %d > min_ida_threshold %d\n", ctg.cost_to_goal, min_ida_threshold);
         return search_result;
     }
-    LOG("pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n",
-        pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+    LOG("pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n", pt0_state, pt1_state, pt2_state,
+        pt3_state, pt4_state);
 
     gettimeofday(&start, NULL);
 
@@ -1243,7 +1288,8 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size,
         gettimeofday(&start_this_threshold, NULL);
         hash_delete_all(&ida_explored);
 
-        search_result = ida_search(cube, cube_size, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state, use_uthash);
+        search_result =
+            ida_search(cube, cube_size, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state, use_uthash);
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
@@ -1252,8 +1298,8 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size,
         float nodes_per_ms = ida_count / ms;
         unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
-        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'llu nodes-per-sec\n", threshold, ida_count, ms / 1000,
-            nodes_per_sec);
+        LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'llu nodes-per-sec\n", threshold, ida_count,
+            ms / 1000, nodes_per_sec);
 
         if (search_result.found_solution) {
             float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
@@ -1628,15 +1674,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (type != NONE ||
-        pt_perfect_hash01 ||
-        pt_perfect_hash02 ||
-        pt_perfect_hash03 || 
-        pt_perfect_hash12 || 
-        pt_perfect_hash31 || 
-        pt_perfect_hash32 ||
-        cost_to_goal_multiplier) {
-
+    if (type != NONE || pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash03 || pt_perfect_hash12 ||
+        pt_perfect_hash31 || pt_perfect_hash32 || cost_to_goal_multiplier) {
         call_pt_simple = 1;
     }
 
@@ -1712,7 +1751,8 @@ int main(int argc, char *argv[]) {
         min_search_result.found_solution = 0;
         min_search_result.f_cost = 99;
 
-        for (unsigned char i_ida_threshold = min_ida_threshold; i_ida_threshold <= max_ida_threshold; i_ida_threshold++) {
+        for (unsigned char i_ida_threshold = min_ida_threshold; i_ida_threshold <= max_ida_threshold;
+             i_ida_threshold++) {
             LOG("loop %d/%d\n", i_ida_threshold, max_ida_threshold);
 
             fh_read = fopen(prune_table_states_filename, "r");
@@ -1740,8 +1780,8 @@ int main(int argc, char *argv[]) {
                     token_index++;
                 }
 
-                search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                          prune_table_3_state, prune_table_4_state,
+                search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state,
+                                          prune_table_2_state, prune_table_3_state, prune_table_4_state,
                                           i_ida_threshold, i_ida_threshold, use_uthash, find_extra);
 
                 if (search_result.found_solution) {
@@ -1781,22 +1821,19 @@ int main(int argc, char *argv[]) {
 
     } else {
         if (!min_ida_threshold) {
-            struct cost_to_goal_result ctg = pt_states_to_cost(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state, prune_table_4_state);
+            struct cost_to_goal_result ctg =
+                pt_states_to_cost(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                                  prune_table_3_state, prune_table_4_state);
             min_ida_threshold = ctg.cost_to_goal;
         }
 
-        search_result = ida_solve(cube, cube_size, type,
-                                  prune_table_0_state,
-                                  prune_table_1_state,
-                                  prune_table_2_state,
-                                  prune_table_3_state,
-                                  prune_table_4_state,
-                                  min_ida_threshold, max_ida_threshold,
+        search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                                  prune_table_3_state, prune_table_4_state, min_ida_threshold, max_ida_threshold,
                                   use_uthash, find_extra);
 
         if (search_result.found_solution) {
-            print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state, prune_table_3_state,
-                              prune_table_4_state, search_result.solution, search_result.f_cost);
+            print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                              prune_table_3_state, prune_table_4_state, search_result.solution, search_result.f_cost);
         }
     }
 

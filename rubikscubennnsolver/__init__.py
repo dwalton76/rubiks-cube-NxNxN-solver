@@ -1527,7 +1527,7 @@ class RubiksCube(object):
         solution_this_phase = self.solution[prev_solution_len:]
         solution_this_phase_len = self.get_solution_len_minus_rotates(solution_this_phase)
         title = f"{self}: {desc} {solution_this_phase_len} steps ({total_len} total steps)"
-        comment = f"COMMENT_{solution_this_phase_len}_steps_{desc.replace(' ', '_').replace('-', '_')}"
+        comment = f"COMMENT_{desc.replace(' ', '_').replace('-', '_')}_({solution_this_phase_len}_steps)"
         self.print_cube(title)
         self.solution.append(comment)
 
@@ -3617,7 +3617,8 @@ class RubiksCube(object):
             self.rotate(step)
 
         self.solution.append(
-            "COMMENT_%d_steps_solve_333" % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:])
+            "COMMENT_solve_333_(%d_steps)"
+            % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:])
         )
 
         if not self.solved():
@@ -4673,7 +4674,7 @@ class RubiksCube(object):
                 self.rotate(step)
 
             self.solution.append(
-                "COMMENT_%d_steps_solve_333"
+                "COMMENT_solve_333_(%d_steps)"
                 % self.get_solution_len_minus_rotates(self.solution[reduce_333_solution_len:])
             )
         else:

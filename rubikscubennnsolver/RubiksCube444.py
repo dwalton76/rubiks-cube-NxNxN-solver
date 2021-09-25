@@ -1003,14 +1003,14 @@ class RubiksCube444(RubiksCube):
         if self.LR_centers_staged():
             return
 
+        tmp_solution_len = len(self.solution)
         self.lt_phase1.solve_via_c()
-        self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
-        self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
     def phase2(self) -> None:
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
+        tmp_solution_len = len(self.solution)
         pt_state_indexes_to_edge_mapping = {}
 
         # try all 2048 edge mappings
@@ -1035,16 +1035,13 @@ class RubiksCube444(RubiksCube):
         for step in phase2_solution:
             self.rotate(step)
 
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[original_solution_len:])}_steps_444_phase2"
-        )
         self.highlow_edges_print()
-        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        self.print_cube_add_comment("centers staged, edges EOed into high/low groups", tmp_solution_len)
 
     def phase3(self, wing_str_combo: List[str] = None):
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
+        tmp_solution_len = len(original_solution)
 
         # phase 3 - search for all wing_strs
         pt_state_indexes = []
@@ -1070,10 +1067,7 @@ class RubiksCube444(RubiksCube):
         for step in phase3_solution:
             self.rotate(step)
 
-        self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[original_solution_len:])}_steps_444_phase3"
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
     def phase4(self, max_ida_threshold: int = None):
         tmp_solution_len = len(self.solution)
@@ -1094,10 +1088,7 @@ class RubiksCube444(RubiksCube):
         else:
             logger.info(f"{self}: could not find a phase4 solution that avoids PLL")
 
-        self.print_cube(f"{self}: end of phase4 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
-        )
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def phase3_and_4(self, consider_solve_333: bool):
         original_state = self.state[:]
@@ -1238,19 +1229,13 @@ class RubiksCube444(RubiksCube):
         tmp_solution_len = len(self.solution)
         for step in phase3_solution:
             self.rotate(step)
-        self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase3"
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
         # apply the phase 4 solution
         tmp_solution_len = len(self.solution)
         for step in phase4_solution:
             self.rotate(step)
-        self.print_cube(f"{self}: end of phase4 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
-        )
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def reduced_to_333(self) -> bool:
 

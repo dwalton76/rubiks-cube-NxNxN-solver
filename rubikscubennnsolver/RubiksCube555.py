@@ -3471,14 +3471,7 @@ class RubiksCube555(RubiksCube):
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_LR_centers_stage.solve_via_c()
-            self.print_cube(
-                "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-
-            self.solution.append(
-                "COMMENT_%d_steps_555_two_centers_staged"
-                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-            )
+            self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
     def group_centers_stage_FB(self, max_ida_threshold: int = None):
         """
@@ -3490,13 +3483,7 @@ class RubiksCube555(RubiksCube):
         else:
             tmp_solution_len = len(self.solution)
             self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
-            self.print_cube(
-                "%s: FB centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-            self.solution.append(
-                "COMMENT_%d_steps_555_centers_staged"
-                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-            )
+            self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
     def group_centers_stage_UD(self, max_ida_threshold: int = None):
         self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
@@ -3583,9 +3570,8 @@ class RubiksCube555(RubiksCube):
         # When solve_via_c is passed pt_state_indexes (2048 lines of states in this case), it will try all 2048 of them
         # to find the state that has the shortest solution.
         self.lt_phase3.solve_via_c(pt_states=pt_state_indexes)
-        self.solution.append(
-            "COMMENT_%d_steps_555_edges_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
+
+        self.print_cube_add_comment("edges EOed into high/low groups", tmp_solution_len)
         self.post_eo_state = self.state[:]
         self.post_eo_solution = self.solution[:]
 
@@ -3593,11 +3579,7 @@ class RubiksCube555(RubiksCube):
         # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
         # the cube and re-apply the solution.
         self.edges_flip_orientation(wing_strs, [])
-
         self.highlow_edges_print()
-        self.print_cube(
-            "%s: end of phase 3, edges EOed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
 
     def high_edge_midge_pair_count(self, target_wing_str=[]):
         count = 0
@@ -3683,47 +3665,29 @@ class RubiksCube555(RubiksCube):
         results.sort()
         return results
 
-    def pair_first_four_edges(self, phase4_wing_str_combo: List[str], call_print_cube: bool = True):
-        original_solution_len = len(self.solution)
+    def pair_first_four_edges(self, phase4_wing_str_combo: List[str]):
+        tmp_solution_len = len(self.solution)
         self.lt_phase4.wing_strs = phase4_wing_str_combo
         self.lt_phase4.solve()
-
-        if call_print_cube:
-            self.print_cube(
-                "%s: end of phase 4, first four edges in x-plane and y-plane (%d steps in)"
-                % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
-        )
+        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
 
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
+        tmp_solution_len = len(self.solution)
 
         self.edges_flip_orientation(phase4_wing_str_combo, [])
         self.lt_phase5_high_edge_midge.wing_strs = phase4_wing_str_combo
         self.lt_phase5_low_edge_midge.wing_strs = phase4_wing_str_combo
         self.lt_phase5.solve_via_c()
 
-        pair_four_edge_solution = self.solution[original_solution_len:]
+        pair_four_edge_solution = self.solution[tmp_solution_len:]
         self.state = original_state[:]
         self.solution = original_solution[:]
 
         for step in pair_four_edge_solution:
             self.rotate(step)
 
-        if call_print_cube:
-            self.print_cube(
-                "%s: end of phase 5, x-plane edges paired (%d steps in)"
-                % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
     def pair_last_eight_edges(self, call_print_cube: bool = True):
         original_state = self.state[:]
@@ -3751,15 +3715,7 @@ class RubiksCube555(RubiksCube):
         for step in pair_eight_edge_solution:
             self.rotate(step)
 
-        if call_print_cube:
-            self.print_cube(f"{self}: last eight edges paired")
-
-        self.solution.append(
-            "COMMENT_%d_steps_555_last_eight_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        logger.info("%s: reduced to 3x3x3 (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def group_centers_phase1_and_2(self) -> None:
         """
@@ -3775,6 +3731,7 @@ class RubiksCube555(RubiksCube):
 
         original_state = self.state[:]
         original_solution = self.solution[:]
+        tmp_solution_len = len(self.solution)
 
         # find multiple phase1 solutions
         phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=100)
@@ -3837,18 +3794,13 @@ class RubiksCube555(RubiksCube):
         for step in min_phase1_solution:
             self.rotate(step)
 
-        self.print_cube(
-            "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append("COMMENT_%d_steps_555_two_centers_staged" % len(min_phase1_solution))
+        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
+        tmp_solution_len = len(self.solution)
         for step in min_phase2_solution:
             self.rotate(step)
 
-        self.print_cube(
-            "%s: FB centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append("COMMENT_%d_steps_555_centers_staged" % len(min_phase2_solution))
+        self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
     def pair_edges(self):
 
@@ -3930,10 +3882,7 @@ class RubiksCube555(RubiksCube):
         for step in phase4_solution:
             self.rotate(step)
 
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
-        )
+        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
 
         # phase 5
         tmp_solution_len = len(self.solution)
@@ -3941,13 +3890,7 @@ class RubiksCube555(RubiksCube):
         for step in phase5_solution:
             self.rotate(step)
 
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        self.print_cube(
-            "%s: first four edges paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
         # phase 6
         tmp_solution_len = len(self.solution)
@@ -3955,13 +3898,7 @@ class RubiksCube555(RubiksCube):
         for step in phase6_solution:
             self.rotate(step)
 
-        self.solution.append(
-            "COMMENT_%d_steps_555_last_eight_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        self.print_cube(
-            "%s: last eight edges paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def reduce_333(self):
         self.lt_init()

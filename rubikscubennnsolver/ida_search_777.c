@@ -198,40 +198,26 @@ unsigned int UFBD_right_oblique_edges_777[NUM_RIGHT_OBLIQUE_EDGES_777] = {
 };
 
 unsigned char get_UFBD_unpaired_obliques_count_777(char *cube) {
-    int left_paired_obliques = 0;
-    int left_unpaired_obliques = 8;
-    int right_paired_obliques = 0;
-    int right_unpaired_obliques = 8;
+    unsigned char unpaired_count = 16;
 
-    int left_cube_index = 0;
-    int middle_cube_index = 0;
-    int right_cube_index = 0;
-
-    for (int i = 0; i < UFBD_NUM_LEFT_OBLIQUE_EDGES_777; i++) {
-        middle_cube_index = UFBD_middle_oblique_edges_777[i];
-
-        if (cube[middle_cube_index] == '1') {
-            left_cube_index = UFBD_left_oblique_edges_777[i];
-            right_cube_index = UFBD_right_oblique_edges_777[i];
-
-            if (cube[left_cube_index] == '1') {
-                left_paired_obliques += 1;
+    for (unsigned char i = 0; i < UFBD_NUM_LEFT_OBLIQUE_EDGES_777; i++) {
+        if (cube[UFBD_middle_oblique_edges_777[i]] == '1') {
+            if (cube[UFBD_left_oblique_edges_777[i]] == '1') {
+                unpaired_count--;
             }
 
-            if (cube[right_cube_index] == '1') {
-                right_paired_obliques += 1;
+            if (cube[UFBD_right_oblique_edges_777[i]] == '1') {
+                unpaired_count--;
             }
         }
     }
 
-    left_unpaired_obliques -= left_paired_obliques;
-    right_unpaired_obliques -= right_paired_obliques;
-    return (left_unpaired_obliques + right_unpaired_obliques);
+    return unpaired_count;
 }
 
 struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube) {
     struct ida_heuristic_result result;
-    result.unpaired_count = get_unpaired_obliques_count_777(cube);
+    result.unpaired_count = get_UFBD_unpaired_obliques_count_777(cube);
 
     // Get the state of the oblique edges
     /*

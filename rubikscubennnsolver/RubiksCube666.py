@@ -308,7 +308,7 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaGraph):
             ),
             centers_only=True,
             prune_tables=[],
-            C_ida_type="6x6x6-LR-oblique-edges-stage",  # C_ida_type
+            C_ida_type="6x6x6-LR-oblique-edges-stage",
         )
         # fmt: on
 
@@ -346,7 +346,7 @@ class LookupTable666LRObliquEdgeStageInnerXStage(LookupTableIDAViaGraph):
             prune_tables=[
                 parent.lt_LR_inner_x_centers_stage,
             ],
-            C_ida_type="6x6x6-LR-oblique-edges-stage",  # C_ida_type
+            C_ida_type="6x6x6-LR-oblique-edges-inner-x-centers-stage",
         )
         # fmt: on
 
@@ -610,7 +610,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
             prune_tables=[
                 parent.lt_UD_inner_x_centers_stage,
             ],
-            C_ida_type="6x6x6-UD-oblique-edges-stage",  # C_ida_type
+            C_ida_type="6x6x6-UD-oblique-edges-inner-x-centers-stage",
         )
         # fmt: on
 

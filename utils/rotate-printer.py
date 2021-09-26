@@ -14,10 +14,6 @@ import click
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, configure_logging
-from rubikscubennnsolver.RubiksCube222 import moves_222, solved_222
-from rubikscubennnsolver.RubiksCube333 import moves_333, solved_333
-from rubikscubennnsolver.RubiksCube444 import moves_444, solved_444
-from rubikscubennnsolver.RubiksCube555 import moves_555, solved_555
 from rubikscubennnsolver.RubiksCube666 import moves_666, solved_666
 from rubikscubennnsolver.RubiksCube777 import moves_777, solved_777
 
@@ -25,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.option("--c/--no-c", type=bool, default=False, show_default=True, help="build for C, else python3")
+@click.option("--c/--no-c", type=bool, default=True, show_default=True, help="build for C, else python3")
 def main(c: bool) -> None:
     build_rotate_xxx_c = c
     swaps_py = "rubikscubennnsolver/swaps.py"
@@ -36,7 +32,7 @@ def main(c: bool) -> None:
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "rotate_xxx.h"
+#include "ida_search_core.h"
 
     """
         )
@@ -46,10 +42,10 @@ def main(c: bool) -> None:
             fh.write("# fmt: off\n")
 
     for (size, solved_state) in (
-        (2, solved_222),
-        (3, solved_333),
-        (4, solved_444),
-        (5, solved_555),
+        # (2, solved_222),
+        # (3, solved_333),
+        # (4, solved_444),
+        # (5, solved_555),
         (6, solved_666),
         (7, solved_777),
     ):
@@ -63,6 +59,7 @@ def main(c: bool) -> None:
 
         original_state = copy(cube.state)
 
+        """
         if size == 2:
             steps = moves_222
 
@@ -74,8 +71,9 @@ def main(c: bool) -> None:
 
         elif size == 5:
             steps = moves_555
+        """
 
-        elif size == 6:
+        if size == 6:
             steps = moves_666
 
         elif size == 7:
@@ -85,6 +83,7 @@ def main(c: bool) -> None:
             raise Exception(f"Add support for size {size}")
 
         steps = list(steps)
+        """
         steps.extend(["x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"])
 
         if size in (4, 5, 6, 7):
@@ -102,6 +101,7 @@ def main(c: bool) -> None:
             steps.extend(["3U", "3U'", "3U2"])
             steps.extend(["3L", "3L'", "3L2"])
             steps.extend(["3F", "3F'", "3F2"])
+        """
 
         if build_rotate_xxx_c:
             print("void")
@@ -114,7 +114,7 @@ def main(c: bool) -> None:
 
             for step in steps:
                 cube.rotate(step)
-                cube.print_case_statement_C(step, first_step)
+                cube.print_case_statement_C(step, first_step, size)
                 cube.state = copy(original_state)
                 first_step = False
 

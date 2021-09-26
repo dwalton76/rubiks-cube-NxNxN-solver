@@ -7,7 +7,6 @@ This was used to build the switch statement in rubikscubennnsolver/ida_search_77
 # standard libraries
 import json
 import logging
-import random
 
 # rubiks cube libraries
 from rubikscubennnsolver import configure_logging
@@ -15,59 +14,6 @@ from rubikscubennnsolver.misc import print_stats_median
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 
 logger = logging.getLogger(__name__)
-random.seed(1234)
-
-# fmt: off
-left_oblique_edges_777 = [
-    10, 30, 20, 40,      # Upper
-    59, 79, 69, 89,      # Left
-    108, 128, 118, 138,  # Front
-    157, 177, 167, 187,  # Right
-    206, 226, 216, 236,  # Back
-    255, 275, 265, 285,  # Down
-]
-
-middle_oblique_edges_777 = [
-    11, 23, 27, 39,      # Upper
-    60, 72, 76, 88,      # Left
-    109, 121, 125, 137,  # Front
-    158, 170, 174, 186,  # Right
-    207, 219, 223, 235,  # Back
-    256, 268, 272, 284,  # Down
-]
-
-right_oblique_edges_777 = [
-    12, 16, 34, 38,      # Upper
-    61, 65, 83, 87,      # Left
-    110, 114, 132, 136,  # Front
-    159, 163, 181, 185,  # Right
-    208, 212, 230, 234,  # Back
-    257, 261, 279, 283,  # Down
-]
-# fmt: on
-
-
-def unpaired_obliques_count_777(cube: RubiksCube777) -> int:
-    left_paired_obliques = 0
-    left_unpaired_obliques = 8
-    right_paired_obliques = 0
-    right_unpaired_obliques = 8
-
-    for (left_cube_index, middle_cube_index, right_cube_index) in zip(
-        left_oblique_edges_777, middle_oblique_edges_777, right_oblique_edges_777
-    ):
-
-        if cube.state[middle_cube_index] in ("U", "D"):
-
-            if cube.state[left_cube_index] in ("U", "D"):
-                left_paired_obliques += 1
-
-            if cube.state[right_cube_index] in ("U", "D"):
-                right_paired_obliques += 1
-
-    left_unpaired_obliques -= left_paired_obliques
-    right_unpaired_obliques -= right_paired_obliques
-    return left_unpaired_obliques + right_unpaired_obliques
 
 
 def main():
@@ -81,43 +27,49 @@ def main():
         cube.lt_init()
         cube.stage_LR_centers()
 
-        # phase 1
-        cube.group_inside_UD_centers()
-        phase1_state = cube.state[:]
-        phase1_solution = cube.solution[:]
-        phase1_solution_len = len(phase1_solution)
+        # stage inner x-centers and pair oblique edges in one phase
+        cube.lt_UD_inner_centers.solve_via_c(use_kociemba_string=True)
 
-        # phase 2 - pair the oblique edges
-        cube.lt_UD_oblique_edge_pairing.solve()
-        UD_oblique_solution = cube.solution[phase1_solution_len:]
-        UD_oblique_solution_len = len(UD_oblique_solution)
-        cube.state = phase1_state
-        cube.solution = phase1_solution
+        """
+       UNPAIRED  EST  PT0  PT1  PER01  CTG  TRU  IDX
+       ========  ===  ===  ===  =====  ===  ===  ===
+ INIT         9   10    6    5      9   11   15    0
+  Uw2         9   10    6    5      9   11   14    1
+ 3Dw2         8   10    7    4      9   11   13    2
+  3Rw         6    7    7    3      9   10   12    3
+  Fw2         6    7    7    3      9   10   11    4
+   Rw         6    7    7    3      9   10   10    5
+  Bw2         6    7    7    2      8    9    9    6
+   D'         6    7    7    1      7    7    8    7
+ 3Lw2         5    6    6    1      6    6    7    8
+ 3Rw'         3    3    5    2      5    5    6    9
+ 3Uw2         2    2    4    2      4    4    5   10
+   F'         2    2    3    2      3    3    4   11
+  Rw2         2    2    3    2      3    3    3   12
+    U         2    2    2    2      2    2    2   13
+  3Lw         1    1    1    1      1    1    1   14
+  3Rw         0    0    0    0      0    0    0   15
+        """
+        found_init = False
 
-        total_count = unpaired_obliques_count_777(cube)
-        logger.warning(
-            f"7x7x7 cube #{index:04d}, UD_oblique_solution_len {UD_oblique_solution_len}, unpaired count {total_count}"
-        )
+        for line in cube.solve_via_c_output.splitlines():
+            logger.info(line)
+            line = line.strip()
 
-        if total_count not in data:
-            data[total_count] = []
-        data[total_count].append(UD_oblique_solution_len)
+            if not found_init and line.startswith("INIT"):
+                found_init = True
 
-        for step_index, step in enumerate(UD_oblique_solution):
-            cube.rotate(step)
-            total_count = unpaired_obliques_count_777(cube)
+            if found_init and line:
+                step, unpaired_count, estimate, pt0_cost, pt1_cost, per01_cost, ctg, true_cost, _index = line.split()
+                unpaired_count = int(unpaired_count)
+                per01_cost = int(per01_cost)
 
-            """
-            logger.warning(
-                f"{step_index+1}/{UD_oblique_solution_len} post {step} unpaired count {total_count} ({left_count} left, {right_count} right), "
-                f"move to go {UD_oblique_solution_len - step_index - 1}"
-            )
-            """
-            if total_count not in data:
-                data[total_count] = []
-            data[total_count].append(UD_oblique_solution_len - step_index - 1)
+                if (unpaired_count, per01_cost) not in data:
+                    data[(unpaired_count, per01_cost)] = []
+                data[(unpaired_count, per01_cost)].append(int(true_cost))
 
-        if index and index % 100 == 0:
+        # if index and index % 10 == 0:
+        if True:
             logger.warning(f"INDEX {index}")
             print_stats_median(data)
             print("\n\n")

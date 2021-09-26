@@ -5,6 +5,7 @@ clean:
 
 init: clean
 	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/ida_search_via_graph.c -lm
+
 	python3 -m venv venv
 	@./venv/bin/python3 -m pip install -U pip==20.3.1
 	@./venv/bin/python3 -m pip install -r requirements.dev.txt

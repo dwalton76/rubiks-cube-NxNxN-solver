@@ -122,10 +122,6 @@ static const move_type moves_777[MOVE_COUNT_777] = {
     B, B_PRIME, B2, Bw, Bw_PRIME, Bw2, threeBw, threeBw_PRIME, threeBw2,
     D, D_PRIME, D2, Dw, Dw_PRIME, Dw2, threeDw, threeDw_PRIME, threeDw2};
 
-void rotate_222(char *cube, char *cube_tmp, int array_size, move_type move);
-void rotate_333(char *cube, char *cube_tmp, int array_size, move_type move);
-void rotate_444(char *cube, char *cube_tmp, int array_size, move_type move);
-void rotate_555(char *cube, char *cube_tmp, int array_size, move_type move);
 void rotate_666(char *cube, char *cube_tmp, int array_size, move_type move);
 void rotate_777(char *cube, char *cube_tmp, int array_size, move_type move);
 

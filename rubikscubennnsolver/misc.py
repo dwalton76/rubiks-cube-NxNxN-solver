@@ -1,6 +1,5 @@
 # standard libraries
 import logging
-from statistics import median
 from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
@@ -206,7 +205,24 @@ def print_stats_median(data: Dict) -> None:
 
     for total_count in sorted(data.keys()):
         step_counts = data[(total_count)]
-        print(f"    {total_count}: {int(median(step_counts))},  # {len(step_counts)} entries")
+
+        # do not bother printing if we only have a handful of entries
+        if len(step_counts) <= 4:
+            continue
+
+        normal_cost = max(total_count)
+
+        # We used to use the median here but that ends up being a bit aggressive
+        # est_cost = int(median(step_counts))
+
+        # Sort the entries and grab the entry 1/4 of the way from the min
+        step_counts.sort()
+        est_index = int(len(step_counts) / 4)
+        est_cost = step_counts[est_index]
+
+        # only print if our estimate is higher that the normal cost used
+        if est_cost > normal_cost:
+            print(f"    {total_count}: {est_cost},  # {len(step_counts)} entries")
 
     print("}")
 

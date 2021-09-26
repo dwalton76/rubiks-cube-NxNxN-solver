@@ -1,63 +1,55 @@
 data = {
-    (0, 0): 0,  # 241 entries
-    (0, 1): 1,  # 13 entries
-    (0, 2): 2,  # 6 entries
-    (0, 3): 3,  # 2 entries
-    (1, 0): 1,  # 56 entries
-    (1, 1): 1,  # 184 entries
-    (1, 2): 2,  # 167 entries
-    (1, 3): 3,  # 53 entries
-    (1, 4): 4,  # 23 entries
-    (1, 5): 5,  # 1 entries
-    (1, 6): 6,  # 2 entries
-    (2, 0): 2,  # 13 entries
-    (2, 1): 1,  # 24 entries
-    (2, 2): 2,  # 50 entries
-    (2, 3): 3,  # 87 entries
-    (2, 4): 4,  # 57 entries
-    (2, 5): 5,  # 22 entries
-    (2, 6): 7,  # 4 entries
-    (3, 0): 3,  # 6 entries
-    (3, 1): 3,  # 18 entries
-    (3, 2): 4,  # 26 entries
-    (3, 3): 3,  # 99 entries
-    (3, 4): 4,  # 119 entries
-    (3, 5): 6,  # 111 entries
-    (3, 6): 7,  # 59 entries
-    (3, 7): 8,  # 10 entries
-    (4, 1): 3,  # 4 entries
-    (4, 2): 4,  # 8 entries
-    (4, 3): 5,  # 20 entries
-    (4, 4): 4,  # 65 entries
-    (4, 5): 6,  # 137 entries
-    (4, 6): 8,  # 139 entries
-    (4, 7): 8,  # 30 entries
-    (5, 1): 4,  # 1 entries
-    (5, 2): 5,  # 5 entries
-    (5, 3): 5,  # 15 entries
-    (5, 4): 6,  # 44 entries
-    (5, 5): 7,  # 122 entries
-    (5, 6): 8,  # 216 entries
-    (5, 7): 9,  # 47 entries
-    (6, 1): 6,  # 1 entries
-    (6, 2): 6,  # 1 entries
-    (6, 3): 7,  # 1 entries
-    (6, 4): 8,  # 11 entries
-    (6, 5): 8,  # 43 entries
-    (6, 6): 9,  # 110 entries
-    (6, 7): 9,  # 19 entries
-    (7, 2): 7,  # 1 entries
-    (7, 3): 8,  # 1 entries
-    (7, 4): 9,  # 5 entries
-    (7, 5): 8,  # 15 entries
-    (7, 6): 9,  # 30 entries
-    (7, 7): 9,  # 12 entries
-    (8, 6): 10,  # 3 entries
-    (8, 7): 10,  # 1 entries
+    (2, 6): 7,  # 17 entries
+    (3, 6): 7,  # 56 entries
+    (3, 7): 8,  # 26 entries
+    (3, 8): 9,  # 6 entries
+    (4, 3): 5,  # 24 entries
+    (4, 4): 5,  # 60 entries
+    (4, 5): 6,  # 113 entries
+    (4, 6): 7,  # 101 entries
+    (4, 7): 8,  # 95 entries
+    (4, 8): 9,  # 44 entries
+    (4, 9): 10,  # 10 entries
+    (5, 3): 6,  # 10 entries
+    (5, 4): 6,  # 28 entries
+    (5, 5): 6,  # 61 entries
+    (5, 6): 7,  # 109 entries
+    (5, 7): 8,  # 105 entries
+    (5, 8): 9,  # 84 entries
+    (5, 9): 11,  # 55 entries
+    (5, 10): 12,  # 12 entries
+    (6, 4): 7,  # 5 entries
+    (6, 5): 8,  # 24 entries
+    (6, 6): 8,  # 58 entries
+    (6, 7): 8,  # 103 entries
+    (6, 10): 12,  # 69 entries
+    (6, 11): 14,  # 6 entries
+    (7, 5): 9,  # 5 entries
+    (7, 6): 9,  # 20 entries
+    (7, 7): 10,  # 46 entries
+    (7, 8): 10,  # 113 entries
+    (7, 9): 11,  # 127 entries
+    (7, 10): 13,  # 75 entries
+    (7, 11): 13,  # 15 entries
+    (8, 7): 11,  # 15 entries
+    (8, 8): 12,  # 70 entries
+    (8, 9): 12,  # 127 entries
+    (8, 10): 13,  # 104 entries
+    (8, 11): 14,  # 14 entries
+    (9, 7): 14,  # 5 entries
+    (9, 8): 12,  # 41 entries
+    (9, 9): 13,  # 69 entries
+    (9, 10): 14,  # 84 entries
+    (10, 9): 14,  # 28 entries
+    (10, 10): 15,  # 30 entries
+    (11, 10): 15,  # 6 entries
+    (12, 9): 15,  # 5 entries
 }
 
 max_x = max([x for (x, y) in data.keys()])
 max_y = max([y for (x, y) in data.keys()])
+# max_x = 16
+# max_y = 12
 
 print(f"unsigned int foobar[{max_x+1}][{max_y+1}] = {{")
 for x in range(max_x + 1):
@@ -65,9 +57,34 @@ for x in range(max_x + 1):
 
     for y in range(max_y + 1):
         max_xy = max([x, y])
-        value = data.get((x, y), max_xy)
+
+        if (x, y) in data:
+            value = data[(x, y)]
+        else:
+            lower_x_value = 0
+            lower_y_value = 0
+
+            for lower_x in reversed(range(x)):
+                if (lower_x, y) in data:
+                    lower_x_value = data[(lower_x, y)]
+                    break
+
+            for lower_y in reversed(range(y)):
+                if (x, lower_y) in data:
+                    lower_y_value = data[(x, lower_y)]
+                    break
+
+            if lower_x_value and lower_x_value:
+                value = max([x, y, min([lower_x_value, lower_y_value])])
+            elif lower_x_value:
+                value = max([x, y, lower_x_value])
+            elif lower_y_value:
+                value = max([x, y, lower_y_value])
+            else:
+                value = max([x, y])
+
         values.append(str(value))
 
-    print("    {" + ", ".join(values) + f"}}, // x unpaired obliques ({x}), y LR centers cost")
+    print("    {" + ", ".join(values) + f"}}, // x unpaired obliques ({x}), y UD inner x-centers cost")
 
 print("};")

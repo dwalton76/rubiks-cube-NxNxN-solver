@@ -201,9 +201,6 @@ class LookupTable444UDCentersStage(LookupTable):
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
-            # md5_bin="2835d311466ad3fada95722fb676ec1a",
-            # md5_state_index="d0b9bbb685a08bf985782daa78208330",
-            # md5_txt="a26afb9be23495b3ec19abef686901ae",
         )
 
     def state(self) -> str:
@@ -259,9 +256,6 @@ class LookupTable444LRCentersStage(LookupTable):
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
-            # md5_bin="2835d311466ad3fada95722fb676ec1a",
-            # md5_state_index="79f362d800935a484dab4de8f655ca07",
-            # md5_txt="b8609a899722c2c9132d21b09f98c5d9",
         )
 
     def state(self) -> str:
@@ -1270,9 +1264,6 @@ class RubiksCube444(RubiksCube):
         # self.phase3()
         # self.phase4()
         self.phase3_and_4(consider_solve_333=consider_solve_333)
-
-        self.solution.append("CENTERS_SOLVED")
-        self.solution.append("EDGES_GROUPED")
 
 
 def rotate_444(cube: List[str], step: str) -> List[str]:

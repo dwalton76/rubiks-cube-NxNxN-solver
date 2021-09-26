@@ -586,8 +586,6 @@ class LookupTable555LRTCenterStage(LookupTable):
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="47f0fbaaa6bc57e13227013f2a4e6000",
-            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -650,8 +648,6 @@ class LookupTable555LRXCenterStage(LookupTable):
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="f115bf1b641fdbcedc4a0cf0dad94b94",
-            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -730,8 +726,6 @@ class LookupTable555FBTCenterStage(LookupTable):
             illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="688fa1df55afc811cd8286aae7ae27ce",
-            md5_state_index="879b393fdddff5c298a4279b58464e5f",
         )
 
     def state(self):
@@ -783,8 +777,6 @@ class LookupTable555FBXCenterStage(LookupTable):
             illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fa7775fbd1dc684389ec32dc0e04b4b2",
-            md5_state_index="879b393fdddff5c298a4279b58464e5f",
         )
 
     def state(self):
@@ -1794,8 +1786,6 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="432c1d1352f6831dc261d756f07aeeee",
-            md5_state_index="496f2f5dbdff19e670329bd896fc339f",
         )
 
     def state(self):
@@ -1853,8 +1843,6 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="e84b1616f11737c99f5bdb9ed1cb4ac6",
-            md5_state_index="b421a267c023f9857f64c5bbdf8218da",
         )
 
     def state(self):
@@ -1931,8 +1919,6 @@ class LookupTable555EdgeOrientInnerOrbit(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="beb38008ba62f77e716031011a59927f",
-            md5_state_index="82b52422c600a32b5ba2ab70f6d4f3cf",
         )
 
     def state(self):
@@ -2014,13 +2000,7 @@ class LookupTable555Phase4(LookupTable):
 
     def __init__(self, parent):
         LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step40-phase4.txt",
-            "TBD",
-            linecount=32389725,
-            max_depth=3,
-            md5_txt="dc7bf65fe07d6d3b3afebd01b4a801b6",
+            self, parent, "lookup-table-5x5x5-step40-phase4.txt", "TBD", linecount=32389725, max_depth=3
         )
         self.wing_strs = None
 
@@ -2152,8 +2132,6 @@ class LookupTable555Phase5Centers(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="ba83862ac8a23bcaedfc219738d6d832",
-            md5_state_index="94850abdebb4a2cc598ad1ecaacfabae",
         )
 
     def state(self):
@@ -2206,8 +2184,6 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="d69e83118e56f1c4b7f0825f2184f704",
-            md5_state_index="43bf02b7b00d01d6fdeca65a0fdb3617",
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -2433,8 +2409,6 @@ class LookupTable555Phase5FBCenters(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="416e5b19a12638c745ef43da971097e5",
-            md5_state_index="1143afbaff9319d0b56af388ed8df18c",
         )
 
     def state(self):
@@ -2487,8 +2461,6 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="63563216a99d9f1df5452dd4b926896d",
-            md5_state_index="a92e9c2f00b8139cfe4d310b77f9ffb0",
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -2603,8 +2575,6 @@ class LookupTable555Phase6Centers(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="39246f6f4a4df584346a6a49a3981237",
-            md5_state_index="a9fb5d65b2b3e0ecb43eb32153156f3a",
         )
 
     def state(self):
@@ -2657,8 +2627,6 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="56382060bb427711e0303bec5a30195e",
-            md5_state_index="2e2d4fdd18f52a2bec92226067d1cfc4",
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -2733,8 +2701,6 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="7d6b1ed74075cda1b191382bbd18b2cb",
-            md5_state_index="af4211fe7054e882ea4d62aea2c2d9de",
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -2897,8 +2863,6 @@ class LookupTable555UDCenterSolve(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="b3219e18ffab62f3e9e5d2546b7efa9b",
-            md5_state_index="32fbc4731dcaf920612cdf601668f47c",
         )
 
     def state(self):
@@ -2956,8 +2920,6 @@ class LookupTable555LRCenterSolve(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="3e014635d3d60c7cd795a1ce6fda02a5",
-            md5_state_index="496f2f5dbdff19e670329bd896fc339f",
         )
 
     def state(self):
@@ -3014,8 +2976,6 @@ class LookupTable555FBCenterSolve(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="185ef249db6173d097ddb7f508172922",
-            md5_state_index="1143afbaff9319d0b56af388ed8df18c",
         )
 
     def state(self):
@@ -3077,7 +3037,6 @@ class LookupTable555TCenterSolve(LookupTable):
             "lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt",
             "UUUULLLLFFFFRRRRBBBBDDDD",
             linecount=343000,
-            md5_txt="87cd07a8258c2489cb2ec07edf24c9f6",
         )
 
     def ida_heuristic(self):
@@ -3259,8 +3218,6 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
-        self.lt_LR_centers_stage.avoid_oll = 0
-
         self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
 
         # phase 2
@@ -3707,6 +3664,11 @@ class RubiksCube555(RubiksCube):
         phase1 stages the centers on sides L and R
         phase2 stages the centers on sides F and B and put the LR centers in one of 495 states that can
             be solved without L L' R R'...this is prep work for phase 3
+
+        TODO this needs more work
+        BLBFRUFRDDFBUULBRLBRRLDLDLFURFLUBUDRRRDDFDFBBLUFRUFFBBFBLLLDBDFBDBLFDUUFRFBLDUDDURFDRBBDFUUFUBFBDLULDLRRUDFDFULLLUUBUDRLURLBBDURFRBULBRFRBRDRRULDFLFLR
+
+        results in "5x5x5 edge swaps are odd, cannot pair edges"
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -3888,19 +3850,13 @@ class RubiksCube555(RubiksCube):
     def reduce_333(self):
         self.lt_init()
 
-        if self.centers_solved():
-            self.solution.append("CENTERS_SOLVED")
-
-        if self.edges_paired():
-            self.solution.append("EDGES_GROUPED")
-
         if self.centers_solved() and self.edges_paired():
             return
 
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        if True:
+        if False:
             self.group_centers_phase1_and_2()
 
         else:
@@ -3915,9 +3871,6 @@ class RubiksCube555(RubiksCube):
 
         # phases 4 5 and 6
         self.pair_edges()
-
-        self.solution.append("CENTERS_SOLVED")
-        self.solution.append("EDGES_GROUPED")
 
 
 def rotate_555(cube, step):

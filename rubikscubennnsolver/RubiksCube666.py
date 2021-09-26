@@ -717,8 +717,6 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fe57c3bcfc9df5a1615bd1e0fa3377bb",
-            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -780,8 +778,6 @@ class LookupTable666UDRightObliqueStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="85d92657ecceb2b01d8bffabf49f3a59",
-            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -839,8 +835,6 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fc2b0db976435d82a3e43397ec57bc97",
-            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -1000,7 +994,6 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             ),
             linecount=343000,
             max_depth=8,
-            md5_txt="e1b1991511ed4bba6ee5cbc118b19ea3",
         )
     # fmt: on
 
@@ -1082,8 +1075,6 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="ab6a16a1f73c7a77570d89818d1e4821",
-            md5_state_index="9cb94f2836125f89c439cd354c3252c1",
         )
         # fmt: on
 
@@ -1158,8 +1149,6 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="e3ffa78934aea743884dcd0c4121420f",
-            md5_state_index="83059d579e597f51e8322c684bb7fb08",
         )
         # fmt: on
 
@@ -1672,7 +1661,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         """
         # phase 1 - stage the LR inner-x centers and pair the LR oblique edges
         tmp_solution_len = len(self.solution)
-        self.lt_LR_oblique_edge_stage.solve_via_c(use_kociemba_string=True)
+        self.lt_LR_oblique_edge_stage_inner_x_stage.solve_via_c(use_kociemba_string=True)
         self.print_cube_add_comment("LR inner x-centers staged, oblique edges paired", tmp_solution_len)
 
         # phase 2 - Stage LR t-centers via 555

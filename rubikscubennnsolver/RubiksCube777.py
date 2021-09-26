@@ -488,8 +488,6 @@ class LookupTable777Step41(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="a99658478f460240789754fc8896ed09",
-            md5_state_index="2fe1b77fdece6f4be954ab79c60db9ee",
         )
         # fmt: on
 
@@ -593,8 +591,6 @@ class LookupTable777Step42(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="78f84af016af93b92b3077d1dfce8786",
-            md5_state_index="7254b47203417f4ab7b54a6693435bfa",
         )
         # fmt: on
 
@@ -698,8 +694,6 @@ class LookupTable777Step43(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="24e93efa9e21378f271e8d630603c099",
-            md5_state_index="7254b47203417f4ab7b54a6693435bfa",
         )
         # fmt: on
 
@@ -803,8 +797,6 @@ class LookupTable777Step44(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="ea50be228f9f34f8b997b14a63ebce3a",
-            md5_state_index="0feebbbbe88ba9045c5e1decfbf8bf0f",
         )
         # fmt: on
 
@@ -973,8 +965,6 @@ class LookupTable777Step51(LookupTable):
                 "D", "D'", "D2",),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="72325fcb5ac8e58c4314caf62ba9dcef",
-            md5_state_index="41d936ea0dc63ce1c8d69c65914eb701",
         )
         # fmt: on
 
@@ -1081,8 +1071,6 @@ class LookupTable777Step52(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="f4dc1f9e08a8bc38d6c761014dc53682",
-            md5_state_index="2668c53df090e8db9b2d3da78010b466",
         )
         # fmt: on
 
@@ -1189,8 +1177,6 @@ class LookupTable777Step53(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="b6067c8143d64f9bc46f20e54d844ed7",
-            md5_state_index="2668c53df090e8db9b2d3da78010b466",
         )
         # fmt: on
 
@@ -1297,8 +1283,6 @@ class LookupTable777Step54(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="632918151ab01c6f7d4737a8a5d3065c",
-            md5_state_index="a4aea978e57b93a644895853240a088c",
         )
         # fmt: on
 
@@ -1362,8 +1346,6 @@ class LookupTable777Step55(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fde4026579cfc33e5c6cff011396ab51",
-            md5_state_index="6a7840cb20b40e9a80587d11736a9bf5",
         )
         # fmt: on
 
@@ -1457,8 +1439,6 @@ class LookupTable777Step61(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fe96271bee163aa61f9ae8e3f69422e4",
-            md5_state_index="79410cb98db22c74c2a5125b8d404a07",
         )
         # fmt: on
 
@@ -1522,8 +1502,6 @@ class LookupTable777Step62(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="1730b982d57820f1a9755dde1df2b16d",
-            md5_state_index="7a7a1ab63db6f5a77e64f1d591a83dc0",
         )
         # fmt: on
 
@@ -1593,8 +1571,6 @@ class LookupTable777Step65(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="2a7d9f116929335984fc31fb4d22d9da",
-            md5_state_index="62f36af96f03a25ce0bf61469abd8104",
         )
         # fmt: on
 
@@ -1664,8 +1640,6 @@ class LookupTable777Step66(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="b93f34b9a292bf2f584944b6df0c0a8d",
-            md5_state_index="6d69631183a1d4948aeffde686208922",
         )
         # fmt: on
 
@@ -1797,8 +1771,6 @@ class LookupTable777Step71(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="a85a359ac073e50343dd18f3dc56b0a5",
-            md5_state_index="b1fdb72f58646cd5c940c6607f81e92f",
         )
         # fmt: on
 
@@ -1900,8 +1872,6 @@ class LookupTable777Step72(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="7a691d2b187f6d36506bfb524d0ec11b",
-            md5_state_index="187ae0ae8e247a0d59ffcc815350c309",
         )
         # fmt: on
 
@@ -1999,8 +1969,6 @@ class LookupTable777Step75(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="a5ff6663425343abc08f5710e044afc8",
-            md5_state_index="62f36af96f03a25ce0bf61469abd8104",
         )
         # fmt: on
 
@@ -2095,8 +2063,6 @@ class LookupTable777Step76(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="f7028fcf06aa35bb46fbd294c16fc837",
-            md5_state_index="6d69631183a1d4948aeffde686208922",
         )
         # fmt: on
 
@@ -2693,23 +2659,17 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
 
         # phase 1 - use 5x5x5 solver to stage the LR inner centers
+        tmp_solution_len = len(self.solution)
         self.group_inside_LR_centers()
-        self.print_cube(
-            "%s: LR inner centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        self.print_cube_add_comment("LR inner centers staged", tmp_solution_len)
 
         # phase 2 - pair LR oblique edges
         tmp_solution_len = len(self.solution)
         self.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
-        self.print_cube(
-            "%s: LR oblique edges staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_777_LR_oblique_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
+        self.print_cube_add_comment("LR oblique edges staged", tmp_solution_len)
 
         # phase 3 - use 5x5x5 solver to stage the LR centers
+        tmp_solution_len = len(self.solution)
         self.create_fake_555_from_outside_centers()
         self.fake_555.group_centers_stage_LR()
 
@@ -2723,22 +2683,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                     raise Exception("5x5x5 solution has 3 wide turn")
                 self.rotate(step)
 
-        self.print_cube(
-            "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
     def LR_centers_vertical_bars(self):
 
         # phase 7 - LR centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step40.solve_via_c()
-        self.print_cube(
-            "%s: LR centers vertical bars (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_777_LR_centers_vertical_bars"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
+        self.print_cube_add_comment("LR centers vertical bars", tmp_solution_len)
 
     # UD centers
     def UD_inside_centers_staged(self):
@@ -2815,26 +2767,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 8 - UD centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve_via_c()
-        self.print_cube(
-            "%s: LR solved, UD centers vertical bars (%d steps in)"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_777_UD_centers_vertical_bars"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
+        self.print_cube_add_comment("LR solved, UD vertical bars", tmp_solution_len)
 
     def centers_daisy_solve(self):
         # phase 9 - centers daisy solve
         tmp_solution_len = len(self.solution)
         self.lt_step60.solve_via_c()
-        self.print_cube(
-            "%s: centers daisy solved (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_777_centers_daisy_solved"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
+        self.print_cube_add_comment("centers daisy solved", tmp_solution_len)
 
     def solve_t_centers(self):
         # This is only used when solving a cube larger than 777
@@ -2846,12 +2785,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase solve t-centers (for cubes larger than 777)
         tmp_solution_len = len(self.solution)
         self.lt_step70.solve_via_c()
-        self.solution.append(
-            "COMMENT_%d_steps_777_t_centers_solved"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        self.print_cube("%s: centers solved (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube_add_comment("t-centers solved", tmp_solution_len)
 
     def solve_centers(self):
         # This is only used when solving a cube larger than 777
@@ -2869,12 +2803,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                     raise Exception("5x5x5 solution has 3 wide turn")
                 self.rotate(step)
 
-        self.solution.append(
-            "COMMENT_%d_steps_777_centers_solved"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        self.print_cube("%s: centers solved (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube_add_comment("centers solved", tmp_solution_len)
 
         if not self.centers_solved():
             raise SolveError("centers should be solved")

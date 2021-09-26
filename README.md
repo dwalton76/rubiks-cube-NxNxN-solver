@@ -11,9 +11,12 @@ Solving a 2x2x2 takes around 9 moves while solving a 3x3x3 takes around 20 moves
 I am not working on those solvers so I did not include them in the table below.
 
 ### Move Counts
+The move counts here are to reduce the cube to a 3x3x3. Solving the reduced 3x3x3 cube
+will add another ~20 moves.
 
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| 09/26/2021 | TBD| 51.6 | 78.9 | 139.7 | 193.8 | **320.6** | 394.4 | **549.2** |
 | 09/09/2021 | [722673f](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/722673f7c95e17768623185de0c847ed28ca2d52) | 50 | **77.5** | **139** | **193** | **335** | **393** | **573** |
 | 10/5/2019 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | **79** | **145** | **202** | 353 | **406** | 618 |
 | 10/17/2018 | [TBD](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/TBD) | 50 | 88 | 156 | 218 | 344 | **430** | **601** |

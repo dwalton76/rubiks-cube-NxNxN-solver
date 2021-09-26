@@ -1,6 +1,9 @@
 # standard libraries
 import logging
+import os
+import random
 import re
+import string
 import subprocess
 from typing import List
 
@@ -135,24 +138,19 @@ class LookupTableIDAViaGraph(LookupTable):
             assert (
                 self.perfect_hash01_filename and self.pt1_state_max
             ), "both perfect_hash01_filename and pt1_state_max must be specified"
-            # rm_file_if_mismatch(self.perfect_hash01_filename, md5_hash01)
             download_file_if_needed(self.perfect_hash01_filename)
 
         if self.perfect_hash02_filename:
             assert (
                 self.perfect_hash02_filename and self.pt2_state_max
             ), "both perfect_hash02_filename and pt2_state_max must be specified"
-            # rm_file_if_mismatch(self.perfect_hash02_filename, md5_hash02)
             download_file_if_needed(self.perfect_hash02_filename)
 
         if self.perfect_hash12_filename:
             assert (
                 self.perfect_hash12_filename and self.pt2_state_max
             ), "both perfect_hash12_filename and pt2_state_max must be specified"
-            # rm_file_if_mismatch(self.perfect_hash12_filename, md5_hash12)
             download_file_if_needed(self.perfect_hash12_filename)
-
-        # dwalton add this
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -289,7 +287,6 @@ class LookupTableIDAViaGraph(LookupTable):
         use_kociemba_string: bool = False,
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
-        my_pt_state_filename = "my-pt-states.txt"
 
         # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
         pre_recolor_state = self.parent.state[:]
@@ -298,18 +295,22 @@ class LookupTableIDAViaGraph(LookupTable):
 
         if pt_states:
             pt_states = sorted(set(pt_states))
+            pt_states_filename = (
+                "/tmp/pt-states-" + "".join(random.choice(string.ascii_uppercase) for i in range(6)) + ".txt"
+            )
 
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
                 cmd.append(pt.filename_bin)
 
-            with open(my_pt_state_filename, "w") as fh:
+            with open(pt_states_filename, "w") as fh:
                 for x in pt_states:
                     fh.write(",".join(map(str, x)) + "\n")
             cmd.append("--prune-table-states")
-            cmd.append(my_pt_state_filename)
+            cmd.append(pt_states_filename)
         else:
             self.init_ida_graph_nodes()
+            pt_states_filename = None
 
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
@@ -427,6 +428,10 @@ class LookupTableIDAViaGraph(LookupTable):
         output = "\n".join(remove_failed_ida_output(output.splitlines()))
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
         logger.info(f"\n{output}\n\n")
+
+        if pt_states_filename is not None:
+            os.unlink(pt_states_filename)
+
         solutions = []
         pt0_state = None
         pt1_state = None

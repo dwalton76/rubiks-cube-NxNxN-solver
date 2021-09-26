@@ -426,27 +426,6 @@ def md5signature(filename: str) -> str:
     return str(hasher.hexdigest())
 
 
-def rm_file_if_mismatch(filename: str, md5target: str) -> None:
-    """
-    Delete a file if its md5 signature does not match
-
-    Args:
-        filename: the file to examine
-        md5target: the md5 signature to look for
-    """
-    filename_gz = filename + ".gz"
-
-    # This only happens if a new copy of the lookup table has been checked in...we need to delete
-    # the one we have and download the new one.
-    if os.path.exists(filename):
-        if md5signature(filename) != md5target:
-            logger.info(f"{filename}: md5 signature {md5signature(filename)} is not {md5target}")
-            os.remove(filename)
-
-            if os.path.exists(filename_gz):
-                os.remove(filename_gz)
-
-
 def download_file_if_needed(filename: str) -> None:
     """
     Args:
@@ -483,9 +462,6 @@ class LookupTable(object):
         state_target: str,
         linecount: int = None,
         max_depth: int = None,
-        md5_txt: str = None,
-        md5_bin: str = None,
-        md5_state_index: str = None,
         legal_moves: List[str] = None,
         all_moves: List[str] = None,
         illegal_moves: List[str] = None,
@@ -571,18 +547,11 @@ class LookupTable(object):
 
             if use_state_index:
                 if not build_state_index:
-                    # It takes a long time to calculate the md5 signatures...need to think of a better way
-                    # assert md5_bin, f"need md5sum for {self.filename_bin}"
-                    # assert md5_state_index, f"need md5sum for {self.filename_state_index}"
-                    # rm_file_if_mismatch(self.filename_bin, md5_bin)
-                    # rm_file_if_mismatch(self.filename_state_index, md5_state_index)
                     download_file_if_needed(self.filename_bin)
                     download_file_if_needed(self.filename_state_index)
                 self.state_width = len(list(self.state_target)[0])
 
             else:
-                # assert md5_txt, f"need md5sum for {self.filename}"
-                # rm_file_if_mismatch(self.filename, md5_txt)
                 download_file_if_needed(self.filename)
 
             if "perfect-hash" not in self.filename and os.path.exists(self.filename):

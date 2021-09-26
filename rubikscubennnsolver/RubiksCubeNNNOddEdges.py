@@ -34,6 +34,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
     def pair_edge_orbit_via_555(self, orbit):
         logger.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
         fake_555 = self.get_fake_555()
+        tmp_solution_len = len(self.solution)
 
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
@@ -134,9 +135,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         wide_str = str(orbit + 2)
 
         for step in fake_555.solution:
-            if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
-                continue
-            elif step.startswith("COMMENT"):
+            if step.startswith("COMMENT"):
                 self.solution.append(step)
             else:
                 # fmt: off
@@ -168,10 +167,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 # logger.info("wide_str %s, orig-step %s -> step %s" % (wide_str, orig_step, step))
                 self.rotate(step)
 
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_total_NNN_edges_paired_orbit_{orbit}"
-        )
-        self.solution.append("COMMENT_")
+        self.print_cube_add_comment(f"NNN edges paired orbit {orbit}", tmp_solution_len)
 
     def group_edges(self):
 
@@ -181,7 +177,3 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         # Work your way from inside to outside and pair each orbit via the 5x5x5 solver
         for orbit in reversed(list(range(0, max_orbit))):
             self.pair_edge_orbit_via_555(orbit)
-
-        self.print_cube(
-            "%s: Edges are paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )

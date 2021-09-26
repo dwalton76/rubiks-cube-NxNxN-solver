@@ -1309,8 +1309,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     RubiksCubeNNNEven RubiksCube666
     """
 
-    instantiated = False
-
     reduce333_orient_edges_tuples = (
         (2, 149),
         (3, 148),
@@ -1409,16 +1407,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         (214, 177),
         (215, 176),
     )
-
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCubeNNNEvenEdges.__init__(self, state, order, colormap, debug)
-
-        if RubiksCube666.instantiated:
-            # raise Exception("Another 6x6x6 instance is being created")
-            # logger.warning("Another 6x6x6 instance is being created")
-            pass
-        else:
-            RubiksCube666.instantiated = True
 
     def get_fake_444(self):
         if self.fake_444 is None:

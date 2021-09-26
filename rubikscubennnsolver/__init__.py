@@ -477,13 +477,12 @@ class RubiksCube(object):
     A base class for rubiks cubes of all sizes
     """
 
-    def __init__(self, state_string: str, order: str, colormap: dict = None, debug: bool = False):
+    def __init__(self, state_string: str, order: str, colormap: dict = None):
         """
         Args:
             state_string: the state of the cube
             order: the side order of ``state_string``
             colormap: a dict to control what colors are used for each side
-            debug: if True display more output
         """
         init_state = ["dummy"]
         init_state.extend(list(state_string))
@@ -516,6 +515,7 @@ class RubiksCube(object):
         self.color_map_html = {}
         self.recolor_positions = []
         self.recolor_map = {}
+        self.edge_mapping = {}
 
         if not os.path.exists(HTML_DIRECTORY):
             os.makedirs(HTML_DIRECTORY)
@@ -567,9 +567,6 @@ class RubiksCube(object):
                 "D": (210, 208, 2),  # Ye
                 "x": (0, 0, 0),  # black
             }
-
-        if debug:
-            logger.setLevel(logging.DEBUG)
 
         self.load_state(state_string, order)
         self.state_backup = self.state[:]

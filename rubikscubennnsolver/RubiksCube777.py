@@ -294,7 +294,7 @@ class LookupTableIDA777Phase45(LookupTableIDAViaGraph):
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
         self.parent.nuke_corners()
-        self.parent.nuke_edges()
+        # self.parent.nuke_edges()
 
         for x in centers_777:
             if x in outer_x_centers_777 or x in LR_centers_777:
@@ -2174,19 +2174,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     """
 
-    instantiated = False
-
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCubeNNNOddEdges.__init__(self, state, order, colormap, debug)
-
-        if RubiksCube777.instantiated:
-            # raise Exception("Another 7x7x7 instance is being created")
-            # logger.warning("Another 7x7x7 instance is being created")
-            pass
-        else:
-            RubiksCube777.instantiated = True
-
-        self.use_phase45_combined = False
+    use_phase45_combined = False
 
     def sanity_check(self):
         edge_orbit_0 = (
@@ -2534,7 +2522,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.lt_phase45_t_centers = LookupTable777Phase45TCenters(self)
             self.lt_phase45_x_centers = LookupTable777Phase45XCenters(self)
             self.lt_phase45 = LookupTableIDA777Phase45(self)
-            self.lt_phase45.avoid_oll = (1, 2)
+
+            # Need to add avoid_oll support for orbit 2 and then enable this.  Currently it will work but the edges
+            # are in a state that cannot be solved by the 555 solver.
+            # self.lt_phase45.avoid_oll = (1, 2)
 
         # phase 5 - pair the oblique UD edges
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)

@@ -926,19 +926,29 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         }
 
         printf("%5s  ", move2str[solution[i]]);
-        if (type) {
-            // TODO make this a switch
-            if (type == LR_OBLIQUE_EDGES_STAGE_666 || type == LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666 || type == UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666) {
+        switch (type) {
+            case NONE:
+                break;
+
+            case LR_OBLIQUE_EDGES_STAGE_666:
+            case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
+            case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
                 rotate_666(cube, cube_tmp, array_size, solution[i]);
-            } else if (type == LR_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_STAGE_777 || type == UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777) {
+                heuristic = ida_heuristic(cube, type);
+                printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
+                break;
+
+            case LR_OBLIQUE_EDGES_STAGE_777:
+            case UD_OBLIQUE_EDGES_STAGE_777:
+            case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
                 rotate_777(cube, cube_tmp, array_size, solution[i]);
-            } else {
+                heuristic = ida_heuristic(cube, type);
+                printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
+                break;
+
+            default:
                 printf("ERROR: print_ida_summary() does not support this --type\n");
                 exit(1);
-            }
-
-            heuristic = ida_heuristic(cube, type);
-            printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
         }
 
         ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);

@@ -1,7 +1,7 @@
 # standard libraries
 import itertools
 import logging
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -843,8 +843,6 @@ class LookupTableIDA444Phase4(LookupTableIDAViaGraph):
 
 class RubiksCube444(RubiksCube):
 
-    instantiated = False
-
     reduce333_orient_edges_tuples: Tuple[Tuple[int, int]] = (
         (2, 67),  # Upper
         (3, 66),
@@ -895,18 +893,6 @@ class RubiksCube444(RubiksCube):
         (94, 79),
         (95, 78),
     )
-
-    def __init__(self, state: str, order: str, colormap: Dict = None, debug: bool = False):
-        RubiksCube.__init__(self, state, order, colormap, debug)
-        self.edge_mapping = {}
-
-        if RubiksCube444.instantiated:
-            logger.warning("Another 4x4x4 instance is being created")
-        else:
-            RubiksCube444.instantiated = True
-
-        if debug:
-            logger.setLevel(logging.DEBUG)
 
     def sanity_check(self) -> None:
         """

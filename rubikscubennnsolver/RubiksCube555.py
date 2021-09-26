@@ -3096,8 +3096,6 @@ class RubiksCube555(RubiksCube):
     - solve as 3x3x3
     """
 
-    instantiated = False
-
     reduce333_orient_edges_tuples = (
         (2, 104),
         (3, 103),
@@ -3172,19 +3170,6 @@ class RubiksCube555(RubiksCube):
         (148, 123),
         (149, 122),  # Down
     )
-
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCube.__init__(self, state, order, colormap)
-
-        if RubiksCube555.instantiated:
-            # raise Exception("Another 5x5x5 instance is being created")
-            # logger.warning("Another 5x5x5 instance is being created")
-            pass
-        else:
-            RubiksCube555.instantiated = True
-
-        if debug:
-            logger.setLevel(logging.DEBUG)
 
     def nuke_centers_specific(self, centers):
         for square_index in centers:

@@ -367,7 +367,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         cycle = max_cycle
         self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers")
-        self.solution.append("COMMENT_")
         self.print_cube_add_comment("NNN centers solved", tmp_solution_len)
 
         if not self.centers_solved():

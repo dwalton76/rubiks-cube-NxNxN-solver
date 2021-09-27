@@ -656,8 +656,7 @@ class RubiksCube(object):
                 continue
 
             if value != expected_count:
-                msg = f"side {desc} {side} count is {value} (should be {expected_count})"
-                logger.warning(f"InvalidCubeReduction {msg}")
+                msg = f"{desc} side-{side} count is {value} (should be {expected_count})"
                 self.enable_print_cube = True
                 self.print_cube(f"InvalidCubeReduction {msg}")
                 raise InvalidCubeReduction(msg)

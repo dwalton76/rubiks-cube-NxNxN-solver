@@ -1513,7 +1513,7 @@ class RubiksCube(object):
         total_len = self.get_solution_len_minus_rotates(self.solution)
         solution_this_phase = self.solution[prev_solution_len:]
         solution_this_phase_len = self.get_solution_len_minus_rotates(solution_this_phase)
-        title = f"{self}: {desc} {solution_this_phase_len} steps ({total_len} total steps)"
+        title = f"{self}: {desc}, {solution_this_phase_len} steps, {total_len} total steps"
         comment = f"COMMENT_{desc.replace(' ', '_').replace('-', '_')}_({solution_this_phase_len}_steps)"
         self.print_cube(title)
         self.solution.append(comment)

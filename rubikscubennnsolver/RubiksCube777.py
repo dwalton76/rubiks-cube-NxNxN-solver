@@ -2648,13 +2648,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
                 self.rotate(step)
 
-    def stage_LR_centers(self):
+    def _stage_LR_centers_common(self, all_centers: bool) -> None:
         """
         phase 1 - use 5x5x5 solver to stage the LR inner centers (10 moves)
         phase 2 - pair LR oblique edges (13 moves)
-        phase 3 - use 5x5x5 solver to stage the LR centers (10 moves)
+        phase 3 - one of
+        - use 5x5x5 solver to stage the LR centers (10 moves)
+        - use 5x5x5 solver to stage the LR t-centers (5 moves)
         """
-
         if self.LR_centers_staged():
             return
 
@@ -2671,7 +2672,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 3 - use 5x5x5 solver to stage the LR centers
         tmp_solution_len = len(self.solution)
         self.create_fake_555_from_outside_centers()
-        self.fake_555.group_centers_stage_LR()
+
+        if all_centers:
+            self.fake_555.group_centers_stage_LR()
+            desc = "LR centers staged"
+        else:
+            self.fake_555.lt_LR_t_centers_stage_ida.solve_via_c()
+            desc = "LR t-centers staged"
 
         for step in self.fake_555.solution:
             if step.startswith("COMMENT"):
@@ -2683,7 +2690,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                     raise Exception("5x5x5 solution has 3 wide turn")
                 self.rotate(step)
 
-        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
+        self.print_cube_add_comment(desc, tmp_solution_len)
+
+    def stage_LR_centers(self):
+        self._stage_LR_centers_common(True)
+
+    def stage_LR_t_centers(self):
+        self._stage_LR_centers_common(False)
 
     def LR_centers_vertical_bars(self):
 
@@ -2719,14 +2732,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
                 self.rotate(step)
 
-    def stage_UD_centers(self):
+    def _stage_UD_centers(self, all_centers: bool):
         """
         phase 4 - use 5x5x5 solver to stage the UD inner centers (10 moves)
         phase 5 - pair the oblique UD edges (13 moves)
-        phase 6 - use 5x5x5 to stage the UD centers (10 moves)
-
-        Could phase5+6 be combined? This would be 12870^4 which is too large of a search space
         """
+        if self.UD_centers_staged():
+            return
+
         if self.use_phase45_combined:
             # This works but takes 5+ minutes so this is disabled until I can figure out a better heuristic so that
             # it will run faster.  It takes ~15 moves though which is a nice ~9 moves savings over doing phases 4
@@ -2748,7 +2761,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 6 - use 5x5x5 to stage the UD centers
         tmp_solution_len = len(self.solution)
         self.create_fake_555_from_outside_centers()
-        self.fake_555.group_centers_stage_FB()
+
+        if all_centers:
+            self.fake_555.group_centers_stage_FB()
+            desc = "UD centers staged"
+        else:
+            self.fake_555.lt_UD_t_centers_stage_ida.solve_via_c()
+            desc = "UD t-centers staged"
 
         for step in self.fake_555.solution:
             if step.startswith("COMMENT"):
@@ -2760,7 +2779,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                     raise Exception("5x5x5 solution has 3 wide turn")
                 self.rotate(step)
 
-        self.print_cube_add_comment("UD centers staged", tmp_solution_len)
+        self.print_cube_add_comment(desc, tmp_solution_len)
+
+    def stage_UD_centers(self):
+        self._stage_UD_centers(True)
+
+    def stage_UD_t_centers(self):
+        self._stage_UD_centers(False)
 
     def UD_centers_vertical_bars(self):
 

@@ -1513,9 +1513,11 @@ class RubiksCube(object):
         solution_this_phase = self.solution[prev_solution_len:]
         solution_this_phase_len = self.get_solution_len_minus_rotates(solution_this_phase)
         title = f"{self}: {desc}, {solution_this_phase_len} steps, {total_len} total steps"
-        comment = f"COMMENT_{desc.replace(' ', '_').replace('-', '_')}_({solution_this_phase_len}_steps)"
         self.print_cube(title)
-        self.solution.append(comment)
+
+        if solution_this_phase_len:
+            comment = f"COMMENT_{desc.replace(' ', '_').replace('-', '_')}_({solution_this_phase_len}_steps)"
+            self.solution.append(comment)
 
     def print_case_statement_C(self, case: str, first_step: bool, size: int) -> None:
         """

@@ -288,11 +288,6 @@ class LookupTableIDAViaGraph(LookupTable):
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
 
-        # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
-        pre_recolor_state = self.parent.state[:]
-        pre_recolor_solution = self.parent.solution[:]
-        self.recolor()
-
         if pt_states:
             pt_states = sorted(set(pt_states))
             pt_states_filename = (
@@ -343,6 +338,11 @@ class LookupTableIDAViaGraph(LookupTable):
 
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise Exception(f"avoid_oll is only supported for orbits 0 or 1, not {self.avoid_oll}")
+
+        # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
+        pre_recolor_state = self.parent.state[:]
+        pre_recolor_solution = self.parent.solution[:]
+        self.recolor()
 
         if use_kociemba_string:
             kociemba_string = self.parent.get_kociemba_string(True)

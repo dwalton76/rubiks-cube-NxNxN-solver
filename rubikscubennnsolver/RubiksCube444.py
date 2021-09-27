@@ -1,7 +1,7 @@
 # standard libraries
 import itertools
 import logging
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -201,9 +201,6 @@ class LookupTable444UDCentersStage(LookupTable):
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
-            # md5_bin="2835d311466ad3fada95722fb676ec1a",
-            # md5_state_index="d0b9bbb685a08bf985782daa78208330",
-            # md5_txt="a26afb9be23495b3ec19abef686901ae",
         )
 
     def state(self) -> str:
@@ -259,9 +256,6 @@ class LookupTable444LRCentersStage(LookupTable):
             illegal_moves=(),
             use_state_index=True,
             build_state_index=build_state_index,
-            # md5_bin="2835d311466ad3fada95722fb676ec1a",
-            # md5_state_index="79f362d800935a484dab4de8f655ca07",
-            # md5_txt="b8609a899722c2c9132d21b09f98c5d9",
         )
 
     def state(self) -> str:
@@ -843,8 +837,6 @@ class LookupTableIDA444Phase4(LookupTableIDAViaGraph):
 
 class RubiksCube444(RubiksCube):
 
-    instantiated = False
-
     reduce333_orient_edges_tuples: Tuple[Tuple[int, int]] = (
         (2, 67),  # Upper
         (3, 66),
@@ -895,18 +887,6 @@ class RubiksCube444(RubiksCube):
         (94, 79),
         (95, 78),
     )
-
-    def __init__(self, state: str, order: str, colormap: Dict = None, debug: bool = False):
-        RubiksCube.__init__(self, state, order, colormap, debug)
-        self.edge_mapping = {}
-
-        if RubiksCube444.instantiated:
-            logger.warning("Another 4x4x4 instance is being created")
-        else:
-            RubiksCube444.instantiated = True
-
-        if debug:
-            logger.setLevel(logging.DEBUG)
 
     def sanity_check(self) -> None:
         """
@@ -1000,16 +980,17 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
     def phase1(self) -> None:
-        if not self.LR_centers_staged():
-            self.lt_phase1.solve_via_c()
+        if self.LR_centers_staged():
+            return
 
-        self.solution.append(f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_444_phase1")
-        self.print_cube(f"{self}: end of phase1 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        tmp_solution_len = len(self.solution)
+        self.lt_phase1.solve_via_c()
+        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
     def phase2(self) -> None:
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
+        tmp_solution_len = len(self.solution)
         pt_state_indexes_to_edge_mapping = {}
 
         # try all 2048 edge mappings
@@ -1034,16 +1015,13 @@ class RubiksCube444(RubiksCube):
         for step in phase2_solution:
             self.rotate(step)
 
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[original_solution_len:])}_steps_444_phase2"
-        )
         self.highlow_edges_print()
-        self.print_cube(f"{self}: end of phase2 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
+        self.print_cube_add_comment("centers staged, edges EOed into high/low groups", tmp_solution_len)
 
     def phase3(self, wing_str_combo: List[str] = None):
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
+        tmp_solution_len = len(original_solution)
 
         # phase 3 - search for all wing_strs
         pt_state_indexes = []
@@ -1069,10 +1047,7 @@ class RubiksCube444(RubiksCube):
         for step in phase3_solution:
             self.rotate(step)
 
-        self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[original_solution_len:])}_steps_444_phase3"
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
     def phase4(self, max_ida_threshold: int = None):
         tmp_solution_len = len(self.solution)
@@ -1093,10 +1068,7 @@ class RubiksCube444(RubiksCube):
         else:
             logger.info(f"{self}: could not find a phase4 solution that avoids PLL")
 
-        self.print_cube(f"{self}: end of phase4 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
-        )
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def phase3_and_4(self, consider_solve_333: bool):
         original_state = self.state[:]
@@ -1237,19 +1209,13 @@ class RubiksCube444(RubiksCube):
         tmp_solution_len = len(self.solution)
         for step in phase3_solution:
             self.rotate(step)
-        self.print_cube(f"{self}: end of phase3 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase3"
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
         # apply the phase 4 solution
         tmp_solution_len = len(self.solution)
         for step in phase4_solution:
             self.rotate(step)
-        self.print_cube(f"{self}: end of phase4 ({self.get_solution_len_minus_rotates(self.solution)} steps in)")
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])}_steps_444_phase4"
-        )
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def reduced_to_333(self) -> bool:
 
@@ -1298,9 +1264,6 @@ class RubiksCube444(RubiksCube):
         # self.phase3()
         # self.phase4()
         self.phase3_and_4(consider_solve_333=consider_solve_333)
-
-        self.solution.append("CENTERS_SOLVED")
-        self.solution.append("EDGES_GROUPED")
 
 
 def rotate_444(cube: List[str], step: str) -> List[str]:

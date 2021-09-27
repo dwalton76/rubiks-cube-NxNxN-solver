@@ -1,6 +1,9 @@
 # standard libraries
 import logging
+import os
+import random
 import re
+import string
 import subprocess
 from typing import List
 
@@ -73,6 +76,10 @@ class LookupTableIDAViaGraph(LookupTable):
         main_table_prune_tables=None,
         perfect_hash01_filename: str = None,
         perfect_hash02_filename: str = None,
+        perfect_hash12_filename: str = None,
+        perfect_hash03_filename: str = None,
+        perfect_hash31_filename: str = None,
+        perfect_hash32_filename: str = None,
         pt1_state_max: int = None,
         pt2_state_max: int = None,
         centers_only: bool = False,
@@ -104,22 +111,46 @@ class LookupTableIDAViaGraph(LookupTable):
         else:
             self.perfect_hash02_filename = perfect_hash02_filename
 
+        if perfect_hash12_filename:
+            self.perfect_hash12_filename = "lookup-tables/" + perfect_hash12_filename
+        else:
+            self.perfect_hash12_filename = perfect_hash12_filename
+
+        if perfect_hash03_filename:
+            self.perfect_hash03_filename = "lookup-tables/" + perfect_hash03_filename
+        else:
+            self.perfect_hash03_filename = perfect_hash03_filename
+
+        if perfect_hash31_filename:
+            self.perfect_hash31_filename = "lookup-tables/" + perfect_hash31_filename
+        else:
+            self.perfect_hash31_filename = perfect_hash31_filename
+
+        if perfect_hash32_filename:
+            self.perfect_hash32_filename = "lookup-tables/" + perfect_hash32_filename
+        else:
+            self.perfect_hash32_filename = perfect_hash32_filename
+
         self.pt1_state_max = pt1_state_max
         self.pt2_state_max = pt2_state_max
 
-        if self.perfect_hash01_filename or self.pt1_state_max:
+        if self.perfect_hash01_filename:
             assert (
                 self.perfect_hash01_filename and self.pt1_state_max
             ), "both perfect_hash01_filename and pt1_state_max must be specified"
-            # rm_file_if_mismatch(self.perfect_hash01_filename, md5_hash01)
             download_file_if_needed(self.perfect_hash01_filename)
 
-        if self.perfect_hash02_filename or self.pt2_state_max:
+        if self.perfect_hash02_filename:
             assert (
                 self.perfect_hash02_filename and self.pt2_state_max
             ), "both perfect_hash02_filename and pt2_state_max must be specified"
-            # rm_file_if_mismatch(self.perfect_hash02_filename, md5_hash02)
             download_file_if_needed(self.perfect_hash02_filename)
+
+        if self.perfect_hash12_filename:
+            assert (
+                self.perfect_hash12_filename and self.pt2_state_max
+            ), "both perfect_hash12_filename and pt2_state_max must be specified"
+            download_file_if_needed(self.perfect_hash12_filename)
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -253,24 +284,33 @@ class LookupTableIDAViaGraph(LookupTable):
         max_ida_threshold: int = None,
         solution_count: int = None,
         find_extra: bool = False,
+        use_kociemba_string: bool = False,
     ) -> List[List[str]]:
         cmd = ["./ida_search_via_graph"]
-        my_pt_state_filename = "my-pt-states.txt"
+
+        # If this is a lookup table that is staging a pair of colors (such as U and D) then recolor the cubies accordingly.
+        pre_recolor_state = self.parent.state[:]
+        pre_recolor_solution = self.parent.solution[:]
+        self.recolor()
 
         if pt_states:
             pt_states = sorted(set(pt_states))
+            pt_states_filename = (
+                "/tmp/pt-states-" + "".join(random.choice(string.ascii_uppercase) for i in range(6)) + ".txt"
+            )
 
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
                 cmd.append(pt.filename_bin)
 
-            with open(my_pt_state_filename, "w") as fh:
+            with open(pt_states_filename, "w") as fh:
                 for x in pt_states:
                     fh.write(",".join(map(str, x)) + "\n")
             cmd.append("--prune-table-states")
-            cmd.append(my_pt_state_filename)
+            cmd.append(pt_states_filename)
         else:
             self.init_ida_graph_nodes()
+            pt_states_filename = None
 
             for (index, pt) in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
@@ -304,6 +344,11 @@ class LookupTableIDAViaGraph(LookupTable):
             if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
                 raise Exception(f"avoid_oll is only supported for orbits 0 or 1, not {self.avoid_oll}")
 
+        if use_kociemba_string:
+            kociemba_string = self.parent.get_kociemba_string(True)
+            cmd.append("--kociemba")
+            cmd.append(kociemba_string)
+
         if self.perfect_hash01_filename:
             cmd.append("--prune-table-perfect-hash01")
             cmd.append(self.perfect_hash01_filename)
@@ -313,6 +358,30 @@ class LookupTableIDAViaGraph(LookupTable):
         if self.perfect_hash02_filename:
             cmd.append("--prune-table-perfect-hash02")
             cmd.append(self.perfect_hash02_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash12_filename:
+            cmd.append("--prune-table-perfect-hash12")
+            cmd.append(self.perfect_hash12_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash03_filename:
+            cmd.append("--prune-table-perfect-hash03")
+            cmd.append(self.perfect_hash03_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash31_filename:
+            cmd.append("--prune-table-perfect-hash31")
+            cmd.append(self.perfect_hash31_filename)
+            cmd.append("--pt2-state-max")
+            cmd.append(str(self.pt2_state_max))
+
+        if self.perfect_hash32_filename:
+            cmd.append("--prune-table-perfect-hash32")
+            cmd.append(self.perfect_hash32_filename)
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
 
@@ -359,12 +428,18 @@ class LookupTableIDAViaGraph(LookupTable):
         output = "\n".join(remove_failed_ida_output(output.splitlines()))
         self.parent.solve_via_c_output = f"\n{cmd_string}\n{output}\n"
         logger.info(f"\n{output}\n\n")
+
+        if pt_states_filename is not None:
+            os.unlink(pt_states_filename)
+
         solutions = []
         pt0_state = None
         pt1_state = None
         pt2_state = None
         pt3_state = None
         pt4_state = None
+        self.parent.state = pre_recolor_state[:]
+        self.parent.solution = pre_recolor_solution[:]
         RE_PT_STATES = re.compile(
             r"pt0_state (\d+), pt1_state (\d+), pt2_state (\d+), pt3_state (\d+), pt4_state (\d+)"
         )
@@ -400,6 +475,7 @@ class LookupTableIDAViaGraph(LookupTable):
         max_ida_threshold: int = None,
         solution_count: int = None,
         find_extra: bool = False,
+        use_kociemba_string: bool = False,
     ) -> None:
         solution = self.solutions_via_c(
             pt_states=pt_states,
@@ -407,6 +483,7 @@ class LookupTableIDAViaGraph(LookupTable):
             max_ida_threshold=max_ida_threshold,
             solution_count=solution_count,
             find_extra=find_extra,
+            use_kociemba_string=use_kociemba_string,
         )[0][0]
 
         for step in solution:

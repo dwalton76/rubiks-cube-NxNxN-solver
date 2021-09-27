@@ -3,7 +3,7 @@ import logging
 import sys
 
 # rubiks cube libraries
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDAViaC
+from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
@@ -32,6 +32,15 @@ moves_666 = (
 solved_666 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
 
+corners_666 = (
+    1, 6, 31, 36,
+    37, 42, 67, 72,
+    73, 78, 103, 108,
+    109, 114, 139, 144,
+    145, 150, 175, 180,
+    181, 186, 211, 216,
+)
+
 inner_x_centers_666 = (
     15, 16, 21, 22,  # Upper
     51, 52, 57, 58,  # Left
@@ -39,6 +48,15 @@ inner_x_centers_666 = (
     123, 124, 129, 130,  # Right
     159, 160, 165, 166,  # Back
     195, 196, 201, 202,  # Down
+)
+
+outer_x_centers_666 = (
+    8, 11, 26, 29,
+    44, 47, 62, 65,
+    80, 83, 98, 101,
+    116, 119, 134, 137,
+    152, 155, 170, 173,
+    188, 191, 206, 209,
 )
 
 centers_666 = (
@@ -50,122 +68,60 @@ centers_666 = (
     188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,  # Down
 )
 
-UD_centers_666 = (
-    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29,
-    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,
-)
-
-FB_centers_666 = (
-    80, 81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
-    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
-)
-
-UFBD_centers_666 = (
-    8, 9, 10, 11, 14, 15, 16, 17, 20, 21, 22, 23, 26, 27, 28, 29, 80,
-    81, 82, 83, 86, 87, 88, 89, 92, 93, 94, 95, 98, 99, 100, 101,
-    152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,
-    188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,
-)
-
-UDFB_left_oblique_edges = (
-    9, 17, 28, 20,  # Upper
-    189, 197, 208, 200,  # Down
-    81, 89, 100, 92,  # Front
-    153, 161, 172, 164,  # Back
-)
-
-UDFB_right_oblique_edges = (
-    10, 23, 27, 14,  # Upper
-    190, 203, 207, 194,  # Down
-    82, 95, 99, 86,  # Front
-    154, 167, 171, 158,  # Back
-)
-
-UDFB_outer_x_centers = (
-    8, 11, 26, 29,  # Upper
-    188, 191, 206, 209,  # Down
-    80, 83, 98, 101,  # Front
-    152, 155, 170, 173,  # Back
-)
-
-UDFB_inner_x_centers = (
-    15, 16, 21, 22,  # Upper
-    195, 196, 201, 202,  # Down
-    87, 88, 93, 94,  # Front
-    159, 160, 165, 166,  # Back
-)
-
-UFBD_outer_x_centers = (
-    8, 11, 26, 29,  # Upper
-    80, 83, 98, 101,  # Front
-    152, 155, 170, 173,  # Back
-    188, 191, 206, 209,  # Down
-)
-
-UFBD_inner_x_centers = (
-    15, 16, 21, 22,  # Upper
-    87, 88, 93, 94,  # Front
-    159, 160, 165, 166,  # Back
-    195, 196, 201, 202,  # Down
-)
-
-LR_left_oblique_edges = (45, 53, 64, 56, 117, 125, 136, 128)
-LR_right_oblique_edges = (46, 59, 63, 50, 118, 131, 135, 122)
-LR_outer_x_centers = (44, 47, 62, 65, 116, 119, 134, 137)
-LR_inner_x_centers = (51, 52, 57, 58, 123, 124, 129, 130)
-
-
-outer_x_centers_666 = set(
-    (8, 11, 26, 29, 44, 47, 62, 65, 80, 83, 98, 101, 116, 119, 134, 137, 152, 155, 170, 173, 188, 191, 206, 209)
-)
-
-outer_x_center_inner_x_centers_666 = (
-    8, 11, 26, 29, 44, 47, 62, 65, 80, 83, 98, 101, 116, 119, 134, 137, 152, 155, 170, 173, 188, 191, 206, 209,  # outer x-centers
-    15, 16, 21, 22, 51, 52, 57, 58, 87, 88, 93, 94, 123, 124, 129, 130, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
-)
-
-UFBD_inner_x_centers_left_oblique_edges_666 = (
-    15, 16, 21, 22, 87, 88, 93, 94, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
-    9, 17, 20, 28, 81, 89, 92, 100, 153, 161, 164, 172, 189, 197, 200, 208,  # left oblique edges
-)
-
-UFBD_inner_x_centers_right_oblique_edges_666 = (
-    15, 16, 21, 22, 87, 88, 93, 94, 159, 160, 165, 166, 195, 196, 201, 202,  # inner x-centers
-    10, 14, 23, 27, 82, 86, 95, 99, 154, 158, 167, 171, 190, 194, 203, 207,  # right oblique edges
-)
-
-UFBD_oblique_edges_666 = (
+oblique_edges_666 = (
     9, 10, 14, 17, 20, 23, 27, 28,
+    45, 46, 50, 53, 56, 59, 63, 64,
     81, 82, 86, 89, 92, 95, 99, 100,
+    117, 118, 122, 125, 128, 131, 135, 136,
     153, 154, 158, 161, 164, 167, 171, 172,
     189, 190, 194, 197, 200, 203, 207, 208,
 )
 
-UFBD_left_oblique_edges_666 = (9, 17, 20, 28, 81, 89, 92, 100, 153, 161, 164, 172, 189, 197, 200, 208)
-
-UFBD_right_oblique_edges_666 = (10, 14, 23, 27, 82, 86, 95, 99, 154, 158, 167, 171, 190, 194, 203, 207)
-
 left_oblique_edges_666 = (
-    9, 17, 20, 28,
-    45, 53, 56, 64,
-    81, 89, 92, 100,
-    117, 125, 128, 136,
-    153, 161, 164, 172,
-    189, 197, 200, 208,
+    9, 17, 28, 20,
+    45, 53, 64, 56,
+    81, 89, 100, 92,
+    117, 125, 136, 128,
+    153, 161, 172, 164,
+    189, 197, 208, 200,
 )
 
 right_oblique_edges_666 = (
-    10, 14, 23, 27,
-    46, 50, 59, 63,
-    82, 86, 95, 99,
-    118, 122, 131, 135,
-    154, 158, 167, 171,
-    190, 194, 203, 207,
+    10, 23, 27, 14,
+    46, 59, 63, 50,
+    82, 95, 99, 86,
+    118, 131, 135, 122,
+    154, 167, 171, 158,
+    190, 203, 207, 194,
 )
 
-LFRB_left_oblique_edges_666 = (45, 53, 56, 64, 81, 89, 92, 100, 117, 125, 128, 136, 153, 161, 164, 172)
+UFBD_left_oblique_edges_666 = (
+    9, 17, 20, 28,  # Upper
+    81, 89, 92, 100,  # Front
+    153, 161, 164, 172,  # Back
+    189, 197, 200, 208,  # Down
+)
 
-LFRB_right_oblique_edges_666 = (46, 50, 59, 63, 82, 86, 95, 99, 118, 122, 131, 135, 154, 158, 167, 171)
+UFBD_right_oblique_edges_666 = (
+    10, 14, 23, 27,  # Upper
+    82, 86, 95, 99,  # Front
+    154, 158, 167, 171,  # Back
+    190, 194, 203, 207,  # Down
+)
+
+UFBD_outer_x_centers_666 = (
+    8, 11, 26, 29,  # Upper
+    80, 83, 98, 101,  # Front
+    152, 155, 170, 173,  # Back
+    188, 191, 206, 209,  # Down
+)
+
+UFBD_inner_x_centers_666 = (
+    15, 16, 21, 22,  # Upper
+    87, 88, 93, 94,  # Front
+    159, 160, 165, 166,  # Back
+    195, 196, 201, 202,  # Down
+)
 
 edge_orbit_0 = (
     2, 5, 12, 30, 35, 32, 25, 7,
@@ -286,36 +242,75 @@ edges_partner_666 = {
 # fmt: on
 
 
-# phase 2
-class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
+# phase 1
+class LookupTable666LRInnerXCentersStage(LookupTable):
     """
-    All we care about is getting the LR oblique edges paired, we do
-    not need them to be placed on sides LR at this point.
+    lookup-table-6x6x6-step00-inner-x-centers-stage.txt
+    ===================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
     """
 
-    # fmt: off
-    oblique_edges_666 = (
-        9, 10, 14, 17, 20, 23, 27, 28,
-        45, 46, 50, 53, 56, 59, 63, 64,
-        81, 82, 86, 89, 92, 95, 99, 100,
-        117, 118, 122, 125, 128, 131, 135, 136,
-        153, 154, 158, 161, 164, 167, 171, 172,
-        189, 190, 194, 197, 200, 203, 207, 208,
-    )
-    # fmt: on
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step00-inner-x-centers-stage.txt",
+            "xxxxLLLLxxxxLLLLxxxxxxxx",
+            linecount=735471,
+            max_depth=8,
+            all_moves=moves_666,
+            illegal_moves=(),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["L" if self.parent.state[x] in ("L", "R") else "x" for x in inner_x_centers_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(inner_x_centers_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666LRObliquEdgeStage(LookupTableIDAViaGraph):
+    """
+    Use an "unpaired oblique edges" heuristic to get the LR oblique edges paired anywhere.
+    We do not need these obliques to be placed on sides LR at this point.
+    """
 
     def __init__(self, parent):
 
-        LookupTableIDAViaC.__init__(
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
             self,
             parent,
-            # Needed tables and their md5 signatures
-            (),
-            "6x6x6-LR-oblique-edges-stage",  # C_ida_type
             all_moves=moves_666,
-            illegal_moves=["3Uw", "3Uw'", "3Dw", "3Dw'", "3Lw", "3Lw'", "3Rw", "3Rw'", "3Fw", "3Fw'", "3Bw", "3Bw'"],
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Lw", "3Lw'",
+                "3Rw", "3Rw'",
+            ),
             centers_only=True,
+            prune_tables=[],
+            C_ida_type="6x6x6-LR-oblique-edges-stage",
         )
+        # fmt: on
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
@@ -323,13 +318,355 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaC):
         self.parent.nuke_edges()
 
         for x in centers_666:
-            if x in self.oblique_edges_666:
+            if x in oblique_edges_666:
                 if self.parent.state[x] == "L" or self.parent.state[x] == "R":
                     self.parent.state[x] = "L"
                 else:
                     self.parent.state[x] = "x"
             else:
                 self.parent.state[x] = "."
+
+
+class LookupTable666LRObliquEdgeStageInnerXStage(LookupTableIDAViaGraph):
+    """
+    Use the inner-x-centers table to pair the LR inner-x-centers while using an "unpaired oblique edges" heuristic
+    to get the LR oblique edges paired anywhere.  We do not need these obliques to be placed on sides
+    LR at this point.
+    """
+
+    def __init__(self, parent):
+
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_666,
+            illegal_moves=(),
+            centers_only=True,
+            prune_tables=[
+                parent.lt_LR_inner_x_centers_stage,
+            ],
+            C_ida_type="6x6x6-LR-oblique-edges-inner-x-centers-stage",
+        )
+        # fmt: on
+
+    def recolor(self):
+        logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_666:
+            if x in oblique_edges_666 or x in inner_x_centers_666:
+                if self.parent.state[x] == "L" or self.parent.state[x] == "R":
+                    self.parent.state[x] = "L"
+                else:
+                    self.parent.state[x] = "x"
+            else:
+                self.parent.state[x] = "."
+
+
+# phase 3
+class LookupTable666UDInnerXCentersStage(LookupTable):
+    """
+    lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+
+    Total: 12,870 entries
+    Average: 5.45 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=7,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_inner_x_centers_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_inner_x_centers_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDXCentersStage(LookupTable):
+    """
+    lookup-table-6x6x6-step12-UD-x-centers.txt
+    ==========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+
+    Total: 12,870 entries
+    Average: 5.45 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step12-UD-x-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=7,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_outer_x_centers_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_outer_x_centers_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDLeftObliqueCentersStage(LookupTable):
+    """
+    lookup-table-6x6x6-step13-UD-left-oblique-centers.txt
+    =====================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step13-UD-left-oblique-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_edges_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_left_oblique_edges_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDRightObliqueCentersStage(LookupTable):
+    """
+    lookup-table-6x6x6-step14-UD-right-oblique-centers.txt
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step14-UD-right-oblique-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+            ),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_edges_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_right_oblique_edges_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
+    """
+    Use the inner-x-centers table to pair the UFBD inner-x-centers while using an "unpaired oblique edges" heuristic
+    to get the UD oblique edges paired anywhere on sides UFDB.  We do not need these obliques to be placed on sides
+    UD at this point.
+    """
+
+    def __init__(self, parent):
+
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+            ),
+            centers_only=True,
+            prune_tables=[
+                parent.lt_UD_inner_x_centers_stage,
+            ],
+            C_ida_type="6x6x6-UD-oblique-edges-inner-x-centers-stage",
+        )
+        # fmt: on
+
+    def recolor(self):
+        logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        # self.parent.nuke_edges()
+
+        for x in centers_666:
+            if x in oblique_edges_666 or x in inner_x_centers_666:
+                if self.parent.state[x] == "U" or self.parent.state[x] == "D":
+                    self.parent.state[x] = "U"
+                elif self.parent.state[x] == "L" or self.parent.state[x] == "R":
+                    self.parent.state[x] = "."
+                else:
+                    self.parent.state[x] = "x"
+            else:
+                self.parent.state[x] = "."
+
+
+class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
+    """
+    Stage the UD inner x-centers and oblique edges
+    """
+
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2",
+            ),
+            prune_tables=(
+                parent.lt_UD_inner_x_centers_stage,
+                parent.lt_UD_left_oblique_edges_stage,
+                parent.lt_UD_right_oblique_edges_stage,
+            ),
+            centers_only=True,
+            perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
+            perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
+            perfect_hash12_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
+            pt1_state_max=12870,
+            pt2_state_max=12870,
+        )
+        # fmt: on
 
 
 # phase 4
@@ -347,7 +684,6 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
     7 steps has 3,774 entries (29 percent, 0.86x previous step)
     8 steps has 1,721 entries (13 percent, 0.46x previous step)
     9 steps has 122 entries (0 percent, 0.07x previous step)
-
     Total: 12,870 entries
     Average: 6.27 moves
     """
@@ -381,8 +717,6 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fe57c3bcfc9df5a1615bd1e0fa3377bb",
-            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -411,7 +745,6 @@ class LookupTable666UDRightObliqueStage(LookupTable):
     7 steps has 3,774 entries (29 percent, 0.86x previous step)
     8 steps has 1,721 entries (13 percent, 0.46x previous step)
     9 steps has 122 entries (0 percent, 0.07x previous step)
-
     Total: 12,870 entries
     Average: 6.27 moves
     """
@@ -445,8 +778,6 @@ class LookupTable666UDRightObliqueStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="85d92657ecceb2b01d8bffabf49f3a59",
-            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
@@ -473,7 +804,6 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
     5 steps has 4,466 entries (34 percent, 3.58x previous step)
     6 steps has 6,236 entries (48 percent, 1.40x previous step)
     7 steps has 656 entries (5 percent, 0.11x previous step)
-
     Total: 12,870 entries
     Average: 5.45 moves
     """
@@ -505,19 +835,17 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fc2b0db976435d82a3e43397ec57bc97",
-            md5_state_index="443ddcd3252633adc4fdfb180f8e86f7",
         )
         # fmt: on
 
     def state(self):
         parent_state = self.parent.state
-        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in UFBD_outer_x_centers])
+        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in UFBD_outer_x_centers_666])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_outer_x_centers, state):
+        for (pos, pos_state) in zip(UFBD_outer_x_centers_666, state):
             cube[pos] = pos_state
 
 
@@ -526,7 +854,6 @@ class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
     """
     This was only used to build the lookup-table-6x6x6-step14-UD-oblique-stage.pt_state
     file which was then converted to lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash
-
     lookup-table-6x6x6-step14-UD-oblique-stage.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -545,15 +872,12 @@ class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
     13 steps has 2,852,222 entries (1 percent, 0.10x previous step)
     14 steps has 41,682 entries (0 percent, 0.01x previous step)
     15 steps has 148 entries (0 percent, 0.00x previous step)
-
     Total: 165,636,900 entries
     Average: 10.61 moves
     """
-
     state_targets = (
         "UUUUUUUUxxxxxxxxxxxxxxxxUUUUUUUU",
     )
-
     def __init__(self, parent):
         # fmt: off
         LookupTableIDAViaGraph.__init__(
@@ -571,12 +895,10 @@ class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
                 "3Rw", "3Rw'",
                 "3Bw", "3Bw'",
                 "3Dw", "3Dw'",
-
                 "Uw", "Uw'",
                 "Dw", "Dw'",
                 "Fw", "Fw'",
                 "Bw", "Bw'",
-
                 # we are not manipulating anything on sides L or R
                 "L", "L'", "L2",
                 "R", "R'", "R2",
@@ -672,7 +994,6 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             ),
             linecount=343000,
             max_depth=8,
-            md5_txt="e1b1991511ed4bba6ee5cbc118b19ea3",
         )
     # fmt: on
 
@@ -754,8 +1075,6 @@ class LookupTable666LRInnerXCenterAndObliqueEdges(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="ab6a16a1f73c7a77570d89818d1e4821",
-            md5_state_index="9cb94f2836125f89c439cd354c3252c1",
         )
         # fmt: on
 
@@ -830,8 +1149,6 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             ),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="e3ffa78934aea743884dcd0c4121420f",
-            md5_state_index="83059d579e597f51e8322c684bb7fb08",
         )
         # fmt: on
 
@@ -981,8 +1298,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     RubiksCubeNNNEven RubiksCube666
     """
 
-    instantiated = False
-
     reduce333_orient_edges_tuples = (
         (2, 149),
         (3, 148),
@@ -1082,15 +1397,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         (215, 176),
     )
 
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCubeNNNEvenEdges.__init__(self, state, order, colormap, debug)
-
-        if RubiksCube666.instantiated:
-            # raise Exception("Another 6x6x6 instance is being created")
-            logger.warning("Another 6x6x6 instance is being created")
-        else:
-            RubiksCube666.instantiated = True
-
     def get_fake_444(self):
         if self.fake_444 is None:
             self.fake_444 = RubiksCube444(solved_444, "URFDLB")
@@ -1130,72 +1436,35 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         print("")
 
     def sanity_check(self):
-        # fmt: off
-        corners = (
-            1, 6, 31, 36,
-            37, 42, 67, 72,
-            73, 78, 103, 108,
-            109, 114, 139, 144,
-            145, 150, 175, 180,
-            181, 186, 211, 216,
-        )
-
-        left_oblique_edge = (
-            9, 17, 28, 20,
-            45, 53, 64, 56,
-            81, 89, 100, 92,
-            117, 125, 136, 128,
-            153, 161, 172, 164,
-            189, 197, 208, 200,
-        )
-
-        right_oblique_edge = (
-            10, 23, 27, 14,
-            46, 59, 63, 50,
-            82, 95, 99, 86,
-            118, 131, 135, 122,
-            154, 167, 171, 158,
-            190, 203, 207, 194,
-        )
-
-        outside_x_centers = (
-            8, 11, 26, 29,
-            44, 47, 62, 65,
-            80, 83, 98, 101,
-            116, 119, 134, 137,
-            152, 155, 170, 173,
-            188, 191, 206, 209,
-        )
-
-        inside_x_centers = (
-            15, 16, 21, 22,
-            51, 52, 57, 58,
-            87, 88, 93, 94,
-            123, 124, 129, 130,
-            159, 160, 165, 166,
-            195, 196, 201, 202,
-        )
-        # fmt: on
-
         self._sanity_check("edge-orbit-0", edge_orbit_0, 8)
         self._sanity_check("edge-orbit-1", edge_orbit_1, 8)
-        self._sanity_check("corners", corners, 4)
-        self._sanity_check("left-oblique", left_oblique_edge, 4)
-        self._sanity_check("right-oblique", right_oblique_edge, 4)
-        self._sanity_check("outside x-center", outside_x_centers, 4)
-        self._sanity_check("inside x-center", inside_x_centers, 4)
+        self._sanity_check("corners", corners_666, 4)
+        self._sanity_check("left-oblique", left_oblique_edges_666, 4)
+        self._sanity_check("right-oblique", right_oblique_edges_666, 4)
+        self._sanity_check("outside x-center", outer_x_centers_666, 4)
+        self._sanity_check("inside x-center", inner_x_centers_666, 4)
 
-    def lt_init(self, LR_oblique_edge_only=False):
+    def lt_init(self):
         if self.lt_init_called:
             return
         self.lt_init_called = True
 
+        # phase 1
+        self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
+        self.lt_LR_oblique_edge_stage_inner_x_stage = LookupTable666LRObliquEdgeStageInnerXStage(self)
+
         # phase 2
         self.lt_LR_oblique_edge_stage = LookupTable666LRObliquEdgeStage(self)
+        self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
+        self.lt_UD_outer_x_centers_stage = LookupTable666UDXCentersStage(self)
+        self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
+        self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
 
-        # This is the case if a 777 is using 666 to pair its LR oblique edges
-        if LR_oblique_edge_only:
-            return
+        # phase 3
+        self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
+        self.lt_UD_oblique_edge_stage.avoid_oll = (0, 1)
+        self.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(self)
+        self.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
 
         # phase 4
         self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueStage(self)
@@ -1307,175 +1576,234 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return False
 
         # verify all oblique edges are paired
+        # fmt: off
         for (x, y) in (
-            (9, 10),
-            (20, 14),
-            (17, 23),
-            (28, 27),  # Upper
-            (45, 46),
-            (56, 50),
-            (53, 59),
-            (64, 63),  # Left
-            (81, 82),
-            (92, 86),
-            (89, 95),
-            (100, 99),  # Front
-            (117, 118),
-            (128, 122),
-            (125, 131),
-            (136, 135),  # Right
-            (153, 154),
-            (164, 158),
-            (161, 167),
-            (172, 171),  # Back
-            (189, 190),
-            (200, 194),
-            (197, 203),
-            (208, 207),  # Down
+            (9, 10), (20, 14), (17, 23), (28, 27),  # Upper
+            (45, 46), (56, 50), (53, 59), (64, 63),  # Left
+            (81, 82), (92, 86), (89, 95), (100, 99),  # Front
+            (117, 118), (128, 122), (125, 131), (136, 135),  # Right
+            (153, 154), (164, 158), (161, 167), (172, 171),  # Back
+            (189, 190), (200, 194), (197, 203), (208, 207),  # Down
         ):
             if self.state[x] != self.state[y]:
                 return False
 
         # verify the inside orbit of edges are paired
         for (x, y) in (
-            (3, 4),
-            (18, 24),
-            (34, 33),
-            (19, 13),  # Upper
-            (39, 40),
-            (54, 60),
-            (70, 69),
-            (55, 49),  # Left
-            (75, 76),
-            (90, 96),
-            (106, 105),
-            (91, 85),  # Front
-            (111, 112),
-            (126, 132),
-            (142, 141),
-            (127, 121),  # Right
-            (147, 148),
-            (162, 168),
-            (178, 177),
-            (163, 157),  # Back
-            (183, 184),
-            (198, 204),
-            (214, 213),
-            (199, 193),  # Down
+            (3, 4), (18, 24), (34, 33), (19, 13),  # Upper
+            (39, 40), (54, 60), (70, 69), (55, 49),  # Left
+            (75, 76), (90, 96), (106, 105), (91, 85),  # Front
+            (111, 112), (126, 132), (142, 141), (127, 121),  # Right
+            (147, 148), (162, 168), (178, 177), (163, 157),  # Back
+            (183, 184), (198, 204), (214, 213), (199, 193),  # Down
         ):
             if self.state[x] != self.state[y]:
                 return False
+        # fmt: on
 
         return True
 
-    def group_centers_guts(self, pair_inside_edges: bool = True):
+    def daisy_solve_centers(self):
         """
-        reduce the 6x6x6 to a 5x5x5
+        The inner x-centers and oblique edges are staged. Daisy solve the centers by
+        - pair the inner x-centers
+        - pair the oblique edges
+        - put the oblique edges in a "daisy" pattern around the inner x-centers
+
+        This reduces our centers to 5x5x5 centers
         """
+
+        # Thoughts on other ways to tackle this problem:
+        """
+        There are 70^3 per side so to do this in one phase would be a 70^9 search space!
+        You could potentially do multiple 70^5 perfect-hash tables with 1,680,700,000 entries
+        or 70^4 perfect-hash with 24,010,000 entries
+
+            70^5/70^9 is 0.000 000 041
+            70^4/70^9 is 0.000 000 000 594
+
+        Realistically it would take multiple 70^5 perfect-hash tables to make this fast enough. It
+        might be doable but that means the solver could no longer run on a raspberry pi. Honestly
+        I think that would be too slow even with lots of 70^5 perfect-hash tables.
+
+        Another two phase approach could be
+        - solve the inner x-centers and pair all of the edges (via unpaired count heuristic). The inner x-centers
+          part would average 7.51 moves. I've never tried the unpaired count heuristic for multiple sides at the
+          same time. Maybe try that first (without worrying about inner x-centers) and see how slow it is?
+          This is a 70^9 search space though so this probably isn't feasible.
+        - use 555 to daisy solve the t-centers. This will average 5.19 move (see Build555ULFRBDTCenterDaisySolve)
+        I have no idea if this would be any better than the two-phase approach we have today.
+        """
+
+        # phase 5
+        # solve the UD inner x-centers and pair the UD oblique edges
+        # this takes ~6 steps
+        tmp_solution_len = len(self.solution)
+        self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
+        self.print_cube_add_comment("UD inner x-center solved and oblique edges paired", tmp_solution_len)
+
+        # phase 6
+        # solve the LR inner x-centers, pair the LR oblique edges and daisy solve LR
+        # solve the FB inner x-centers, pair the FB oblique edges and daisy solve FB
+        # daisy solve UD
+        # this takes ~14 steps
+        tmp_solution_len = len(self.solution)
+        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve_via_c()
+        self.print_cube_add_comment("LFRB inner x-center solved and oblique edges paired", tmp_solution_len)
+
+    def stage_t_centers(self):
+        """
+        Used by RubiksCubeNNNEven.make_plus_sign
+
+        - pair LR inner x-centers and pair oblique edges (9 moves)
+        - stage LR t-centers (6 moves)
+        - stage the UD oblique edges and inner x-centers
+        """
+        # phase 1 - stage the LR inner-x centers and pair the LR oblique edges
+        tmp_solution_len = len(self.solution)
+        self.lt_LR_oblique_edge_stage_inner_x_stage.solve_via_c(use_kociemba_string=True)
+        self.print_cube_add_comment("LR inner x-centers staged, oblique edges paired", tmp_solution_len)
+
+        # phase 2 - Stage LR t-centers via 555
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+        tmp_solution_len = len(self.solution)
+        fake_555.lt_LR_t_centers_stage_ida.solve_via_c()
+
+        for step in fake_555.solution:
+            if not step.startswith("COMMENT"):
+                self.rotate(step)
+
+        self.print_cube_add_comment("LR t-centers staged", tmp_solution_len)
+
+        # phase 3 - stage the UD oblique edges and inner x-centers
+        tmp_solution_len = len(self.solution)
+        self.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
+        self.print_cube_add_comment("UD t-centers staged", tmp_solution_len)
+
+    def stage_centers(self):
+        """
+        option A (original strategy)
+        - pair all inner x-centers via 444 (9 moves)
+        - pair LR oblique edges (9 moves)
+        - stage LR (10 moves)
+        - stage UD (14 moves)
+        - 42 total
+
+        option B (what we use today)
+        - pair LR inner x-centers and oblique edges (9 moves)
+        - stage LR (10 moves)
+        - pair UD inner x-centers and oblique edges (9 moves)
+        - stage UD (10 moves)
+        - 38 total
+        The downside here is the "pair LR inner x-centers and pair oblique edges" phase is pretty slow
+        because it is using an unpaired count heuristic.
+
+        Things I have tried here that did not work
+
+        3 phases
+        - pair LR inner x-centers and pair oblique edges (9 moves)
+        - stage LR (10 moves)
+        - stage all of UD in a single phase. This is a 12870^4 search space though and even with
+            six (yes six) 12870^2 (165 million entry) perfect-hash tables the IDA ran overnight
+            before I killed it.
+
+        Things to try:
+        - pair LR inner x-centers and oblique edges (9 moves)
+        - stage LR while staging the UDFB inner x-centers? (at least 10 moves)
+            - similar to 555 stage LR phase
+            - would also stage UDFB inner x-centers which is a 16!/(8! * 8!) or 12870 space
+            - would have to avoid any 3w move that would break up an LR obilque edge
+            - this would be super slow...735741/(735741*735741*12870) = 0.000 000 000 105
+            - not feasible
+        - stage UD (14 moves)
+        - 33 plus the rest of the moves for the 2nd phase
+        """
+        use_option_A = False
+
+        if use_option_A:
+            # phase 1 - stage the inner-x centers via 444 solver
+            fake_444 = self.get_fake_444()
+            self.populate_fake_444_for_inner_x_centers_stage()
+            tmp_solution_len = len(self.solution)
+            fake_444.lt_ULFRBD_centers_stage.solve_via_c()
+
+            for step in fake_444.solution:
+                if not step.startswith("COMMENT"):
+                    if "w" in step:
+                        step = "3" + step
+                    self.rotate(step)
+
+            self.print_cube_add_comment("inner x-centers staged", tmp_solution_len)
+
+            # phase 2 - pair LR oblique edges (5 or 6 moves)
+            self.lt_LR_oblique_edge_stage.solve_via_c(use_kociemba_string=True)
+            self.print_cube_add_comment("LR oblique edges paired", tmp_solution_len)
+
+            # phase 3 - Stage LR centers via 555
+            fake_555 = self.get_fake_555()
+            self.populate_fake_555_for_ULFRBD_solve()
+            tmp_solution_len = len(self.solution)
+            fake_555.group_centers_stage_LR()
+
+            for step in fake_555.solution:
+                if not step.startswith("COMMENT"):
+                    self.rotate(step)
+
+            self.print_cube_add_comment("LR centers staged", tmp_solution_len)
+
+            # phase 4 - pair the UD oblique edges and outer x-centers to finish staging centers
+            tmp_solution_len = len(self.solution)
+            self.lt_UD_centers_stage.solve_via_c()
+            self.print_cube_add_comment("UD centers staged", tmp_solution_len)
+
+        else:
+
+            if not self.LR_centers_staged():
+                # phase 1 - stage the LR inner-x centers and pair the LR oblique edges
+                tmp_solution_len = len(self.solution)
+                self.lt_LR_oblique_edge_stage_inner_x_stage.solve_via_c(use_kociemba_string=True)
+                self.print_cube_add_comment("LR oblique edges paired", tmp_solution_len)
+
+                # phase 2 - Stage LR centers via 555
+                fake_555 = self.get_fake_555()
+                self.populate_fake_555_for_ULFRBD_solve()
+                tmp_solution_len = len(self.solution)
+                fake_555.group_centers_stage_LR()
+
+                for step in fake_555.solution:
+                    if not step.startswith("COMMENT"):
+                        self.rotate(step)
+
+                self.print_cube_add_comment("LR centers staged", tmp_solution_len)
+
+            if not self.UD_centers_staged():
+                # phase 3 - pair the UD oblique edges and outer x-centers
+                tmp_solution_len = len(self.solution)
+                self.lt_UD_oblique_edge_stage.solve_via_c(use_kociemba_string=True)
+                self.print_cube_add_comment("UD oblique edges paired", tmp_solution_len)
+
+                # phase 4 - Stage UD centers via 555
+                fake_555 = self.get_fake_555()
+                self.populate_fake_555_for_ULFRBD_solve()
+                tmp_solution_len = len(self.solution)
+                fake_555.group_centers_stage_UD()
+
+                for step in fake_555.solution:
+                    if not step.startswith("COMMENT"):
+                        self.rotate(step)
+
+                self.print_cube_add_comment("UD centers staged", tmp_solution_len)
+
+    def reduce_555(self):
+
         if self.reduced_to_555():
             return
 
         self.lt_init()
-
-        # phase 1
-        # stage the inner-x centers via 444 solver
-        fake_444 = self.get_fake_444()
-        self.populate_fake_444_for_inner_x_centers_stage()
-        tmp_solution_len = len(self.solution)
-        fake_444.lt_ULFRBD_centers_stage.solve_via_c()
-
-        for step in fake_444.solution:
-            if step.startswith("COMMENT"):
-                self.solution.append(step)
-            else:
-                if "w" in step:
-                    step = "3" + step
-                self.rotate(step)
-
-        self.solution.append(
-            "COMMENT_%d_steps_666_inner_x_centers_staged"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        self.print_cube(
-            "%s: inner-x centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-        # phase 2
-        # pair the LR oblique edges
-        tmp_solution_len = len(self.solution)
-        self.lt_LR_oblique_edge_stage.solve()
-        self.print_cube(
-            "%s: LR oblique edges paired but not staged (%d steps in)"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_666_LR_oblique_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        # phase 3
-        # Stage LR centers via 555
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        tmp_solution_len = len(self.solution)
-        fake_555.group_centers_stage_LR()
-
-        for step in fake_555.solution:
-            if step.startswith("COMMENT"):
-                self.solution.append(step)
-            else:
-                self.rotate(step)
-
-        self.print_cube(
-            "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-
-        # phase 4
-        # pair the UD oblique edges and outer x-centers to finish staging centers
-        tmp_solution_len = len(self.solution)
-        self.lt_UD_centers_stage.solve_via_c()
-        self.print_cube(
-            "%s: centers staged, (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_666_centers_staged"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        # Reduce the centers to 5x5x5 centers
-        # - solve the UD inner x-centers and pair the UD oblique edges
-        # - solve the LR inner x-centers and pair the LR oblique edges
-        # - solve the FB inner x-centers and pair the FB oblique edges
-
-        # phase 5
-        # solve the UD inner x-centers and pair the UD oblique edges
-        tmp_solution_len = len(self.solution)
-        self.lt_UD_solve_inner_x_centers_and_oblique_edges.solve()
-        self.print_cube(
-            "%s: UD inner x-center solved and oblique edges paired (%d steps in)"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_666_UD_reduced_to_555"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        # phase 6
-        # solve the LR inner x-centers and pair the LR oblique edges
-        # solve the FB inner x-centers and pair the FB oblique edges
-        tmp_solution_len = len(self.solution)
-        self.lt_LFRB_solve_inner_x_centers_and_oblique_edges.solve_via_c()
-        self.print_cube(
-            "%s: LFRB inner x-center and oblique edges paired (%d steps in)"
-            % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append(
-            "COMMENT_%d_steps_666_reduced_to_555"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        if pair_inside_edges:
-            self.pair_inside_edges_via_444()
+        self.stage_centers()
+        self.daisy_solve_centers()
+        self.pair_inside_edges_via_444()
 
 
 def rotate_666(cube, step):

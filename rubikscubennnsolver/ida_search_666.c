@@ -30,16 +30,11 @@ unsigned int right_oblique_edges_666[NUM_RIGHT_OBLIQUE_EDGES_666] = {
     190, 194, 203, 207,  // Down
 };
 
-unsigned int get_unpaired_obliques_count_666(char *cube) {
-    unsigned int unpaired_obliques = 8;
-    unsigned int left_cube_index = 0;
-    unsigned int right_cube_index = 0;
+unsigned char get_unpaired_obliques_count_666(char *cube) {
+    unsigned char unpaired_obliques = 8;
 
     for (int i = 0; i < NUM_LEFT_OBLIQUE_EDGES_666; i++) {
-        left_cube_index = left_oblique_edges_666[i];
-        right_cube_index = right_oblique_edges_666[i];
-
-        if (cube[left_cube_index] == '1' && cube[right_cube_index] == '1') {
+        if (cube[left_oblique_edges_666[i]] == '1' && cube[right_oblique_edges_666[i]] == '1') {
             unpaired_obliques -= 1;
         }
     }
@@ -50,14 +45,14 @@ unsigned int get_unpaired_obliques_count_666(char *cube) {
 // ============================================================================
 // step20
 // ============================================================================
-struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube) {
-    int unpaired_count = get_unpaired_obliques_count_666(cube);
+struct ida_heuristic_result ida_heuristic_oblique_edges_stage_666(char *cube) {
     struct ida_heuristic_result result;
-    unsigned long long state = 0;
-
-    result.unpaired_count = unpaired_count;
+    result.unpaired_count = get_unpaired_obliques_count_666(cube);
 
     // Get the state of the oblique edges
+    /*
+    unsigned long long state = 0;
+
     for (int i = 0; i < NUM_OBLIQUE_EDGES_666; i++) {
         if (cube[oblique_edges_666[i]] == '1') {
             state |= 0x1;
@@ -68,6 +63,7 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube)
     // 000000033fff is 12 chars
     state >>= 1;
     sprintf(result.lt_state, "%012llx", state);
+    */
 
     // The most oblique edges we can pair in single move is 4 so take the number that are unpaired and divide by 4.
     //
@@ -84,23 +80,16 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_666(char *cube)
     //
     // result.cost_to_goal = (int)ceil((double)unpaired_count / 1.2);
 
-    // The math works out that it just basically takes about 1 mpve per unpaired oblique edge
+    // The math works out that it just basically takes about 1 move per unpaired oblique edge
     // so save some cycles and just use the unpaired_count as the heuristic.
-    result.cost_to_goal = unpaired_count;
+    result.cost_to_goal = result.unpaired_count;
 
     return result;
 }
 
-unsigned char ida_search_complete_LR_oblique_edges_stage_666(char *cube) {
-    unsigned int left_cube_index = 0;
-    unsigned int right_cube_index = 0;
-
-    for (int i = 0; i < NUM_LEFT_OBLIQUE_EDGES_666; i++) {
-        left_cube_index = left_oblique_edges_666[i];
-        right_cube_index = right_oblique_edges_666[i];
-
-        if ((cube[left_cube_index] == '1' && cube[right_cube_index] == '0') ||
-            (cube[left_cube_index] == '0' && cube[right_cube_index] == '1')) {
+unsigned char ida_search_complete_oblique_edges_stage_666(char *cube) {
+    for (unsigned char i = 0; i < NUM_LEFT_OBLIQUE_EDGES_666; i++) {
+        if (cube[left_oblique_edges_666[i]] != cube[right_oblique_edges_666[i]]) {
             return 0;
         }
     }

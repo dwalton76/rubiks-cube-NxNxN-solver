@@ -69,42 +69,42 @@ if size == 2:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube222 import RubiksCube222
 
-    cube = RubiksCube222(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCube222(args.state, args.order, args.colormap)
 elif size == 3:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube333 import RubiksCube333
 
-    cube = RubiksCube333(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCube333(args.state, args.order, args.colormap)
 elif size == 4:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
-    cube = RubiksCube444(args.state, args.order, args.colormap, debug=args.debug)
+    cube = RubiksCube444(args.state, args.order, args.colormap)
 elif size == 5:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 
-    cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCube555(args.state, args.order, args.colormap)
 elif size == 6:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube666 import RubiksCube666
 
-    cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCube666(args.state, args.order, args.colormap)
 elif size == 7:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube777 import RubiksCube777
 
-    cube = RubiksCube777(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCube777(args.state, args.order, args.colormap)
 elif size % 2 == 0:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven
 
-    cube = RubiksCubeNNNEven(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCubeNNNEven(args.state, args.order, args.colormap)
 else:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
 
-    cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap, args.debug)
+    cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap)
 
 cube.sanity_check()
 cube.print_cube("Initial Cube")

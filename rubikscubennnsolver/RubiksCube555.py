@@ -586,8 +586,6 @@ class LookupTable555LRTCenterStage(LookupTable):
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="47f0fbaaa6bc57e13227013f2a4e6000",
-            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -650,8 +648,6 @@ class LookupTable555LRXCenterStage(LookupTable):
             legal_moves=moves_555,
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="f115bf1b641fdbcedc4a0cf0dad94b94",
-            md5_state_index="7588f48543c0f59a191051b7950c7c52",
         )
 
     def state(self):
@@ -687,6 +683,18 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
         )
 
 
+class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_555,
+            illegal_moves=(),
+            prune_tables=(parent.lt_LR_t_centers_stage,),
+            centers_only=True,
+        )
+
+
 # phase 2
 class LookupTable555FBTCenterStage(LookupTable):
     """
@@ -718,8 +726,6 @@ class LookupTable555FBTCenterStage(LookupTable):
             illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="688fa1df55afc811cd8286aae7ae27ce",
-            md5_state_index="879b393fdddff5c298a4279b58464e5f",
         )
 
     def state(self):
@@ -771,8 +777,6 @@ class LookupTable555FBXCenterStage(LookupTable):
             illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="fa7775fbd1dc684389ec32dc0e04b4b2",
-            md5_state_index="879b393fdddff5c298a4279b58464e5f",
         )
 
     def state(self):
@@ -1782,8 +1786,6 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="432c1d1352f6831dc261d756f07aeeee",
-            md5_state_index="496f2f5dbdff19e670329bd896fc339f",
         )
 
     def state(self):
@@ -1841,8 +1843,6 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="e84b1616f11737c99f5bdb9ed1cb4ac6",
-            md5_state_index="b421a267c023f9857f64c5bbdf8218da",
         )
 
     def state(self):
@@ -1919,8 +1919,6 @@ class LookupTable555EdgeOrientInnerOrbit(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="beb38008ba62f77e716031011a59927f",
-            md5_state_index="82b52422c600a32b5ba2ab70f6d4f3cf",
         )
 
     def state(self):
@@ -2002,13 +2000,7 @@ class LookupTable555Phase4(LookupTable):
 
     def __init__(self, parent):
         LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step40-phase4.txt",
-            "TBD",
-            linecount=32389725,
-            max_depth=3,
-            md5_txt="dc7bf65fe07d6d3b3afebd01b4a801b6",
+            self, parent, "lookup-table-5x5x5-step40-phase4.txt", "TBD", linecount=32389725, max_depth=3
         )
         self.wing_strs = None
 
@@ -2140,8 +2132,6 @@ class LookupTable555Phase5Centers(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="ba83862ac8a23bcaedfc219738d6d832",
-            md5_state_index="94850abdebb4a2cc598ad1ecaacfabae",
         )
 
     def state(self):
@@ -2194,8 +2184,6 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="d69e83118e56f1c4b7f0825f2184f704",
-            md5_state_index="43bf02b7b00d01d6fdeca65a0fdb3617",
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -2421,8 +2409,6 @@ class LookupTable555Phase5FBCenters(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="416e5b19a12638c745ef43da971097e5",
-            md5_state_index="1143afbaff9319d0b56af388ed8df18c",
         )
 
     def state(self):
@@ -2475,8 +2461,6 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="63563216a99d9f1df5452dd4b926896d",
-            md5_state_index="a92e9c2f00b8139cfe4d310b77f9ffb0",
         )
         self.wing_strs = ("LB", "LF", "RB", "RF")
 
@@ -2591,8 +2575,6 @@ class LookupTable555Phase6Centers(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="39246f6f4a4df584346a6a49a3981237",
-            md5_state_index="a9fb5d65b2b3e0ecb43eb32153156f3a",
         )
 
     def state(self):
@@ -2645,8 +2627,6 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="56382060bb427711e0303bec5a30195e",
-            md5_state_index="2e2d4fdd18f52a2bec92226067d1cfc4",
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -2721,8 +2701,6 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
             # fmt: on
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="7d6b1ed74075cda1b191382bbd18b2cb",
-            md5_state_index="af4211fe7054e882ea4d62aea2c2d9de",
         )
         self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
 
@@ -2885,8 +2863,6 @@ class LookupTable555UDCenterSolve(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="b3219e18ffab62f3e9e5d2546b7efa9b",
-            md5_state_index="32fbc4731dcaf920612cdf601668f47c",
         )
 
     def state(self):
@@ -2944,8 +2920,6 @@ class LookupTable555LRCenterSolve(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="3e014635d3d60c7cd795a1ce6fda02a5",
-            md5_state_index="496f2f5dbdff19e670329bd896fc339f",
         )
 
     def state(self):
@@ -3002,8 +2976,6 @@ class LookupTable555FBCenterSolve(LookupTable):
             illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
             use_state_index=True,
             build_state_index=build_state_index,
-            md5_bin="185ef249db6173d097ddb7f508172922",
-            md5_state_index="1143afbaff9319d0b56af388ed8df18c",
         )
 
     def state(self):
@@ -3065,7 +3037,6 @@ class LookupTable555TCenterSolve(LookupTable):
             "lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt",
             "UUUULLLLFFFFRRRRBBBBDDDD",
             linecount=343000,
-            md5_txt="87cd07a8258c2489cb2ec07edf24c9f6",
         )
 
     def ida_heuristic(self):
@@ -3083,8 +3054,6 @@ class RubiksCube555(RubiksCube):
     - pair edges
     - solve as 3x3x3
     """
-
-    instantiated = False
 
     reduce333_orient_edges_tuples = (
         (2, 104),
@@ -3160,19 +3129,6 @@ class RubiksCube555(RubiksCube):
         (148, 123),
         (149, 122),  # Down
     )
-
-    def __init__(self, state, order, colormap=None, debug=False):
-        RubiksCube.__init__(self, state, order, colormap)
-
-        if RubiksCube555.instantiated:
-            # raise Exception("Another 5x5x5 instance is being created")
-            # logger.warning("Another 5x5x5 instance is being created")
-            pass
-        else:
-            RubiksCube555.instantiated = True
-
-        if debug:
-            logger.setLevel(logging.DEBUG)
 
     def nuke_centers_specific(self, centers):
         for square_index in centers:
@@ -3262,7 +3218,7 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
-        self.lt_LR_centers_stage.avoid_oll = 0
+        self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
 
         # phase 2
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
@@ -3457,14 +3413,7 @@ class RubiksCube555(RubiksCube):
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_LR_centers_stage.solve_via_c()
-            self.print_cube(
-                "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-
-            self.solution.append(
-                "COMMENT_%d_steps_555_two_centers_staged"
-                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-            )
+            self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
     def group_centers_stage_FB(self, max_ida_threshold: int = None):
         """
@@ -3476,13 +3425,10 @@ class RubiksCube555(RubiksCube):
         else:
             tmp_solution_len = len(self.solution)
             self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
-            self.print_cube(
-                "%s: FB centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-            self.solution.append(
-                "COMMENT_%d_steps_555_centers_staged"
-                % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-            )
+            self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
+
+    def group_centers_stage_UD(self, max_ida_threshold: int = None):
+        self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
 
     def eo_edges(self):
         """
@@ -3566,9 +3512,8 @@ class RubiksCube555(RubiksCube):
         # When solve_via_c is passed pt_state_indexes (2048 lines of states in this case), it will try all 2048 of them
         # to find the state that has the shortest solution.
         self.lt_phase3.solve_via_c(pt_states=pt_state_indexes)
-        self.solution.append(
-            "COMMENT_%d_steps_555_edges_EOed" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
+
+        self.print_cube_add_comment("edges EOed into high/low groups", tmp_solution_len)
         self.post_eo_state = self.state[:]
         self.post_eo_solution = self.solution[:]
 
@@ -3576,11 +3521,7 @@ class RubiksCube555(RubiksCube):
         # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
         # the cube and re-apply the solution.
         self.edges_flip_orientation(wing_strs, [])
-
         self.highlow_edges_print()
-        self.print_cube(
-            "%s: end of phase 3, edges EOed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
 
     def high_edge_midge_pair_count(self, target_wing_str=[]):
         count = 0
@@ -3666,47 +3607,29 @@ class RubiksCube555(RubiksCube):
         results.sort()
         return results
 
-    def pair_first_four_edges(self, phase4_wing_str_combo: List[str], call_print_cube: bool = True):
-        original_solution_len = len(self.solution)
+    def pair_first_four_edges(self, phase4_wing_str_combo: List[str]):
+        tmp_solution_len = len(self.solution)
         self.lt_phase4.wing_strs = phase4_wing_str_combo
         self.lt_phase4.solve()
-
-        if call_print_cube:
-            self.print_cube(
-                "%s: end of phase 4, first four edges in x-plane and y-plane (%d steps in)"
-                % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
-        )
+        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
 
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
+        tmp_solution_len = len(self.solution)
 
         self.edges_flip_orientation(phase4_wing_str_combo, [])
         self.lt_phase5_high_edge_midge.wing_strs = phase4_wing_str_combo
         self.lt_phase5_low_edge_midge.wing_strs = phase4_wing_str_combo
         self.lt_phase5.solve_via_c()
 
-        pair_four_edge_solution = self.solution[original_solution_len:]
+        pair_four_edge_solution = self.solution[tmp_solution_len:]
         self.state = original_state[:]
         self.solution = original_solution[:]
 
         for step in pair_four_edge_solution:
             self.rotate(step)
 
-        if call_print_cube:
-            self.print_cube(
-                "%s: end of phase 5, x-plane edges paired (%d steps in)"
-                % (self, self.get_solution_len_minus_rotates(self.solution))
-            )
-
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
     def pair_last_eight_edges(self, call_print_cube: bool = True):
         original_state = self.state[:]
@@ -3734,21 +3657,18 @@ class RubiksCube555(RubiksCube):
         for step in pair_eight_edge_solution:
             self.rotate(step)
 
-        if call_print_cube:
-            self.print_cube(f"{self}: last eight edges paired")
-
-        self.solution.append(
-            "COMMENT_%d_steps_555_last_eight_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-
-        logger.info("%s: reduced to 3x3x3 (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def group_centers_phase1_and_2(self) -> None:
         """
         phase1 stages the centers on sides L and R
         phase2 stages the centers on sides F and B and put the LR centers in one of 495 states that can
             be solved without L L' R R'...this is prep work for phase 3
+
+        TODO this needs more work
+        BLBFRUFRDDFBUULBRLBRRLDLDLFURFLUBUDRRRDDFDFBBLUFRUFFBBFBLLLDBDFBDBLFDUUFRFBLDUDDURFDRBBDFUUFUBFBDLULDLRRUDFDFULLLUUBUDRLURLBBDURFRBULBRFRBRDRRULDFLFLR
+
+        results in "5x5x5 edge swaps are odd, cannot pair edges"
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -3758,6 +3678,7 @@ class RubiksCube555(RubiksCube):
 
         original_state = self.state[:]
         original_solution = self.solution[:]
+        tmp_solution_len = len(self.solution)
 
         # find multiple phase1 solutions
         phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=100)
@@ -3820,18 +3741,13 @@ class RubiksCube555(RubiksCube):
         for step in min_phase1_solution:
             self.rotate(step)
 
-        self.print_cube(
-            "%s: LR centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append("COMMENT_%d_steps_555_two_centers_staged" % len(min_phase1_solution))
+        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
+        tmp_solution_len = len(self.solution)
         for step in min_phase2_solution:
             self.rotate(step)
 
-        self.print_cube(
-            "%s: FB centers staged (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
-        self.solution.append("COMMENT_%d_steps_555_centers_staged" % len(min_phase2_solution))
+        self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
     def pair_edges(self):
 
@@ -3913,10 +3829,7 @@ class RubiksCube555(RubiksCube):
         for step in phase4_solution:
             self.rotate(step)
 
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_staged"
-            % self.get_solution_len_minus_rotates(self.solution[original_solution_len:])
-        )
+        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
 
         # phase 5
         tmp_solution_len = len(self.solution)
@@ -3924,13 +3837,7 @@ class RubiksCube555(RubiksCube):
         for step in phase5_solution:
             self.rotate(step)
 
-        self.solution.append(
-            "COMMENT_%d_steps_555_first_four_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        self.print_cube(
-            "%s: first four edges paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
 
         # phase 6
         tmp_solution_len = len(self.solution)
@@ -3938,22 +3845,10 @@ class RubiksCube555(RubiksCube):
         for step in phase6_solution:
             self.rotate(step)
 
-        self.solution.append(
-            "COMMENT_%d_steps_555_last_eight_edges_paired"
-            % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:])
-        )
-        self.print_cube(
-            "%s: last eight edges paired (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
-        )
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def reduce_333(self):
         self.lt_init()
-
-        if self.centers_solved():
-            self.solution.append("CENTERS_SOLVED")
-
-        if self.edges_paired():
-            self.solution.append("EDGES_GROUPED")
 
         if self.centers_solved() and self.edges_paired():
             return
@@ -3961,7 +3856,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        if True:
+        if False:
             self.group_centers_phase1_and_2()
 
         else:
@@ -3976,9 +3871,6 @@ class RubiksCube555(RubiksCube):
 
         # phases 4 5 and 6
         self.pair_edges()
-
-        self.solution.append("CENTERS_SOLVED")
-        self.solution.append("EDGES_GROUPED")
 
 
 def rotate_555(cube, step):

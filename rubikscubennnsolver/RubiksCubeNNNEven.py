@@ -218,7 +218,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_NNN += self.size * self.size
 
             # reduce the centers to 5x5x5 centers
-            fake_666.group_centers_guts(pair_inside_edges=False)
+            fake_666.stage_t_centers()
+            fake_666.daisy_solve_centers()
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))
@@ -241,17 +242,13 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 "%s: Big plus sign formed (%d steps in)" % (self, self.get_solution_len_minus_rotates(self.solution))
             )
 
-    def group_centers_guts(self):
+    def reduce_555(self):
 
         # Reduce this even cube to an odd cube
+        tmp_solution_len = len(self.solution)
         self.make_plus_sign()
         self.pair_inside_edges_via_444()
-        self.solution.append(
-            "COMMENT_%d_steps_total_NNN_even_cube_reduce_to_odd_cube"
-            % self.get_solution_len_minus_rotates(self.solution)
-        )
-        self.solution.append("COMMENT_")
-        self.print_cube("NNN even reduced to NNN odd cube")
+        self.print_cube_add_comment("NNN even reduced to NNN odd cube", tmp_solution_len)
 
         # create a state string we can use to create the reduced NNN odd cube
         kociemba_string = []

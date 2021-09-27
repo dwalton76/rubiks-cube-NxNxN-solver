@@ -70,10 +70,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         half_size_str = str(half_size)
 
         for step in fake_444.solution:
-
-            if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
-                continue
-            elif step.startswith("COMMENT"):
+            if step.startswith("COMMENT"):
                 self.solution.append(step)
             else:
                 # Rotate the entire cube
@@ -203,9 +200,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
 
-            if step in ("CENTERS_SOLVED", "EDGES_GROUPED"):
-                continue
-            elif step.startswith("COMMENT"):
+            if step.startswith("COMMENT"):
                 self.solution.append(step)
             else:
                 # Rotate the entire cube
@@ -236,13 +231,8 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
                 self.rotate(step)
 
-        self.solution.append(
-            f"COMMENT_{self.get_solution_len_minus_rotates(self.solution)}_steps_total_NNN_edges_paired_orbit_{orbit}"
-        )
-        self.solution.append("COMMENT_")
-
     def group_edges(self):
-        # For 6x6x6 the inside edges are already paired at the end of group_centers_guts
+        # For 6x6x6 the inside edges are already paired at the end of reduce_555
         # For 8x8x8 and larger the inside edges were paired right after make_plus_sign
 
         # How many orbits of edges does this cube have?

@@ -45,8 +45,6 @@ try:
         test_cases = json.load(fh)
 
     solution_total = 0
-    centers_solution_total = 0
-    edges_solution_total = 0
     min_solution = None
     max_solution = None
     min_solution_kociemba_string = None
@@ -152,8 +150,6 @@ try:
 
             solution_length = cube.get_solution_len_minus_rotates(cube.solution)
             solution_total += solution_length
-            centers_solution_total += cube.steps_to_solve_centers
-            edges_solution_total += cube.steps_to_group_edges
 
             if min_solution is None or solution_length < min_solution:
                 min_solution = solution_length
@@ -163,8 +159,6 @@ try:
                 max_solution = solution_length
                 max_solution_kociemba_string = kociemba_string
 
-        results.append(f"{size} avg centers solution {float(centers_solution_total / num_test_cases_executed)} steps")
-        results.append(f"{size} avg edges solution {float(edges_solution_total / num_test_cases_executed)} steps")
         results.append(f"{size} avg solution {float(solution_total / num_test_cases_executed)} steps")
         results.append(f"{size} min solution {min_solution} steps ({min_solution_kociemba_string})")
         results.append(f"{size} max solution {max_solution} steps ({max_solution_kociemba_string})")

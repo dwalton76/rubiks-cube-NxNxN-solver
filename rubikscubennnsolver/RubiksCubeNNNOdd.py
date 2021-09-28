@@ -289,21 +289,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         elif action == "solve_t_centers":
             self.fake_777.solve_t_centers()
 
-        elif action == "solve_centers":
-            self.fake_777.solve_centers()
-
-        elif action == "daisy_solve_centers":
-            self.print_cube("HERE 100")
-            self.fake_777.enable_print_cube = True
-            self.fake_777.print_cube("HERE 100")
-            self.fake_777.enable_print_cube = False
-            self.fake_777.LR_centers_vertical_bars()
-            self.fake_777.UD_centers_vertical_bars()
-            self.fake_777.centers_daisy_solve()
-
-            # this should really be a "bullseye" solve of the centers
-            self.fake_777.solve_centers()
-
         else:
             raise Exception(f"Invalid action {action}")
 

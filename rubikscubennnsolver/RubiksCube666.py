@@ -42,15 +42,6 @@ corners_666 = (
     181, 186, 211, 216,
 )
 
-corners_666 = (
-    1, 6, 31, 36,
-    37, 42, 67, 72,
-    73, 78, 103, 108,
-    109, 114, 139, 144,
-    145, 150, 175, 180,
-    181, 186, 211, 216,
-)
-
 inner_x_centers_666 = (
     15, 16, 21, 22,  # Upper
     51, 52, 57, 58,  # Left
@@ -1160,6 +1151,34 @@ class LookupTableIDA666Step50(LookupTableIDAViaGraph):
                 parent.lt_LR_centers,
                 parent.lt_LR_highlow_edges,
             ),
+        )
+        # fmt: on
+
+
+class LookupTableIDA666Step50WithoutEdges(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_666,
+            illegal_moves=(
+                "3Rw", "3Rw'",
+                "3Lw", "3Lw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "Rw", "Rw'",
+                "Lw", "Lw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'"
+            ),
+            prune_tables=(
+                parent.lt_LR_centers,
+            ),
             centers_only=True,
         )
         # fmt: on
@@ -1640,6 +1659,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_LR_centers = LookupTable666Step50LRCenters(self)
         self.lt_LR_highlow_edges = LookupTable666Step50HighLowEdges(self)
         self.lt_step50 = LookupTableIDA666Step50(self)
+        self.lt_step50_without_edges = LookupTableIDA666Step50WithoutEdges(self)
 
         # phase 6
         self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
@@ -1768,9 +1788,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         return True
 
-    def daisy_solve_centers(self):
+    def daisy_solve_centers_eo_edges(self):
         """
-        The inner x-centers and oblique edges are staged. Daisy solve the centers so that our centers are reduced to 555.
+        The inner x-centers and oblique edges are staged. Daisy solve the centers so that our
+        centers are reduced to 555 while also EOing the inside orbit of edges.
 
         Thoughts on other ways to tackle this problem:
         - There are 70^3 per side so to do this in one phase would be a 70^9 search space which is unrealistic.
@@ -1806,6 +1827,27 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         for step in phase5_solution:
             self.rotate(step)
 
+        self.print_cube_add_comment("LR centers reduced to 555, EOed inside edges", tmp_solution_len)
+
+        # phase 6
+        # solve the UD inner x-centers, pair the UD oblique edges and daisy solve UD
+        # solve the FB inner x-centers, pair the FB oblique edges and daisy solve FB
+        # daisy solve LR
+        # this takes ~14 steps
+        tmp_solution_len = len(self.solution)
+        self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solve_via_c()
+        self.print_cube_add_comment("UD FB centers reduced to 555", tmp_solution_len)
+
+    def daisy_solve_centers(self):
+        """
+        The inner x-centers and oblique edges are staged. Daisy solve the centers so that our
+        centers are reduced to 555.
+        """
+
+        # phase 5
+        # - put LR centers such that they can be solved with L L' R R'
+        tmp_solution_len = len(self.solution)
+        self.lt_step50_without_edges.solve_via_c()
         self.print_cube_add_comment("LR centers reduced to 5x5x5", tmp_solution_len)
 
         # phase 6
@@ -1968,7 +2010,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_init()
         self.stage_centers()
-        self.daisy_solve_centers()
+        self.daisy_solve_centers_eo_edges()
         self.pair_inside_edges_via_444()
 
 

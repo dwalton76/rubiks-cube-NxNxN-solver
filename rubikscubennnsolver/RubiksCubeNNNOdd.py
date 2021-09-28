@@ -272,13 +272,19 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             if outer_x_centers_valid:
                 self.fake_777.stage_UD_centers()
             else:
-                self.fake_777.stage_UD_t_centers()
+                if cycle == max_cycle:
+                    self.fake_777.stage_UD_t_centers()
+                else:
+                    self.fake_777.lt_UD_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
 
         elif action == "stage_LR_centers":
             if outer_x_centers_valid:
                 self.fake_777.stage_LR_centers()
             else:
-                self.fake_777.stage_LR_t_centers()
+                if cycle == max_cycle:
+                    self.fake_777.stage_LR_t_centers()
+                else:
+                    self.fake_777.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
 
         elif action == "solve_t_centers":
             self.fake_777.solve_t_centers()

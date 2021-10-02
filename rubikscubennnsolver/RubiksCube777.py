@@ -448,21 +448,21 @@ class LookupTable777Phase5RightOblique(LookupTable):
 
 class LookupTable777Phase5MiddleOblique(LookupTable):
     """
-    lookup-table-7x7x7-phase5-left-oblique.txt
-    ==========================================
+    lookup-table-7x7x7-phase5-middle-oblique.txt
+    ============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1,836 entries (14 percent, 2.47x previous step)
-    6 steps has 4,405 entries (34 percent, 2.40x previous step)
-    7 steps has 3,774 entries (29 percent, 0.86x previous step)
-    8 steps has 1,721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
+    2 steps has 25 entries (0 percent, 12.50x previous step)
+    3 steps has 210 entries (1 percent, 8.40x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
 
     Total: 12,870 entries
-    Average: 6.27 moves
+    Average: 6.34 moves
     """
 
     # fmt: off
@@ -474,11 +474,12 @@ class LookupTable777Phase5MiddleOblique(LookupTable):
     )
     # fmt: on
 
+    # dwalton here now
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-7x7x7-phase5-left-oblique.txt",
+            "lookup-table-7x7x7-phase5-middle-oblique.txt",
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=9,

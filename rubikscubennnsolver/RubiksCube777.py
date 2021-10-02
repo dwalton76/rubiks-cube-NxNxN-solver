@@ -73,6 +73,28 @@ UFBD_inner_x_centers_777 = (
     213, 215, 227, 229,  # Back
     262, 264, 276, 278,  # Down
 )
+
+UFBD_left_oblique_777 = (
+    10, 20, 30, 40,  # Upper
+    108, 118, 128, 138,  # Front
+    206, 216, 226, 236,  # Back
+    255, 265, 275, 285,  # Down
+)
+
+UFBD_right_oblique_777 = (
+    12, 16, 34, 38,  # Upper
+    110, 114, 132, 136,  # Front
+    208, 212, 230, 234,  # Back
+    257, 261, 279, 283,  # Down
+)
+
+UFBD_middle_oblique_777 = (
+    11, 23, 27, 39,  # Upper
+    109, 121, 125, 137,  # Front
+    207, 219, 223, 235,  # Back
+    256, 268, 272, 284,  # Down
+)
+
 # fmt: on
 
 
@@ -310,6 +332,7 @@ class LookupTableIDA777Phase45(LookupTableIDAViaGraph):
 # phase 5 - pair the oblique UD edges
 # new
 # ===================================
+# dwalton
 
 
 class LookupTable777Phase5LeftOblique(LookupTable):
@@ -330,15 +353,6 @@ class LookupTable777Phase5LeftOblique(LookupTable):
     Total: 12,870 entries
     Average: 6.27 moves
     """
-
-    # fmt: off
-    UFBD_left_oblique_777 = (
-        10, 20, 30, 40,  # Upper
-        108, 118, 128, 138,  # Front
-        206, 216, 226, 236,  # Back
-        255, 265, 275, 285,  # Down
-    )
-    # fmt: on
 
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
@@ -370,12 +384,12 @@ class LookupTable777Phase5LeftOblique(LookupTable):
         )
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_left_oblique_777])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_777])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UFBD_left_oblique_777, state):
+        for (pos, pos_state) in zip(UFBD_left_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -397,15 +411,6 @@ class LookupTable777Phase5RightOblique(LookupTable):
     Total: 12,870 entries
     Average: 6.27 moves
     """
-
-    # fmt: off
-    UFBD_right_oblique_777 = (
-        12, 16, 34, 38,  # Upper
-        110, 114, 132, 136,  # Front
-        208, 212, 230, 234,  # Back
-        257, 261, 279, 283,  # Down
-    )
-    # fmt: on
 
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
@@ -437,12 +442,12 @@ class LookupTable777Phase5RightOblique(LookupTable):
         )
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_right_oblique_777])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_777])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UFBD_right_oblique_777, state):
+        for (pos, pos_state) in zip(UFBD_right_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -465,16 +470,6 @@ class LookupTable777Phase5MiddleOblique(LookupTable):
     Average: 6.34 moves
     """
 
-    # fmt: off
-    UFBD_middle_oblique_777 = (
-        11, 23, 27, 39,  # Upper
-        109, 121, 125, 137,  # Front
-        207, 219, 223, 235,  # Back
-        256, 268, 272, 284,  # Down
-    )
-    # fmt: on
-
-    # dwalton here now
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
@@ -505,12 +500,12 @@ class LookupTable777Phase5MiddleOblique(LookupTable):
         )
 
     def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_middle_oblique_777])
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_middle_oblique_777])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UFBD_middle_oblique_777, state):
+        for (pos, pos_state) in zip(UFBD_middle_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -2703,6 +2698,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             # self.lt_phase45.avoid_oll = (1, 2)
 
         # phase 5 - pair the oblique UD edges
+        # new
+        self.lt_phase5_left_oblique = LookupTable777Phase5LeftOblique(self)
+        self.lt_phase5_right_oblique = LookupTable777Phase5RightOblique(self)
+        self.lt_phase5_middle_oblique = LookupTable777Phase5MiddleOblique(self)
+
+        # phase 5 - pair the oblique UD edges
+        # old
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
         # phase 7 - LR centers to vertical bars

@@ -112,13 +112,17 @@ struct ida_heuristic_result ida_heuristic_LR_oblique_edges_stage_777(char *cube)
     // bit for some problematic cubes.
     switch (result.unpaired_count) {
         case 0:
+            result.cost_to_goal = 0;
+            break;
         case 1:
+        case 2:
+            result.cost_to_goal = 1;
+            break;
         case 9:
         case 10:
         case 11:
             result.cost_to_goal = result.unpaired_count;
             break;
-        case 2:
         case 3:
         case 4:
         case 5:
@@ -250,8 +254,12 @@ struct ida_heuristic_result ida_heuristic_UD_oblique_edges_stage_777(char *cube)
     // bit for some problematic cubes.
     switch (result.unpaired_count) {
         case 0:
+            result.cost_to_goal = 0;
+            break;
         case 1:
         case 2:
+            result.cost_to_goal = 1;
+            break;
         case 3:
             result.cost_to_goal = result.unpaired_count;
             break;

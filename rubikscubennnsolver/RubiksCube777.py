@@ -308,6 +308,214 @@ class LookupTableIDA777Phase45(LookupTableIDAViaGraph):
 
 # ===================================
 # phase 5 - pair the oblique UD edges
+# new
+# ===================================
+
+
+class LookupTable777Phase5LeftOblique(LookupTable):
+    """
+    lookup-table-7x7x7-phase5-left-oblique.txt
+    ==========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 238 entries (1 percent, 8.21x previous step)
+    4 steps has 742 entries (5 percent, 3.12x previous step)
+    5 steps has 1,836 entries (14 percent, 2.47x previous step)
+    6 steps has 4,405 entries (34 percent, 2.40x previous step)
+    7 steps has 3,774 entries (29 percent, 0.86x previous step)
+    8 steps has 1,721 entries (13 percent, 0.46x previous step)
+    9 steps has 122 entries (0 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.27 moves
+    """
+
+    # fmt: off
+    UFBD_left_oblique_777 = (
+        10, 20, 30, 40,  # Upper
+        108, 118, 128, 138,  # Front
+        206, 216, 226, 236,  # Back
+        255, 265, 275, 285,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-phase5-left-oblique.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=9,
+            all_moves=moves_777,
+            # fmt: off
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Lw", "3Lw'",
+                "3Rw", "3Rw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_left_oblique_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UFBD_left_oblique_777, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Phase5RightOblique(LookupTable):
+    """
+    lookup-table-7x7x7-phase5-right-oblique.txt
+    ===========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 238 entries (1 percent, 8.21x previous step)
+    4 steps has 742 entries (5 percent, 3.12x previous step)
+    5 steps has 1,836 entries (14 percent, 2.47x previous step)
+    6 steps has 4,405 entries (34 percent, 2.40x previous step)
+    7 steps has 3,774 entries (29 percent, 0.86x previous step)
+    8 steps has 1,721 entries (13 percent, 0.46x previous step)
+    9 steps has 122 entries (0 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.27 moves
+    """
+
+    # fmt: off
+    UFBD_right_oblique_777 = (
+        12, 16, 34, 38,  # Upper
+        110, 114, 132, 136,  # Front
+        208, 212, 230, 234,  # Back
+        257, 261, 279, 283,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-phase5-right-oblique.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=9,
+            all_moves=moves_777,
+            # fmt: off
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Lw", "3Lw'",
+                "3Rw", "3Rw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_right_oblique_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UFBD_right_oblique_777, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Phase5MiddleOblique(LookupTable):
+    """
+    lookup-table-7x7x7-phase5-left-oblique.txt
+    ==========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 238 entries (1 percent, 8.21x previous step)
+    4 steps has 742 entries (5 percent, 3.12x previous step)
+    5 steps has 1,836 entries (14 percent, 2.47x previous step)
+    6 steps has 4,405 entries (34 percent, 2.40x previous step)
+    7 steps has 3,774 entries (29 percent, 0.86x previous step)
+    8 steps has 1,721 entries (13 percent, 0.46x previous step)
+    9 steps has 122 entries (0 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.27 moves
+    """
+
+    # fmt: off
+    UFBD_middle_oblique_777 = (
+        11, 23, 27, 39,  # Upper
+        109, 121, 125, 137,  # Front
+        207, 219, 223, 235,  # Back
+        256, 268, 272, 284,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-phase5-left-oblique.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=9,
+            all_moves=moves_777,
+            # fmt: off
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Lw", "3Lw'",
+                "3Rw", "3Rw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in self.UFBD_middle_oblique_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(self.UFBD_middle_oblique_777, state):
+            cube[pos] = pos_state
+
+
+# ===================================
+# phase 5 - pair the oblique UD edges
+# old
 # ===================================
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
 

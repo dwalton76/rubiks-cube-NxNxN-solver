@@ -64,6 +64,7 @@ typedef enum {
     // 7x7x7
     LR_OBLIQUE_EDGES_STAGE_777,
     UD_OBLIQUE_EDGES_STAGE_777,
+    UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777,
     UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777,
 
 } lookup_table_type;
@@ -295,6 +296,7 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
 
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
         case UD_OBLIQUE_EDGES_STAGE_777:
+        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
             // Convert to 1s and 0s
             str_replace_for_binary(cube, ones_UD);
@@ -434,6 +436,12 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         case UD_OBLIQUE_EDGES_STAGE_777:
             heuristic_result = ida_heuristic(cube, type);
             cost_to_goal = max(cost_to_goal, heuristic_result.cost_to_goal);
+            break;
+
+        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+            // This is unusual but we ignore the cost of the pt0, pt1 and pt2 tables. In this scenario we are only
+            // using those to keep track of the cube state so that we can do a lookup in the perfect-hash tables.
+            cost_to_goal = 0;
             break;
 
         default:
@@ -658,6 +666,12 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             result.cost_to_goal = max(result.cost_to_goal, heuristic_result.cost_to_goal);
             break;
 
+        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+            // This is unusual but we ignore the cost of the pt0, pt1 and pt2 tables. In this scenario we are only
+            // using those to keep track of the cube state so that we can do a lookup in the perfect-hash tables.
+            result.cost_to_goal = 0;
+            break;
+
         default:
             printf("ERROR: pt_states_to_cost() does not support this --type\n");
             exit(1);
@@ -758,8 +772,13 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     printf("       ");
 
     // header
-    if (type) {
-        printf("UNPAIRED  EST  ");
+    switch (type) {
+        case NONE:
+        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+            break;
+        default:
+            printf("UNPAIRED  EST  ");
+            break;
     }
 
     if (pt_max == 4) {
@@ -802,8 +821,13 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
 
     // divider line
     printf("       ");
-    if (type) {
-        printf("========  ===  ");
+    switch (type) {
+        case NONE:
+        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+            break;
+        default:
+            printf("========  ===  ");
+            break;
     }
 
     if (pt_max == 4) {
@@ -848,9 +872,14 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
 
     printf(" INIT  ");
 
-    if (type) {
-        heuristic = ida_heuristic(cube, type);
-        printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
+    switch (type) {
+        case NONE:
+        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+            break;
+        default:
+            heuristic = ida_heuristic(cube, type);
+            printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
+            break;
     }
 
     if (pt_max >= 0) {
@@ -928,6 +957,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         printf("%5s  ", move2str[solution[i]]);
         switch (type) {
             case NONE:
+            case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
                 break;
 
             case LR_OBLIQUE_EDGES_STAGE_666:
@@ -1041,6 +1071,7 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
 
     switch (type) {
         case NONE:
+        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
             break;
 
         // 6x6x6
@@ -1543,6 +1574,10 @@ int main(int argc, char *argv[]) {
 
             } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage")) {
                 type = UD_OBLIQUE_EDGES_STAGE_777;
+                cube_size_type = 7;
+
+            } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage-new")) {
+                type = UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777;
                 cube_size_type = 7;
 
             } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-inner-x-centers-stage")) {

@@ -328,11 +328,90 @@ class LookupTableIDA777Phase45(LookupTableIDAViaGraph):
                     self.parent.state[x] = "x"
 
 
+# phase 5 history
+"""
+Originally I used the unpaired-count heuristic for getting the UD oblique edges paired at any
+location on sides UDFB. It works but is not admissable so I went through the effort of creating
+a lookup-table based solution here. What I found in the end is that the unpaired-count heuristic
+approach works shockingly well.  There are corner cases where it will find a longer solution but
+in general it runs much faster and most of the time it finds a solution of the same length.
+Here is a good example where it finds a solution one step longer but runs 55x faster.
+
+Using a pair of perfect-hash lookup tables (which is admissable) we find a 12 step solution but it takes 12.3s.
+This is an unusually long solution for this phase..normally they are around 9 or 10 moves.
+
+./ida_search_via_graph \
+    --prune-table-0-filename lookup-tables/lookup-table-7x7x7-phase5-left-oblique.bin --prune-table-0-state 3967 \
+    --prune-table-1-filename lookup-tables/lookup-table-7x7x7-phase5-right-oblique.bin --prune-table-1-state 958 \
+    --prune-table-2-filename lookup-tables/lookup-table-7x7x7-phase5-middle-oblique.bin --prune-table-2-state 11045 \
+    --prune-table-perfect-hash01 lookup-tables/lookup-table-7x7x7-phase5-left-right-oblique.perfect-hash --pt1-state-max 12870 \
+    --prune-table-perfect-hash02 lookup-tables/lookup-table-7x7x7-phase5-left-middle-oblique.perfect-hash --pt2-state-max 12870 \
+    --centers-only --type 7x7x7-UD-oblique-edges-stage-new --legal-moves "U,U',U2,Uw2,3Uw2,Lw,Lw',Lw2,3Lw2,F,F',F2,Fw2,3Fw2,Rw,Rw',Rw2,3Rw2,B,B',B2,Bw2,3Bw2,D,D',D2,Dw2,3Dw2"
+
+[2021-10-03T13:09:47.745] pt0_state 3967, pt1_state 958, pt2_state 11045, pt3_state 0, pt4_state 0
+[2021-10-03T13:09:47.746] IDA threshold 8, explored 1,164 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-10-03T13:09:47.759] IDA threshold 9, explored 56,781 nodes, took 0.013s, 4,367,769 nodes-per-sec
+[2021-10-03T13:09:48.237] IDA threshold 10, explored 1,958,490 nodes, took 0.478s, 4,097,259 nodes-per-sec
+[2021-10-03T13:09:59.101] IDA threshold 11, explored 55,942,853 nodes, took 10.864s, 5,149,379 nodes-per-sec
+[2021-10-03T13:10:00.137] IDA count 5,084,327, f_cost 12 vs threshold 12 (cost_to_here 12, cost_to_goal 0)
+SOLUTION (12 steps): 3Dw2 Bw2 3Lw2 Fw2 Lw' U 3Uw2 Rw F 3Fw2 3Dw2 3Lw2
+[2021-10-03T13:10:00.137] IDA threshold 12, explored 5,084,327 nodes, took 1.035s, 4,912,393 nodes-per-sec
+[2021-10-03T13:10:00.137] IDA found solution, explored 63,043,615 total nodes, took 12.392s, 5,087,445 nodes-per-sec
+
+
+       PT0  PT1  PT2  PER01  PER02  CTG  TRU  IDX
+       ===  ===  ===  =====  =====  ===  ===  ===
+ INIT    6    7    8      4      8    8   12    0
+ 3Dw2    5    7    9      5      7    7   11    1
+  Bw2    5    7    9      6      7    7   10    2
+ 3Lw2    5    7    8      5      7    7    9    3
+  Fw2    6    7    8      4      8    8    8    4
+  Lw'    7    7    8      3      7    7    7    5
+    U    7    7    7      3      6    6    6    6
+ 3Uw2    6    6    7      3      5    5    5    7
+   Rw    6    6    7      3      4    4    4    8
+    F    6    6    7      3      3    3    3    9
+ 3Fw2    7    6    7      2      2    2    2   10
+ 3Dw2    6    6    7      1      1    1    1   11
+ 3Lw2    6    6    6      0      0    0    0   12
+
+
+ vs. the unpaired-count heuristic approach which finds a 13 step solution in 247ms
+
+./ida_search_via_graph \
+    --kociemba DBLBLBBRBUBDURBUUDUFRRFDUUUULDUDUDDUDBFFURUFLFDFRBFRBUDRULLRLRDLLLRRRBDLLRLRRFLLLLRBDRLRRLRRRRUDFDLRDLRDULBDDFFRUDFFBUULFFFFDBFFFFBFUBFUDBBFFFFDRRDULRFBBFDDDBFFBDUDUDUFBDUDUFRUBDDDDFFUBBUUUULFULLFBUDDUFBURLRRLDDRRRRLBULLLRLDBRRRLRLBRLLRLULLRRLLRDUBLFDLBDDUBDLDFBBFFFFUBBBUFUBBBFBRDFUBBBLLBBLUUF \
+    --centers-only --type 7x7x7-UD-oblique-edges-stage  --legal-moves "U,U',U2,Uw2,3Uw2,Lw,Lw',Lw2,3Lw2,F,F',F2,Fw2,3Fw2,Rw,Rw',Rw2,3Rw2,B,B',B2,Bw2,3Bw2,D,D',D2,Dw2,3Dw2"
+
+[2021-10-03T13:11:08.331] pt0_state 0, pt1_state 0, pt2_state 0, pt3_state 0, pt4_state 0
+[2021-10-03T13:11:08.331] IDA threshold 11, explored 70 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-10-03T13:11:08.356] IDA threshold 12, explored 79,843 nodes, took 0.024s, 3,326,791 nodes-per-sec
+[2021-10-03T13:11:08.578] IDA count 1,673,135, f_cost 13 vs threshold 13 (cost_to_here 13, cost_to_goal 0)
+SOLUTION (13 steps): D' Rw' 3Bw2 3Uw2 3Rw2 B' Rw' D' 3Bw2 Dw2 Lw D' 3Fw2
+[2021-10-03T13:11:08.578] IDA threshold 13, explored 1,673,135 nodes, took 0.222s, 7,536,644 nodes-per-sec
+[2021-10-03T13:11:08.578] IDA found solution, explored 1,753,048 total nodes, took 0.247s, 7,097,360 nodes-per-sec
+
+       UNPAIRED  EST  CTG  TRU  IDX
+       ========  ===  ===  ===  ===
+ INIT        10   11   11   13    0
+   D'        10   11   11   12    1
+  Rw'        10   11   11   11    2
+ 3Bw2         8   10   10   10    3
+ 3Uw2         6    7    7    9    4
+ 3Rw2         4    5    5    8    5
+   B'         4    5    5    7    6
+  Rw'         4    5    5    6    7
+   D'         4    5    5    5    8
+ 3Bw2         2    1    1    4    9
+  Dw2         2    1    1    3   10
+   Lw         2    1    1    2   11
+   D'         2    1    1    1   12
+ 3Fw2         0    0    0    0   13
+"""
+
 # ===================================
 # phase 5 - pair the oblique UD edges
-# new
+# via perfect-hash lookup tables
 # ===================================
-# dwalton
 
 
 class LookupTable777Phase5LeftOblique(LookupTable):
@@ -509,9 +588,49 @@ class LookupTable777Phase5MiddleOblique(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTableIDA777UDObliqueEdgePairingNew(LookupTableIDAViaGraph):
+    """
+    Pair the UD oblique edges
+    """
+
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_777,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "3Lw", "3Lw'",
+                "3Rw", "3Rw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            prune_tables=(
+                parent.lt_phase5_left_oblique,
+                parent.lt_phase5_right_oblique,
+                parent.lt_phase5_middle_oblique,
+            ),
+            centers_only=True,
+            perfect_hash01_filename="lookup-table-7x7x7-phase5-left-right-oblique.perfect-hash",
+            perfect_hash02_filename="lookup-table-7x7x7-phase5-left-middle-oblique.perfect-hash",
+            pt1_state_max=12870,
+            pt2_state_max=12870,
+            C_ida_type="7x7x7-UD-oblique-edges-stage-new",
+        )
+        # fmt: on
+
+
 # ===================================
 # phase 5 - pair the oblique UD edges
-# old
+# via an unpaired-count heuristic
 # ===================================
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
 
@@ -2697,14 +2816,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             # are in a state that cannot be solved by the 555 solver.
             # self.lt_phase45.avoid_oll = (1, 2)
 
-        # phase 5 - pair the oblique UD edges
-        # new
-        self.lt_phase5_left_oblique = LookupTable777Phase5LeftOblique(self)
-        self.lt_phase5_right_oblique = LookupTable777Phase5RightOblique(self)
-        self.lt_phase5_middle_oblique = LookupTable777Phase5MiddleOblique(self)
+        # phase 5 - pair the oblique UD edges (perfect-hash tables)
+        # self.lt_phase5_left_oblique = LookupTable777Phase5LeftOblique(self)
+        # self.lt_phase5_right_oblique = LookupTable777Phase5RightOblique(self)
+        # self.lt_phase5_middle_oblique = LookupTable777Phase5MiddleOblique(self)
+        # self.lt_UD_oblique_edge_pairing_new = LookupTableIDA777UDObliqueEdgePairingNew(self)
 
-        # phase 5 - pair the oblique UD edges
-        # old
+        # phase 5 - pair the oblique UD edges (unpaired-count heuristic)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
         # phase 7 - LR centers to vertical bars
@@ -2967,6 +3085,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             # phase 5 - pair the oblique UD edges
             tmp_solution_len = len(self.solution)
             self.lt_UD_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
+            # $ self.lt_UD_oblique_edge_pairing_new.solve_via_c()
             self.print_cube_add_comment("UD oblique edges paired", tmp_solution_len)
 
         # phase 6 - use 5x5x5 to stage the UD centers

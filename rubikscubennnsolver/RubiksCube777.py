@@ -150,9 +150,9 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
 # ======================
 # phase 4 and 5 combined
 # ======================
-class LookupTable777Phase45TCenters(LookupTable):
+class LookupTable777Phase4TCenters(LookupTable):
     """
-    lookup-table-7x7x7-step11-phase45-t-centers
+    lookup-table-7x7x7-step11-phase4-t-centers
     ===========================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
@@ -174,7 +174,7 @@ class LookupTable777Phase45TCenters(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-7x7x7-step11-phase45-t-centers.txt",
+            "lookup-table-7x7x7-step11-phase4-t-centers.txt",
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=9,
@@ -206,9 +206,9 @@ class LookupTable777Phase45TCenters(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable777Phase45XCenters(LookupTable):
+class LookupTable777Phase4XCenters(LookupTable):
     """
-    lookup-table-7x7x7-step12-phase45-x-centers
+    lookup-table-7x7x7-step12-phase4-x-centers
     ===========================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
@@ -228,7 +228,7 @@ class LookupTable777Phase45XCenters(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-7x7x7-step12-phase45-x-centers.txt",
+            "lookup-table-7x7x7-step12-phase4-x-centers.txt",
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=7,
@@ -260,7 +260,7 @@ class LookupTable777Phase45XCenters(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTableIDA777Phase45(LookupTableIDAViaGraph):
+class LookupTableIDA777Phase4(LookupTableIDAViaGraph):
     """
     The perfect-hash here is:
 
@@ -303,8 +303,8 @@ class LookupTableIDA777Phase45(LookupTableIDAViaGraph):
                 "R", "R'", "R2"
             ),
             prune_tables=(
-                parent.lt_phase45_t_centers,
-                parent.lt_phase45_x_centers,
+                parent.lt_phase4_t_centers,
+                parent.lt_phase4_x_centers,
             ),
             centers_only=True,
             C_ida_type="7x7x7-UD-oblique-edges-inner-x-centers-stage",
@@ -326,6 +326,169 @@ class LookupTableIDA777Phase45(LookupTableIDAViaGraph):
                     self.parent.state[x] = "U"
                 else:
                     self.parent.state[x] = "x"
+
+
+# dwalton here
+class LookupTable777Phase4LeftOblique(LookupTable):
+    """
+    lookup-table-7x7x7-phase4-left-oblique.txt
+    ==========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-phase4-left-oblique.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_777,
+            # fmt: off
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_left_oblique_777, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Phase4RightOblique(LookupTable):
+    """
+    lookup-table-7x7x7-phase4-right-oblique.txt
+    ===========================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-phase4-right-oblique.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_777,
+            # fmt: off
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_right_oblique_777, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Phase4MiddleOblique(LookupTable):
+    """
+    lookup-table-7x7x7-phase4-middle-oblique.txt
+    ============================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (0 percent, 12.50x previous step)
+    3 steps has 210 entries (1 percent, 8.40x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.34 moves
+    """
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-phase4-middle-oblique.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=9,
+            all_moves=moves_777,
+            # fmt: off
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_middle_oblique_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(UFBD_middle_oblique_777, state):
+            cube[pos] = pos_state
 
 
 # phase 5 history
@@ -2463,7 +2626,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     """
 
-    use_phase45_combined = False
+    use_phase4_combined = False
 
     def sanity_check(self):
         edge_orbit_0 = (
@@ -2807,14 +2970,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
 
         # phase 4 + 5
-        if self.use_phase45_combined:
-            self.lt_phase45_t_centers = LookupTable777Phase45TCenters(self)
-            self.lt_phase45_x_centers = LookupTable777Phase45XCenters(self)
-            self.lt_phase45 = LookupTableIDA777Phase45(self)
+        if self.use_phase4_combined:
+            self.lt_phase4_t_centers = LookupTable777Phase4TCenters(self)
+            self.lt_phase4_x_centers = LookupTable777Phase4XCenters(self)
+            self.lt_phase4 = LookupTableIDA777Phase4(self)
 
             # Need to add avoid_oll support for orbit 2 and then enable this.  Currently it will work but the edges
             # are in a state that cannot be solved by the 555 solver.
-            # self.lt_phase45.avoid_oll = (1, 2)
+            # self.lt_phase4.avoid_oll = (1, 2)
 
         # phase 5 - pair the oblique UD edges (perfect-hash tables)
         # self.lt_phase5_left_oblique = LookupTable777Phase5LeftOblique(self)
@@ -3069,12 +3232,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         if self.UD_centers_staged():
             return
 
-        if self.use_phase45_combined:
+        if self.use_phase4_combined:
             # This works but takes 5+ minutes so this is disabled until I can figure out a better heuristic so that
             # it will run faster.  It takes ~15 moves though which is a nice ~9 moves savings over doing phases 4
             # and 5 invididually.
             tmp_solution_len = len(self.solution)
-            self.lt_phase45.solve_via_c(use_kociemba_string=True)
+            self.lt_phase4.solve_via_c(use_kociemba_string=True)
             self.print_cube_add_comment("UD inner x-centers staged, oblique edges paired", tmp_solution_len)
         else:
             # phase 4 - use 5x5x5 solver to stage the UD inner centers

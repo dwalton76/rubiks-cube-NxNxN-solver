@@ -152,8 +152,8 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
 # ======================
 class LookupTable777Phase4TCenters(LookupTable):
     """
-    lookup-table-7x7x7-step11-phase4-t-centers
-    ===========================================
+    lookup-table-7x7x7-phase4-t-centers
+    ===================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
     2 steps has 25 entries (0 percent, 12.50x previous step)
@@ -174,7 +174,7 @@ class LookupTable777Phase4TCenters(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-7x7x7-step11-phase4-t-centers.txt",
+            "lookup-table-7x7x7-phase4-t-centers.txt",
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=9,
@@ -208,8 +208,8 @@ class LookupTable777Phase4TCenters(LookupTable):
 
 class LookupTable777Phase4XCenters(LookupTable):
     """
-    lookup-table-7x7x7-step12-phase4-x-centers
-    ===========================================
+    lookup-table-7x7x7-phase4-x-centers
+    ===================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
     2 steps has 29 entries (0 percent, 14.50x previous step)
@@ -228,7 +228,7 @@ class LookupTable777Phase4XCenters(LookupTable):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-7x7x7-step12-phase4-x-centers.txt",
+            "lookup-table-7x7x7-phase4-x-centers.txt",
             "UUUUxxxxxxxxUUUU",
             linecount=12870,
             max_depth=7,
@@ -264,7 +264,7 @@ class LookupTableIDA777Phase4(LookupTableIDAViaGraph):
     """
     The perfect-hash here is:
 
-    lookup-table-7x7x7-step13-inner-centers.txt
+    lookup-table-7x7x7-phase4-inner-centers.txt
     ===========================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
@@ -308,7 +308,7 @@ class LookupTableIDA777Phase4(LookupTableIDAViaGraph):
             ),
             centers_only=True,
             C_ida_type="7x7x7-UD-oblique-edges-inner-x-centers-stage",
-            perfect_hash01_filename="lookup-table-7x7x7-step13-inner-centers.perfect-hash",
+            perfect_hash01_filename="lookup-table-7x7x7-phase4-inner-centers.perfect-hash",
             pt1_state_max=12870,
         )
         # fmt: on
@@ -328,7 +328,6 @@ class LookupTableIDA777Phase4(LookupTableIDAViaGraph):
                     self.parent.state[x] = "x"
 
 
-# dwalton here
 class LookupTable777Phase4LeftOblique(LookupTable):
     """
     lookup-table-7x7x7-phase4-left-oblique.txt
@@ -489,6 +488,59 @@ class LookupTable777Phase4MiddleOblique(LookupTable):
 
         for (pos, pos_state) in zip(UFBD_middle_oblique_777, state):
             cube[pos] = pos_state
+
+
+class LookupTableIDA777Phase4New(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_777,
+            illegal_moves=(
+                "3Uw", "3Uw'",
+                "3Dw", "3Dw'",
+                "3Fw", "3Fw'",
+                "3Bw", "3Bw'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "L", "L'", "L2",
+                "R", "R'", "R2"
+            ),
+            prune_tables=(
+                parent.lt_phase4_left_oblique,
+                parent.lt_phase4_right_oblique,
+                parent.lt_phase4_middle_oblique,
+                parent.lt_phase4_t_centers,
+                parent.lt_phase4_x_centers,
+            ),
+            centers_only=True,
+            C_ida_type="7x7x7-UD-oblique-edges-inner-x-centers-stage",
+            perfect_hash01_filename="lookup-table-7x7x7-phase4-left-right-oblique.perfect-hash",
+            perfect_hash02_filename="lookup-table-7x7x7-phase4-left-middle-oblique.perfect-hash",
+            # perfect_hash34_filename="lookup-table-7x7x7-phase4-inner-centers.perfect-hash",
+            pt1_state_max=12870,
+            pt2_state_max=12870,
+            # pt4_state_max=12870,
+        )
+        # fmt: on
+        # dwalton
+
+    def recolor(self):
+        logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        # self.parent.nuke_edges()
+
+        for x in centers_777:
+            if x in outer_x_centers_777 or x in LR_centers_777:
+                self.parent.state[x] = "."
+            else:
+                if self.parent.state[x] == "U" or self.parent.state[x] == "D":
+                    self.parent.state[x] = "U"
+                else:
+                    self.parent.state[x] = "x"
 
 
 # phase 5 history
@@ -2970,12 +3022,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
 
         # phase 4
-        # self.lt_phase4_t_centers = LookupTable777Phase4TCenters(self)
-        # self.lt_phase4_x_centers = LookupTable777Phase4XCenters(self)
+        self.lt_phase4_t_centers = LookupTable777Phase4TCenters(self)
+        self.lt_phase4_x_centers = LookupTable777Phase4XCenters(self)
         self.lt_phase4_left_oblique = LookupTable777Phase4LeftOblique(self)
         self.lt_phase4_right_oblique = LookupTable777Phase4RightOblique(self)
         self.lt_phase4_middle_oblique = LookupTable777Phase4MiddleOblique(self)
-        # self.lt_phase4 = LookupTableIDA777Phase4(self)
+        self.lt_phase4 = LookupTableIDA777Phase4(self)
+        self.lt_phase4_new = LookupTableIDA777Phase4New(self)
 
         # Need to add avoid_oll support for orbit 2 and then enable this.  Currently it will work but the edges
         # are in a state that cannot be solved by the 555 solver.
@@ -3234,7 +3287,9 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         if self.UD_centers_staged():
             return
 
-        if self.use_phase4_combined:
+        # dwalton
+        # if self.use_phase4_combined:
+        if True:
             # This works but takes 5+ minutes so this is disabled until I can figure out a better heuristic so that
             # it will run faster.  It takes ~15 moves though which is a nice ~9 moves savings over doing phases 4
             # and 5 invididually.

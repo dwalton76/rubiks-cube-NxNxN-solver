@@ -322,6 +322,7 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type) {
 
         case UD_OBLIQUE_EDGES_STAGE_777:
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             return ida_heuristic_UD_oblique_edges_stage_777(cube);
 
         default:
@@ -431,6 +432,9 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
             // This is unusual but we ignore the cost of the pt0, pt1 and pt2 tables. In this scenario we are only
             // using those to keep track of the cube state so that we can do a lookup in the perfect-hash tables.
             cost_to_goal = 0;
+
+            heuristic_result = ida_heuristic(cube, type);
+            cost_to_goal = heuristic_result.cost_to_goal;
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:
@@ -640,9 +644,10 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             result.cost_to_goal = max(heuristic_result.cost_to_goal, result.cost_to_goal);
             break;
 
-        // dwalton fix this
+        // dwalton update the comment here
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
-            result.cost_to_goal = 0;
+            heuristic_result = ida_heuristic(cube, type);
+            result.cost_to_goal = heuristic_result.cost_to_goal;
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:
@@ -738,7 +743,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
         default:
             printf("UNPAIRED  EST  ");
@@ -780,7 +784,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
         default:
             printf("========  ===  ");
@@ -824,7 +827,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
         default:
             heuristic = ida_heuristic(cube, type);
@@ -902,7 +904,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         switch (type) {
             case NONE:
             case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
                 break;
 
             case LR_OBLIQUE_EDGES_STAGE_666:
@@ -916,6 +917,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
             case LR_OBLIQUE_EDGES_STAGE_777:
             case UD_OBLIQUE_EDGES_STAGE_777:
             case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
+            case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
                 rotate_777(cube, cube_tmp, array_size, solution[i]);
                 heuristic = ida_heuristic(cube, type);
                 printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
@@ -1011,7 +1013,6 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
 
         // 6x6x6
@@ -1026,6 +1027,9 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
 
         case UD_OBLIQUE_EDGES_STAGE_777:
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
+
+        // dwalton I think we can avoid this for the _NEW_
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             return ida_search_complete_UD_oblique_edges_stage_777(cube);
 
         default:

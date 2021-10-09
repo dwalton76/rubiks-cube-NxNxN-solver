@@ -516,7 +516,7 @@ class LookupTableIDA777Phase4New(LookupTableIDAViaGraph):
                 parent.lt_phase4_t_centers,
                 parent.lt_phase4_x_centers,
             ),
-            # centers_only=True,
+            centers_only=True,
             C_ida_type="7x7x7-UD-oblique-edges-inner-x-centers-stage-new",
             perfect_hash01_filename="lookup-table-7x7x7-phase4-left-right-oblique.perfect-hash",
             perfect_hash02_filename="lookup-table-7x7x7-phase4-left-middle-oblique.perfect-hash",
@@ -3290,7 +3290,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             # and 5 invididually.
             tmp_solution_len = len(self.solution)
             # self.lt_phase4.solve_via_c(use_kociemba_string=True)
-            self.lt_phase4_new.solve_via_c()
+            self.lt_phase4_new.solve_via_c(use_kociemba_string=True)
+            # self.lt_phase4_new.solve_via_c()
             self.print_cube_add_comment("UD inner x-centers staged, oblique edges paired", tmp_solution_len)
             raise Exception("DONE")
         else:

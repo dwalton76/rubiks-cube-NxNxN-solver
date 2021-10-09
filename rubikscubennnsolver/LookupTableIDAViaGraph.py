@@ -77,11 +77,10 @@ class LookupTableIDAViaGraph(LookupTable):
         perfect_hash01_filename: str = None,
         perfect_hash02_filename: str = None,
         perfect_hash12_filename: str = None,
-        perfect_hash03_filename: str = None,
-        perfect_hash31_filename: str = None,
-        perfect_hash32_filename: str = None,
+        perfect_hash34_filename: str = None,
         pt1_state_max: int = None,
         pt2_state_max: int = None,
+        pt4_state_max: int = None,
         centers_only: bool = False,
         use_uthash: bool = False,
         C_ida_type: str = None,
@@ -116,23 +115,14 @@ class LookupTableIDAViaGraph(LookupTable):
         else:
             self.perfect_hash12_filename = perfect_hash12_filename
 
-        if perfect_hash03_filename:
-            self.perfect_hash03_filename = "lookup-tables/" + perfect_hash03_filename
+        if perfect_hash34_filename:
+            self.perfect_hash34_filename = "lookup-tables/" + perfect_hash34_filename
         else:
-            self.perfect_hash03_filename = perfect_hash03_filename
-
-        if perfect_hash31_filename:
-            self.perfect_hash31_filename = "lookup-tables/" + perfect_hash31_filename
-        else:
-            self.perfect_hash31_filename = perfect_hash31_filename
-
-        if perfect_hash32_filename:
-            self.perfect_hash32_filename = "lookup-tables/" + perfect_hash32_filename
-        else:
-            self.perfect_hash32_filename = perfect_hash32_filename
+            self.perfect_hash34_filename = perfect_hash34_filename
 
         self.pt1_state_max = pt1_state_max
         self.pt2_state_max = pt2_state_max
+        self.pt4_state_max = pt4_state_max
 
         if self.perfect_hash01_filename:
             assert (
@@ -151,6 +141,12 @@ class LookupTableIDAViaGraph(LookupTable):
                 self.perfect_hash12_filename and self.pt2_state_max
             ), "both perfect_hash12_filename and pt2_state_max must be specified"
             download_file_if_needed(self.perfect_hash12_filename)
+
+        if self.perfect_hash34_filename:
+            assert (
+                self.perfect_hash34_filename and self.pt4_state_max
+            ), "both perfect_hash34_filename and pt4_state_max must be specified"
+            download_file_if_needed(self.perfect_hash34_filename)
 
         if legal_moves:
             self.all_moves = list(legal_moves)
@@ -367,23 +363,11 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--pt2-state-max")
             cmd.append(str(self.pt2_state_max))
 
-        if self.perfect_hash03_filename:
-            cmd.append("--prune-table-perfect-hash03")
-            cmd.append(self.perfect_hash03_filename)
-            cmd.append("--pt2-state-max")
-            cmd.append(str(self.pt2_state_max))
-
-        if self.perfect_hash31_filename:
-            cmd.append("--prune-table-perfect-hash31")
-            cmd.append(self.perfect_hash31_filename)
-            cmd.append("--pt2-state-max")
-            cmd.append(str(self.pt2_state_max))
-
-        if self.perfect_hash32_filename:
-            cmd.append("--prune-table-perfect-hash32")
-            cmd.append(self.perfect_hash32_filename)
-            cmd.append("--pt2-state-max")
-            cmd.append(str(self.pt2_state_max))
+        if self.perfect_hash34_filename:
+            cmd.append("--prune-table-perfect-hash34")
+            cmd.append(self.perfect_hash34_filename)
+            cmd.append("--pt4-state-max")
+            cmd.append(str(self.pt4_state_max))
 
         if min_ida_threshold is not None:
             cmd.append("--min-ida-threshold")

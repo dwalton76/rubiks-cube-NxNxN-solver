@@ -28,11 +28,10 @@ unsigned char *pt4 = NULL;
 unsigned char *pt_perfect_hash01 = NULL;
 unsigned char *pt_perfect_hash02 = NULL;
 unsigned char *pt_perfect_hash12 = NULL;
-unsigned char *pt_perfect_hash03 = NULL;
-unsigned char *pt_perfect_hash31 = NULL;
-unsigned char *pt_perfect_hash32 = NULL;
+unsigned char *pt_perfect_hash34 = NULL;
 unsigned int pt1_state_max = 0;
 unsigned int pt2_state_max = 0;
+unsigned int pt4_state_max = 0;
 unsigned int call_pt_simple = 0;
 
 #define MAX_IDA_THRESHOLD 20
@@ -66,6 +65,7 @@ typedef enum {
     UD_OBLIQUE_EDGES_STAGE_777,
     UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777,
     UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777,
+    UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777,
 
 } lookup_table_type;
 
@@ -79,9 +79,7 @@ struct cost_to_goal_result {
     unsigned char perfect_hash01_cost;
     unsigned char perfect_hash02_cost;
     unsigned char perfect_hash12_cost;
-    unsigned char perfect_hash03_cost;
-    unsigned char perfect_hash31_cost;
-    unsigned char perfect_hash32_cost;
+    unsigned char perfect_hash34_cost;
 };
 
 unsigned int lr_centers_stage_555[9][9] = {
@@ -298,6 +296,7 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
         case UD_OBLIQUE_EDGES_STAGE_777:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             // Convert to 1s and 0s
             str_replace_for_binary(cube, ones_UD);
             print_cube(cube, size);
@@ -425,10 +424,13 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
 
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
             heuristic_result = ida_heuristic(cube, type);
+            cost_to_goal = max(heuristic_result.cost_to_goal, cost_to_goal);
+            break;
 
-            unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
-            unsigned char perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
-            cost_to_goal = unpaired_count_inner_x_centers_777[heuristic_result.unpaired_count][perfect_hash01_cost];
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
+            // This is unusual but we ignore the cost of the pt0, pt1 and pt2 tables. In this scenario we are only
+            // using those to keep track of the cube state so that we can do a lookup in the perfect-hash tables.
+            cost_to_goal = 0;
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:
@@ -471,15 +473,6 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         }
     }
 
-    if (pt_perfect_hash03) {
-        unsigned int perfect_hash03_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash03_cost = hash_cost_to_cost(pt_perfect_hash03[perfect_hash03_index]);
-
-        if (perfect_hash03_cost > cost_to_goal) {
-            cost_to_goal = perfect_hash03_cost;
-        }
-    }
-
     if (pt_perfect_hash12) {
         unsigned int perfect_hash12_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
         unsigned char perfect_hash12_cost = hash_cost_to_cost(pt_perfect_hash12[perfect_hash12_index]);
@@ -489,21 +482,12 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         }
     }
 
-    if (pt_perfect_hash31) {
-        unsigned int perfect_hash31_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash31_cost = hash_cost_to_cost(pt_perfect_hash31[perfect_hash31_index]);
+    if (pt_perfect_hash34) {
+        unsigned int perfect_hash34_index = (prev_pt3_state * pt4_state_max) + prev_pt4_state;
+        unsigned char perfect_hash34_cost = hash_cost_to_cost(pt_perfect_hash34[perfect_hash34_index]);
 
-        if (perfect_hash31_cost > cost_to_goal) {
-            cost_to_goal = perfect_hash31_cost;
-        }
-    }
-
-    if (pt_perfect_hash32) {
-        unsigned int perfect_hash32_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash32_cost = hash_cost_to_cost(pt_perfect_hash32[perfect_hash32_index]);
-
-        if (perfect_hash32_cost > cost_to_goal) {
-            cost_to_goal = perfect_hash32_cost;
+        if (perfect_hash34_cost > cost_to_goal) {
+            cost_to_goal = perfect_hash34_cost;
         }
     }
 
@@ -653,10 +637,12 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
 
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
             heuristic_result = ida_heuristic(cube, type);
+            result.cost_to_goal = max(heuristic_result.cost_to_goal, result.cost_to_goal);
+            break;
 
-            unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
-            unsigned char perfect_hash01_cost = hash_cost_to_cost(pt_perfect_hash01[perfect_hash01_index]);
-            result.cost_to_goal = unpaired_count_inner_x_centers_777[heuristic_result.unpaired_count][perfect_hash01_cost];
+        // dwalton fix this
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
+            result.cost_to_goal = 0;
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:
@@ -699,17 +685,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         result.perfect_hash02_cost = perfect_hash02_cost;
     }
 
-    if (pt_perfect_hash03) {
-        unsigned int perfect_hash03_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash03_cost = hash_cost_to_cost(pt_perfect_hash03[perfect_hash03_index]);
-
-        if (perfect_hash03_cost > result.cost_to_goal) {
-            result.cost_to_goal = perfect_hash03_cost;
-        }
-
-        result.perfect_hash03_cost = perfect_hash03_cost;
-    }
-
     if (pt_perfect_hash12) {
         unsigned int perfect_hash12_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
         unsigned char perfect_hash12_cost = hash_cost_to_cost(pt_perfect_hash12[perfect_hash12_index]);
@@ -721,28 +696,16 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         result.perfect_hash12_cost = perfect_hash12_cost;
     }
 
-    if (pt_perfect_hash31) {
-        unsigned int perfect_hash31_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash31_cost = hash_cost_to_cost(pt_perfect_hash31[perfect_hash31_index]);
+    if (pt_perfect_hash34) {
+        unsigned int perfect_hash34_index = (prev_pt3_state * pt4_state_max) + prev_pt4_state;
+        unsigned char perfect_hash34_cost = hash_cost_to_cost(pt_perfect_hash34[perfect_hash34_index]);
 
-        if (perfect_hash31_cost > result.cost_to_goal) {
-            result.cost_to_goal = perfect_hash31_cost;
+        if (perfect_hash34_cost > result.cost_to_goal) {
+            result.cost_to_goal = perfect_hash34_cost;
         }
 
-        result.perfect_hash31_cost = perfect_hash31_cost;
+        result.perfect_hash34_cost = perfect_hash34_cost;
     }
-
-    if (pt_perfect_hash32) {
-        unsigned int perfect_hash32_index = (prev_pt1_state * pt2_state_max) + prev_pt2_state;
-        unsigned char perfect_hash32_cost = hash_cost_to_cost(pt_perfect_hash32[perfect_hash32_index]);
-
-        if (perfect_hash32_cost > result.cost_to_goal) {
-            result.cost_to_goal = perfect_hash32_cost;
-        }
-
-        result.perfect_hash32_cost = perfect_hash32_cost;
-    }
-
     if (cost_to_goal_multiplier) {
         result.cost_to_goal = (unsigned char)round(result.cost_to_goal * cost_to_goal_multiplier);
     }
@@ -775,6 +738,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
         default:
             printf("UNPAIRED  EST  ");
@@ -801,20 +765,12 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         printf("PER02  ");
     }
 
-    if (pt_perfect_hash03) {
-        printf("PER03  ");
-    }
-
     if (pt_perfect_hash12) {
         printf("PER12  ");
     }
 
-    if (pt_perfect_hash31) {
-        printf("PER31  ");
-    }
-
-    if (pt_perfect_hash32) {
-        printf("PER32  ");
+    if (pt_perfect_hash34) {
+        printf("PER34  ");
     }
 
     printf("CTG  TRU  IDX\n");
@@ -824,6 +780,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
         default:
             printf("========  ===  ");
@@ -854,15 +811,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         printf("=====  ");
     }
 
-    if (pt_perfect_hash03) {
-        printf("=====  ");
-    }
-
-    if (pt_perfect_hash31) {
-        printf("=====  ");
-    }
-
-    if (pt_perfect_hash32) {
+    if (pt_perfect_hash34) {
         printf("=====  ");
     }
 
@@ -875,6 +824,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
         default:
             heuristic = ida_heuristic(cube, type);
@@ -906,14 +856,8 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     if (pt_perfect_hash12) {
         printf("%5d  ", ctg.perfect_hash12_cost);
     }
-    if (pt_perfect_hash03) {
-        printf("%5d  ", ctg.perfect_hash03_cost);
-    }
-    if (pt_perfect_hash31) {
-        printf("%5d  ", ctg.perfect_hash31_cost);
-    }
-    if (pt_perfect_hash32) {
-        printf("%5d  ", ctg.perfect_hash32_cost);
+    if (pt_perfect_hash34) {
+        printf("%5d  ", ctg.perfect_hash34_cost);
     }
     printf("%3d  %3d  %3d\n", ctg.cost_to_goal, steps_to_solved, 0);
 
@@ -958,6 +902,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         switch (type) {
             case NONE:
             case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+            case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
                 break;
 
             case LR_OBLIQUE_EDGES_STAGE_666:
@@ -1008,14 +953,8 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         if (pt_perfect_hash12) {
             printf("%5d  ", ctg.perfect_hash12_cost);
         }
-        if (pt_perfect_hash03) {
-            printf("%5d  ", ctg.perfect_hash03_cost);
-        }
-        if (pt_perfect_hash31) {
-            printf("%5d  ", ctg.perfect_hash31_cost);
-        }
-        if (pt_perfect_hash32) {
-            printf("%5d  ", ctg.perfect_hash32_cost);
+        if (pt_perfect_hash34) {
+            printf("%5d  ", ctg.perfect_hash34_cost);
         }
 
         printf("%3d  %3d  %3d\n", ctg.cost_to_goal, steps_to_solved, i + 1);
@@ -1072,6 +1011,7 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
     switch (type) {
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777:
             break;
 
         // 6x6x6
@@ -1250,39 +1190,39 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
 
             switch (pt_max) {
                 case 1:
-                    memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
-                    pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    // pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    // pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
+                    // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
+                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
-                    pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    // pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    // pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
+                    // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     break;
 
                 case 3:
-                    memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
-                    pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    // pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    // pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
+                    // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
+                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
-                    pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    // pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    // pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
+                    // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
-                    pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
-                    // pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
-                    // pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
+                    // pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
+                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
+                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt3_state, &pt3[pt3_state_offset + offset_i], sizeof(unsigned int));
-                    pt3_cost = pt3[pt3_state_offset + offset_i + STATE_LENGTH];
-                    // pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
-                    // pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt3_state, &pt3[pt3_state_offset + offset_i], sizeof(unsigned int));
+                    // pt3_cost = pt3[pt3_state_offset + offset_i + STATE_LENGTH];
+                    pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
+                    pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     cost_to_goal = max(cost_to_goal, pt2_cost);
@@ -1290,50 +1230,50 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                     break;
 
                 case 2:
-                    memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
-                    pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    // pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    // pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
+                    // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
+                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
-                    pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    // pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    // pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
+                    // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
-                    pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
-                    // pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
-                    // pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
+                    // pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
+                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
+                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     cost_to_goal = max(cost_to_goal, pt2_cost);
                     break;
 
                 case 4:
-                    memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
-                    pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    // pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    // pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
+                    // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
+                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
-                    pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    // pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    // pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
+                    // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
+                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
+                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
-                    pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
-                    // pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
-                    // pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
+                    // pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
+                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
+                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt3_state, &pt3[pt3_state_offset + offset_i], sizeof(unsigned int));
-                    pt3_cost = pt3[pt3_state_offset + offset_i + STATE_LENGTH];
-                    // pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
-                    // pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt3_state, &pt3[pt3_state_offset + offset_i], sizeof(unsigned int));
+                    // pt3_cost = pt3[pt3_state_offset + offset_i + STATE_LENGTH];
+                    pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
+                    pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
-                    memcpy(&pt4_state, &pt4[pt4_state_offset + offset_i], sizeof(unsigned int));
-                    pt4_cost = pt4[pt4_state_offset + offset_i + STATE_LENGTH];
-                    // pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset_i);
-                    // pt4_cost = read_cost(pt4, (node->pt4_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt4_state, &pt4[pt4_state_offset + offset_i], sizeof(unsigned int));
+                    // pt4_cost = pt4[pt4_state_offset + offset_i + STATE_LENGTH];
+                    pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset_i);
+                    pt4_cost = read_cost(pt4, (node->pt4_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     cost_to_goal = max(cost_to_goal, pt2_cost);
@@ -1342,10 +1282,10 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                     break;
 
                 case 0:
-                    memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
-                    pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    // pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    // pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
+                    // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
+                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
+                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
                     cost_to_goal = pt0_cost;
                     break;
 
@@ -1539,9 +1479,12 @@ int main(int argc, char *argv[]) {
     unsigned int cube_size = 0;
     char kociemba[300];
     char *cube = NULL;
+    struct ida_search_result search_result;
     memset(kociemba, 0, sizeof(char) * 300);
     memset(legal_moves, MOVE_NONE, MOVE_MAX);
     memset(move_matrix, MOVE_NONE, MOVE_MAX * MOVE_MAX);
+    search_result.found_solution = 0;
+    search_result.f_cost = 99;
 
     for (unsigned char i = 1; i < argc; i++) {
         if (strmatch(argv[i], "-k") || strmatch(argv[i], "--kociemba")) {
@@ -1582,6 +1525,10 @@ int main(int argc, char *argv[]) {
 
             } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-inner-x-centers-stage")) {
                 type = UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777;
+                cube_size_type = 7;
+
+            } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-inner-x-centers-stage-new")) {
+                type = UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_NEW_777;
                 cube_size_type = 7;
 
             } else {
@@ -1647,21 +1594,13 @@ int main(int argc, char *argv[]) {
             i++;
             pt_perfect_hash02 = read_file(argv[i]);
 
-        } else if (strmatch(argv[i], "--prune-table-perfect-hash03")) {
-            i++;
-            pt_perfect_hash03 = read_file(argv[i]);
-
         } else if (strmatch(argv[i], "--prune-table-perfect-hash12")) {
             i++;
             pt_perfect_hash12 = read_file(argv[i]);
 
-        } else if (strmatch(argv[i], "--prune-table-perfect-hash31")) {
+        } else if (strmatch(argv[i], "--prune-table-perfect-hash34")) {
             i++;
-            pt_perfect_hash31 = read_file(argv[i]);
-
-        } else if (strmatch(argv[i], "--prune-table-perfect-hash32")) {
-            i++;
-            pt_perfect_hash32 = read_file(argv[i]);
+            pt_perfect_hash34 = read_file(argv[i]);
 
         } else if (strmatch(argv[i], "--pt1-state-max")) {
             i++;
@@ -1670,6 +1609,10 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "--pt2-state-max")) {
             i++;
             pt2_state_max = atoi(argv[i]);
+
+        } else if (strmatch(argv[i], "--pt4-state-max")) {
+            i++;
+            pt4_state_max = atoi(argv[i]);
 
         } else if (strmatch(argv[i], "--prune-table-states")) {
             i++;
@@ -1836,6 +1779,135 @@ int main(int argc, char *argv[]) {
                 legal_move_count++;
             }
 
+        } else if (strmatch(argv[i], "--solution")) {
+            i++;
+            char *p = strtok(argv[i], " ");
+            // dwalton
+            unsigned char j = 0;
+            search_result.found_solution = 1;
+            search_result.f_cost = 0;
+
+            while (p != NULL) {
+                if (strmatch(p, "U")) {
+                    search_result.solution[j] = U;
+                } else if (strmatch(p, "U'")) {
+                    search_result.solution[j] = U_PRIME;
+                } else if (strmatch(p, "U2")) {
+                    search_result.solution[j] = U2;
+                } else if (strmatch(p, "Uw")) {
+                    search_result.solution[j] = Uw;
+                } else if (strmatch(p, "Uw'")) {
+                    search_result.solution[j] = Uw_PRIME;
+                } else if (strmatch(p, "Uw2")) {
+                    search_result.solution[j] = Uw2;
+                } else if (strmatch(p, "3Uw")) {
+                    search_result.solution[j] = threeUw;
+                } else if (strmatch(p, "3Uw'")) {
+                    search_result.solution[j] = threeUw_PRIME;
+                } else if (strmatch(p, "3Uw2")) {
+                    search_result.solution[j] = threeUw2;
+
+                } else if (strmatch(p, "L")) {
+                    search_result.solution[j] = L;
+                } else if (strmatch(p, "L'")) {
+                    search_result.solution[j] = L_PRIME;
+                } else if (strmatch(p, "L2")) {
+                    search_result.solution[j] = L2;
+                } else if (strmatch(p, "Lw")) {
+                    search_result.solution[j] = Lw;
+                } else if (strmatch(p, "Lw'")) {
+                    search_result.solution[j] = Lw_PRIME;
+                } else if (strmatch(p, "Lw2")) {
+                    search_result.solution[j] = Lw2;
+                } else if (strmatch(p, "3Lw")) {
+                    search_result.solution[j] = threeLw;
+                } else if (strmatch(p, "3Lw'")) {
+                    search_result.solution[j] = threeLw_PRIME;
+                } else if (strmatch(p, "3Lw2")) {
+                    search_result.solution[j] = threeLw2;
+
+                } else if (strmatch(p, "F")) {
+                    search_result.solution[j] = F;
+                } else if (strmatch(p, "F'")) {
+                    search_result.solution[j] = F_PRIME;
+                } else if (strmatch(p, "F2")) {
+                    search_result.solution[j] = F2;
+                } else if (strmatch(p, "Fw")) {
+                    search_result.solution[j] = Fw;
+                } else if (strmatch(p, "Fw'")) {
+                    search_result.solution[j] = Fw_PRIME;
+                } else if (strmatch(p, "Fw2")) {
+                    search_result.solution[j] = Fw2;
+                } else if (strmatch(p, "3Fw")) {
+                    search_result.solution[j] = threeFw;
+                } else if (strmatch(p, "3Fw'")) {
+                    search_result.solution[j] = threeFw_PRIME;
+                } else if (strmatch(p, "3Fw2")) {
+                    search_result.solution[j] = threeFw2;
+
+                } else if (strmatch(p, "R")) {
+                    search_result.solution[j] = R;
+                } else if (strmatch(p, "R'")) {
+                    search_result.solution[j] = R_PRIME;
+                } else if (strmatch(p, "R2")) {
+                    search_result.solution[j] = R2;
+                } else if (strmatch(p, "Rw")) {
+                    search_result.solution[j] = Rw;
+                } else if (strmatch(p, "Rw'")) {
+                    search_result.solution[j] = Rw_PRIME;
+                } else if (strmatch(p, "Rw2")) {
+                    search_result.solution[j] = Rw2;
+                } else if (strmatch(p, "3Rw")) {
+                    search_result.solution[j] = threeRw;
+                } else if (strmatch(p, "3Rw'")) {
+                    search_result.solution[j] = threeRw_PRIME;
+                } else if (strmatch(p, "3Rw2")) {
+                    search_result.solution[j] = threeRw2;
+
+                } else if (strmatch(p, "B")) {
+                    search_result.solution[j] = B;
+                } else if (strmatch(p, "B'")) {
+                    search_result.solution[j] = B_PRIME;
+                } else if (strmatch(p, "B2")) {
+                    search_result.solution[j] = B2;
+                } else if (strmatch(p, "Bw")) {
+                    search_result.solution[j] = Bw;
+                } else if (strmatch(p, "Bw'")) {
+                    search_result.solution[j] = Bw_PRIME;
+                } else if (strmatch(p, "Bw2")) {
+                    search_result.solution[j] = Bw2;
+                } else if (strmatch(p, "3Bw")) {
+                    search_result.solution[j] = threeBw;
+                } else if (strmatch(p, "3Bw'")) {
+                    search_result.solution[j] = threeBw_PRIME;
+                } else if (strmatch(p, "3Bw2")) {
+                    search_result.solution[j] = threeBw2;
+
+                } else if (strmatch(p, "D")) {
+                    search_result.solution[j] = D;
+                } else if (strmatch(p, "D'")) {
+                    search_result.solution[j] = D_PRIME;
+                } else if (strmatch(p, "D2")) {
+                    search_result.solution[j] = D2;
+                } else if (strmatch(p, "Dw")) {
+                    search_result.solution[j] = Dw;
+                } else if (strmatch(p, "Dw'")) {
+                    search_result.solution[j] = Dw_PRIME;
+                } else if (strmatch(p, "Dw2")) {
+                    search_result.solution[j] = Dw2;
+                } else if (strmatch(p, "3Dw")) {
+                    search_result.solution[j] = threeDw;
+                } else if (strmatch(p, "3Dw'")) {
+                    search_result.solution[j] = threeDw_PRIME;
+                } else if (strmatch(p, "3Dw2")) {
+                    search_result.solution[j] = threeDw2;
+                }
+
+                p = strtok(NULL, " ");
+                search_result.f_cost++;
+                j++;
+            }
+
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
             printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
             exit(0);
@@ -1846,8 +1918,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (type != NONE || pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash03 || pt_perfect_hash12 ||
-        pt_perfect_hash31 || pt_perfect_hash32 || cost_to_goal_multiplier) {
+    if (type != NONE || pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash12 || pt_perfect_hash34 || cost_to_goal_multiplier) {
         call_pt_simple = 1;
     }
 
@@ -1909,9 +1980,6 @@ int main(int argc, char *argv[]) {
     }
 
     ROW_LENGTH = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * legal_move_count);
-    struct ida_search_result search_result;
-    search_result.found_solution = 0;
-    search_result.f_cost = 99;
 
     if (prune_table_states_filename) {
         FILE *fh_read = NULL;
@@ -1992,16 +2060,19 @@ int main(int argc, char *argv[]) {
         }
 
     } else {
-        if (!min_ida_threshold) {
-            struct cost_to_goal_result ctg =
-                pt_states_to_cost(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                  prune_table_3_state, prune_table_4_state);
-            min_ida_threshold = ctg.cost_to_goal;
-        }
+        // dwalton
+        if (!search_result.found_solution) {
+            if (!min_ida_threshold) {
+                struct cost_to_goal_result ctg =
+                    pt_states_to_cost(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                                      prune_table_3_state, prune_table_4_state);
+                min_ida_threshold = ctg.cost_to_goal;
+            }
 
-        search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                                  prune_table_3_state, prune_table_4_state, min_ida_threshold, max_ida_threshold,
-                                  use_uthash, find_extra);
+            search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                                      prune_table_3_state, prune_table_4_state, min_ida_threshold, max_ida_threshold,
+                                      use_uthash, find_extra);
+        }
 
         if (search_result.found_solution) {
             print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,

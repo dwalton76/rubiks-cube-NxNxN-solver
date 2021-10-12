@@ -260,74 +260,6 @@ class LookupTable777Phase4XCenters(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTableIDA777Phase4(LookupTableIDAViaGraph):
-    """
-    The perfect-hash here is:
-
-    lookup-table-7x7x7-phase4-inner-centers.txt
-    ===========================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 33 entries (0 percent, 16.50x previous step)
-    3 steps has 374 entries (0 percent, 11.33x previous step)
-    4 steps has 3,838 entries (0 percent, 10.26x previous step)
-    5 steps has 39,254 entries (0 percent, 10.23x previous step)
-    6 steps has 387,357 entries (0 percent, 9.87x previous step)
-    7 steps has 3,374,380 entries (2 percent, 8.71x previous step)
-    8 steps has 20,851,334 entries (12 percent, 6.18x previous step)
-    9 steps has 65,556,972 entries (39 percent, 3.14x previous step)
-    10 steps has 66,986,957 entries (40 percent, 1.02x previous step)
-    11 steps has 8,423,610 entries (5 percent, 0.13x previous step)
-    12 steps has 12,788 entries (0 percent, 0.00x previous step)
-
-    Total: 165,636,900 entries
-    Average: 9.33 moves
-    """
-
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_777,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2"
-            ),
-            prune_tables=(
-                parent.lt_phase4_t_centers,
-                parent.lt_phase4_x_centers,
-            ),
-            centers_only=True,
-            C_ida_type="7x7x7-UD-oblique-edges-inner-x-centers-stage",
-            perfect_hash01_filename="lookup-table-7x7x7-phase4-inner-centers.perfect-hash",
-            pt1_state_max=12870,
-        )
-        # fmt: on
-
-    def recolor(self):
-        logger.info(f"{self}: recolor (custom)")
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
-
-        for x in centers_777:
-            if x in outer_x_centers_777 or x in LR_centers_777:
-                self.parent.state[x] = "."
-            else:
-                if self.parent.state[x] == "U" or self.parent.state[x] == "D":
-                    self.parent.state[x] = "U"
-                else:
-                    self.parent.state[x] = "x"
-
-
 class LookupTable777Phase4LeftOblique(LookupTable):
     """
     lookup-table-7x7x7-phase4-left-oblique.txt
@@ -490,7 +422,7 @@ class LookupTable777Phase4MiddleOblique(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTableIDA777Phase4New(LookupTableIDAViaGraph):
+class LookupTableIDA777Phase4(LookupTableIDAViaGraph):
     def __init__(self, parent):
         # fmt: off
         LookupTableIDAViaGraph.__init__(
@@ -517,7 +449,7 @@ class LookupTableIDA777Phase4New(LookupTableIDAViaGraph):
                 parent.lt_phase4_x_centers,
             ),
             centers_only=True,
-            C_ida_type="7x7x7-UD-oblique-edges-inner-x-centers-stage-new",
+            C_ida_type="7x7x7-UD-oblique-edges-inner-x-centers-stage",
             perfect_hash01_filename="lookup-table-7x7x7-phase4-left-right-oblique.perfect-hash",
             perfect_hash02_filename="lookup-table-7x7x7-phase4-left-middle-oblique.perfect-hash",
             perfect_hash34_filename="lookup-table-7x7x7-phase4-inner-centers.perfect-hash",
@@ -526,7 +458,6 @@ class LookupTableIDA777Phase4New(LookupTableIDAViaGraph):
             pt4_state_max=12870,
         )
         # fmt: on
-        # dwalton
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
@@ -3026,7 +2957,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_phase4_right_oblique = LookupTable777Phase4RightOblique(self)
         self.lt_phase4_middle_oblique = LookupTable777Phase4MiddleOblique(self)
         self.lt_phase4 = LookupTableIDA777Phase4(self)
-        self.lt_phase4_new = LookupTableIDA777Phase4New(self)
 
         # Need to add avoid_oll support for orbit 2 and then enable this.  Currently it will work but the edges
         # are in a state that cannot be solved by the 555 solver.
@@ -3281,19 +3211,16 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         if self.UD_centers_staged():
             return
 
-        # dwalton
-        if True:
+        if False:
             # phase 4 - stage UD inner centers, pair UD oblique edges
 
-            # This works but takes 5+ minutes so this is disabled until I can figure out a better heuristic so that
+            # This works but can take 70s so this is disabled until I can figure out a better heuristic so that
             # it will run faster.  It takes ~15 moves though which is a nice ~9 moves savings over doing phases 4
             # and 5 invididually.
             tmp_solution_len = len(self.solution)
-            # self.lt_phase4.solve_via_c(use_kociemba_string=True)
-            self.lt_phase4_new.solve_via_c(use_kociemba_string=True)
-            # self.lt_phase4_new.solve_via_c()
+            self.lt_phase4.solve_via_c(use_kociemba_string=True)
             self.print_cube_add_comment("UD inner x-centers staged, oblique edges paired", tmp_solution_len)
-            raise Exception("DONE")
+
         else:
             # phase 4 - use 5x5x5 solver to stage the UD inner centers
             tmp_solution_len = len(self.solution)

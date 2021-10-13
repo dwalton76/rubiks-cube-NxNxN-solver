@@ -1316,6 +1316,18 @@ class LookupTableIDA555FBCentersStageLRCentersSpecial(LookupTableIDAViaGraph):
         # fmt: on
 
 
+class LookupTableIDA555UDTCenterStage(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_555,
+            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            prune_tables=(parent.lt_FB_t_centers_stage,),
+            centers_only=True,
+        )
+
+
 # phase 3
 class LookupTable555Phase3LRCenterStage(LookupTable):
     """
@@ -3226,6 +3238,8 @@ class RubiksCube555(RubiksCube):
         self.lt_phase2_lr_center_stage = LookupTable555Phase2LRCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
+
+        self.lt_UD_t_centers_stage_ida = LookupTableIDA555UDTCenterStage(self)
 
         self.lt_FB_centers_stage_LR_centers_special = LookupTableIDA555FBCentersStageLRCentersSpecial(self)
         self.lt_FB_centers_stage_LR_centers_special.avoid_oll = 0

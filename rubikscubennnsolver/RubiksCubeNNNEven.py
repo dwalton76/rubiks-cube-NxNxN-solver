@@ -123,6 +123,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         center_orbit_count = int((self.size - 4) / 2)
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
         original_solution_len = len(self.solution)
+        max_center_orbit_id = center_orbit_count - 1
 
         # Make a big "plus" sign on each side
         for center_orbit_id in range(center_orbit_count):
@@ -219,7 +220,11 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             # reduce the centers to 5x5x5 centers
             fake_666.stage_t_centers()
-            fake_666.daisy_solve_centers()
+
+            if center_orbit_id == max_center_orbit_id:
+                fake_666.daisy_solve_centers_eo_edges()
+            else:
+                fake_666.daisy_solve_centers()
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))

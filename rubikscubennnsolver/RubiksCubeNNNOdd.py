@@ -3,7 +3,6 @@ import logging
 from math import ceil
 
 # rubiks cube libraries
-from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 
@@ -41,7 +40,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             self.fake_777.re_init()
         return self.fake_777
 
-    def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
+    def populate_fake_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle):
         fake_777 = self.get_fake_777()
 
         for index in range(1, 295):
@@ -51,14 +50,11 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
         start_NNN = 0
         row0_midpoint = ceil(self.size / 2)
         row6_midpoint = (self.size * self.size) - row0_midpoint + 1
-        tmp_solution_len = len(self.solution)
 
         logger.info(
-            "%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
-            % (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle)
+            "%s: start orbit, %d/%d, cycle %d/%d, width %d"
+            % (self, center_orbit_id, max_center_orbits, cycle, max_cycle, width)
         )
-
-        logger.info(f"{self}: row0_midpoint {row0_midpoint}, row6_midpoint {row6_midpoint}")
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
 
         for x in range(6):
@@ -263,38 +259,44 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
             start_777 += 49
             start_NNN += self.size * self.size
 
-        # Apply the 7x7x7 solution to our cube
-        half_size = str(ceil(self.size / 2) - 1 - cycle)
-        wide_size = str(ceil(self.size / 2) - 2 - center_orbit_id)
+    def stage_or_solve_inside_777(self, center_orbit_id, max_center_orbits, width, cycle, max_cycle, action):
+        tmp_solution_len = len(self.solution)
+        self.populate_fake_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle)
+
+        if (center_orbit_id == 0 and cycle == 0) or (center_orbit_id == max_center_orbits and cycle == max_cycle):
+            outer_x_centers_valid = True
+        else:
+            outer_x_centers_valid = False
 
         if action == "stage_UD_centers":
-            fake_777.stage_UD_centers()
+            if outer_x_centers_valid:
+                self.fake_777.stage_UD_centers()
+            else:
+                if cycle == max_cycle:
+                    self.fake_777.stage_UD_t_centers()
+                else:
+                    self.fake_777.lt_UD_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
 
         elif action == "stage_LR_centers":
-            fake_777.stage_LR_centers()
+            if outer_x_centers_valid:
+                self.fake_777.stage_LR_centers()
+            else:
+                if cycle == max_cycle:
+                    self.fake_777.stage_LR_t_centers()
+                else:
+                    self.fake_777.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
 
         elif action == "solve_t_centers":
-            fake_777.solve_t_centers()
-
-        elif action == "solve_centers":
-            fake_777.solve_centers()
-
-        elif action == "daisy_solve_centers":
-            self.print_cube("HERE 100")
-            fake_777.enable_print_cube = True
-            fake_777.print_cube("HERE 100")
-            fake_777.enable_print_cube = False
-            fake_777.LR_centers_vertical_bars()
-            fake_777.UD_centers_vertical_bars()
-            fake_777.centers_daisy_solve()
-
-            # this should really be a "bullseye" solve of the centers
-            fake_777.solve_centers()
+            self.fake_777.solve_t_centers()
 
         else:
             raise Exception(f"Invalid action {action}")
 
-        for step in fake_777.solution:
+        # Apply the 7x7x7 solution to our cube
+        half_size = str(ceil(self.size / 2) - 1 - cycle)
+        wide_size = str(ceil(self.size / 2) - 2 - center_orbit_id)
+
+        for step in self.fake_777.solution:
             if step.startswith("COMMENT"):
                 self.solution.append(step)
             elif step.startswith("3"):
@@ -305,8 +307,8 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 self.rotate(step)
 
         self.print_cube_add_comment(
-            "NNN center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s"
-            % (center_orbit_id, max_center_orbits, width, cycle, max_cycle),
+            "NNN orbit %d/%d, cycle %d/%d, width %d, x-centers %s"
+            % (center_orbit_id, max_center_orbits, cycle, max_cycle, width, outer_x_centers_valid),
             tmp_solution_len,
         )
 
@@ -358,16 +360,3 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                     center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_t_centers"
                 )
         self.print_cube_add_comment("NNN t-centers solved", tmp_solution_len)
-
-        # Solve all centers
-        center_orbit_id = max_center_orbits
-        width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-        max_cycle = int((width - 5) / 2)
-        tmp_solution_len = len(self.solution)
-
-        cycle = max_cycle
-        self.stage_or_solve_inside_777(center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers")
-        self.print_cube_add_comment("NNN centers solved", tmp_solution_len)
-
-        if not self.centers_solved():
-            raise SolveError("centers should be solved")

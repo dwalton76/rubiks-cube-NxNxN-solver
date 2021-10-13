@@ -3,7 +3,7 @@
 """
 Used to generate misc list of squares for each side
 """
-foo = [9, 13, 37, 41]
+foo = [11, 27, 39, 23]
 foo.sort()
 
 offset = 0

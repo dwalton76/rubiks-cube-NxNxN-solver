@@ -656,8 +656,7 @@ class RubiksCube(object):
                 continue
 
             if value != expected_count:
-                msg = f"side {desc} {side} count is {value} (should be {expected_count})"
-                logger.warning(f"InvalidCubeReduction {msg}")
+                msg = f"{desc} side-{side} count is {value} (should be {expected_count})"
                 self.enable_print_cube = True
                 self.print_cube(f"InvalidCubeReduction {msg}")
                 raise InvalidCubeReduction(msg)
@@ -1513,10 +1512,12 @@ class RubiksCube(object):
         total_len = self.get_solution_len_minus_rotates(self.solution)
         solution_this_phase = self.solution[prev_solution_len:]
         solution_this_phase_len = self.get_solution_len_minus_rotates(solution_this_phase)
-        title = f"{self}: {desc} {solution_this_phase_len} steps ({total_len} total steps)"
-        comment = f"COMMENT_{desc.replace(' ', '_').replace('-', '_')}_({solution_this_phase_len}_steps)"
+        title = f"{self}: {desc}, {solution_this_phase_len} steps, {total_len} total steps"
         self.print_cube(title)
-        self.solution.append(comment)
+
+        if solution_this_phase_len:
+            comment = f"COMMENT_{desc.replace(' ', '_').replace('-', '_')}_({solution_this_phase_len}_steps)"
+            self.solution.append(comment)
 
     def print_case_statement_C(self, case: str, first_step: bool, size: int) -> None:
         """

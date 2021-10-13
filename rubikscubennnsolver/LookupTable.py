@@ -987,7 +987,10 @@ class LookupTable(object):
             state_index = binary_search(fh, width, state_width, linecount, state)
 
             if state_index is None:
-                raise Exception(f"{self}: state {state} not found in {self.filename_state_index}")
+                self.parent.enable_print_cube = True
+                desc = f"state {state} not found in {self.filename_state_index}"
+                self.parent.print_cube(desc)
+                raise Exception(f"{self}: {desc}")
 
             return int(state_index)
 

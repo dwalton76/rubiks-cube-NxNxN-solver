@@ -3112,7 +3112,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         for step in self.fake_555.solution:
 
             if step.startswith("COMMENT"):
-                self.solution.append(step)
+                pass
             else:
                 if step.startswith("5"):
                     step = "7" + step[1:]
@@ -3157,7 +3157,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         for step in self.fake_555.solution:
             if step.startswith("COMMENT"):
-                self.solution.append(step)
+                pass
             else:
                 if step.startswith("5"):
                     step = "7" + step[1:]
@@ -3196,7 +3196,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         for step in self.fake_555.solution:
 
             if step.startswith("COMMENT"):
-                self.solution.append(step)
+                pass
             else:
                 if step.startswith("5"):
                     step = "7" + step[1:]
@@ -3246,7 +3246,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         for step in self.fake_555.solution:
             if step.startswith("COMMENT"):
-                self.solution.append(step)
+                pass
             else:
                 if step.startswith("5"):
                     step = "7" + step[1:]
@@ -3295,7 +3295,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         for step in self.fake_555.solution:
             if step.startswith("COMMENT"):
-                self.solution.append(step)
+                pass
             else:
                 if step.startswith("5"):
                     step = "7" + step[1:]

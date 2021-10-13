@@ -2951,12 +2951,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
 
         # phase 4 - stage UD inner centers, pair UD oblique edges
-        self.lt_phase4_t_centers = LookupTable777Phase4TCenters(self)
-        self.lt_phase4_x_centers = LookupTable777Phase4XCenters(self)
-        self.lt_phase4_left_oblique = LookupTable777Phase4LeftOblique(self)
-        self.lt_phase4_right_oblique = LookupTable777Phase4RightOblique(self)
-        self.lt_phase4_middle_oblique = LookupTable777Phase4MiddleOblique(self)
-        self.lt_phase4 = LookupTableIDA777Phase4(self)
+        # self.lt_phase4_t_centers = LookupTable777Phase4TCenters(self)
+        # self.lt_phase4_x_centers = LookupTable777Phase4XCenters(self)
+        # self.lt_phase4_left_oblique = LookupTable777Phase4LeftOblique(self)
+        # self.lt_phase4_right_oblique = LookupTable777Phase4RightOblique(self)
+        # self.lt_phase4_middle_oblique = LookupTable777Phase4MiddleOblique(self)
+        # self.lt_phase4 = LookupTableIDA777Phase4(self)
 
         # Need to add avoid_oll support for orbit 2 and then enable this.  Currently it will work but the edges
         # are in a state that cannot be solved by the 555 solver.

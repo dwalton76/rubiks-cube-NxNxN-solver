@@ -348,8 +348,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
             self.print_cube_add_comment("NNN UD centers staged", tmp_solution_len)
 
-        raise Exception("DONE")
-
         # Solve all t-centers
         tmp_solution_len = len(self.solution)
 

@@ -418,6 +418,7 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             heuristic_result = ida_heuristic(cube, type);
             cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
+            // cost_to_goal = max(heuristic_result.cost_to_goal, init_cost_to_goal);
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:
@@ -632,6 +633,7 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             heuristic_result = ida_heuristic(cube, type);
             result.cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
+            // result.cost_to_goal = max(heuristic_result.cost_to_goal, result.cost_to_goal);
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:

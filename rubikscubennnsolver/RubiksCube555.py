@@ -2245,12 +2245,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 "L", "L'", "R", "R'",
             ),
             # fmt: on
-            # dwalton
-            prune_tables=(
-                parent.lt_phase5_high_edge_midge,
-                parent.lt_phase5_low_edge_midge,
-                # parent.lt_phase5_centers,
-            ),
+            prune_tables=(parent.lt_phase5_high_edge_midge, parent.lt_phase5_low_edge_midge, parent.lt_phase5_centers),
         )
 
 
@@ -3381,7 +3376,7 @@ class RubiksCube555(RubiksCube):
 
         self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
-    def pair_edges(self):
+    def pair_edges(self, consider_333_solution: bool = False):
 
         # We need the edge swaps to be even for our phase6 lookup tables to work.
         if self.edge_swaps_odd(False, 0, False):
@@ -3390,12 +3385,10 @@ class RubiksCube555(RubiksCube):
         # phase 5
         original_state = self.state[:]
         original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
         pt_state_indexes = []
         phase5_pt_state_indexes_to_wing_str_combo = {}
 
-        # dwalton
-        for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
+        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
             self.state = original_state[:]
             self.solution = original_solution[:]
             self.edges_flip_orientation(wing_str_combo, [])
@@ -3412,18 +3405,12 @@ class RubiksCube555(RubiksCube):
 
         # phase 6
         pt_state_indexes = []
-        phase6_pt_state_indexes_to_phase4_solution = {}
         phase6_pt_state_indexes_to_phase5_solution = {}
 
         for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
-            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state, pt3_state)]
+            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state)]
             self.state = original_state[:]
             self.solution = original_solution[:]
-
-            self.lt_phase4.wing_strs = wing_str_combo
-            self.lt_phase4.solve()
-            phase4_solution = self.solution[original_solution_len:]
-
             self.edges_flip_orientation(wing_strs_all, [])
             self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
@@ -3437,20 +3424,60 @@ class RubiksCube555(RubiksCube):
             self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
             self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
             wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase6.prune_tables])
-            phase6_pt_state_indexes_to_phase4_solution[wing_str_combo_pt_state_indexes] = phase4_solution
             phase6_pt_state_indexes_to_phase5_solution[wing_str_combo_pt_state_indexes] = phase5_solution
             pt_state_indexes.append(wing_str_combo_pt_state_indexes)
 
-        phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = self.lt_phase6.solutions_via_c(
-            pt_states=pt_state_indexes
-        )[0]
-        phase4_solution = phase6_pt_state_indexes_to_phase4_solution[(pt0_state, pt1_state, pt2_state)]
-        phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
+        if consider_333_solution:
+            solution_count = 500
+        else:
+            solution_count = None
 
-        # apply the solution
+        phase6_solutions = self.lt_phase6.solutions_via_c(pt_states=pt_state_indexes, solution_count=solution_count)
+
+        if consider_333_solution:
+            min_solution_333_len = None
+            min_solution_333_phase5 = None
+            min_solution_333_phase6 = None
+
+            for phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase6_solutions:
+                phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
+
+                # put the cube back in its post EO state
+                self.state = self.post_eo_state
+                self.solution = self.post_eo_solution[:]
+
+                for step in phase5_solution:
+                    self.rotate(step)
+                for step in phase6_solution:
+                    self.rotate(step)
+
+                tmp_solution_len = len(self.solution)
+                logging.getLogger().setLevel(logging.WARNING)
+                self.solve_333()
+                logging.getLogger().setLevel(logging.INFO)
+                solution_333 = self.solution[tmp_solution_len:]
+
+                # minus 1 for a COMMENT
+                solution_333_len = len(solution_333) - 1
+
+                if min_solution_333_len is None or solution_333_len < min_solution_333_len:
+                    min_solution_333_len = solution_333_len
+                    min_solution_333_phase5 = phase5_solution
+                    min_solution_333_phase6 = phase6_solution
+                    logger.info(f"333 solution len {solution_333_len} (NEW MIN)")
+
+            phase5_solution = min_solution_333_phase5
+            phase6_solution = min_solution_333_phase6
+        else:
+            # if we are here, solution_count is None so there will only be one solution to choose from
+            phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase6_solutions[0]
+            phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
+
+        # put the cube back in its post EO state
         self.state = self.post_eo_state
         self.solution = self.post_eo_solution[:]
 
+        # apply the solutions
         # phase 5
         tmp_solution_len = len(self.solution)
 
@@ -3490,7 +3517,7 @@ class RubiksCube555(RubiksCube):
         self.eo_edges()
 
         # phases 4 5 and 6
-        self.pair_edges()
+        self.pair_edges(consider_333_solution=True)
 
 
 def rotate_555(cube, step):

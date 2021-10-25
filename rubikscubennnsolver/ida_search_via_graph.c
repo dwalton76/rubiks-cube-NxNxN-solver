@@ -10,6 +10,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "ida_search_666.h"
 #include "ida_search_777.h"
@@ -1417,6 +1418,12 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
 }
 
 char *read_file(char *filename) {
+
+    if (access(filename, F_OK) != 0) {
+        printf("ERROR: file %s not found\n", filename);
+        exit(1);
+    }
+
     FILE *fh = fopen(filename, "rb");
     unsigned long bufsize = 0;
     char *buffer = NULL;
@@ -1983,6 +1990,11 @@ int main(int argc, char *argv[]) {
         struct ida_search_result min_search_result;
         min_search_result.found_solution = 0;
         min_search_result.f_cost = 99;
+
+        if (access(prune_table_states_filename, F_OK) != 0) {
+            printf("ERROR: file %s not found\n", prune_table_states_filename);
+            exit(1);
+        }
 
         for (unsigned char i_ida_threshold = min_ida_threshold; i_ida_threshold <= max_ida_threshold;
              i_ida_threshold++) {

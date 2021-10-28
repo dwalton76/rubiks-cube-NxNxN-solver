@@ -194,11 +194,25 @@ high_wings_and_midges_555 = (
     127, 128, 136, 141, 135, 140, 148, 149,  # Down
 )
 
+LFRB_high_wings_555 = (
+    35, 41,  # Left
+    56, 70,  # Front
+    85, 91,  # Right
+    106, 120,  # Back
+)
+
 low_wings_and_midges_555 = (
     3, 4, 6, 11, 15, 20, 22, 23,  # Upper
     31, 36, 40, 45,  # Left
     81, 86, 90, 95,  # Right
     128, 129, 131, 136, 140, 145, 147, 148,  # Down
+)
+
+LFRB_low_wings_555 = (
+    31, 45,  # Left
+    60, 66,  # Front
+    81, 95,  # Right
+    110, 116,  # Back
 )
 
 high_edges_555 = (
@@ -2229,6 +2243,164 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
 
         for step in steps_to_scramble:
             self.parent.rotate(step)
+
+
+class LookupTable555Phase5HighEdge(LookupTable):
+    """
+    lookup-table-5x5x5-step56-phase5-high-edge.txt
+    ==============================================
+    0 steps has 24 entries (0 percent, 0.00x previous step)
+    1 steps has 48 entries (0 percent, 2.00x previous step)
+    2 steps has 504 entries (4 percent, 10.50x previous step)
+    3 steps has 2,928 entries (24 percent, 5.81x previous step)
+    4 steps has 5,208 entries (43 percent, 1.78x previous step)
+    5 steps has 3,168 entries (26 percent, 0.61x previous step)
+
+    Total: 11,880 entries
+    Average: 3.92 moves
+    """
+
+    # fmt: off
+    state_targets = (
+        "----------------L--L-------B----B-------R--R-------F----F---------------",
+        "----------------L--L-------B----F-------R--R-------B----F---------------",
+        "----------------L--L-------F----B-------R--R-------F----B---------------",
+        "----------------L--L-------F----F-------R--R-------B----B---------------",
+        "----------------L--R-------B----B-------L--R-------F----F---------------",
+        "----------------L--R-------B----F-------L--R-------F----B---------------",
+        "----------------L--R-------B----F-------R--L-------B----F---------------",
+        "----------------L--R-------B----F-------R--L-------F----B---------------",
+        "----------------L--R-------F----B-------L--R-------B----F---------------",
+        "----------------L--R-------F----B-------R--L-------B----F---------------",
+        "----------------L--R-------F----B-------R--L-------F----B---------------",
+        "----------------L--R-------F----F-------L--R-------B----B---------------",
+        "----------------R--L-------B----B-------R--L-------F----F---------------",
+        "----------------R--L-------B----F-------L--R-------B----F---------------",
+        "----------------R--L-------B----F-------L--R-------F----B---------------",
+        "----------------R--L-------B----F-------R--L-------F----B---------------",
+        "----------------R--L-------F----B-------L--R-------B----F---------------",
+        "----------------R--L-------F----B-------L--R-------F----B---------------",
+        "----------------R--L-------F----B-------R--L-------B----F---------------",
+        "----------------R--L-------F----F-------R--L-------B----B---------------",
+        "----------------R--R-------B----B-------L--L-------F----F---------------",
+        "----------------R--R-------B----F-------L--L-------B----F---------------",
+        "----------------R--R-------F----B-------L--L-------F----B---------------",
+        "----------------R--R-------F----F-------L--L-------B----B---------------"
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step56-phase5-high-edge.txt",
+            self.state_targets,
+            linecount=11880,
+            max_depth=5,
+            all_moves=moves_555,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join([self.parent.state[x] for x in LFRB_high_wings_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(LFRB_high_wings_555, state):
+            cube[pos] = pos_state
+
+
+class LookupTable555Phase5LowEdge(LookupTable):
+    """
+    lookup-table-5x5x5-step57-phase5-low-edge.txt
+    =============================================
+    0 steps has 24 entries (0 percent, 0.00x previous step)
+    1 steps has 48 entries (0 percent, 2.00x previous step)
+    2 steps has 504 entries (4 percent, 10.50x previous step)
+    3 steps has 2,928 entries (24 percent, 5.81x previous step)
+    4 steps has 5,208 entries (43 percent, 1.78x previous step)
+    5 steps has 3,168 entries (26 percent, 0.61x previous step)
+
+    Total: 11,880 entries
+    Average: 3.92 moves
+    """
+
+    # fmt: off
+    state_targets = (
+        "---------------L----L-------B--B-------R----R-------F--F----------------",
+        "---------------L----L-------B--F-------R----R-------B--F----------------",
+        "---------------L----L-------F--B-------R----R-------F--B----------------",
+        "---------------L----L-------F--F-------R----R-------B--B----------------",
+        "---------------L----R-------B--B-------L----R-------F--F----------------",
+        "---------------L----R-------B--F-------L----R-------F--B----------------",
+        "---------------L----R-------B--F-------R----L-------B--F----------------",
+        "---------------L----R-------B--F-------R----L-------F--B----------------",
+        "---------------L----R-------F--B-------L----R-------B--F----------------",
+        "---------------L----R-------F--B-------R----L-------B--F----------------",
+        "---------------L----R-------F--B-------R----L-------F--B----------------",
+        "---------------L----R-------F--F-------L----R-------B--B----------------",
+        "---------------R----L-------B--B-------R----L-------F--F----------------",
+        "---------------R----L-------B--F-------L----R-------B--F----------------",
+        "---------------R----L-------B--F-------L----R-------F--B----------------",
+        "---------------R----L-------B--F-------R----L-------F--B----------------",
+        "---------------R----L-------F--B-------L----R-------B--F----------------",
+        "---------------R----L-------F--B-------L----R-------F--B----------------",
+        "---------------R----L-------F--B-------R----L-------B--F----------------",
+        "---------------R----L-------F--F-------R----L-------B--B----------------",
+        "---------------R----R-------B--B-------L----L-------F--F----------------",
+        "---------------R----R-------B--F-------L----L-------B--F----------------",
+        "---------------R----R-------F--B-------L----L-------F--B----------------",
+        "---------------R----R-------F--F-------L----L-------B--B----------------"
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step57-phase5-low-edge.txt",
+            self.state_targets,
+            linecount=11880,
+            max_depth=5,
+            all_moves=moves_555,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join([self.parent.state[x] for x in LFRB_low_wings_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(LFRB_low_wings_555, state):
+            cube[pos] = pos_state
 
 
 class LookupTableIDA555Phase5(LookupTableIDAViaGraph):

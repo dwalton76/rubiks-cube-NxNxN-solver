@@ -2403,7 +2403,13 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 "L", "L'", "R", "R'",
             ),
             # fmt: on
-            prune_tables=(parent.lt_phase5_high_edge_midge, parent.lt_phase5_low_edge_midge, parent.lt_phase5_centers),
+            prune_tables=(
+                parent.lt_phase5_high_edge,
+                parent.lt_phase5_low_edge,
+                parent.lt_phase5_high_edge_midge,
+                parent.lt_phase5_low_edge_midge,
+                parent.lt_phase5_centers,
+            ),
         )
 
 
@@ -3114,6 +3120,8 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
+        self.lt_phase5_high_edge = LookupTable555Phase5HighEdge(self)
+        self.lt_phase5_low_edge = LookupTable555Phase5LowEdge(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
         # phase 6

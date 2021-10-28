@@ -194,11 +194,13 @@ high_wings_and_midges_555 = (
     127, 128, 136, 141, 135, 140, 148, 149,  # Down
 )
 
-LFRB_high_wings_555 = (
-    35, 41,  # Left
-    56, 70,  # Front
-    85, 91,  # Right
-    106, 120,  # Back
+high_wings_555 = (
+    2, 16, 10, 24,  # Upper
+    29, 35, 41, 47,  # Left
+    54, 56, 70, 72,  # Front
+    79, 85, 91, 97,  # Right
+    104, 106, 120, 122,  # Back
+    127, 141, 135, 149,  # Down
 )
 
 low_wings_and_midges_555 = (
@@ -208,11 +210,13 @@ low_wings_and_midges_555 = (
     128, 129, 131, 136, 140, 145, 147, 148,  # Down
 )
 
-LFRB_low_wings_555 = (
-    31, 45,  # Left
-    60, 66,  # Front
-    81, 95,  # Right
-    110, 116,  # Back
+low_wings_555 = (
+    4, 6, 20, 22,  # Upper
+    27, 31, 45, 49,  # Left
+    52, 60, 66, 74,  # Front
+    77, 81, 95, 99,  # Right
+    102, 110, 116, 124,  # Back
+    129, 131, 145, 147,  # Down
 )
 
 high_edges_555 = (
@@ -2315,7 +2319,7 @@ class LookupTable555Phase5HighEdge(LookupTable):
         )
 
     def state(self):
-        return "".join([self.parent.state[x] if x in LFRB_high_wings_555 else "-" for x in edges_555])
+        return "".join([self.parent.state[x] if x in high_wings_555 else "-" for x in edges_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
@@ -2394,7 +2398,7 @@ class LookupTable555Phase5LowEdge(LookupTable):
         )
 
     def state(self):
-        return "".join([self.parent.state[x] if x in LFRB_low_wings_555 else "-" for x in edges_555])
+        return "".join([self.parent.state[x] if x in low_wings_555 else "-" for x in edges_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)

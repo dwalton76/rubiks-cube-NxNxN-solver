@@ -2317,9 +2317,34 @@ class LookupTable555Phase5HighEdge(LookupTable):
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        self.wing_strs = ("LB", "LF", "RB", "RF")
 
     def state(self):
-        return "".join([self.parent.state[x] if x in high_wings_555 else "-" for x in edges_555])
+        wing_strs_LB_LF_RB_RF = ("LB", "LF", "RB", "RF")
+        results = []
+
+        for x in edges_555:
+            if x in high_wings_555:
+                partner_index = edges_partner_555[x]
+                square_value = self.parent.state[x]
+                partner_value = self.parent.state[partner_index]
+                wing_str_unmapped = square_value + partner_value
+                wing_str = wing_str_map[wing_str_unmapped]
+
+                if wing_str in self.wing_strs:
+                    index = self.wing_strs.index(wing_str)
+                    wing_str_LB_LF_RB_RF = wing_strs_LB_LF_RB_RF[index]
+
+                    if wing_str_unmapped in wing_strs_all:
+                        results.append(wing_str_LB_LF_RB_RF[0])
+                    else:
+                        results.append(wing_str_LB_LF_RB_RF[1])
+                else:
+                    results.append("-")
+            else:
+                results.append("-")
+
+        return "".join(results)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
@@ -2396,9 +2421,34 @@ class LookupTable555Phase5LowEdge(LookupTable):
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        self.wing_strs = ("LB", "LF", "RB", "RF")
 
     def state(self):
-        return "".join([self.parent.state[x] if x in low_wings_555 else "-" for x in edges_555])
+        wing_strs_LB_LF_RB_RF = ("LB", "LF", "RB", "RF")
+        results = []
+
+        for x in edges_555:
+            if x in low_wings_555:
+                partner_index = edges_partner_555[x]
+                square_value = self.parent.state[x]
+                partner_value = self.parent.state[partner_index]
+                wing_str_unmapped = square_value + partner_value
+                wing_str = wing_str_map[wing_str_unmapped]
+
+                if wing_str in self.wing_strs:
+                    index = self.wing_strs.index(wing_str)
+                    wing_str_LB_LF_RB_RF = wing_strs_LB_LF_RB_RF[index]
+
+                    if wing_str_unmapped in wing_strs_all:
+                        results.append(wing_str_LB_LF_RB_RF[0])
+                    else:
+                        results.append(wing_str_LB_LF_RB_RF[1])
+                else:
+                    results.append("-")
+            else:
+                results.append("-")
+
+        return "".join(results)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
@@ -2428,6 +2478,9 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_low_edge_midge,
                 parent.lt_phase5_centers,
             ),
+            # dwalton
+            perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-high-low-edge.perfect-hash",
+            pt1_state_max=11880,
         )
 
 
@@ -3577,8 +3630,11 @@ class RubiksCube555(RubiksCube):
             self.solution = original_solution[:]
             self.edges_flip_orientation(wing_str_combo, [])
 
+            # dwalton
             self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
+            self.lt_phase5_high_edge.wing_strs = wing_str_combo
+            self.lt_phase5_low_edge.wing_strs = wing_str_combo
             wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase5.prune_tables])
             phase5_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
             pt_state_indexes.append(wing_str_combo_pt_state_indexes)
@@ -3592,7 +3648,9 @@ class RubiksCube555(RubiksCube):
         phase6_pt_state_indexes_to_phase5_solution = {}
 
         for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
-            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state)]
+            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[
+                (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state)
+            ]
             self.state = original_state[:]
             self.solution = original_solution[:]
             self.edges_flip_orientation(wing_strs_all, [])

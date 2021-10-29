@@ -2077,14 +2077,12 @@ int main(int argc, char *argv[]) {
                                       prune_table_3_state, prune_table_4_state, min_ida_threshold, max_ida_threshold,
                                       use_uthash, find_extra);
         }
-
-        if (search_result.found_solution) {
-            print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                              prune_table_3_state, prune_table_4_state, search_result.solution, search_result.f_cost);
-        }
     }
 
-    if (!search_result.found_solution) {
+    if (search_result.found_solution) {
+        print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                          prune_table_3_state, prune_table_4_state, search_result.solution, search_result.f_cost);
+    } else {
         exit(1);
     }
 }

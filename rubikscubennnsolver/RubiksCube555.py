@@ -1,5 +1,4 @@
 # standard libraries
-import itertools
 import logging
 
 # rubiks cube libraries
@@ -2076,10 +2075,14 @@ class LookupTable555Phase5Centers(LookupTable):
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
             ),
             # fmt: on
             use_state_index=True,
@@ -2129,10 +2132,14 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
             ),
             # fmt: on
             use_state_index=True,
@@ -2205,10 +2212,14 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
             ),
             # fmt: on
             use_state_index=True,
@@ -2457,6 +2468,69 @@ class LookupTable555Phase5LowEdge(LookupTable):
             cube[pos] = pos_state
 
 
+class LookupTable555Phase5FBCenters(LookupTable):
+    """
+    lookup-table-5x5x5-step58-phase5-FB-centers.txt
+    ===============================================
+    0 steps has 6 entries (0 percent, 0.00x previous step)
+    1 steps has 22 entries (0 percent, 3.67x previous step)
+    2 steps has 110 entries (2 percent, 5.00x previous step)
+    3 steps has 396 entries (8 percent, 3.60x previous step)
+    4 steps has 1,196 entries (24 percent, 3.02x previous step)
+    5 steps has 2,102 entries (42 percent, 1.76x previous step)
+    6 steps has 1,016 entries (20 percent, 0.48x previous step)
+    7 steps has 52 entries (1 percent, 0.05x previous step)
+
+    Total: 4,900 entries
+    Average: 4.73 moves
+    """
+
+    # fmt: off
+    state_targets = (
+        "BFBBFBBFBFBFFBFFBF",
+        "BFFBFFBFFBBFBBFBBF",
+        "BFFBFFBFFFBBFBBFBB",
+        "FFBFFBFFBBBFBBFBBF",
+        "FFBFFBFFBFBBFBBFBB",
+        "FFFFFFFFFBBBBBBBBB"
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step58-phase5-FB-centers.txt",
+            self.state_targets,
+            linecount=4900,
+            max_depth=7,
+            all_moves=moves_555,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join([self.parent.state[x] for x in FB_centers_555])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for (pos, pos_state) in zip(FB_centers_555, state):
+            cube[pos] = pos_state
+
+
 class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -2465,10 +2539,14 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             all_moves=moves_555,
             # fmt: off
             illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'",
             ),
             # fmt: on
             prune_tables=(
@@ -2479,8 +2557,8 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 parent.lt_phase5_centers,
             ),
             # dwalton
-            perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-high-low-edge.perfect-hash",
-            pt1_state_max=11880,
+            # perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-high-low-edge.perfect-hash",
+            # pt1_state_max=11880,
         )
 
 
@@ -3193,6 +3271,7 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
         self.lt_phase5_high_edge = LookupTable555Phase5HighEdge(self)
         self.lt_phase5_low_edge = LookupTable555Phase5LowEdge(self)
+        self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
         # phase 6
@@ -3619,18 +3698,29 @@ class RubiksCube555(RubiksCube):
         if self.edge_swaps_odd(False, 0, False):
             raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
 
+        # dwalton
+        wing_str_combo = ("UL", "UF", "RF", "DF")
+        self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
+        self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
+        self.lt_phase5_high_edge.wing_strs = wing_str_combo
+        self.lt_phase5_low_edge.wing_strs = wing_str_combo
+        phase5_solutions = self.lt_phase5.solutions_via_c()
+        phase5_solution = phase5_solutions[0][0]
+
+        """
         # phase 5
         original_state = self.state[:]
         original_solution = self.solution[:]
         pt_state_indexes = []
         phase5_pt_state_indexes_to_wing_str_combo = {}
 
+        import itertools
+
         for wing_str_combo in itertools.combinations(wing_strs_all, 4):
             self.state = original_state[:]
             self.solution = original_solution[:]
             self.edges_flip_orientation(wing_str_combo, [])
 
-            # dwalton
             self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_high_edge.wing_strs = wing_str_combo
@@ -3714,6 +3804,7 @@ class RubiksCube555(RubiksCube):
             # if we are here, solution_count is None so there will only be one solution to choose from
             phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase6_solutions[0]
             phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
+        """
 
         # put the cube back in its post EO state
         self.state = self.post_eo_state
@@ -3727,14 +3818,18 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
+        # dwalton
+        raise Exception("DONE")
 
         # phase 6
+        """
         tmp_solution_len = len(self.solution)
 
         for step in phase6_solution:
             self.rotate(step)
 
         self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
+        """
 
     def reduce_333(self):
         self.lt_init()

@@ -285,7 +285,7 @@ class LookupTableIDAViaGraph(LookupTable):
         cmd = ["./ida_search_via_graph"]
 
         if pt_states:
-            pt_states = sorted(set(pt_states))
+            pt_states = set(pt_states)
             pt_states_filename = (
                 "/tmp/pt-states-" + "".join(random.choice(string.ascii_uppercase) for i in range(6)) + ".txt"
             )

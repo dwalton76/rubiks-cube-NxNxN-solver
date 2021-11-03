@@ -1,4 +1,5 @@
 # standard libraries
+import itertools
 import logging
 
 # rubiks cube libraries
@@ -2260,277 +2261,6 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             self.parent.rotate(step)
 
 
-class LookupTable555Phase5HighEdge(LookupTable):
-    """
-    lookup-table-5x5x5-step56-phase5-high-edge.txt
-    ==============================================
-    0 steps has 24 entries (0 percent, 0.00x previous step)
-    1 steps has 48 entries (0 percent, 2.00x previous step)
-    2 steps has 504 entries (4 percent, 10.50x previous step)
-    3 steps has 2,928 entries (24 percent, 5.81x previous step)
-    4 steps has 5,208 entries (43 percent, 1.78x previous step)
-    5 steps has 3,168 entries (26 percent, 0.61x previous step)
-
-    Total: 11,880 entries
-    Average: 3.92 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "----------------L--L-------B----B-------R--R-------F----F---------------",
-        "----------------L--L-------B----F-------R--R-------B----F---------------",
-        "----------------L--L-------F----B-------R--R-------F----B---------------",
-        "----------------L--L-------F----F-------R--R-------B----B---------------",
-        "----------------L--R-------B----B-------L--R-------F----F---------------",
-        "----------------L--R-------B----F-------L--R-------F----B---------------",
-        "----------------L--R-------B----F-------R--L-------B----F---------------",
-        "----------------L--R-------B----F-------R--L-------F----B---------------",
-        "----------------L--R-------F----B-------L--R-------B----F---------------",
-        "----------------L--R-------F----B-------R--L-------B----F---------------",
-        "----------------L--R-------F----B-------R--L-------F----B---------------",
-        "----------------L--R-------F----F-------L--R-------B----B---------------",
-        "----------------R--L-------B----B-------R--L-------F----F---------------",
-        "----------------R--L-------B----F-------L--R-------B----F---------------",
-        "----------------R--L-------B----F-------L--R-------F----B---------------",
-        "----------------R--L-------B----F-------R--L-------F----B---------------",
-        "----------------R--L-------F----B-------L--R-------B----F---------------",
-        "----------------R--L-------F----B-------L--R-------F----B---------------",
-        "----------------R--L-------F----B-------R--L-------B----F---------------",
-        "----------------R--L-------F----F-------R--L-------B----B---------------",
-        "----------------R--R-------B----B-------L--L-------F----F---------------",
-        "----------------R--R-------B----F-------L--L-------B----F---------------",
-        "----------------R--R-------F----B-------L--L-------F----B---------------",
-        "----------------R--R-------F----F-------L--L-------B----B---------------"
-    )
-    # fmt: on
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step56-phase5-high-edge.txt",
-            self.state_targets,
-            linecount=11880,
-            max_depth=5,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        self.wing_strs = ("LB", "LF", "RB", "RF")
-
-    def state(self):
-        wing_strs_LB_LF_RB_RF = ("LB", "LF", "RB", "RF")
-        results = []
-
-        for x in edges_555:
-            if x in high_wings_555:
-                partner_index = edges_partner_555[x]
-                square_value = self.parent.state[x]
-                partner_value = self.parent.state[partner_index]
-                wing_str_unmapped = square_value + partner_value
-                wing_str = wing_str_map[wing_str_unmapped]
-
-                if wing_str in self.wing_strs:
-                    index = self.wing_strs.index(wing_str)
-                    wing_str_LB_LF_RB_RF = wing_strs_LB_LF_RB_RF[index]
-
-                    if wing_str_unmapped in wing_strs_all:
-                        results.append(wing_str_LB_LF_RB_RF[0])
-                    else:
-                        results.append(wing_str_LB_LF_RB_RF[1])
-                else:
-                    results.append("-")
-            else:
-                results.append("-")
-
-        return "".join(results)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(edges_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555Phase5LowEdge(LookupTable):
-    """
-    lookup-table-5x5x5-step57-phase5-low-edge.txt
-    =============================================
-    0 steps has 24 entries (0 percent, 0.00x previous step)
-    1 steps has 48 entries (0 percent, 2.00x previous step)
-    2 steps has 504 entries (4 percent, 10.50x previous step)
-    3 steps has 2,928 entries (24 percent, 5.81x previous step)
-    4 steps has 5,208 entries (43 percent, 1.78x previous step)
-    5 steps has 3,168 entries (26 percent, 0.61x previous step)
-
-    Total: 11,880 entries
-    Average: 3.92 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "---------------L----L-------B--B-------R----R-------F--F----------------",
-        "---------------L----L-------B--F-------R----R-------B--F----------------",
-        "---------------L----L-------F--B-------R----R-------F--B----------------",
-        "---------------L----L-------F--F-------R----R-------B--B----------------",
-        "---------------L----R-------B--B-------L----R-------F--F----------------",
-        "---------------L----R-------B--F-------L----R-------F--B----------------",
-        "---------------L----R-------B--F-------R----L-------B--F----------------",
-        "---------------L----R-------B--F-------R----L-------F--B----------------",
-        "---------------L----R-------F--B-------L----R-------B--F----------------",
-        "---------------L----R-------F--B-------R----L-------B--F----------------",
-        "---------------L----R-------F--B-------R----L-------F--B----------------",
-        "---------------L----R-------F--F-------L----R-------B--B----------------",
-        "---------------R----L-------B--B-------R----L-------F--F----------------",
-        "---------------R----L-------B--F-------L----R-------B--F----------------",
-        "---------------R----L-------B--F-------L----R-------F--B----------------",
-        "---------------R----L-------B--F-------R----L-------F--B----------------",
-        "---------------R----L-------F--B-------L----R-------B--F----------------",
-        "---------------R----L-------F--B-------L----R-------F--B----------------",
-        "---------------R----L-------F--B-------R----L-------B--F----------------",
-        "---------------R----L-------F--F-------R----L-------B--B----------------",
-        "---------------R----R-------B--B-------L----L-------F--F----------------",
-        "---------------R----R-------B--F-------L----L-------B--F----------------",
-        "---------------R----R-------F--B-------L----L-------F--B----------------",
-        "---------------R----R-------F--F-------L----L-------B--B----------------"
-    )
-    # fmt: on
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step57-phase5-low-edge.txt",
-            self.state_targets,
-            linecount=11880,
-            max_depth=5,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        self.wing_strs = ("LB", "LF", "RB", "RF")
-
-    def state(self):
-        wing_strs_LB_LF_RB_RF = ("LB", "LF", "RB", "RF")
-        results = []
-
-        for x in edges_555:
-            if x in low_wings_555:
-                partner_index = edges_partner_555[x]
-                square_value = self.parent.state[x]
-                partner_value = self.parent.state[partner_index]
-                wing_str_unmapped = square_value + partner_value
-                wing_str = wing_str_map[wing_str_unmapped]
-
-                if wing_str in self.wing_strs:
-                    index = self.wing_strs.index(wing_str)
-                    wing_str_LB_LF_RB_RF = wing_strs_LB_LF_RB_RF[index]
-
-                    if wing_str_unmapped in wing_strs_all:
-                        results.append(wing_str_LB_LF_RB_RF[0])
-                    else:
-                        results.append(wing_str_LB_LF_RB_RF[1])
-                else:
-                    results.append("-")
-            else:
-                results.append("-")
-
-        return "".join(results)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(edges_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555Phase5FBCenters(LookupTable):
-    """
-    lookup-table-5x5x5-step58-phase5-FB-centers.txt
-    ===============================================
-    0 steps has 6 entries (0 percent, 0.00x previous step)
-    1 steps has 22 entries (0 percent, 3.67x previous step)
-    2 steps has 110 entries (2 percent, 5.00x previous step)
-    3 steps has 396 entries (8 percent, 3.60x previous step)
-    4 steps has 1,196 entries (24 percent, 3.02x previous step)
-    5 steps has 2,102 entries (42 percent, 1.76x previous step)
-    6 steps has 1,016 entries (20 percent, 0.48x previous step)
-    7 steps has 52 entries (1 percent, 0.05x previous step)
-
-    Total: 4,900 entries
-    Average: 4.73 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "BFBBFBBFBFBFFBFFBF",
-        "BFFBFFBFFBBFBBFBBF",
-        "BFFBFFBFFFBBFBBFBB",
-        "FFBFFBFFBBBFBBFBBF",
-        "FFBFFBFFBFBBFBBFBB",
-        "FFFFFFFFFBBBBBBBBB"
-    )
-    # fmt: on
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step58-phase5-FB-centers.txt",
-            self.state_targets,
-            linecount=4900,
-            max_depth=7,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        return "".join([self.parent.state[x] for x in FB_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for (pos, pos_state) in zip(FB_centers_555, state):
-            cube[pos] = pos_state
-
-
 class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -2548,17 +2278,12 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 "L", "L'",
                 "R", "R'",
             ),
-            # fmt: on
             prune_tables=(
-                parent.lt_phase5_high_edge,
-                parent.lt_phase5_low_edge,
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
                 parent.lt_phase5_centers,
             ),
-            # dwalton
-            # perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-high-low-edge.perfect-hash",
-            # pt1_state_max=11880,
+            # fmt: on
         )
 
 
@@ -3269,9 +2994,6 @@ class RubiksCube555(RubiksCube):
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
-        self.lt_phase5_high_edge = LookupTable555Phase5HighEdge(self)
-        self.lt_phase5_low_edge = LookupTable555Phase5LowEdge(self)
-        self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
         # phase 6
@@ -3699,22 +3421,11 @@ class RubiksCube555(RubiksCube):
             raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
 
         # dwalton
-        wing_str_combo = ("UL", "UF", "RF", "DF")
-        self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
-        self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-        self.lt_phase5_high_edge.wing_strs = wing_str_combo
-        self.lt_phase5_low_edge.wing_strs = wing_str_combo
-        phase5_solutions = self.lt_phase5.solutions_via_c()
-        phase5_solution = phase5_solutions[0][0]
-
-        """
         # phase 5
         original_state = self.state[:]
         original_solution = self.solution[:]
         pt_state_indexes = []
         phase5_pt_state_indexes_to_wing_str_combo = {}
-
-        import itertools
 
         for wing_str_combo in itertools.combinations(wing_strs_all, 4):
             self.state = original_state[:]
@@ -3723,8 +3434,6 @@ class RubiksCube555(RubiksCube):
 
             self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
             self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_high_edge.wing_strs = wing_str_combo
-            self.lt_phase5_low_edge.wing_strs = wing_str_combo
             wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase5.prune_tables])
             phase5_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
             pt_state_indexes.append(wing_str_combo_pt_state_indexes)
@@ -3738,9 +3447,7 @@ class RubiksCube555(RubiksCube):
         phase6_pt_state_indexes_to_phase5_solution = {}
 
         for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
-            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[
-                (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state)
-            ]
+            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state)]
             self.state = original_state[:]
             self.solution = original_solution[:]
             self.edges_flip_orientation(wing_strs_all, [])
@@ -3804,7 +3511,6 @@ class RubiksCube555(RubiksCube):
             # if we are here, solution_count is None so there will only be one solution to choose from
             phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase6_solutions[0]
             phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
-        """
 
         # put the cube back in its post EO state
         self.state = self.post_eo_state
@@ -3818,18 +3524,14 @@ class RubiksCube555(RubiksCube):
             self.rotate(step)
 
         self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
-        # dwalton
-        raise Exception("DONE")
 
         # phase 6
-        """
         tmp_solution_len = len(self.solution)
 
         for step in phase6_solution:
             self.rotate(step)
 
         self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
-        """
 
     def reduce_333(self):
         self.lt_init()

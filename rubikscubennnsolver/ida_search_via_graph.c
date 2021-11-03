@@ -352,8 +352,16 @@ void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cos
     node->cost_to_goal = cost_to_goal;
 
     if (cost_to_here) {
+
+        // not much performance difference in the memcpy vs the for loop
         memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+
+        // for (unsigned char i = 0; moves_to_here[i] != MOVE_NONE; i++) {
+        //     node->moves_to_here[i] = moves_to_here[i];
+        // }
+
         node->moves_to_here[cost_to_here - 1] = prev_move;
+
     } else {
         memset(node->moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
     }

@@ -1212,12 +1212,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                     pt1_state = read_state(pt1, pt1_state_offset + offset_i);
                     pt1_cost = read_cost(pt1, pt1_state_offset + offset_i + STATE_LENGTH);
 
-                    // cost_to_goal = max(pt0_cost, pt1_cost);
-                    if (pt0_cost >= pt1_cost) {
-                        cost_to_goal = pt0_cost;
-                    } else {
-                        cost_to_goal = pt1_cost;
-                    }
+                    cost_to_goal = max(pt0_cost, pt1_cost);
                     break;
 
                 case 3:

@@ -2279,9 +2279,9 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
                 "R", "R'",
             ),
             prune_tables=(
+                parent.lt_phase5_centers,
                 parent.lt_phase5_high_edge_midge,
                 parent.lt_phase5_low_edge_midge,
-                parent.lt_phase5_centers,
             ),
             # fmt: on
         )

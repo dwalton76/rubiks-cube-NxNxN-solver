@@ -1390,7 +1390,7 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
         return search_result;
     }
     LOG("cost_to_goal %d, pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n",
-        cost_to_goal, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+         ctg.cost_to_goal, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 
     gettimeofday(&start, NULL);
     ida_count_total = 0;
@@ -1405,20 +1405,21 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
-        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) +
-                   ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
-        float nodes_per_ms = ida_count / ms;
-        unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
+        // dwalton reference
+        float us = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000000) +
+                   ((stop.tv_usec - start_this_threshold.tv_usec));
+        float nodes_per_us = ida_count / us;
+        unsigned int nodes_per_sec = nodes_per_us * 1000000;
         LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'llu nodes-per-sec\n", threshold, ida_count,
-            ms / 1000, nodes_per_sec);
+            us / 1000000, nodes_per_sec);
 
         if (search_result.found_solution) {
-            float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
-            float nodes_per_ms = ida_count_total / ms;
-            unsigned int nodes_per_sec = nodes_per_ms * 1000;
+            float us = ((stop.tv_sec - start.tv_sec) * 1000000) + ((stop.tv_usec - start.tv_usec));
+            float nodes_per_us = ida_count_total / us;
+            unsigned int nodes_per_sec = nodes_per_us * 1000000;
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n", ida_count_total,
-                ms / 1000, nodes_per_sec);
+                us / 1000000, nodes_per_sec);
 
             if (solution_count >= min_solution_count || !find_extra) {
                 return search_result;
@@ -2003,11 +2004,15 @@ int main(int argc, char *argv[]) {
         struct ida_search_result min_search_result;
         min_search_result.found_solution = 0;
         min_search_result.f_cost = 99;
+        struct timeval pt_states_start, pt_states_stop;
+        unsigned int pt_states_ida_count_total = 0;
 
         if (access(prune_table_states_filename, F_OK) != 0) {
             printf("ERROR: file %s not found\n", prune_table_states_filename);
             exit(1);
         }
+
+        gettimeofday(&pt_states_start, NULL);
 
         for (unsigned char i_ida_threshold = min_ida_threshold; i_ida_threshold <= max_ida_threshold;
              i_ida_threshold++) {
@@ -2041,6 +2046,7 @@ int main(int argc, char *argv[]) {
                 search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state,
                                           prune_table_2_state, prune_table_3_state, prune_table_4_state,
                                           i_ida_threshold, i_ida_threshold, use_uthash, find_extra);
+                pt_states_ida_count_total += ida_count;
 
                 if (search_result.found_solution) {
                     if (search_result.f_cost < min_search_result.f_cost) {
@@ -2072,6 +2078,13 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
+
+        gettimeofday(&pt_states_stop, NULL);
+        float us = ((pt_states_stop.tv_sec - pt_states_start.tv_sec) * 1000000) + ((pt_states_stop.tv_usec - pt_states_start.tv_usec));
+        float nodes_per_us = pt_states_ida_count_total / us;
+        unsigned int nodes_per_sec = nodes_per_us * 1000000;
+        LOG("all pt-states explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n", pt_states_ida_count_total,
+            us / 1000000, nodes_per_sec);
 
         if (line) {
             free(line);

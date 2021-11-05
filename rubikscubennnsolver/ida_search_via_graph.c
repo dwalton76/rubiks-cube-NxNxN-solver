@@ -1393,6 +1393,7 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
         cost_to_goal, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 
     gettimeofday(&start, NULL);
+    ida_count_total = 0;
 
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;

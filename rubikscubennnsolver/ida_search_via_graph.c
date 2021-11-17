@@ -10,6 +10,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "ida_search_666.h"
 #include "ida_search_777.h"
@@ -349,7 +350,22 @@ void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cos
     struct StackNode *node = (struct StackNode *)malloc(sizeof(struct StackNode));
     node->cost_to_here = cost_to_here;
     node->cost_to_goal = cost_to_goal;
-    memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+
+    if (cost_to_here) {
+
+        // not much performance difference in the memcpy vs the for loop
+        memcpy(node->moves_to_here, moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
+
+        // for (unsigned char i = 0; moves_to_here[i] != MOVE_NONE; i++) {
+        //     node->moves_to_here[i] = moves_to_here[i];
+        // }
+
+        node->moves_to_here[cost_to_here - 1] = prev_move;
+
+    } else {
+        memset(node->moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
+    }
+
     node->prev_move = prev_move;
     node->pt0_state = pt0_state;
     node->pt1_state = pt1_state;
@@ -1058,8 +1074,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
     unsigned int pt2_state_offset = 0;
     unsigned int pt3_state_offset = 0;
     unsigned int pt4_state_offset = 0;
-    move_type move, moves_to_here[MAX_IDA_THRESHOLD];
-    memset(moves_to_here, MOVE_NONE, sizeof(move_type) * MAX_IDA_THRESHOLD);
+    move_type move;
     search_result.found_solution = 0;
     char key[64];
     move_type *prev_move_move_matrix = NULL;
@@ -1075,7 +1090,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
     struct StackNode *root = NULL;
     struct StackNode *node = NULL;
 
-    push(&root, 0, ctg.cost_to_goal, moves_to_here, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
+    push(&root, 0, ctg.cost_to_goal, NULL, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
          init_pt3_state, init_pt4_state, cube_copy);
 
     for (unsigned char i = 0; i < legal_move_count; i++) {
@@ -1142,7 +1157,6 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
         }
         */
 
-        memcpy(moves_to_here, node->moves_to_here, sizeof(move_type) * MAX_IDA_THRESHOLD);
         prev_move_move_matrix = move_matrix[node->prev_move];
         cube_copy = NULL;
 
@@ -1190,13 +1204,13 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                 case 1:
                     // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
                     // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt0_state = read_state(pt0, pt0_state_offset + offset_i);
+                    pt0_cost = read_cost(pt0, pt0_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
                     // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt1_state = read_state(pt1, pt1_state_offset + offset_i);
+                    pt1_cost = read_cost(pt1, pt1_state_offset + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     break;
@@ -1204,23 +1218,23 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                 case 3:
                     // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
                     // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt0_state = read_state(pt0, pt0_state_offset + offset_i);
+                    pt0_cost = read_cost(pt0, pt0_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
                     // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt1_state = read_state(pt1, pt1_state_offset + offset_i);
+                    pt1_cost = read_cost(pt1, pt1_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
                     // pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
-                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
-                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt2_state = read_state(pt2, pt2_state_offset + offset_i);
+                    pt2_cost = read_cost(pt2, pt2_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt3_state, &pt3[pt3_state_offset + offset_i], sizeof(unsigned int));
                     // pt3_cost = pt3[pt3_state_offset + offset_i + STATE_LENGTH];
-                    pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
-                    pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt3_state = read_state(pt3, pt3_state_offset + offset_i);
+                    pt3_cost = read_cost(pt3, pt3_state_offset + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     cost_to_goal = max(cost_to_goal, pt2_cost);
@@ -1230,18 +1244,18 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                 case 2:
                     // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
                     // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt0_state = read_state(pt0, pt0_state_offset + offset_i);
+                    pt0_cost = read_cost(pt0, pt0_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
                     // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt1_state = read_state(pt1, pt1_state_offset + offset_i);
+                    pt1_cost = read_cost(pt1, pt1_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
                     // pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
-                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
-                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt2_state = read_state(pt2, pt2_state_offset + offset_i);
+                    pt2_cost = read_cost(pt2, pt2_state_offset + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     cost_to_goal = max(cost_to_goal, pt2_cost);
@@ -1250,28 +1264,28 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                 case 4:
                     // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
                     // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt0_state = read_state(pt0, pt0_state_offset + offset_i);
+                    pt0_cost = read_cost(pt0, pt0_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt1_state, &pt1[pt1_state_offset + offset_i], sizeof(unsigned int));
                     // pt1_cost = pt1[pt1_state_offset + offset_i + STATE_LENGTH];
-                    pt1_state = read_state(pt1, (node->pt1_state * ROW_LENGTH) + offset_i);
-                    pt1_cost = read_cost(pt1, (node->pt1_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt1_state = read_state(pt1, pt1_state_offset + offset_i);
+                    pt1_cost = read_cost(pt1, pt1_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt2_state, &pt2[pt2_state_offset + offset_i], sizeof(unsigned int));
                     // pt2_cost = pt2[pt2_state_offset + offset_i + STATE_LENGTH];
-                    pt2_state = read_state(pt2, (node->pt2_state * ROW_LENGTH) + offset_i);
-                    pt2_cost = read_cost(pt2, (node->pt2_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt2_state = read_state(pt2, pt2_state_offset + offset_i);
+                    pt2_cost = read_cost(pt2, pt2_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt3_state, &pt3[pt3_state_offset + offset_i], sizeof(unsigned int));
                     // pt3_cost = pt3[pt3_state_offset + offset_i + STATE_LENGTH];
-                    pt3_state = read_state(pt3, (node->pt3_state * ROW_LENGTH) + offset_i);
-                    pt3_cost = read_cost(pt3, (node->pt3_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt3_state = read_state(pt3, pt3_state_offset + offset_i);
+                    pt3_cost = read_cost(pt3, pt3_state_offset + offset_i + STATE_LENGTH);
 
                     // memcpy(&pt4_state, &pt4[pt4_state_offset + offset_i], sizeof(unsigned int));
                     // pt4_cost = pt4[pt4_state_offset + offset_i + STATE_LENGTH];
-                    pt4_state = read_state(pt4, (node->pt4_state * ROW_LENGTH) + offset_i);
-                    pt4_cost = read_cost(pt4, (node->pt4_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt4_state = read_state(pt4, pt4_state_offset + offset_i);
+                    pt4_cost = read_cost(pt4, pt4_state_offset + offset_i + STATE_LENGTH);
 
                     cost_to_goal = max(pt0_cost, pt1_cost);
                     cost_to_goal = max(cost_to_goal, pt2_cost);
@@ -1282,8 +1296,8 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                 case 0:
                     // memcpy(&pt0_state, &pt0[pt0_state_offset + offset_i], sizeof(unsigned int));
                     // pt0_cost = pt0[pt0_state_offset + offset_i + STATE_LENGTH];
-                    pt0_state = read_state(pt0, (node->pt0_state * ROW_LENGTH) + offset_i);
-                    pt0_cost = read_cost(pt0, (node->pt0_state * ROW_LENGTH) + offset_i + STATE_LENGTH);
+                    pt0_state = read_state(pt0, pt0_state_offset + offset_i);
+                    pt0_cost = read_cost(pt0, pt0_state_offset + offset_i + STATE_LENGTH);
                     cost_to_goal = pt0_cost;
                     break;
 
@@ -1323,10 +1337,9 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                                              pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, cost_to_goal);
             }
             ida_count++;
-            moves_to_here[node->cost_to_here] = move;
 
             if (node->cost_to_here + 1 + cost_to_goal <= threshold) {
-                push(&root, node->cost_to_here + 1, cost_to_goal, moves_to_here, move, pt0_state, pt1_state, pt2_state,
+                push(&root, node->cost_to_here + 1, cost_to_goal, node->moves_to_here, move, pt0_state, pt1_state, pt2_state,
                      pt3_state, pt4_state, cube_copy);
             } else {
                 if (cube_copy) {
@@ -1377,9 +1390,10 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
         return search_result;
     }
     LOG("cost_to_goal %d, pt0_state %d, pt1_state %d, pt2_state %d, pt3_state %d, pt4_state %d\n",
-        cost_to_goal, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
+         ctg.cost_to_goal, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 
     gettimeofday(&start, NULL);
+    ida_count_total = 0;
 
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
@@ -1391,20 +1405,20 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
 
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
-        float ms = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000) +
-                   ((stop.tv_usec - start_this_threshold.tv_usec) / 1000);
-        float nodes_per_ms = ida_count / ms;
-        unsigned int nodes_per_sec = nodes_per_ms * 1000;
 
+        float us = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000000) +
+                   ((stop.tv_usec - start_this_threshold.tv_usec));
+        float nodes_per_us = ida_count / us;
+        unsigned int nodes_per_sec = nodes_per_us * 1000000;
         LOG("IDA threshold %d, explored %'llu nodes, took %.3fs, %'llu nodes-per-sec\n", threshold, ida_count,
-            ms / 1000, nodes_per_sec);
+            us / 1000000, nodes_per_sec);
 
         if (search_result.found_solution) {
-            float ms = ((stop.tv_sec - start.tv_sec) * 1000) + ((stop.tv_usec - start.tv_usec) / 1000);
-            float nodes_per_ms = ida_count_total / ms;
-            unsigned int nodes_per_sec = nodes_per_ms * 1000;
+            float us = ((stop.tv_sec - start.tv_sec) * 1000000) + ((stop.tv_usec - start.tv_usec));
+            float nodes_per_us = ida_count_total / us;
+            unsigned int nodes_per_sec = nodes_per_us * 1000000;
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n", ida_count_total,
-                ms / 1000, nodes_per_sec);
+                us / 1000000, nodes_per_sec);
 
             if (solution_count >= min_solution_count || !find_extra) {
                 return search_result;
@@ -1417,6 +1431,12 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
 }
 
 char *read_file(char *filename) {
+
+    if (access(filename, F_OK) != 0) {
+        printf("ERROR: file %s not found\n", filename);
+        exit(1);
+    }
+
     FILE *fh = fopen(filename, "rb");
     unsigned long bufsize = 0;
     char *buffer = NULL;
@@ -1983,6 +2003,15 @@ int main(int argc, char *argv[]) {
         struct ida_search_result min_search_result;
         min_search_result.found_solution = 0;
         min_search_result.f_cost = 99;
+        struct timeval pt_states_start, pt_states_stop;
+        unsigned int pt_states_ida_count_total = 0;
+
+        if (access(prune_table_states_filename, F_OK) != 0) {
+            printf("ERROR: file %s not found\n", prune_table_states_filename);
+            exit(1);
+        }
+
+        gettimeofday(&pt_states_start, NULL);
 
         for (unsigned char i_ida_threshold = min_ida_threshold; i_ida_threshold <= max_ida_threshold;
              i_ida_threshold++) {
@@ -2016,6 +2045,7 @@ int main(int argc, char *argv[]) {
                 search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state,
                                           prune_table_2_state, prune_table_3_state, prune_table_4_state,
                                           i_ida_threshold, i_ida_threshold, use_uthash, find_extra);
+                pt_states_ida_count_total += ida_count;
 
                 if (search_result.found_solution) {
                     if (search_result.f_cost < min_search_result.f_cost) {
@@ -2048,6 +2078,13 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        gettimeofday(&pt_states_stop, NULL);
+        float us = ((pt_states_stop.tv_sec - pt_states_start.tv_sec) * 1000000) + ((pt_states_stop.tv_usec - pt_states_start.tv_usec));
+        float nodes_per_us = pt_states_ida_count_total / us;
+        unsigned int nodes_per_sec = nodes_per_us * 1000000;
+        LOG("all pt-states explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n", pt_states_ida_count_total,
+            us / 1000000, nodes_per_sec);
+
         if (line) {
             free(line);
         }
@@ -2065,14 +2102,12 @@ int main(int argc, char *argv[]) {
                                       prune_table_3_state, prune_table_4_state, min_ida_threshold, max_ida_threshold,
                                       use_uthash, find_extra);
         }
-
-        if (search_result.found_solution) {
-            print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
-                              prune_table_3_state, prune_table_4_state, search_result.solution, search_result.f_cost);
-        }
     }
 
-    if (!search_result.found_solution) {
+    if (search_result.found_solution) {
+        print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
+                          prune_table_3_state, prune_table_4_state, search_result.solution, search_result.f_cost);
+    } else {
         exit(1);
     }
 }

@@ -1406,7 +1406,6 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
 
-        // dwalton reference
         float us = ((stop.tv_sec - start_this_threshold.tv_sec) * 1000000) +
                    ((stop.tv_usec - start_this_threshold.tv_usec));
         float nodes_per_us = ida_count / us;

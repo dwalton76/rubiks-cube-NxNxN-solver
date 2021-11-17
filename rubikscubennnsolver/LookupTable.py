@@ -679,7 +679,7 @@ class LookupTable(object):
             # but would be slower.  I have not measured how much slower.
             with open(self.filename, "r") as fh:
 
-                # The bottleneck is the building of the dictionary, moreso that reading from disk.
+                # The bottleneck is the building of the dictionary, moreso than reading from disk.
                 for line in fh:
                     (state, steps) = line.rstrip().split(":")
 

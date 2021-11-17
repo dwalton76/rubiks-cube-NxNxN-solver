@@ -1,0 +1,123 @@
+profiling notes
+---------------
+gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/ida_search.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/xxhash.c -lm -pg
+gprof ida_search  gmon.out > prof_output; head -n 20 prof_output
+
+
+todo
+----
+- clean up cube_copy and cube_tmp?
+
+- verify everything works on a pi3
+
+- switch to click
+
+- clean up /home/dwalton/rubiks-cube-lookup-tables/rubikscubelookuptables/builder777.py
+
+- chop md5 stuff and version the lookup tables
+
+- write docs
+
+- 555 experiment with eliminating phase4
+
+- chop "dummy" references
+
+- chop rubikscubennnsolver/LookupTableIDAViaGraph.py build_ida_graph and utils/convert-pt-state-to-perfect-hash.py
+
+555
+===
+- update README
+- sort pt-states file so entry with lowest average heuristic is evaluated first?
+- bring back the push() code that sorts the stack by lowest heuristic...this is in git history somewhere
+- fix the pt-states nodes-per-second stats
+- use threads for pt-states searches
+
+
+- time test.py
+
+5x5x5 avg solution 76.66 steps
+5x5x5 min solution 69 steps (DUFLUDDLRDRLUFBBDRFRBUBFDLDLBLUFLUUUBRFBLBUDRBFLLLLFULFULUBBFDFRRDRUDBDDURURRFBRFLDLLFBDRDRRDRDFLDRUFFBRDFFBLLUDLLRBFRULRUDUBFBLBRRBFUDDFBBLFUUBDBFRUU)
+5x5x5 max solution 80 steps (BDRUFFDRDBLBUBBULRFLBFFUUFFUURDLDRFLBRDRLLLUDRLLFRRRLBLDBURRRDFUDDUFFULDDBFDFBLDRFUUDDLDBUUUFRULBFLDULBFUBBLDLRULLDUFDDFDRFBBURURLRRFBDBRBFFBLRBLBBURF)
+real    90m52.299s
+
+
+6x6x6 took 24m 54s
+7x7x7 took 21m 17s
+8x8x8 took 9m 42s
+9x9x9 took 15m 5s
+10x10x10 took 30m 29s
+
+
+latest 5x5x5 took 173m...I thought it was going to be faster :(
+putting the "sorted(set(pt_states))" back in brought this down to 93m...wow!!
+
+
+
+666
+===
+# This takes 41s
+./ida_search_via_graph \
+  --prune-table-0-filename lookup-tables/lookup-table-6x6x6-step00-inner-x-centers-stage.bin --prune-table-0-state 14592 \
+  --kociemba ........Lx...xLLL..LLxx...xx................xx...Lxxx..LxxL...xL................xx...xLxL..xxxL...Lx................xx...xLxL..xxLL...xx................xx...xxxx..xxLL...LL................xx...xxLx..xxxx...Lx........ \
+  --centers-only \
+  --type 6x6x6-LR-oblique-edges-inner-x-centers-stage \
+  --legal-moves "U,U',U2,Uw,Uw',Uw2,3Uw,3Uw',3Uw2,L,L',L2,Lw,Lw',Lw2,3Lw,3Lw',3Lw2,F,F',F2,Fw,Fw',Fw2,3Fw,3Fw',3Fw2,R,R',R2,Rw,Rw',Rw2,3Rw,3Rw',3Rw2,B,B',B2,Bw,Bw',Bw2,3Bw,3Bw',3Bw2,D,D',D2,Dw,Dw',Dw2,3Dw,3Dw',3Dw2"
+
+# This takes 55s
+./ida_search_via_graph \
+  --prune-table-0-filename lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage.bin --prune-table-0-state 11594 \
+  --orbit0-need-odd-w --orbit1-need-odd-w \
+  --kociemba ........UU...Uxxx..xxUx...xU....................................................Ux...xUUU..xUUU...xx................UU...xUxU..xxxU...Ux....................................................xx...xUxx..UxUU...UU........ \
+  --centers-only \
+  --type 6x6x6-UD-oblique-edges-inner-x-centers-stage \
+  --legal-moves "U,U',U2,Uw2,3Uw2,Lw,Lw',Lw2,3Lw,3Lw',3Lw2,F,F',F2,Fw2,3Fw2,Rw,Rw',Rw2,3Rw,3Rw',3Rw2,B,B',B2,Bw2,3Bw2,D,D',D2,Dw2,3Dw2"
+
+We need a heuristic that is more accurate than unpaired count (much easier said than done) or use
+multiple threads.
+
+
+# baseline
+./ida_search_via_graph \
+  --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 \
+  --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
+  --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+[2021-11-03T11:15:50.474] cost_to_goal 0, pt0_state 218536, pt1_state 86325, pt2_state 0, pt3_state 0, pt4_state 0
+[2021-11-03T11:15:50.474] IDA threshold 7, explored 720 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:15:50.475] IDA threshold 8, explored 23,067 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:15:50.488] IDA threshold 9, explored 547,275 nodes, took 0.013s, 42,098,080 nodes-per-sec
+[2021-11-03T11:15:50.781] IDA threshold 10, explored 13,310,568 nodes, took 0.293s, 45,428,560 nodes-per-sec
+[2021-11-03T11:15:51.133] IDA count 16,672,377, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+[2021-11-03T11:15:51.134] IDA threshold 11, explored 16,672,377 nodes, took 0.354s, 47,097,108 nodes-per-sec
+[2021-11-03T11:15:51.134] IDA found solution, explored 30,554,007 total nodes, took 0.661s, 46,223,916 nodes-per-sec
+
+
+
+       PT0  PT1  CTG  TRU  IDX
+       ===  ===  ===  ===  ===
+ INIT    6    7    7   11    0
+   D2    6    6    6   10    1
+  Rw'    6    5    6    9    2
+   D2    7    5    7    8    3
+   Fw    6    5    6    7    4
+  Rw'    5    6    6    6    5
+    B    5    5    5    5    6
+  Uw'    4    4    4    4    7
+  Lw'    3    3    3    3    8
+    D    2    2    2    2    9
+   Dw    1    1    1    1   10
+  Bw'    0    0    0    0   11
+
+
+# chopping the moves memcpy
+[2021-11-03T11:41:47.032] cost_to_goal 0, pt0_state 218536, pt1_state 86325, pt2_state 0, pt3_state 0, pt4_state 0
+[2021-11-03T11:41:47.032] IDA threshold 7, explored 720 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:41:47.032] IDA threshold 8, explored 23,067 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:41:47.040] IDA threshold 9, explored 547,275 nodes, took 0.007s, 78,182,144 nodes-per-sec
+[2021-11-03T11:41:47.249] IDA threshold 10, explored 13,310,568 nodes, took 0.209s, 63,686,928 nodes-per-sec
+[2021-11-03T11:41:47.494] IDA count 16,672,377, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+[2021-11-03T11:41:47.494] IDA threshold 11, explored 16,672,377 nodes, took 0.244s, 68,329,416 nodes-per-sec
+[2021-11-03T11:41:47.494] IDA found solution, explored 30,554,007 total nodes, took 0.462s, 66,134,220 nodes-per-sec
+
+This is normally in the 60 to 65 million nodes-per-sec range

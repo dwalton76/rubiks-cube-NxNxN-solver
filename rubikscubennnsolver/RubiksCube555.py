@@ -545,6 +545,9 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
             else:
                 high_low = highlow_edge_values_555[(square_index, partner_index, square_value, partner_value)]
 
+                if midges_map[wing_str] is None:
+                    raise Exception(f"midges_map[{wing_str}] is None")
+
                 # If this is a high wing use the uppercase of the midge edge_index
                 if high_low == "U":
                     state[square_index] = midges_map[wing_str].upper()
@@ -2261,6 +2264,179 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             self.parent.rotate(step)
 
 
+class LookupTable555Phase5ThreeEdgesWings(LookupTable):
+    """
+    lookup-table-5x5x5-step55-phase5-three-edges-wings.txt
+    ======================================================
+    0 steps has 6 entries (0 percent, 0.00x previous step)
+    1 steps has 42 entries (0 percent, 7.00x previous step)
+    2 steps has 324 entries (0 percent, 7.71x previous step)
+    3 steps has 2,214 entries (0 percent, 6.83x previous step)
+    4 steps has 16,716 entries (0 percent, 7.55x previous step)
+    5 steps has 96,048 entries (5 percent, 5.75x previous step)
+    6 steps has 404,754 entries (23 percent, 4.21x previous step)
+    7 steps has 889,848 entries (51 percent, 2.20x previous step)
+    8 steps has 330,480 entries (18 percent, 0.37x previous step)
+    9 steps has 1,968 entries (0 percent, 0.01x previous step)
+
+    Total: 1,742,400 entries
+    Average: 6.81 moves
+    """
+
+    # fmt: off
+    state_targets = (
+        "---------------LL--LL------BF--BF------R---R--------F---F---------------",
+        "---------------LL--LL------FF--FF------R---R--------B---B---------------",
+        "---------------LR--LR------FB--FB------L---L--------F---F---------------",
+        "---------------LR--LR------FF--FF------L---L--------B---B---------------",
+        "---------------RL--RL------BF--BF------L---L--------F---F---------------",
+        "---------------RL--RL------FB--FB------L---L--------F---F---------------"
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step55-phase5-three-edges-wings.txt",
+            self.state_targets,
+            linecount=1742400,
+            max_depth=9,
+            all_moves=moves_555,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
+
+        result = []
+        for index in wings_for_edges_pattern_555:
+            if state[index] == "." or index in midge_indexes:
+                result.append("-")
+            else:
+                result.append(state[index])
+
+        return "".join(result)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ["x"]
+        self.parent.state.extend(
+            list(
+                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
+            )
+        )
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        three_edges = [31, 36, 41, 35, 40, 45, 56, 61, 66, 60, 65, 70, 81, 86, 91, 110, 115, 120]
+        midges_three_edges = [36, 40, 61, 65, 86, 115]
+        wings_three_edges = [x for x in three_edges if x not in midges_three_edges]
+
+        for x in list(edge_orbit_0_555) + list(edge_orbit_1_555):
+            if x not in wings_three_edges:
+                self.parent.state[x] = "-"
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+
+class LookupTable555Phase5ThreeEdgesMidge(LookupTable):
+    """
+    lookup-table-5x5x5-step55-phase5-three-edges-midge.txt
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 5 entries (2 percent, 5.00x previous step)
+    2 steps has 24 entries (10 percent, 4.80x previous step)
+    3 steps has 79 entries (35 percent, 3.29x previous step)
+    4 steps has 105 entries (47 percent, 1.33x previous step)
+    5 steps has 6 entries (2 percent, 0.06x previous step)
+
+    Total: 220 entries
+    Average: 3.36 moves
+    """
+
+    # fmt: off
+    state_targets = (
+        "-------------S--T--U----------------",
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step55-phase5-three-edges-midge.txt",
+            self.state_targets,
+            linecount=220,
+            max_depth=5,
+            all_moves=moves_555,
+            # fmt: off
+            illegal_moves=(
+                "Uw", "Uw'",
+                "Dw", "Dw'",
+                "Fw", "Fw'",
+                "Bw", "Bw'",
+                "Lw", "Lw'",
+                "Rw", "Rw'",
+                "L", "L'",
+                "R", "R'"
+            ),
+            # fmt: on
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
+
+        result = []
+        for index in wings_for_edges_pattern_555:
+            if state[index] == "." or index not in midge_indexes:
+                result.append("-")
+            else:
+                result.append(state[index])
+
+        return "".join(result)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        steps_to_solve = steps_to_solve.split()
+        steps_to_scramble = reverse_steps(steps_to_solve)
+
+        self.parent.state = ["x"]
+        self.parent.state.extend(
+            list(
+                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
+            )
+        )
+        self.parent.nuke_corners()
+        self.parent.nuke_centers()
+        midges_three_edges = [36, 40, 61, 65, 86, 115]
+
+        for x in list(edge_orbit_0_555) + list(edge_orbit_1_555):
+            if x not in midges_three_edges:
+                self.parent.state[x] = "-"
+
+        for step in steps_to_scramble:
+            self.parent.rotate(step)
+
+
 class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
@@ -3420,7 +3596,6 @@ class RubiksCube555(RubiksCube):
         if self.edge_swaps_odd(False, 0, False):
             raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
 
-        # dwalton
         # phase 5
         original_state = self.state[:]
         original_solution = self.solution[:]

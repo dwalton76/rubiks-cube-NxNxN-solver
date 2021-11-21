@@ -2318,6 +2318,7 @@ class LookupTable555Phase5ThreeEdgesWings(LookupTable):
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        self.wing_strs = ("LB", "LF", "RF")
 
     def state(self):
         parent_state = self.parent.state
@@ -2345,11 +2346,9 @@ class LookupTable555Phase5ThreeEdgesWings(LookupTable):
         self.parent.nuke_corners()
         self.parent.nuke_centers()
         three_edges = [31, 36, 41, 35, 40, 45, 56, 61, 66, 60, 65, 70, 81, 86, 91, 110, 115, 120]
-        midges_three_edges = [36, 40, 61, 65, 86, 115]
-        wings_three_edges = [x for x in three_edges if x not in midges_three_edges]
 
         for x in list(edge_orbit_0_555) + list(edge_orbit_1_555):
-            if x not in wings_three_edges:
+            if x not in three_edges:
                 self.parent.state[x] = "-"
 
         for step in steps_to_scramble:
@@ -2401,6 +2400,7 @@ class LookupTable555Phase5ThreeEdgesMidge(LookupTable):
             use_state_index=True,
             build_state_index=build_state_index,
         )
+        self.wing_strs = ("LB", "LF", "RF")
 
     def state(self):
         parent_state = self.parent.state

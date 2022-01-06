@@ -1476,6 +1476,7 @@ char *read_file(char *filename) {
 }
 
 int main(int argc, char *argv[]) {
+    LOG("main() begin\n");
     unsigned long prune_table_0_state = 0;
     unsigned long prune_table_1_state = 0;
     unsigned long prune_table_2_state = 0;
@@ -2106,4 +2107,5 @@ int main(int argc, char *argv[]) {
     } else {
         exit(1);
     }
+    LOG("main() end\n");
 }

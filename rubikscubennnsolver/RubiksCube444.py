@@ -993,6 +993,18 @@ class RubiksCube444(RubiksCube):
         tmp_solution_len = len(self.solution)
         pt_state_indexes_to_edge_mapping = {}
 
+        # Use state_index_multiple to populate the state_index_cache dict for each pt
+        for pt in self.lt_phase2.prune_tables:
+            states_to_find = []
+            for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
+                for edge_mapping in edges_to_flip_sets:
+                    self.state = original_state[:]
+                    self.solution = original_solution[:]
+                    self.edge_mapping = edge_mapping
+                    states_to_find.append(pt.state())
+
+            pt.state_index_multiple(states_to_find)
+
         # try all 2048 edge mappings
         for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
             for edge_mapping in edges_to_flip_sets:
@@ -1078,6 +1090,17 @@ class RubiksCube444(RubiksCube):
         pt_state_indexes = []
         phase3_pt_state_indexes_to_wing_str_combo = {}
 
+        # Use state_index_multiple to populate the state_index_cache dict for each pt
+        for pt in self.lt_phase3.prune_tables:
+            states_to_find = []
+
+            for wing_str_combo in itertools.combinations(wing_strs_all, 4):
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                self.lt_phase3_edges.only_colors = wing_str_combo
+                states_to_find.append(pt.state())
+            pt.state_index_multiple(states_to_find)
+
         for wing_str_combo in itertools.combinations(wing_strs_all, 4):
             self.state = original_state[:]
             self.solution = original_solution[:]
@@ -1119,7 +1142,7 @@ class RubiksCube444(RubiksCube):
         solutions_without_pll = []
         solutions_without_pll_states = set()
         solutions_with_pll = set()
-        solution_count = 1000
+        solution_count = 50
 
         # disable INFO messages as we try many phase4 solutions
         logging.getLogger().setLevel(logging.WARNING)

@@ -16,6 +16,8 @@ from rubikscubennnsolver.RubiksSide import SolveError
 
 logger = logging.getLogger(__name__)
 
+seek_count = 0
+
 
 class NoSteps(Exception):
     pass
@@ -43,22 +45,20 @@ def binary_search(fh: TextIO, width: int, state_width: int, linecount: int, stat
     """
     first = 0
     last = linecount - 1
+    global seek_count
 
     while first <= last:
         midpoint = int((first + last) / 2)
         fh.seek(midpoint * width)
+        seek_count += 1
 
-        # Only read the 'state' part of the line (for speed)
-        b_state = fh.read(state_width)
+        line = fh.read(width)
+        (b_state, value) = line.rstrip().split(":")
 
         if state_to_find < b_state:
             last = midpoint - 1
 
-        # If this is the line we are looking for, then read the entire line
         elif state_to_find == b_state:
-            fh.seek(midpoint * width)
-            line = fh.read(width)
-            (_, value) = line.rstrip().split(":")
             return value
 
         else:
@@ -108,64 +108,65 @@ def binary_search_multiple(
     Returns:
         a dictionary where the state is the key and the value is a move sequence or move count
     """
+    global seek_count
     states_to_find = sorted(states_to_find)
-    cache = []
+    cache = {}
     results = {}
     fh.seek(0)
-    b_state_first = fh.read(state_width)
+    seek_count += 1
+    line = fh.read(width)
+    cache[0] = line
+    b_state_first = line[:state_width]
 
     fh.seek((linecount - 1) * width)
-    b_state_last = fh.read(state_width)
+    seek_count += 1
+    line = fh.read(width)
+    cache[linecount - 1] = line
+    b_state_last = line[:state_width]
 
-    (_, starting_index) = binary_search_list(states_to_find, b_state_first)
-    # logger.info("start at index %d" % starting_index)
-
-    for state_to_find in states_to_find[starting_index:]:
+    for state_to_find in states_to_find:
         b_state_to_find = bytearray(state_to_find, encoding="utf-8")
 
         # This provides a pretty massive improvement when you are looking for 100k+ states
         if b_state_to_find < b_state_first:
-            # This part is basically a no-op now that we binary_search states_to_find
-            # for b_state_first to find the starting_index
             continue
         elif b_state_to_find > b_state_last:
             break
 
-        if cache:
-            (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
-        else:
-            first = 0
-            last = linecount - 1
+        (first, last) = find_first_last(linecount, cache, b_state_to_find, state_width)
 
         # logger.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
         while first <= last:
             midpoint = int((first + last) / 2)
-            fh.seek(midpoint * width)
 
-            # Only read the 'state' part of the line (for speed)
-            b_state = fh.read(state_width)
+            if midpoint in cache:
+                line = cache[midpoint]
+            else:
+                fh.seek(midpoint * width)
+                seek_count += 1
 
-            # We did a read...reads are expensive...cache the read
-            cache.append((midpoint, b_state))
+                line = fh.read(width)
+
+                # We did a read...reads are expensive...cache the read
+                cache[midpoint] = line
+
+            b_state = line[:state_width]
 
             if b_state_to_find < b_state:
                 last = midpoint - 1
 
             # If this is the line we are looking for, then read the entire line
             elif b_state_to_find == b_state:
-                fh.seek(midpoint * width)
-                line = fh.read(width)
                 (_, value) = line.decode("utf-8").rstrip().split(":")
+
                 if value.isdigit():
                     value = int(value)
+
                 results[state_to_find] = value
                 break
 
             else:
                 first = midpoint + 1
-        else:
-            # results[state_to_find] = None
-            pass
 
     return results
 
@@ -362,7 +363,7 @@ def pretty_time(delta: dt.timedelta) -> str:
 
 
 def find_first_last(
-    linecount: int, cache: List[Tuple[int, str]], b_state_to_find: str
+    linecount: int, cache: Dict[int, str], b_state_to_find: str, state_width: int
 ) -> Tuple[List[Tuple[int, str]], int, int]:
     """
     Speed up a binary search by using a cache of what states we have seen where in the file. Use this
@@ -378,20 +379,21 @@ def find_first_last(
         the first line number to search
         the last line number to search
     """
-    cache.sort()
     first = 0
     last = linecount - 1
-    to_delete = 0
     # logger.info("find_first_last for %s with cache\n%s" % (b_state_to_find, pformat(cache)))
+    offsets = sorted(cache.keys())
 
-    for (offset, state) in cache:
+    for offset in offsets:
+        line = cache[offset]
+        b_state = line[:state_width]
 
-        if state < b_state_to_find:
-            to_delete += 1
+        if b_state < b_state_to_find:
+            del cache[offset]
             first = offset
             # logger.info("state %s < b_state_to_find %s, to_delete %d, first %s" % (state, b_state_to_find, to_delete, first))
 
-        elif state == b_state_to_find:
+        elif b_state == b_state_to_find:
             first = offset
             last = offset
             # logger.info("state %s == b_state_to_find %s, to_delete %d, first %s, last %s" % (state, b_state_to_find, first, last))
@@ -402,13 +404,9 @@ def find_first_last(
             # logger.info("state %s > b_state_to_find %s, last %s" % (state, b_state_to_find, last))
             break
 
-    to_delete -= 1
-
-    if to_delete > 0:
-        cache = cache[to_delete:]
-
-    # logger.info("find_first_last for %s, deleted %s, first %s, last %s, cache\n%s" % (b_state_to_find, to_delete, first, last, pformat(cache)))
-    return (cache, first, last)
+    # from pprint import pformat
+    # logger.info("find_first_last for %s, first %s, last %s, cache\n%s" % (b_state_to_find, first, last, pformat(cache)))
+    return (first, last)
 
 
 def md5signature(filename: str) -> str:
@@ -602,6 +600,8 @@ class LookupTable(object):
         Returns:
             a move sequence or move count
         """
+        logger.info(f"{self} class binary_search() called")
+        # dwalton should this use the normal binary_search function?
         first = 0
         last = self.linecount - 1
         state_to_find = bytes(state_to_find, encoding="utf-8")
@@ -786,6 +786,7 @@ class LookupTable(object):
                 self.printed_disk_io_warning = True
 
             line = self.binary_search(state_to_find)
+
             if line:
                 (state, steps) = line.strip().split(":")
                 steps_list = steps.split()
@@ -978,8 +979,8 @@ class LookupTable(object):
         if state is None:
             state = self.state()
 
-        if self.state_index_cache:
-            return self.state_index_cache.get(state)
+        if state in self.state_index_cache:
+            return self.state_index_cache[state]
 
         (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
 
@@ -992,12 +993,20 @@ class LookupTable(object):
                 self.parent.print_cube(desc)
                 raise Exception(f"{self}: {desc}")
 
-            return int(state_index)
+            state_index = int(state_index)
+            # dwalton
+            logger.info(f"{self} state_index for {state}, seek_count {seek_count}")
+            self.state_index_cache[state] = state_index
+            return state_index
 
     def state_index_multiple(self, states_to_find: List[str]) -> Dict[str, str]:
         (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
         with open(self.filename_state_index, "rb") as fh:
-            return binary_search_multiple(fh, width, state_width, linecount, states_to_find)
+            results = binary_search_multiple(fh, width, state_width, linecount, states_to_find)
+            for (state, state_index) in results.items():
+                self.state_index_cache[state] = state_index
+            logger.info(f"{self} state_index_multiple, seek_count {seek_count}")
+            return results
 
     def reverse_state_index(self, state_index: int) -> str:
         """

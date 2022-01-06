@@ -4,6 +4,12 @@ gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/
 gprof ida_search  gmon.out > prof_output; head -n 20 prof_output
 
 
+444 perf
+--------
+- baseline takes 2.6s on my laptop
+- using state_index_cache brings it down to 2.2s
+
+
 todo
 ----
 - clean up cube_copy and cube_tmp?
@@ -20,9 +26,6 @@ todo
 
 - 555 experiment with eliminating phase4
 
-- chop "dummy" references
-
-- chop rubikscubennnsolver/LookupTableIDAViaGraph.py build_ida_graph and utils/convert-pt-state-to-perfect-hash.py
 
 555
 ===
@@ -120,4 +123,3 @@ SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw'
 [2021-11-03T11:41:47.494] IDA threshold 11, explored 16,672,377 nodes, took 0.244s, 68,329,416 nodes-per-sec
 [2021-11-03T11:41:47.494] IDA found solution, explored 30,554,007 total nodes, took 0.462s, 66,134,220 nodes-per-sec
 
-This is normally in the 60 to 65 million nodes-per-sec range

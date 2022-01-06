@@ -3616,6 +3616,7 @@ class RubiksCube555(RubiksCube):
             else:
                 logger.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
 
+        self.lt_phase4.fh_txt_cache = {}
         self.state = original_state[:]
         self.solution = original_solution[:]
         results.sort()

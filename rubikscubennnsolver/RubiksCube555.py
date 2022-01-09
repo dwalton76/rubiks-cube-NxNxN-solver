@@ -1,6 +1,7 @@
 # standard libraries
 import itertools
 import logging
+from typing import List
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -3499,6 +3500,92 @@ class RubiksCube555(RubiksCube):
                     count += 1
 
         return count
+
+    def find_first_four_edges_to_pair(self):
+        """
+        phase-5 requires a 4-edge combo where none of the edges are in the z-plane.
+        phase-4 will put a 4-edge combo into that state. There are 12!/(4!*8!) or 495
+        different 4-edge combinations.  Try them all and see which one has the lowest
+        phase-4 cost.
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+        results = []
+
+        for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
+            wing_str_combo = sorted(wing_str_combo)
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            self.lt_phase4.wing_strs = wing_str_combo
+
+            if self.lt_phase4.solve():
+                phase4_solution = self.solution[original_solution_len:]
+                phase4_solution_len = len(phase4_solution)
+                results.append((phase4_solution_len, wing_str_combo))
+                logger.debug(
+                    f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
+                )
+            else:
+                logger.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
+
+        self.lt_phase4.fh_txt_cache = {}
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        results.sort()
+        return results
+
+    def pair_first_four_edges(self, phase4_wing_str_combo: List[str]):
+        tmp_solution_len = len(self.solution)
+        self.lt_phase4.wing_strs = phase4_wing_str_combo
+        self.lt_phase4.solve()
+        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
+
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        tmp_solution_len = len(self.solution)
+
+        self.edges_flip_orientation(phase4_wing_str_combo, [])
+        self.lt_phase5_high_edge_midge.wing_strs = phase4_wing_str_combo
+        self.lt_phase5_low_edge_midge.wing_strs = phase4_wing_str_combo
+        self.lt_phase5.solve_via_c()
+
+        pair_four_edge_solution = self.solution[tmp_solution_len:]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in pair_four_edge_solution:
+            self.rotate(step)
+
+        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
+
+    def pair_last_eight_edges(self, call_print_cube: bool = True):
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
+        tmp_solution_len = len(self.solution)
+
+        # We need the edge swaps to be even for our edges lookup table to work.
+        if self.edge_swaps_odd(False, 0, False):
+            raise SolveError("edge swaps are odd, cannot pair last 8-edges")
+
+        self.edges_flip_orientation(wing_strs_all, [])
+
+        yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
+        self.lt_phase6_high_edge_midge.ida_graph_node = None
+        self.lt_phase6_low_edge_midge.ida_graph_node = None
+        self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
+        self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
+        self.lt_phase6.solve_via_c()
+
+        pair_eight_edge_solution = self.solution[original_solution_len:]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in pair_eight_edge_solution:
+            self.rotate(step)
+
+        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def group_centers_phase1_and_2(self) -> None:
         """

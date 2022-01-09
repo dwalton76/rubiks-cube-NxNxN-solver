@@ -1186,7 +1186,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
             case 0:
                 pt0_state_offset = node->pt0_state * ROW_LENGTH;
                 break;
-            case -1:
+            default:
                 break;
         }
 
@@ -1301,13 +1301,9 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                     cost_to_goal = pt0_cost;
                     break;
 
-                case -1:
+                default:
                     cost_to_goal = 0;
                     break;
-
-                default:
-                    printf("ERROR: ida_search() invalid pt_max %d\n", pt_max);
-                    exit(1);
             }
 
             if (cube_size) {
@@ -1462,9 +1458,9 @@ char *read_file(char *filename) {
         }
 
         // Read the entire file into memory. A 128M file take ~140ms to load.
-        // LOG("%s fread begin\n", filename);
+        LOG("%s fread begin\n", filename);
         size_t new_len = fread(buffer, sizeof(char), bufsize, fh);
-        // LOG("%s fread end\n", filename);
+        LOG("%s fread end\n", filename);
 
         if (ferror(fh) != 0) {
             printf("ERROR: could not read %s\n", filename);
@@ -1480,6 +1476,7 @@ char *read_file(char *filename) {
 }
 
 int main(int argc, char *argv[]) {
+    LOG("main() begin\n");
     unsigned long prune_table_0_state = 0;
     unsigned long prune_table_1_state = 0;
     unsigned long prune_table_2_state = 0;
@@ -2110,4 +2107,5 @@ int main(int argc, char *argv[]) {
     } else {
         exit(1);
     }
+    LOG("main() end\n");
 }

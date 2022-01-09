@@ -4,6 +4,12 @@ gcc -O3 -o ida_search rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/
 gprof ida_search  gmon.out > prof_output; head -n 20 prof_output
 
 
+444 perf
+--------
+- baseline takes 2.6s on my laptop
+- using state_index_cache brings it down to 2.2s
+
+
 todo
 ----
 - clean up cube_copy and cube_tmp?
@@ -18,9 +24,7 @@ todo
 
 - write docs
 
-- chop "dummy" references
-
-- chop rubikscubennnsolver/LookupTableIDAViaGraph.py build_ida_graph and utils/convert-pt-state-to-perfect-hash.py
+- 555 experiment with eliminating phase4
 
 - make 555 phase6 perfect hash
   - rubiks-cube-lookup-tables: chop Build555PairLastEightEdgesCentersOnly
@@ -93,3 +97,49 @@ R D B L U  B B L L U  F R D L L  D R L D U
 
 We need a heuristic that is more accurate than unpaired count (much easier said than done) or use
 multiple threads.
+
+
+# baseline
+./ida_search_via_graph \
+  --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 \
+  --prune-table-1-filename lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.bin --prune-table-1-state 86325 \
+  --centers-only --legal-moves "U,U',U2,Uw,Uw',Uw2,L,L',L2,Lw,Lw',Lw2,F,F',F2,Fw,Fw',Fw2,R,R',R2,Rw,Rw',Rw2,B,B',B2,Bw,Bw',Bw2,D,D',D2,Dw,Dw',Dw2"
+[2021-11-03T11:15:50.474] cost_to_goal 0, pt0_state 218536, pt1_state 86325, pt2_state 0, pt3_state 0, pt4_state 0
+[2021-11-03T11:15:50.474] IDA threshold 7, explored 720 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:15:50.475] IDA threshold 8, explored 23,067 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:15:50.488] IDA threshold 9, explored 547,275 nodes, took 0.013s, 42,098,080 nodes-per-sec
+[2021-11-03T11:15:50.781] IDA threshold 10, explored 13,310,568 nodes, took 0.293s, 45,428,560 nodes-per-sec
+[2021-11-03T11:15:51.133] IDA count 16,672,377, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+[2021-11-03T11:15:51.134] IDA threshold 11, explored 16,672,377 nodes, took 0.354s, 47,097,108 nodes-per-sec
+[2021-11-03T11:15:51.134] IDA found solution, explored 30,554,007 total nodes, took 0.661s, 46,223,916 nodes-per-sec
+
+
+
+       PT0  PT1  CTG  TRU  IDX
+       ===  ===  ===  ===  ===
+ INIT    6    7    7   11    0
+   D2    6    6    6   10    1
+  Rw'    6    5    6    9    2
+   D2    7    5    7    8    3
+   Fw    6    5    6    7    4
+  Rw'    5    6    6    6    5
+    B    5    5    5    5    6
+  Uw'    4    4    4    4    7
+  Lw'    3    3    3    3    8
+    D    2    2    2    2    9
+   Dw    1    1    1    1   10
+  Bw'    0    0    0    0   11
+
+
+# chopping the moves memcpy
+[2021-11-03T11:41:47.032] cost_to_goal 0, pt0_state 218536, pt1_state 86325, pt2_state 0, pt3_state 0, pt4_state 0
+[2021-11-03T11:41:47.032] IDA threshold 7, explored 720 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:41:47.032] IDA threshold 8, explored 23,067 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
+[2021-11-03T11:41:47.040] IDA threshold 9, explored 547,275 nodes, took 0.007s, 78,182,144 nodes-per-sec
+[2021-11-03T11:41:47.249] IDA threshold 10, explored 13,310,568 nodes, took 0.209s, 63,686,928 nodes-per-sec
+[2021-11-03T11:41:47.494] IDA count 16,672,377, f_cost 11 vs threshold 11 (cost_to_here 11, cost_to_goal 0)
+SOLUTION (11 steps): D2 Rw' D2 Fw Rw' B Uw' Lw' D Dw Bw' 
+[2021-11-03T11:41:47.494] IDA threshold 11, explored 16,672,377 nodes, took 0.244s, 68,329,416 nodes-per-sec
+[2021-11-03T11:41:47.494] IDA found solution, explored 30,554,007 total nodes, took 0.462s, 66,134,220 nodes-per-sec
+

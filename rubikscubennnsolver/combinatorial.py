@@ -101,7 +101,7 @@ def state_to_list(state: str) -> List[int]:
     """
     result = []
 
-    for (index, char) in enumerate(state):
+    for index, char in enumerate(state):
         if char != "x":
             result.append(index)
 
@@ -129,7 +129,6 @@ def state_to_rank(state: str) -> int:
 
 
 if __name__ == "__main__":
-
     # standard libraries
     import doctest
 

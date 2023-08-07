@@ -170,7 +170,6 @@ class RubiksCubeNNNOddEdges(RubiksCube):
         self.print_cube_add_comment(f"NNN edges paired orbit {orbit}", tmp_solution_len)
 
     def group_edges(self):
-
         # How many orbits of edges does this cube have?
         max_orbit = int((self.size / 2) - 1)
 

@@ -187,7 +187,6 @@ def stage_centers_555(cube_count: int, move_count: int, batch_size: int, filenam
     line_count = 0
 
     with open(filename, "w") as fh_nn:  # noqa: F841
-
         # scramble CUBE_COUNT cubes up to MOVE_COUNT random moves
         for x in range(cube_count):
             cube.re_init()

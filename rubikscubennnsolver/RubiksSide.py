@@ -18,7 +18,7 @@ def build_2d_list(squares_list):
     squares_per_side = len(squares_list)
     size = int(math.sqrt(squares_per_side))
 
-    for (square_index, x) in enumerate(squares_list):
+    for square_index, x in enumerate(squares_list):
         row.append(x)
 
         if (square_index + 1) % size == 0:
@@ -307,7 +307,7 @@ class Side(object):
     def north_edge_non_paired(self):
         non_paired_edges = self.non_paired_wings(True, False, False, False)
 
-        for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+        for (pos1, pos2), (pos3, pos4) in non_paired_edges:
             if (
                 self.parent.state[pos1] == "-"
                 and self.parent.state[pos2] == "-"
@@ -328,7 +328,7 @@ class Side(object):
     def south_edge_non_paired(self):
         non_paired_edges = self.non_paired_wings(False, False, True, False)
 
-        for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+        for (pos1, pos2), (pos3, pos4) in non_paired_edges:
             if (
                 self.parent.state[pos1] == "-"
                 and self.parent.state[pos2] == "-"
@@ -348,7 +348,7 @@ class Side(object):
     def east_edge_non_paired(self):
         non_paired_edges = self.non_paired_wings(False, False, False, True)
 
-        for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+        for (pos1, pos2), (pos3, pos4) in non_paired_edges:
             if (
                 self.parent.state[pos1] == "-"
                 and self.parent.state[pos2] == "-"
@@ -368,7 +368,7 @@ class Side(object):
     def west_edge_non_paired(self):
         non_paired_edges = self.non_paired_wings(False, True, False, False)
 
-        for ((pos1, pos2), (pos3, pos4)) in non_paired_edges:
+        for (pos1, pos2), (pos3, pos4) in non_paired_edges:
             if (
                 self.parent.state[pos1] == "-"
                 and self.parent.state[pos2] == "-"
@@ -399,7 +399,7 @@ class Side(object):
         return True
 
     def calculate_wing_partners(self):
-        for (pos1, pos2) in self.parent.all_edge_positions:
+        for pos1, pos2 in self.parent.all_edge_positions:
             if pos1 >= self.min_pos and pos1 <= self.max_pos:
                 self.wing_partner[pos1] = pos2
             elif pos2 >= self.min_pos and pos2 <= self.max_pos:

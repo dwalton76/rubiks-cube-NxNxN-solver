@@ -127,7 +127,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
         # Make a big "plus" sign on each side
         for center_orbit_id in range(center_orbit_count):
-
             # create a fake 6x6x6 to solve the inside 4x4 block
             fake_666 = self.get_fake_666()
 
@@ -248,7 +247,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             )
 
     def reduce_555(self):
-
         # Reduce this even cube to an odd cube
         tmp_solution_len = len(self.solution)
         self.make_plus_sign()

@@ -53,7 +53,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
         half_size = int(self.size / 2)
 
         for x in range(6):
-
             fake_444.state[start_444 + 2] = self.state[start_nnn + half_size]
             fake_444.state[start_444 + 3] = self.state[start_nnn + half_size + 1]
             fake_444.state[start_444 + 5] = self.state[start_nnn + (self.size * (half_size - 1)) + 1]
@@ -199,7 +198,6 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
         wide_str = str(orbit + 2)
         for step in fake_555.solution:
-
             if step.startswith("COMMENT"):
                 self.solution.append(step)
             else:

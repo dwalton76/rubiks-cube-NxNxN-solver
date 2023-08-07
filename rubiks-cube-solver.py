@@ -135,8 +135,7 @@ solution = cube.solution
 cube.re_init()
 len_steps = len(solution)
 
-for (i, step) in enumerate(solution):
-
+for i, step in enumerate(solution):
     if args.print_steps:
         print(("Move %d/%d: %s" % (i + 1, len_steps, step)))
 

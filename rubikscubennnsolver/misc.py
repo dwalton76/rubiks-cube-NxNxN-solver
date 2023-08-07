@@ -19,7 +19,7 @@ def find_index_for_value(list_foo: List[Any], target: Any, min_index: int) -> in
     Returns:
         the index of ``target`` in ``list_foo``
     """
-    for (index, value) in enumerate(list_foo):
+    for index, value in enumerate(list_foo):
         if value == target and index >= min_index:
             return index
     raise SolveError(f"Did not find {target} in list {sorted(list_foo)}")

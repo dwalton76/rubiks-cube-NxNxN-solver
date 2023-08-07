@@ -121,7 +121,6 @@ class LookupTable333Phase2Corners(LookupTable):
 
 
 class RubiksCube333(RubiksCube):
-
     reduce333_orient_edges_tuples = (
         (2, 38),  # Upper
         (4, 11),

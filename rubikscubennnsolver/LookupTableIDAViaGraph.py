@@ -170,7 +170,7 @@ class LookupTableIDAViaGraph(LookupTable):
         return [pt.ida_graph_node for pt in self.prune_tables]
 
     def set_ida_graph_nodes(self, ida_graph_nodes) -> None:
-        for (pt, node) in zip(self.prune_tables, ida_graph_nodes):
+        for pt, node in zip(self.prune_tables, ida_graph_nodes):
             pt.ida_graph_node = node
 
     def init_state_index_caches(self) -> None:
@@ -230,8 +230,7 @@ class LookupTableIDAViaGraph(LookupTable):
 
         with open(pt_state_filename, "w") as fh_pt_state:
             with open(self.filename, "r") as fh:
-                for (line_number, line) in enumerate(fh):
-
+                for line_number, line in enumerate(fh):
                     if start is not None and line_number < start:
                         continue
 
@@ -290,7 +289,7 @@ class LookupTableIDAViaGraph(LookupTable):
                 "/tmp/pt-states-" + "".join(random.choice(string.ascii_uppercase) for i in range(6)) + ".txt"
             )
 
-            for (index, pt) in enumerate(self.prune_tables):
+            for index, pt in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
                 cmd.append(pt.filename_bin)
 
@@ -303,7 +302,7 @@ class LookupTableIDAViaGraph(LookupTable):
             self.init_ida_graph_nodes()
             pt_states_filename = None
 
-            for (index, pt) in enumerate(self.prune_tables):
+            for index, pt in enumerate(self.prune_tables):
                 cmd.append("--prune-table-%d-filename" % index)
                 cmd.append(pt.filename_bin)
 

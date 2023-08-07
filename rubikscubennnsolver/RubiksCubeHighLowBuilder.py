@@ -35,7 +35,6 @@ class RubiksCubeHighLow333(RubiksCube333):
 
         # Now move that wing to its home edge
         if wing_str.startswith("U"):
-
             if wing_str == "UB":
                 self.move_wing_to_U_north(x)
                 high_edge_index = 2
@@ -83,7 +82,6 @@ class RubiksCubeHighLow333(RubiksCube333):
                 raise Exception(msg)
 
         elif wing_str.startswith("L"):
-
             if wing_str == "LB":
                 self.move_wing_to_L_west(x)
                 high_edge_index = 13
@@ -121,7 +119,6 @@ class RubiksCubeHighLow333(RubiksCube333):
                 raise Exception(msg)
 
         elif wing_str.startswith("R"):
-
             if wing_str == "RB":
                 self.move_wing_to_R_east(x)
                 high_edge_index = 33
@@ -217,7 +214,6 @@ class RubiksCubeHighLow333(RubiksCube333):
         new_highlow_edge_values = {}
 
         for x in range(1000000):
-
             # make random moves
             step = moves_333[random.randint(0, len(moves_333) - 1)]
 
@@ -226,7 +222,7 @@ class RubiksCubeHighLow333(RubiksCube333):
 
             self.rotate(step)
 
-            for (x, y) in self.reduce333_orient_edges_tuples:
+            for x, y in self.reduce333_orient_edges_tuples:
                 state_x = self.state[x]
                 state_y = self.state[y]
                 wing_str = wing_str_map[state_x + state_y]
@@ -257,7 +253,6 @@ class RubiksCubeHighLow444(RubiksCube444):
 
         # Now move that wing to its home edge
         if wing_str.startswith("U"):
-
             if wing_str == "UB":
                 self.move_wing_to_U_north(x)
                 high_edge_index = 2
@@ -309,7 +304,6 @@ class RubiksCubeHighLow444(RubiksCube444):
                 raise Exception(msg)
 
         elif wing_str.startswith("L"):
-
             if wing_str == "LB":
                 self.move_wing_to_L_west(x)
                 high_edge_index = 25
@@ -351,7 +345,6 @@ class RubiksCubeHighLow444(RubiksCube444):
                 raise Exception(msg)
 
         elif wing_str.startswith("R"):
-
             if wing_str == "RB":
                 self.move_wing_to_R_east(x)
                 high_edge_index = 56
@@ -456,12 +449,11 @@ class RubiksCubeHighLow444(RubiksCube444):
         new_highlow_edge_values = {}
 
         for x in range(100000):
-
             # make random moves
             step = moves_444[random.randint(0, len(moves_444) - 1)]
             self.rotate(step)
 
-            for (x, y) in self.reduce333_orient_edges_tuples:
+            for x, y in self.reduce333_orient_edges_tuples:
                 state_x = self.state[x]
                 state_y = self.state[y]
                 wing_str = wing_str_map[state_x + state_y]
@@ -497,7 +489,6 @@ class RubiksCubeHighLow555(RubiksCube555):
 
         # Now move that wing to its home edge
         if wing_str.startswith("U"):
-
             if wing_str == "UB":
                 self.move_wing_to_U_north(x)
 
@@ -595,7 +586,6 @@ class RubiksCubeHighLow555(RubiksCube555):
                     raise Exception(msg)
 
         elif wing_str.startswith("L"):
-
             if wing_str == "LB":
                 self.move_wing_to_L_west(x)
 
@@ -672,7 +662,6 @@ class RubiksCubeHighLow555(RubiksCube555):
                     raise Exception(msg)
 
         elif wing_str.startswith("R"):
-
             if wing_str == "RB":
                 self.move_wing_to_R_east(x)
 
@@ -857,7 +846,6 @@ class RubiksCubeHighLow555(RubiksCube555):
         new_highlow_edge_values = {}
 
         for x in range(1000000):
-
             # make random moves
             step = moves_555[random.randint(0, len(moves_555) - 1)]
 
@@ -866,7 +854,7 @@ class RubiksCubeHighLow555(RubiksCube555):
 
             self.rotate(step)
 
-            for (x, y) in self.reduce333_orient_edges_tuples:
+            for x, y in self.reduce333_orient_edges_tuples:
                 state_x = self.state[x]
                 state_y = self.state[y]
                 wing_str = wing_str_map[state_x + state_y]
@@ -898,7 +886,6 @@ class RubiksCubeHighLow666(RubiksCube666):
 
         # Now move that wing to its home edge
         if wing_str.startswith("U"):
-
             if wing_str == "UB":
                 self.move_wing_to_U_north(x)
 
@@ -970,7 +957,6 @@ class RubiksCubeHighLow666(RubiksCube666):
                 raise Exception(msg)
 
         elif wing_str.startswith("L"):
-
             if wing_str == "LB":
                 self.move_wing_to_L_west(x)
 
@@ -1022,7 +1008,6 @@ class RubiksCubeHighLow666(RubiksCube666):
                 raise Exception(msg)
 
         elif wing_str.startswith("R"):
-
             if wing_str == "RB":
                 self.move_wing_to_R_east(x)
 
@@ -1164,12 +1149,11 @@ class RubiksCubeHighLow666(RubiksCube666):
         new_highlow_edge_values = {}
 
         for x in range(100000):
-
             # make random moves
             step = moves_666[random.randint(0, len(moves_666) - 1)]
             self.rotate(step)
 
-            for (x, y) in self.reduce333_orient_edges_tuples:
+            for x, y in self.reduce333_orient_edges_tuples:
                 state_x = self.state[x]
                 state_y = self.state[y]
                 wing_str = wing_str_map[state_x + state_y]

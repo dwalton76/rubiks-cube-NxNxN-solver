@@ -40,7 +40,6 @@ parser.add_argument("--start", type=int, default=0)
 args = parser.parse_args()
 
 try:
-
     with open(args.test_cubes, "r") as fh:
         test_cases = json.load(fh)
 
@@ -54,7 +53,6 @@ try:
     order = "URFDLB"
 
     for size in sorted(test_cases.keys()):
-
         if args.size != "all" and size != args.size:
             continue
 
@@ -113,8 +111,7 @@ try:
         num_test_cases = len(kociemba_strings)
         num_test_cases_executed = 0
 
-        for (index, kociemba_string) in enumerate(kociemba_strings):
-
+        for index, kociemba_string in enumerate(kociemba_strings):
             if index < args.start:
                 continue
 

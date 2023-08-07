@@ -102,7 +102,6 @@ UFBD_middle_oblique_777 = (
 # phase 2 - pair LR oblique edges
 # ===============================
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
-
     # fmt: off
     oblique_edges_777 = (
         10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
@@ -115,7 +114,6 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
     # fmt: on
 
     def __init__(self, parent):
-
         # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
@@ -202,7 +200,7 @@ class LookupTable777Phase4TCenters(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_inner_t_centers_777, state):
+        for pos, pos_state in zip(UFBD_inner_t_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -256,7 +254,7 @@ class LookupTable777Phase4XCenters(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_inner_x_centers_777, state):
+        for pos, pos_state in zip(UFBD_inner_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -309,7 +307,7 @@ class LookupTable777Phase4LeftOblique(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_left_oblique_777, state):
+        for pos, pos_state in zip(UFBD_left_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -362,7 +360,7 @@ class LookupTable777Phase4RightOblique(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_right_oblique_777, state):
+        for pos, pos_state in zip(UFBD_right_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -418,7 +416,7 @@ class LookupTable777Phase4MiddleOblique(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_middle_oblique_777, state):
+        for pos, pos_state in zip(UFBD_middle_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -614,7 +612,7 @@ class LookupTable777Phase5LeftOblique(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_left_oblique_777, state):
+        for pos, pos_state in zip(UFBD_left_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -672,7 +670,7 @@ class LookupTable777Phase5RightOblique(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_right_oblique_777, state):
+        for pos, pos_state in zip(UFBD_right_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -730,7 +728,7 @@ class LookupTable777Phase5MiddleOblique(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_middle_oblique_777, state):
+        for pos, pos_state in zip(UFBD_middle_oblique_777, state):
             cube[pos] = pos_state
 
 
@@ -779,7 +777,6 @@ class LookupTableIDA777UDObliqueEdgePairingNew(LookupTableIDAViaGraph):
 # via an unpaired-count heuristic
 # ===================================
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
-
     # fmt: off
     UFBD_oblique_edges_777 = (
         10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
@@ -790,7 +787,6 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
     # fmt: on
 
     def __init__(self, parent):
-
         # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
@@ -967,7 +963,7 @@ class LookupTable777Step41(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_oblique_edges_and_outer_t_center, state):
+        for pos, pos_state in zip(self.LR_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -1070,7 +1066,7 @@ class LookupTable777Step42(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_inside_centers_and_left_oblique_edges, state):
+        for pos, pos_state in zip(self.LR_inside_centers_and_left_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1173,7 +1169,7 @@ class LookupTable777Step43(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_inside_centers_and_outer_t_centers, state):
+        for pos, pos_state in zip(self.LR_inside_centers_and_outer_t_centers, state):
             cube[pos] = pos_state
 
 
@@ -1276,7 +1272,7 @@ class LookupTable777Step44(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_inside_centers_and_right_oblique_edges, state):
+        for pos, pos_state in zip(self.LR_inside_centers_and_right_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1444,7 +1440,7 @@ class LookupTable777Step51(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_oblique_edges_and_outer_t_center, state):
+        for pos, pos_state in zip(self.UD_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -1550,7 +1546,7 @@ class LookupTable777Step52(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_inside_centers_and_left_oblique_edges, state):
+        for pos, pos_state in zip(self.UD_inside_centers_and_left_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1656,7 +1652,7 @@ class LookupTable777Step53(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_inside_centers_and_outer_t_centers, state):
+        for pos, pos_state in zip(self.UD_inside_centers_and_outer_t_centers, state):
             cube[pos] = pos_state
 
 
@@ -1762,7 +1758,7 @@ class LookupTable777Step54(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_inside_centers_and_right_oblique_edges, state):
+        for pos, pos_state in zip(self.UD_inside_centers_and_right_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1825,7 +1821,7 @@ class LookupTable777Step55(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(self.LR_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -1918,7 +1914,7 @@ class LookupTable777Step61(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(self.UD_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -1981,7 +1977,7 @@ class LookupTable777Step62(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(self.LR_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -2050,7 +2046,7 @@ class LookupTable777Step65(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.FB_inside_centers_and_outer_t_centers, state):
+        for pos, pos_state in zip(self.FB_inside_centers_and_outer_t_centers, state):
             cube[pos] = pos_state
 
 
@@ -2119,7 +2115,7 @@ class LookupTable777Step66(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.FB_oblique_edges_and_outer_t_center, state):
+        for pos, pos_state in zip(self.FB_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -2250,7 +2246,7 @@ class LookupTable777Step71(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(self.UD_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -2351,7 +2347,7 @@ class LookupTable777Step72(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(self.LR_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -2448,7 +2444,7 @@ class LookupTable777Step75(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.FB_inside_centers_and_outer_t_centers, state):
+        for pos, pos_state in zip(self.FB_inside_centers_and_outer_t_centers, state):
             cube[pos] = pos_state
 
 
@@ -2542,7 +2538,7 @@ class LookupTable777Step76(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.FB_oblique_edges_and_outer_t_center, state):
+        for pos, pos_state in zip(self.FB_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -3001,7 +2997,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_step70 = LookupTableIDA777Step70(self)
 
     def create_fake_555_from_inside_centers(self):
-
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
         fake_555 = self.get_fake_555()
         fake_555.nuke_corners()
@@ -3047,7 +3042,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             fake_555.state[24 + offset_555] = self.state[47 + offset_777]
 
     def create_fake_555_from_outside_centers(self):
-
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
         fake_555 = self.get_fake_555()
         fake_555.nuke_corners()
@@ -3102,7 +3096,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         return True
 
     def group_inside_LR_centers(self):
-
         if self.LR_inside_centers_staged():
             return
 
@@ -3110,7 +3103,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.fake_555.group_centers_stage_LR()
 
         for step in self.fake_555.solution:
-
             if step.startswith("COMMENT"):
                 pass
             else:
@@ -3174,7 +3166,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self._stage_LR_centers_common(False)
 
     def LR_centers_vertical_bars(self):
-
         # phase 7 - LR centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step40.solve_via_c()
@@ -3194,7 +3185,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.fake_555.group_centers_stage_FB()
 
         for step in self.fake_555.solution:
-
             if step.startswith("COMMENT"):
                 pass
             else:
@@ -3263,7 +3253,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self._stage_UD_centers(False)
 
     def UD_centers_vertical_bars(self):
-
         # phase 8 - UD centers to vertical bars
         tmp_solution_len = len(self.solution)
         self.lt_step50.solve_via_c()

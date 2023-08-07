@@ -57,7 +57,7 @@ cubes["9x9x9"] = RubiksCube(solved_999, "URFDLB")
 # cubes["15x15x15"] = RubiksCube(solved_151515, 'URFDLB')
 # cubes["17x17x17"] = RubiksCube(solved_171717, 'URFDLB')
 
-for (size, cube) in cubes.items():
+for size, cube in cubes.items():
     logger.info(f"size {size} has cube {cube}")
     for x in range(10):
         cube.re_init()

@@ -53,12 +53,10 @@ def unpaired_obliques_count_777(cube: RubiksCube777) -> int:
     right_paired_obliques = 0
     right_unpaired_obliques = 8
 
-    for (left_cube_index, middle_cube_index, right_cube_index) in zip(
+    for left_cube_index, middle_cube_index, right_cube_index in zip(
         left_oblique_edges_777, middle_oblique_edges_777, right_oblique_edges_777
     ):
-
         if cube.state[middle_cube_index] in ("L", "R"):
-
             if cube.state[left_cube_index] in ("L", "R"):
                 left_paired_obliques += 1
 

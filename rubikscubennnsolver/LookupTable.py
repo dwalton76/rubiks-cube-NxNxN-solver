@@ -672,7 +672,6 @@ class LookupTable(object):
             # then binary search through it. That takes about 1/6 the amount of memory
             # but would be slower.  I have not measured how much slower.
             with open(self.filename, "r") as fh:
-
                 # The bottleneck is the building of the dictionary, moreso than reading from disk.
                 for line in fh:
                     (state, steps) = line.rstrip().split(":")
@@ -701,7 +700,6 @@ class LookupTable(object):
             # then binary search through it. That takes about 1/6 the amount of memory
             # but would be slower.  I have not measured how much slower.
             with open(self.filename, "r") as fh:
-
                 # The bottleneck is the building of the dictionary, moreso that reading from disk.
                 for line in fh:
                     state = line[: self.state_width]
@@ -757,7 +755,6 @@ class LookupTable(object):
                 return None
 
         elif self.preloaded_cache_set:
-
             if state_to_find in self.cache_set:
                 # Binary search the file to get the value
                 line = self.binary_search(state_to_find)
@@ -807,7 +804,6 @@ class LookupTable(object):
                 return len(steps)
 
     def solve_old_school(self) -> None:
-
         while True:
             state = self.state()
 
@@ -823,7 +819,6 @@ class LookupTable(object):
                 raise NoSteps(f"{self}: state {state} does not have steps")
 
     def solve(self) -> None:
-
         if not self.filename_exists:
             raise SolveError(f"{self.filename} does not exist")
 
@@ -897,7 +892,7 @@ class LookupTable(object):
 
         logger.info(f"{self}: state_index begin")
         with open(self.filename_state_index, "w") as fh:
-            for (index, state) in enumerate(states):
+            for index, state in enumerate(states):
                 fh.write("%s:%d\n" % (state, index))
 
         subprocess.call(["./utils/pad-lines.py", self.filename_state_index])
@@ -906,7 +901,7 @@ class LookupTable(object):
         logger.info(f"{self}: json begin")
         index = 0
 
-        for (state, steps) in self.cache.items():
+        for state, steps in self.cache.items():
             len_steps = len(steps.split())
 
             if state in self.state_target:
@@ -995,7 +990,7 @@ class LookupTable(object):
         (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
         with open(self.filename_state_index, "rb") as fh:
             results = binary_search_multiple(fh, width, state_width, linecount, states_to_find)
-            for (state, state_index) in results.items():
+            for state, state_index in results.items():
                 self.state_index_cache[state] = state_index
             return results
 

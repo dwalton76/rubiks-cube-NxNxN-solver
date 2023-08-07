@@ -104,7 +104,6 @@ class RubiksCube222(RubiksCube):
         for h in (0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1):
             for s, x in list(data[h].items()):
                 for y in range(12):
-
                     data[h][s] = x + [y - [1, -1, 1, 3][h * y % 4]]
 
                     if s in data[1 - h]:

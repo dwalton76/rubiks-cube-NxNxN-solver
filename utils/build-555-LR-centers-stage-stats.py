@@ -54,9 +54,19 @@ def main():
                 found_init = True
 
             if found_init and line:
-                step, pt0_cost, pt1_cost, pt2_cost, pt3_cost, pt4_cost, per01_cost, per02_cost, ctg, true_cost, _index = (
-                    line.split()
-                )
+                (
+                    step,
+                    pt0_cost,
+                    pt1_cost,
+                    pt2_cost,
+                    pt3_cost,
+                    pt4_cost,
+                    per01_cost,
+                    per02_cost,
+                    ctg,
+                    true_cost,
+                    _index,
+                ) = line.split()
                 pt0_cost = int(pt0_cost)
                 pt1_cost = int(pt1_cost)
                 pt2_cost = int(pt2_cost)

@@ -41,7 +41,7 @@ def main(c: bool) -> None:
         with open(swaps_py, "w") as fh:
             fh.write("# fmt: off\n")
 
-    for (size, solved_state) in (
+    for size, solved_state in (
         # (2, solved_222),
         # (3, solved_333),
         # (4, solved_444),
@@ -49,7 +49,6 @@ def main(c: bool) -> None:
         (6, solved_666),
         (7, solved_777),
     ):
-
         cube = RubiksCube(solved_state, "URFDLB")
         max_square_index = size * size * 6
 

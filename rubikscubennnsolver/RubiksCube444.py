@@ -140,14 +140,14 @@ def edges_recolor_pattern_444(state: List[int], only_colors: List[str] = None) -
     }
 
     # Record the two edge_indexes for each of the 12 edges
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+    for edge_index, square_index, partner_index in wings_for_edges_recolor_pattern_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = wing_str_map[square_value + partner_value]
         edge_map[wing_str].append(edge_index)
 
     # Where is the other wing_str like us?
-    for (edge_index, square_index, partner_index) in wings_for_edges_recolor_pattern_444:
+    for edge_index, square_index, partner_index in wings_for_edges_recolor_pattern_444:
         square_value = state[square_index]
         partner_value = state[partner_index]
         wing_str = wing_str_map[square_value + partner_value]
@@ -222,7 +222,7 @@ class LookupTable444UDCentersStage(LookupTable):
         """
         state = list(state)
 
-        for (pos, pos_state) in zip(centers_444, state):
+        for pos, pos_state in zip(centers_444, state):
             cube[pos] = pos_state
 
 
@@ -276,7 +276,7 @@ class LookupTable444LRCentersStage(LookupTable):
         """
         state = list(state)
 
-        for (pos, pos_state) in zip(centers_444, state):
+        for pos, pos_state in zip(centers_444, state):
             cube[pos] = pos_state
 
 
@@ -435,7 +435,7 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(centers_444, state):
+        for pos, pos_state in zip(centers_444, state):
             cube[pos] = pos_state
 
 
@@ -544,7 +544,7 @@ class LookupTable444Reduce333FirstTwoCenters(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(LFRB_centers_444, state):
+        for pos, pos_state in zip(LFRB_centers_444, state):
             cube[pos] = pos_state
 
 
@@ -713,7 +713,7 @@ class LookupTable444Reduce333Centers(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(centers_444, state):
+        for pos, pos_state in zip(centers_444, state):
             cube[pos] = pos_state
 
 
@@ -836,7 +836,6 @@ class LookupTableIDA444Phase4(LookupTableIDAViaGraph):
 
 
 class RubiksCube444(RubiksCube):
-
     reduce333_orient_edges_tuples: Tuple[Tuple[int, int]] = (
         (2, 67),  # Upper
         (3, 66),
@@ -908,7 +907,7 @@ class RubiksCube444(RubiksCube):
 
         if edges_to_flip:
             result = []
-            for (x, y) in self.reduce333_orient_edges_tuples:
+            for x, y in self.reduce333_orient_edges_tuples:
                 state_x = state[x]
                 state_y = state[y]
                 high_low = highlow_edge_values_444[(x, y, state_x, state_y)]
@@ -1186,7 +1185,7 @@ class RubiksCube444(RubiksCube):
 
         # sort solutions_without_pll by shortest phase3 + phase4 length
         by_length = []
-        for (phase3_solution, phase4_solution) in solutions_without_pll:
+        for phase3_solution, phase4_solution in solutions_without_pll:
             by_length.append((len(phase3_solution) + len(phase4_solution), (phase3_solution, phase4_solution)))
         by_length.sort()
         solutions_without_pll = [x[1] for x in by_length]
@@ -1196,7 +1195,7 @@ class RubiksCube444(RubiksCube):
             min_solution_len = None
             PHASE_34_SOLUTIONS_TO_EVALUATE = 5
 
-            for (phase3_solution, phase4_solution) in solutions_without_pll[:PHASE_34_SOLUTIONS_TO_EVALUATE]:
+            for phase3_solution, phase4_solution in solutions_without_pll[:PHASE_34_SOLUTIONS_TO_EVALUATE]:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 
@@ -1241,7 +1240,6 @@ class RubiksCube444(RubiksCube):
         self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def reduced_to_333(self) -> bool:
-
         if not all([self.state[x] == "U" for x in (6, 7, 10, 11)]):  # Upper
             return False
 
@@ -1277,7 +1275,6 @@ class RubiksCube444(RubiksCube):
         return True
 
     def reduce_333(self, consider_solve_333: bool = True) -> None:
-
         if self.reduced_to_333():
             return
 

@@ -282,7 +282,7 @@ class LookupTable666LRInnerXCentersStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(inner_x_centers_666, state):
+        for pos, pos_state in zip(inner_x_centers_666, state):
             cube[pos] = pos_state
 
 
@@ -293,7 +293,6 @@ class LookupTable666LRObliquEdgeStage(LookupTableIDAViaGraph):
     """
 
     def __init__(self, parent):
-
         # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
@@ -336,7 +335,6 @@ class LookupTable666LRObliquEdgeStageInnerXStage(LookupTableIDAViaGraph):
     """
 
     def __init__(self, parent):
-
         # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
@@ -417,7 +415,7 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_inner_x_centers_666, state):
+        for pos, pos_state in zip(UFBD_inner_x_centers_666, state):
             cube[pos] = pos_state
 
 
@@ -471,7 +469,7 @@ class LookupTable666UDXCentersStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_outer_x_centers_666, state):
+        for pos, pos_state in zip(UFBD_outer_x_centers_666, state):
             cube[pos] = pos_state
 
 
@@ -524,7 +522,7 @@ class LookupTable666UDLeftObliqueCentersStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_left_oblique_edges_666, state):
+        for pos, pos_state in zip(UFBD_left_oblique_edges_666, state):
             cube[pos] = pos_state
 
 
@@ -577,7 +575,7 @@ class LookupTable666UDRightObliqueCentersStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_right_oblique_edges_666, state):
+        for pos, pos_state in zip(UFBD_right_oblique_edges_666, state):
             cube[pos] = pos_state
 
 
@@ -589,7 +587,6 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
     """
 
     def __init__(self, parent):
-
         # fmt: off
         LookupTableIDAViaGraph.__init__(
             self,
@@ -728,7 +725,7 @@ class LookupTable666UDLeftObliqueStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_left_oblique_edges_666, state):
+        for pos, pos_state in zip(UFBD_left_oblique_edges_666, state):
             cube[pos] = pos_state
 
 
@@ -789,7 +786,7 @@ class LookupTable666UDRightObliqueStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_right_oblique_edges_666, state):
+        for pos, pos_state in zip(UFBD_right_oblique_edges_666, state):
             cube[pos] = pos_state
 
 
@@ -846,7 +843,7 @@ class LookupTable666UDOuterXCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(UFBD_outer_x_centers_666, state):
+        for pos, pos_state in zip(UFBD_outer_x_centers_666, state):
             cube[pos] = pos_state
 
 
@@ -1047,7 +1044,7 @@ class LookupTable666Step50LRCenters(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_inner_x_centers_oblique_edges_666, state):
+        for pos, pos_state in zip(self.LR_inner_x_centers_oblique_edges_666, state):
             cube[pos] = pos_state
 
 
@@ -1259,7 +1256,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_inner_x_centers_oblique_edges, state):
+        for pos, pos_state in zip(self.UD_inner_x_centers_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1338,7 +1335,7 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.FB_inner_x_centers_oblique_edges, state):
+        for pos, pos_state in zip(self.FB_inner_x_centers_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1421,7 +1418,7 @@ class LookupTable666LRObliqueEdges(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_oblique_edges_UFBD_inner_x_centers, state):
+        for pos, pos_state in zip(self.LR_oblique_edges_UFBD_inner_x_centers, state):
             cube[pos] = pos_state
 
 
@@ -1602,8 +1599,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         edge_indexes = list(edge_orbit_0) + list(edge_orbit_1)
         edge_indexes.sort()
 
-        for (count, square_index) in enumerate(edge_indexes):
-
+        for count, square_index in enumerate(edge_indexes):
             if count % 16 == 0:
                 print("")
 
@@ -1741,7 +1737,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             fake_555.state[24 + offset_555] = self.state[35 + offset_666]
 
     def reduced_to_555(self) -> bool:
-
         if not all([self.state[x] == "U" for x in (15, 16, 21, 22)]):  # Upper
             return False
 
@@ -1966,7 +1961,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.print_cube_add_comment("UD centers staged", tmp_solution_len)
 
         else:
-
             if not self.LR_centers_staged():
                 # phase 1 - stage the LR inner-x centers and pair the LR oblique edges
                 tmp_solution_len = len(self.solution)
@@ -2004,7 +1998,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                 self.print_cube_add_comment("UD centers staged", tmp_solution_len)
 
     def reduce_555(self):
-
         if self.reduced_to_555():
             return
 

@@ -433,7 +433,7 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
     paired_edges_indexes = []
 
     if uppercase_paired_edges:
-        for (s1, s2, s3) in (
+        for s1, s2, s3 in (
             (2, 3, 4),  # Upper
             (6, 11, 16),
             (10, 15, 20),
@@ -447,7 +447,6 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
             (135, 140, 145),
             (147, 148, 149),
         ):
-
             s1_value = state[s1]
             s2_value = state[s2]
             s3_value = state[s3]
@@ -469,7 +468,7 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
             ):
                 paired_edges_indexes.extend([s1, s2, s3, p1, p2, p3])
 
-    for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
+    for edge_index, square_index, partner_index in midges_recolor_tuples_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
 
@@ -505,7 +504,7 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
                     state[partner_index] = midges_map[wing_str]
 
     # Where is the midge for each high/low wing?
-    for (_, square_index, partner_index) in edges_recolor_tuples_555:
+    for _, square_index, partner_index in edges_recolor_tuples_555:
         square_value = state[square_index]
         partner_value = state[partner_index]
 
@@ -601,7 +600,7 @@ class LookupTable555LRTCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
-        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
+        for pos, pos_state in zip(self.t_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -663,7 +662,7 @@ class LookupTable555LRXCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
-        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
+        for pos, pos_state in zip(self.x_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -741,7 +740,7 @@ class LookupTable555FBTCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(16)
 
-        for (pos, pos_state) in zip(UFBD_t_centers_555, binary_state):
+        for pos, pos_state in zip(UFBD_t_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -792,7 +791,7 @@ class LookupTable555FBXCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(16)
 
-        for (pos, pos_state) in zip(UFBD_x_centers_555, binary_state):
+        for pos, pos_state in zip(UFBD_x_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -1277,7 +1276,7 @@ class LookupTable555Phase2LRCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_centers_555, state):
+        for pos, pos_state in zip(self.LR_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -1807,7 +1806,7 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_centers_555, state):
+        for pos, pos_state in zip(self.LR_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -1937,7 +1936,7 @@ class LookupTable555EdgeOrientInnerOrbit(LookupTable):
         lt_state = self.parent.state[:]
 
         for edge_position in MIDGE_TUPLES_555:
-            for (e0, e1) in edge_position:
+            for e0, e1 in edge_position:
                 edge_str = lt_state[e0] + lt_state[e1]
 
                 if edge_str in self.midge_states.get((e0, e1), ()):
@@ -1951,7 +1950,6 @@ class LookupTable555EdgeOrientInnerOrbit(LookupTable):
         return "".join([lt_state[x] for x in midge_indexes])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
-
         # populate the midges
         steps_to_solve = steps_to_solve.split()
         steps_to_scramble = reverse_steps(steps_to_solve)
@@ -2153,7 +2151,7 @@ class LookupTable555Phase5Centers(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(LFRB_centers_555, state):
+        for pos, pos_state in zip(LFRB_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2430,7 +2428,7 @@ class LookupTable555Phase5FBCenters(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(FB_centers_555, state):
+        for pos, pos_state in zip(FB_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2596,7 +2594,7 @@ class LookupTable555Phase6Centers(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(centers_555, state):
+        for pos, pos_state in zip(centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2884,7 +2882,7 @@ class LookupTable555UDCenterSolve(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.UD_centers_LR_t_centers_555, state):
+        for pos, pos_state in zip(self.UD_centers_LR_t_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2941,7 +2939,7 @@ class LookupTable555LRCenterSolve(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.LR_centers_FB_x_centers_555, state):
+        for pos, pos_state in zip(self.LR_centers_FB_x_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2997,7 +2995,7 @@ class LookupTable555FBCenterSolve(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for (pos, pos_state) in zip(self.FB_centers_UD_t_centers_555, state):
+        for pos, pos_state in zip(self.FB_centers_UD_t_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -3277,7 +3275,7 @@ class RubiksCube555(RubiksCube):
         state = self.state
         result = []
 
-        for (x, y) in self.reduce333_orient_edges_tuples:
+        for x, y in self.reduce333_orient_edges_tuples:
             try:
                 result.append(highlow_edge_values_555[(x, y, state[x], state[y])])
             except KeyError:
@@ -3287,7 +3285,6 @@ class RubiksCube555(RubiksCube):
         return result
 
     def highlow_edges_print(self):
-
         # save cube state
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3317,7 +3314,7 @@ class RubiksCube555(RubiksCube):
         # Roo rPz Qqw qrP Sss TTt Uuu VVv ZwW Xxx YYy pzO
         #  ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^   ^
         #  UB  UL  UR  UD  LB  LF  RF  RB  DF  DL  DR  DB
-        for (edge_state_index, square_index, partner_index) in (
+        for edge_state_index, square_index, partner_index in (
             (1, 3, 103),  # UB
             (4, 11, 28),  # UL
             (7, 15, 78),  # UR
@@ -3331,7 +3328,6 @@ class RubiksCube555(RubiksCube):
             (31, 140, 98),  # DR
             (34, 148, 123),  # DB
         ):
-
             square_value = self.state[square_index]
             partner_value = self.state[partner_index]
             wing_str = wing_str_map[square_value + partner_value]
@@ -3460,7 +3456,7 @@ class RubiksCube555(RubiksCube):
         # Build a list of the wing strings at each midge
         wing_strs = []
 
-        for (_, square_index, partner_index) in midges_recolor_tuples_555:
+        for _, square_index, partner_index in midges_recolor_tuples_555:
             square_value = self.state[square_index]
             partner_value = self.state[partner_index]
             wing_str = square_value + partner_value
@@ -3484,7 +3480,7 @@ class RubiksCube555(RubiksCube):
             must_be_lowercase = []
             self.state = original_state[:]
 
-            for (wing_str, uppercase) in zip(wing_strs, permutation):
+            for wing_str, uppercase in zip(wing_strs, permutation):
                 if uppercase:
                     must_be_uppercase.append(wing_str)
                 else:
@@ -3509,7 +3505,7 @@ class RubiksCube555(RubiksCube):
 
         # build a list of tuples of the state indexes
         pt_state_indexes = []
-        for (lr_center_stage_eo_inner_orbit_state, eo_outer_orbit_state, eo_inner_orbit_state) in zip(
+        for lr_center_stage_eo_inner_orbit_state, eo_outer_orbit_state, eo_inner_orbit_state in zip(
             lr_center_stage_states, eo_outer_orbit_states, eo_inner_orbit_states
         ):
             pt_state_indexes.append(
@@ -3551,7 +3547,6 @@ class RubiksCube555(RubiksCube):
             index2_partner_value = self.state[index2_partner]
 
             if index1_value == index2_value and index1_partner_value == index2_partner_value:
-
                 if target_wing_str:
                     index1_wing_str = wing_str_map[index1_value + index1_partner_value]
                     # index2_wing_str = wing_str_map[index2_value + index2_partner_value]
@@ -3600,7 +3595,7 @@ class RubiksCube555(RubiksCube):
         original_solution_len = len(self.solution)
         results = []
 
-        for (wing_str_index, wing_str_combo) in enumerate(itertools.combinations(wing_strs_all, 4)):
+        for wing_str_index, wing_str_combo in enumerate(itertools.combinations(wing_strs_all, 4)):
             wing_str_combo = sorted(wing_str_combo)
             self.state = original_state[:]
             self.solution = original_solution[:]
@@ -3765,7 +3760,6 @@ class RubiksCube555(RubiksCube):
         self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
     def pair_edges(self):
-
         # We need the edge swaps to be even for our phase6 lookup tables to work.
         if self.edge_swaps_odd(False, 0, False):
             raise SolveError(f"{self} edge swaps are odd, cannot pair edges")

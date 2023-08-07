@@ -1416,6 +1416,7 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n", ida_count_total,
                 us / 1000000, nodes_per_sec);
 
+            // dwalton
             if (solution_count >= min_solution_count || !find_extra) {
                 return search_result;
             }
@@ -2099,6 +2100,10 @@ int main(int argc, char *argv[]) {
                                       prune_table_3_state, prune_table_4_state, min_ida_threshold, max_ida_threshold,
                                       use_uthash, find_extra);
         }
+    }
+
+    if (min_solution_count != 1) {
+        LOG("found %d solutions\n", solution_count);
     }
 
     if (search_result.found_solution) {

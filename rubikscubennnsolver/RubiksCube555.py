@@ -694,6 +694,131 @@ class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
         )
 
 
+class LookupTable555UDTCenterStage(LookupTable):
+    """
+    lookup-table-5x5x5-step13-UD-centers-stage-t-center-only.txt
+    ============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
+    """
+
+    # fmt: off
+    t_centers_555 = (
+        8, 12, 14, 18,  # Upper
+        33, 37, 39, 43,  # Left
+        58, 62, 64, 68,  # Front
+        83, 87, 89, 93,  # Right
+        108, 112, 114, 118,  # Back
+        133, 137, 139, 143,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index=False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step13-UD-centers-stage-t-center-only.txt",
+            "f0000f",
+            linecount=735471,
+            max_depth=8,
+            legal_moves=moves_555,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.t_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
+
+
+class LookupTable555UDXCenterStage(LookupTable):
+    """
+    lookup-table-5x5x5-step14-UD-centers-stage-x-center-only.txt
+    ============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+    """
+
+    # fmt: off
+    x_centers_555 = (
+        7, 9, 17, 19,  # Upper
+        32, 34, 42, 44,  # Left
+        57, 59, 67, 69,  # Front
+        82, 84, 92, 94,  # Right
+        107, 109, 117, 119,  # Back
+        132, 134, 142, 144,  # Down
+    )
+    # fmt: on
+
+    def __init__(self, parent, build_state_index=False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step14-UD-centers-stage-x-center-only.txt",
+            "f0000f",
+            linecount=735471,
+            max_depth=8,
+            legal_moves=moves_555,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        parent_state = self.parent.state
+        state = "".join(["1" if parent_state[x] in ("U", "D") else "0" for x in self.x_centers_555])
+        return self.hex_format % int(state, 2)
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        binary_state = bin(int(state, 16))[2:].zfill(24)
+
+        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
+            if pos_state == "0":
+                cube[pos] = "x"
+            else:
+                cube[pos] = "U"
+
+# phase 1 and 2 combined
+class LookupTableIDA555CenterStageOnePhase(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_555,
+            illegal_moves=(),
+            prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage, parent.lt_UD_t_centers_stage, parent.lt_UD_x_centers_stage),
+            centers_only=True,
+        )
+
 # phase 2
 class LookupTable555FBTCenterStage(LookupTable):
     """
@@ -3227,7 +3352,12 @@ class RubiksCube555(RubiksCube):
         # phase 1
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
+        self.lt_UD_t_centers_stage = LookupTable555UDTCenterStage(self)
+        self.lt_UD_x_centers_stage = LookupTable555UDXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
+        self.centers_stage_one_phase = LookupTableIDA555CenterStageOnePhase(self)
+
+        # used by 666 and 777
         self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
 
         # phase 2
@@ -3439,6 +3569,17 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_stage_UD(self, max_ida_threshold: int = None):
         self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
+
+    def group_centers_stage_one_phase(self, max_ida_threshold: int = None) -> None:
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+
+        if self.centers_staged():
+            return
+
+        tmp_solution_len = len(self.solution)
+        self.centers_stage_one_phase.solve_via_c(max_ida_threshold=max_ida_threshold)
+        self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
     def eo_edges(self):
         """
@@ -3669,96 +3810,6 @@ class RubiksCube555(RubiksCube):
 
         self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
-    def group_centers_phase1_and_2(self) -> None:
-        """
-        phase1 stages the centers on sides L and R
-        phase2 stages the centers on sides F and B and put the LR centers in one of 495 states that can
-            be solved without L L' R R'...this is prep work for phase 3
-
-        TODO this needs more work
-        BLBFRUFRDDFBUULBRLBRRLDLDLFURFLUBUDRRRDDFDFBBLUFRUFFBBFBLLLDBDFBDBLFDUUFRFBLDUDDURFDRBBDFUUFUBFBDLULDLRRUDFDFULLLUUBUDRLURLBBDURFRBULBRFRBRDRRULDFLFLR
-
-        results in "5x5x5 edge swaps are odd, cannot pair edges"
-        """
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-
-        if self.centers_staged():
-            return
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-
-        # find multiple phase1 solutions
-        phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=100)
-        pt_state_indexes = []
-        pt_state_indexes_LR_centers_special = []
-        phase2_pt_state_indexes_to_phase1_solution = {}
-        logger.info(f"found {len(phase1_solutions)} phase1 solutions")
-
-        # find the phase2 solution for each phase1 solution
-        for phase1_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase1_solutions:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in phase1_solution:
-                self.rotate(step)
-
-            # stage the LR centers
-            phase2_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_FB_centers_stage.prune_tables])
-            pt_state_indexes.append(phase2_pt_state_indexes)
-            phase2_pt_state_indexes_to_phase1_solution[phase2_pt_state_indexes] = phase1_solution
-
-            # stage the LR centers and put them into one of 495 states solveable with L L' R R'
-            phase2_pt_state_indexes = tuple(
-                [pt.state_index() for pt in self.lt_FB_centers_stage_LR_centers_special.prune_tables]
-            )
-            pt_state_indexes_LR_centers_special.append(phase2_pt_state_indexes)
-            phase2_pt_state_indexes_to_phase1_solution[phase2_pt_state_indexes] = phase1_solution
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        # stage the FB centers
-        phase2_solutions = self.lt_FB_centers_stage.solutions_via_c(pt_states=pt_state_indexes, solution_count=1)
-        phase2_solution = phase2_solutions[0][0]
-
-        # stage the FB centers and put LR centers into one of 495 states solveable with L L' R R'
-        phase2_solutions_lr_centers_special = self.lt_FB_centers_stage_LR_centers_special.solutions_via_c(
-            pt_states=pt_state_indexes_LR_centers_special, solution_count=1
-        )
-        phase2_solution_lr_centers_special = phase2_solutions_lr_centers_special[0][0]
-
-        # if we can put the LR centers into one of 495 states without adding to the move count, make it so
-        if len(phase2_solution_lr_centers_special) <= len(phase2_solution):
-            min_phase2_solution, (
-                pt0_state,
-                pt1_state,
-                pt2_state,
-                pt3_state,
-                pt4_state,
-            ) = phase2_solutions_lr_centers_special[0]
-            min_phase1_solution = phase2_pt_state_indexes_to_phase1_solution[pt0_state, pt1_state, pt2_state]
-        else:
-            min_phase2_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase2_solutions[0]
-            min_phase1_solution = phase2_pt_state_indexes_to_phase1_solution[pt0_state, pt1_state]
-
-        logger.info(
-            f"phase2 solution length {len(phase2_solution)}, phase2_lr_centers_special solution length {len(phase2_solution_lr_centers_special)}"
-        )
-
-        for step in min_phase1_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
-
-        tmp_solution_len = len(self.solution)
-        for step in min_phase2_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
-
     def pair_edges(self):
         # We need the edge swaps to be even for our phase6 lookup tables to work.
         if self.edge_swaps_odd(False, 0, False):
@@ -3866,7 +3917,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_F_to_F()
 
         if False:
-            self.group_centers_phase1_and_2()
+            self.group_centers_stage_one_phase()
 
         else:
             # phase 1

@@ -744,7 +744,7 @@ class LookupTable555UDTCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
-        for (pos, pos_state) in zip(self.t_centers_555, binary_state):
+        for pos, pos_state in zip(self.t_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -801,11 +801,12 @@ class LookupTable555UDXCenterStage(LookupTable):
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
-        for (pos, pos_state) in zip(self.x_centers_555, binary_state):
+        for pos, pos_state in zip(self.x_centers_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
                 cube[pos] = "U"
+
 
 # phase 1 and 2 combined
 class LookupTableIDA555CenterStageOnePhase(LookupTableIDAViaGraph):
@@ -815,9 +816,15 @@ class LookupTableIDA555CenterStageOnePhase(LookupTableIDAViaGraph):
             parent,
             all_moves=moves_555,
             illegal_moves=(),
-            prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage, parent.lt_UD_t_centers_stage, parent.lt_UD_x_centers_stage),
+            prune_tables=(
+                parent.lt_LR_t_centers_stage,
+                parent.lt_LR_x_centers_stage,
+                parent.lt_UD_t_centers_stage,
+                parent.lt_UD_x_centers_stage,
+            ),
             centers_only=True,
         )
+
 
 # phase 2
 class LookupTable555FBTCenterStage(LookupTable):

@@ -237,7 +237,7 @@ class LookupTableIDAViaGraph(LookupTable):
                     if end is not None and line_number > end:
                         break
 
-                    (state, steps_to_solve) = line.rstrip().split(":")
+                    state, steps_to_solve = line.rstrip().split(":")
                     steps_to_solve = steps_to_solve.split()
 
                     if state in self.state_target:

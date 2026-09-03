@@ -96,7 +96,7 @@ def binary_search(fh: TextIO, width: int, state_width: int, linecount: int, stat
         fh.seek(midpoint * width)
 
         line = fh.read(width)
-        (b_state, value) = line.rstrip().split(":")
+        b_state, value = line.rstrip().split(":")
 
         if state_to_find < b_state:
             last = midpoint - 1
@@ -173,7 +173,7 @@ def binary_search_multiple(
         elif b_state_to_find > b_state_last:
             break
 
-        (first, last) = find_first_last(linecount, cache, b_state_to_find, state_width)
+        first, last = find_first_last(linecount, cache, b_state_to_find, state_width)
 
         # logger.info("state_to_find %s, first %s, last %s, cache\n%s" % (state_to_find, first, last, pformat(cache)))
         while first <= last:
@@ -196,7 +196,7 @@ def binary_search_multiple(
 
             # If this is the line we are looking for, then read the entire line
             elif b_state_to_find == b_state:
-                (_, value) = line.decode("utf-8").rstrip().split(":")
+                _, value = line.decode("utf-8").rstrip().split(":")
 
                 if value.isdigit():
                     value = int(value)
@@ -226,7 +226,7 @@ def get_file_vitals(filename: str) -> Tuple[int, int, int]:
     with open(filename, "r") as fh:
         first_line = next(fh)
         width = len(first_line)
-        (state, steps) = first_line.split(":")
+        state, steps = first_line.split(":")
         state_width = len(state)
         linecount = int(size / width)
         return (width, state_width, linecount)
@@ -550,7 +550,7 @@ class LookupTable(object):
                 with open(self.filename, "r") as fh:
                     first_line = next(fh)
                     self.width = len(first_line)
-                    (state, steps) = first_line.strip().split(":")
+                    state, steps = first_line.strip().split(":")
                     self.state_width = len(state)
 
                     if steps.isdigit():
@@ -594,7 +594,7 @@ class LookupTable(object):
             a move sequence or move count
         """
         state_to_find = bytes(state_to_find, encoding="utf-8")
-        (first, last) = find_first_last(self.linecount, self.fh_txt_cache, state_to_find, self.state_width)
+        first, last = find_first_last(self.linecount, self.fh_txt_cache, state_to_find, self.state_width)
 
         while first <= last:
             midpoint = int((first + last) / 2)
@@ -674,7 +674,7 @@ class LookupTable(object):
             with open(self.filename, "r") as fh:
                 # The bottleneck is the building of the dictionary, moreso than reading from disk.
                 for line in fh:
-                    (state, steps) = line.rstrip().split(":")
+                    state, steps = line.rstrip().split(":")
 
                     # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
                     # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
@@ -758,7 +758,7 @@ class LookupTable(object):
             if state_to_find in self.cache_set:
                 # Binary search the file to get the value
                 line = self.binary_search(state_to_find)
-                (state, steps) = line.strip().split(":")
+                state, steps = line.strip().split(":")
                 steps_list = steps.split()
                 return steps_list
 
@@ -766,7 +766,7 @@ class LookupTable(object):
             line = self.binary_search_cache_string(state_to_find)
 
             if line:
-                (state, steps) = line.strip().split(":")
+                state, steps = line.strip().split(":")
                 steps_list = steps.split()
                 return steps_list
 
@@ -779,7 +779,7 @@ class LookupTable(object):
             line = self.binary_search(state_to_find)
 
             if line:
-                (state, steps) = line.strip().split(":")
+                state, steps = line.strip().split(":")
                 steps_list = steps.split()
                 return steps_list
 
@@ -829,7 +829,7 @@ class LookupTable(object):
 
         while True:
             self.ida_graph_node = None
-            (state, cost_to_goal) = self.ida_heuristic()
+            state, cost_to_goal = self.ida_heuristic()
 
             if tbd:
                 logger.info(
@@ -957,7 +957,7 @@ class LookupTable(object):
 
         with open(self.filename_state_index, "r") as fh:
             for line in fh:
-                (state, state_index) = line.rstrip().split(":")
+                state, state_index = line.rstrip().split(":")
                 self.state_index_cache[state] = int(state_index)
 
     def state_index(self, state: str = None) -> int:
@@ -971,7 +971,7 @@ class LookupTable(object):
         if state in self.state_index_cache:
             return self.state_index_cache[state]
 
-        (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
+        width, state_width, linecount = get_file_vitals(self.filename_state_index)
 
         with open(self.filename_state_index, "r") as fh:
             state_index = binary_search(fh, width, state_width, linecount, state)
@@ -987,7 +987,7 @@ class LookupTable(object):
             return state_index
 
     def state_index_multiple(self, states_to_find: List[str]) -> Dict[str, str]:
-        (width, state_width, linecount) = get_file_vitals(self.filename_state_index)
+        width, state_width, linecount = get_file_vitals(self.filename_state_index)
         with open(self.filename_state_index, "rb") as fh:
             results = binary_search_multiple(fh, width, state_width, linecount, states_to_find)
             for state, state_index in results.items():
@@ -1129,7 +1129,7 @@ class LookupTableIDA(LookupTable):
         # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
         cost_to_here = len(steps_to_here)
         self.parent.state = prev_state[:]
-        (lt_state, cost_to_goal) = self.ida_heuristic()
+        lt_state, cost_to_goal = self.ida_heuristic()
 
         if self.multiplier:
             cost_to_goal = cost_to_goal * self.multiplier
@@ -1156,7 +1156,7 @@ class LookupTableIDA(LookupTable):
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
             self.parent.state = self.rotate_xxx(prev_state, step)
 
-            (f_cost_tmp, found_solution, solution_steps) = self.ida_search(
+            f_cost_tmp, found_solution, solution_steps = self.ida_search(
                 steps_to_here + [step], threshold, step, self.parent.state[:]
             )
 
@@ -1236,7 +1236,7 @@ class LookupTableIDA(LookupTable):
                 )
 
         # Get the intial cube state and cost_to_goal
-        (state, cost_to_goal) = self.ida_heuristic()
+        state, cost_to_goal = self.ida_heuristic()
 
         # The cube is already in the desired state, nothing to do
         if cost_to_goal == 0:
@@ -1266,7 +1266,7 @@ class LookupTableIDA(LookupTable):
             self.ida_count = 0
             self.explored = {}
 
-            (f_cost, found_solution, solution_steps) = self.ida_search(
+            f_cost, found_solution, solution_steps = self.ida_search(
                 steps_to_here, threshold, None, self.original_state[:]
             )
             total_ida_count += self.ida_count

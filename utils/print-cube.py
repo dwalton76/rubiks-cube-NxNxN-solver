@@ -3,6 +3,7 @@
 """
 Print the layout of a cube
 """
+
 # standard libraries
 import sys
 

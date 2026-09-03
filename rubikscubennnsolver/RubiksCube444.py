@@ -1010,9 +1010,9 @@ class RubiksCube444(RubiksCube):
                 self.state = original_state[:]
                 self.solution = original_solution[:]
                 self.edge_mapping = edge_mapping
-                pt_state_indexes_to_edge_mapping[
-                    tuple([pt.state_index() for pt in self.lt_phase2.prune_tables])
-                ] = edge_mapping
+                pt_state_indexes_to_edge_mapping[tuple([pt.state_index() for pt in self.lt_phase2.prune_tables])] = (
+                    edge_mapping
+                )
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -1225,7 +1225,7 @@ class RubiksCube444(RubiksCube):
         logging.getLogger().setLevel(logging.INFO)
         self.state = original_state[:]
         self.solution = original_solution[:]
-        (phase3_solution, phase4_solution) = min_phase34_solution
+        phase3_solution, phase4_solution = min_phase34_solution
 
         # apply the phase 3 solution
         tmp_solution_len = len(self.solution)

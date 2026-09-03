@@ -3,6 +3,7 @@
 """
 Used to generate misc list of squares for each side
 """
+
 foo = [11, 27, 39, 23]
 foo.sort()
 

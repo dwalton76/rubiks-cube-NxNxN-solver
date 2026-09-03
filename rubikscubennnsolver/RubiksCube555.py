@@ -2049,7 +2049,7 @@ class LookupTable555Phase4(LookupTable):
         We override the normal solve() so that we do not have to enter all 343,000
         state_targets for this class.
         """
-        (state, _cost_to_goal) = self.ida_heuristic()
+        state, _cost_to_goal = self.ida_heuristic()
         steps = self.steps(state)
 
         if steps:

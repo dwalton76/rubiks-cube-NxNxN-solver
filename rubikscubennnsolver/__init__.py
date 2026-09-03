@@ -4701,8 +4701,7 @@ class RubiksCube(object):
             os.unlink(HTML_FILENAME)
 
         with open(HTML_FILENAME, "w") as fh:
-            fh.write(
-                """<!DOCTYPE html>
+            fh.write("""<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -4732,15 +4731,12 @@ a.next_page {
     float: right;
 }
 
-"""
-                % side_margin
-            )
+""" % side_margin)
 
             for x in range(1, size - 1):
                 fh.write("div.col%d,\n" % x)
 
-            fh.write(
-                """div.col%d {
+            fh.write("""div.col%d {
     float: left;
 }
 
@@ -4751,9 +4747,7 @@ div#upper,
 div#down {
     margin-left: %dpx;
 }
-"""
-                % (size - 1, size, (size - 1) * square_size, (size * square_size) + (3 * side_margin))
-            )
+""" % (size - 1, size, (size - 1) * square_size, (size * square_size) + (3 * side_margin)))
 
             fh.write(
                 """
@@ -4830,7 +4824,7 @@ div#page_holder {
 
         sides = ("upper", "left", "front", "right", "back", "down")
         side_index = -1
-        (first_squares, last_squares, last_UBD_squares) = _www_square_indexes(self.size)
+        first_squares, last_squares, last_UBD_squares = _www_square_indexes(self.size)
 
         with open(HTML_FILENAME, "a") as fh:
             fh.write("<div class='page' style='display: none;'>\n")
@@ -4840,7 +4834,7 @@ div#page_holder {
                     side_index += 1
                     fh.write(f"<div class='side' id='{sides[side_index]}'>\n")
 
-                (red, green, blue) = cube[index]
+                red, green, blue = cube[index]
                 fh.write(
                     "    <div class='square col%d' title='RGB (%d, %d, %d)' style='background-color: #%02x%02x%02x;'><span>%02d</span></div>\n"
                     % (col, red, green, blue, red, green, blue, index)
@@ -4863,8 +4857,7 @@ div#page_holder {
         Write the end of the HTML file
         """
         with open(HTML_FILENAME, "a") as fh:
-            fh.write(
-                """
+            fh.write("""
 <div id="sets-browse-controls">
 <a class="prev_page" style="display: block;"><img src="Arrow-Prev.png" class="clickable" width="128"></a>
 <a class="next_page" style="display: block;"><img src="Arrow-Next.png" class="clickable" width="128"></a>
@@ -4872,8 +4865,7 @@ div#page_holder {
 </div>
 </body>
 </html>
-"""
-            )
+""")
 
     def x_plane_edges_paired(self) -> bool:
         """

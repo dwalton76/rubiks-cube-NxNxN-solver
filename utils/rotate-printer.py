@@ -27,15 +27,13 @@ def main(c: bool) -> None:
     swaps_py = "rubikscubennnsolver/swaps.py"
 
     if build_rotate_xxx_c:
-        print(
-            """
+        print("""
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "ida_search_core.h"
 
-    """
-        )
+    """)
 
     else:
         with open(swaps_py, "w") as fh:
@@ -117,15 +115,13 @@ def main(c: bool) -> None:
                 cube.state = copy(original_state)
                 first_step = False
 
-            print(
-                r"""
+            print(r"""
     default:
         printf("ERROR: invalid move %d\n", move);
         exit(1);
     }
 }
-    """
-            )
+    """)
 
         # build python swaps.py
         else:

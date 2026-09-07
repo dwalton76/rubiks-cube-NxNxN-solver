@@ -1,3 +1,55 @@
+"""
+Even NxNxN solver (8x8x8 and up): turn the cube into an odd cube, then reuse
+the odd NxNxN solver.
+
+``RubiksCubeNNNEven`` inherits ``RubiksCubeNNNEvenEdges`` and is a sibling of
+``RubiksCube666``. Plus-sign staging maps each center orbit onto a fake 6x6x6
+and reuses the ranked 6x6x6 center-staging phases.
+
+``reduce_555``:
+    1. ``make_plus_sign`` maps each inner center orbit onto a fake 6x6x6 and
+       runs its ranked center staging, then daisy-solves it. That pairs the
+       middle two rows and columns of every face, leaving a plus sign of
+       already-reduced stickers.
+    2. ``pair_inside_edges_via_444`` pairs the innermost wing orbit (and avoids
+       PLL) by copying those wings onto a fake 4x4x4.
+    3. Drop the middle row and column of each face to build a ``RubiksCubeNNNOdd``
+       of size N-1 and ``solve()`` it. That odd cube stages its remaining
+       centers via 7x7x7 orbits and pairs the rest of the wings via 5x5x5.
+
+``group_edges`` (on ``RubiksCubeNNNEvenEdges``) then pairs any outer wing
+orbits that the odd reduction did not already pair, again via a fake 5x5x5,
+inside to outside. ``solve_333`` finishes the cube.
+
+Why the plus sign is required
+-----------------------------
+The odd solver reduces centers with a fake 7x7x7 and pairs wings with a fake
+5x5x5. Those fake cubes depend on two pieces that only odd cubes have:
+
+- A fixed center sticker. The middle of a 7x7x7 or 5x5x5 face never moves
+  under a face or wide turn. An even face has a 2x2 block in the middle
+  instead, and a quarter turn cycles those four stickers.
+- A midge. Each oblique line on a 7x7x7 face is left, midge, right, and each
+  edge has a center wing that pairs with itself across the edge. An even edge
+  has two middle wings. Each one pairs with the other column on the adjacent
+  face, so U column 3 pairs with B column 4, and U column 4 pairs with B
+  column 3.
+
+Copying an even cube's middle column onto the middle slot of a fake 7x7x7
+breaks both. The fake center is not fixed, and the fake center wing is paired
+with the real wing's neighbor, giving impossible pieces such as a (B, B) wing.
+Parity checks like ``get_edge_swap_count`` fail on that state.
+
+A fake 6x6x6 has no middle slot, so it maps cleanly onto an even cube. The
+plus sign uses it to make the middle two rows and the middle two columns
+match on every face, and ``pair_inside_edges_via_444`` pairs the two middle
+wings of every edge. After that, each middle row, column, and wing matches
+its twin. Dropping one of each leaves an odd cube of size N-1. The remaining
+middle row and column act as a real fixed center line, and the remaining
+middle wing acts as a real midge, so ``RubiksCubeNNNOdd`` can run its fake
+7x7x7 and 5x5x5 steps on it.
+"""
+
 # standard libraries
 import logging
 
@@ -9,11 +61,8 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
 logger = logging.getLogger(__name__)
 
 solved_888 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_101010 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_121212 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_141414 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
 # fmt: off
@@ -91,6 +140,10 @@ moves_10x10x10 = (
 
 class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     """
+    Even cubes 8x8x8 and larger. A fake 6x6x6 builds a plus sign so the cube can
+    be treated as odd; a fake 4x4x4 pairs the inside wings; then
+    ``RubiksCubeNNNOdd`` finishes the reduction. See the module docstring.
+
     Inheritance model
     -----------------
 
@@ -119,11 +172,13 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         Pair the middle two columns/rows in order to convert this Even cube into an Odd cube...this
         allows us to use the RubiksCubeNNNOdd solver later.  It makes what looks like a large "plus"
         sign on each cube face thus the name of this method.
+
+        This runs on a fake 6x6x6 because an even face has no fixed center and
+        no midge. See "Why the plus sign is required" in the module docstring.
         """
         center_orbit_count = int((self.size - 4) / 2)
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
         original_solution_len = len(self.solution)
-        max_center_orbit_id = center_orbit_count - 1
 
         # Make a big "plus" sign on each side
         for center_orbit_id in range(center_orbit_count):
@@ -217,13 +272,10 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_666 += 36
                 start_NNN += self.size * self.size
 
-            # reduce the centers to 5x5x5 centers
-            fake_666.stage_t_centers()
-
-            if center_orbit_id == max_center_orbit_id:
-                fake_666.daisy_solve_centers_eo_edges()
-            else:
-                fake_666.daisy_solve_centers()
+            # Stage this orbit with the ranked 6x6x6 phases 1-3, then reduce
+            # its centers to a 5x5x5.
+            fake_666.stage_centers()
+            fake_666.daisy_solve_centers()
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))

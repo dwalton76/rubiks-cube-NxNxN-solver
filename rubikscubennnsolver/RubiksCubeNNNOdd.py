@@ -1,26 +1,304 @@
+"""
+Odd NxNxN solver (9x9x9 and up): reduce the cube to a 7x7x7 orbit by orbit,
+then pair wings with the 5x5x5 solver.
+
+``RubiksCubeNNNOdd`` inherits ``RubiksCubeNNNOddEdges`` and is a sibling of
+``RubiksCube777``. T-center solving uses 7x7x7 lookup tables that the 7x7x7
+solver itself does not use; those tables live here. Each concentric ring of
+centers (and the matching wing orbit) is copied onto a fake 7x7x7; 7x7x7
+moves are rewritten as the matching wide turns on this cube.
+
+``reduce_555`` walks those orbits from the inside out:
+    1. Stage every LR center orbit (7x7x7 phases 1-3 on slices whose outer
+       x-centers are real, or t-centers / oblique pairing otherwise).
+    2. Stage every UD center orbit the same way (ranked outer-x / oblique
+       tables on full mappings; ranked oblique-only tables otherwise).
+    3. Solve every center orbit with the combined 7x7x7 daisy search. Phases
+       7 and 8 run on every cycle. Phase 9 runs on the last cycle of the orbit.
+
+After the centers are a 5x5x5, ``group_edges`` (on ``RubiksCubeNNNOddEdges``)
+pairs each wing orbit via a fake 5x5x5, inside to outside. ``solve_333`` then
+finishes the cube.
+"""
+
 # standard libraries
 import logging
+import subprocess
 from math import ceil
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
+from rubikscubennnsolver.LookupTable import download_file_if_needed
+from rubikscubennnsolver.misc import SolveError
+from rubikscubennnsolver.RubiksCube777 import (
+    UD_OBLIQUE_ONLY_TABLES_777,
+    RubiksCube777,
+    UFBD_oblique_edges_777,
+    centers_777,
+    oblique_edges_777,
+    solved_777,
+)
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 
 logger = logging.getLogger(__name__)
 
 solved_999 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_111111 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_131313 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_151515 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_171717 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+
+
+class LookupTableIDA777LRObliqueEdgePairing:
+    """
+    Pair LR obliques on a fake 7x7 orbit without staging UD inner centers.
+
+    The search loads no cost file. It asks ``ida_search_777_centers_stage``
+    for ``--obliques-only``.
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . L . L . .  . . . . . . .  . . R . R . .  . . . . . . .
+    . . L . L . .  . . . . . . .  . . R . R . .  . . . . . . .
+    . . L . L . .  . . . . . . .  . . R . R . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+
+    def solve_via_c(self, **_kwargs):
+        cmd = [
+            "./ida_search_777_centers_stage",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--obliques-only",
+        ]
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+
+        raise SolveError(f"ida_search_777_centers_stage --obliques-only failed with exit {returncode}\n{output}")
+
+    def recolor(self):
+        logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for position in centers_777:
+            if position in oblique_edges_777:
+                self.parent.state[position] = "L" if self.parent.state[position] in ("L", "R") else "x"
+            else:
+                self.parent.state[position] = "."
+
+
+class LookupTableIDA777UDObliqueEdgePairing:
+    """
+    Pair UD obliques (and therefore outer t-centers) without using outer-x tables.
+
+    The search loads no cost file. It asks ``ida_search_777_UD_centers_stage``
+    for ``--obliques-only``.
+
+                   . . . . . . .
+                   . . U . U . .
+                   . U . . . U .
+                   . . . . . . .
+                   . U . . . U .
+                   . . U . U . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . x . x . .  . . . . . . .  . . x . x . .
+    . . . . . . .  . x . . . x .  . . . . . . .  . x . . . x .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . x . . . x .  . . . . . . .  . x . . . x .
+    . . . . . . .  . . x . x . .  . . . . . . .  . . x . x . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . U . U . .
+                   . U . . . U .
+                   . . . . . . .
+                   . U . . . U .
+                   . . U . U . .
+                   . . . . . . .
+    """
+
+    def __init__(self, parent, multiplier=1.3):
+        self.parent = parent
+        self.multiplier = multiplier
+
+    def solve_via_c(self, **_kwargs):
+        cmd = [
+            "./ida_search_777_UD_centers_stage",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--obliques-only",
+        ]
+        for flag, filename in UD_OBLIQUE_ONLY_TABLES_777:
+            download_file_if_needed(filename)
+            cmd.extend((flag, filename))
+        if self.multiplier:
+            cmd.extend(("--multiplier", str(self.multiplier)))
+
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+
+        raise SolveError(f"ida_search_777_UD_centers_stage --obliques-only failed with exit {returncode}\n{output}")
+
+    def recolor(self):
+        logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for position in centers_777:
+            if position in UFBD_oblique_edges_777:
+                self.parent.state[position] = "U" if self.parent.state[position] in ("U", "D") else "x"
+            else:
+                self.parent.state[position] = "."
+
+
+class RubiksCube777ForNNNOdd(RubiksCube777):
+    """Fake 7x7 adapter containing behavior used only by larger odd cubes."""
+
+    stage_outer_x_centers = True
+
+    def lt_init(self):
+        if self.lt_init_called:
+            return
+
+        super().lt_init()
+        self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
+        self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
+
+    def stage_LR_t_centers(self):
+        if self.LR_centers_staged():
+            return
+
+        tmp_solution_len = len(self.solution)
+        self.group_inside_LR_centers()
+        self.print_cube_add_comment("LR inner centers staged", tmp_solution_len)
+
+        tmp_solution_len = len(self.solution)
+        self.lt_LR_oblique_edge_pairing.solve_via_c()
+        self.print_cube_add_comment("LR oblique edges paired", tmp_solution_len)
+
+        tmp_solution_len = len(self.solution)
+        self.create_fake_555_from_outside_centers()
+        self.fake_555.lt_LR_t_centers_stage_ida.solve_via_c()
+        for step in self.fake_555.solution:
+            if not step.startswith("COMMENT"):
+                if step.startswith("5"):
+                    step = "7" + step[1:]
+                elif step.startswith("3"):
+                    raise Exception("5x5x5 solution has 3 wide turn")
+                self.rotate(step)
+        self.print_cube_add_comment("LR t-centers staged", tmp_solution_len)
+
+    def group_inside_UD_centers(self):
+        if self.UD_inside_centers_staged():
+            return
+
+        self.create_fake_555_from_inside_centers()
+        fake_555 = self.fake_555
+        if fake_555.FB_centers_staged():
+            if fake_555.edge_swaps_odd(False, 0, False):
+                fake_555.prevent_OLL()
+        else:
+            tmp_555_len = len(fake_555.solution)
+            fake_555.lt_FB_centers_stage.solve_via_c()
+            fake_555.print_cube_add_comment("UD FB centers staged", tmp_555_len)
+
+        for step in fake_555.solution:
+            if not step.startswith("COMMENT"):
+                if step.startswith("5"):
+                    step = "7" + step[1:]
+                elif step.startswith("3"):
+                    step = "4" + step[1:]
+                elif "w" in step:
+                    step = "3" + step
+                self.rotate(step)
+
+    def stage_UD_centers(self):
+        if self.UD_centers_staged():
+            return
+
+        tmp_solution_len = len(self.solution)
+        self.group_inside_UD_centers()
+        self.print_cube_add_comment("UD inner x-centers staged", tmp_solution_len)
+        super().stage_UD_centers()
+
+    def stage_UD_t_centers(self):
+        if self.UD_centers_staged():
+            return
+
+        tmp_solution_len = len(self.solution)
+        self.group_inside_UD_centers()
+        self.print_cube_add_comment("UD inner x-centers staged", tmp_solution_len)
+
+        tmp_solution_len = len(self.solution)
+        self.lt_UD_oblique_edge_pairing.solve_via_c()
+        self.print_cube_add_comment("UD t-centers and obliques staged", tmp_solution_len)
 
 
 class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
     """
+    Odd cubes 9x9x9 and larger. Centers are reduced orbit-by-orbit on a fake 7x7x7;
+    wings are paired orbit-by-orbit on a fake 5x5x5. See the module docstring.
+
     Inheritance model
     -----------------
 
@@ -33,7 +311,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
     def get_fake_777(self):
         if self.fake_777 is None:
-            self.fake_777 = RubiksCube777(solved_777, "URFDLB")
+            self.fake_777 = RubiksCube777ForNNNOdd(solved_777, "URFDLB")
             self.fake_777.lt_init()
             self.fake_777.enable_print_cube = False
         else:
@@ -270,6 +548,9 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         if action == "stage_UD_centers":
             if outer_x_centers_valid:
+                # All four UFBD coordinates map to real stickers, so the
+                # combined outer-x / oblique ranked search can replace the
+                # old phase-5/6 split.
                 self.fake_777.stage_UD_centers()
             else:
                 if cycle == max_cycle:
@@ -279,6 +560,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         elif action == "stage_LR_centers":
             if outer_x_centers_valid:
+                # Real 7x7 of this orbit: stage UD inner t/x while pairing LR obliques.
                 self.fake_777.stage_LR_centers()
             else:
                 if cycle == max_cycle:
@@ -286,8 +568,8 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 else:
                     self.fake_777.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
 
-        elif action == "solve_t_centers":
-            self.fake_777.solve_t_centers()
+        elif action == "solve_centers":
+            self.fake_777.centers_combined_daisy_solve(native_only=True, do_phase9=cycle == max_cycle)
 
         else:
             raise Exception(f"Invalid action {action}")
@@ -348,7 +630,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
             self.print_cube_add_comment("NNN UD centers staged", tmp_solution_len)
 
-        # Solve all t-centers
+        # Solve every center orbit to its native orientation
         tmp_solution_len = len(self.solution)
 
         for center_orbit_id in range(max_center_orbits + 1):
@@ -357,6 +639,6 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
             for cycle in range(max_cycle + 1):
                 self.stage_or_solve_inside_777(
-                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_t_centers"
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "solve_centers"
                 )
-        self.print_cube_add_comment("NNN t-centers solved", tmp_solution_len)
+        self.print_cube_add_comment("NNN centers solved natively", tmp_solution_len)

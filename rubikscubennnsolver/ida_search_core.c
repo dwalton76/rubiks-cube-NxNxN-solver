@@ -1,11 +1,53 @@
 
 #include "ida_search_core.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
+#include <unistd.h>
+
+#define GROUPED_UINT64_DIGITS 20
+
+const char *grouped_uint64(uint64_t value, char *buffer, size_t buffer_size)
+{
+    char digits[GROUPED_UINT64_DIGITS + 1];
+    int digit_count;
+    int comma_count;
+    int out;
+    int index;
+
+    digit_count = snprintf(digits, sizeof(digits), "%" PRIu64, value);
+    if (digit_count <= 0 || (size_t)digit_count >= sizeof(digits) || buffer_size < 2) {
+        if (buffer_size) {
+            buffer[0] = '\0';
+        }
+        return buffer;
+    }
+
+    comma_count = (digit_count - 1) / 3;
+    if ((size_t)digit_count + (size_t)comma_count >= buffer_size) {
+        snprintf(buffer, buffer_size, "%" PRIu64, value);
+        return buffer;
+    }
+
+    out = digit_count + comma_count;
+    buffer[out] = '\0';
+    for (index = digit_count - 1; index >= 0; index--) {
+        buffer[--out] = digits[index];
+        if (index && (digit_count - index) % 3 == 0) {
+            buffer[--out] = ',';
+        }
+    }
+    return buffer;
+}
 
 void LOG(const char *fmt, ...) {
     char date[20];
@@ -21,6 +63,7 @@ void LOG(const char *fmt, ...) {
     va_start(args, fmt);
     vprintf(fmt, args);
     va_end(args);
+    fflush(stdout);
 }
 
 unsigned long hex_to_int(char value) {
@@ -66,61 +109,39 @@ unsigned long hex_to_int(char value) {
 
 unsigned long max(unsigned long a, unsigned long b) { return (a > b ? a : b); }
 
-// uthash references
-// http://troydhanson.github.io/uthash/index.html
-// https://cfsa-pmw.warwick.ac.uk/SDF/SDF_C/blob/3cf5bf49856ef9ee4080cf6722cf9058a1e28b01/src/uthash/tests/example.c
-inline void hash_add(struct key_value_pair **hashtable, char *state_key, unsigned long value) {
-    struct key_value_pair *s;
+static void print_cube_sticker(char sticker) {
+    int color = 0;
 
-    s = malloc(sizeof(struct key_value_pair));
-    strcpy(s->state, state_key);
-    s->value = value;
-
-    HASH_ADD_STR(*hashtable, state, s);
-}
-
-inline struct key_value_pair *hash_find(struct key_value_pair **hashtable, char *state_key) {
-    struct key_value_pair *s = NULL;
-    HASH_FIND_STR(*hashtable, state_key, s);
-    return s;
-}
-
-void hash_delete(struct key_value_pair **hashtable, struct key_value_pair *s) {
-    HASH_DEL(*hashtable, s);
-    free(s);
-}
-
-void hash_delete_all(struct key_value_pair **hashtable) {
-    struct key_value_pair *s, *tmp;
-
-    HASH_ITER(hh, *hashtable, s, tmp) {
-        HASH_DEL(*hashtable, s);
-        free(s);
-    }
-}
-
-unsigned long hash_count(struct key_value_pair **hashtable) {
-    struct key_value_pair *s;
-    unsigned long count = 0;
-
-    for (s = *hashtable; s != NULL; s = (struct key_value_pair *)(s->hh.next)) {
-        count++;
+    switch (sticker) {
+        case 'U':
+            color = 97;  // white
+            break;
+        case 'L':
+            color = 90;  // orange
+            break;
+        case 'F':
+            color = 92;  // green
+            break;
+        case 'R':
+            color = 91;  // red
+            break;
+        case 'B':
+            color = 94;  // blue
+            break;
+        case 'D':
+            color = 93;  // yellow
+            break;
     }
 
-    return count;
-}
-
-void hash_print_all(struct key_value_pair **hashtable) {
-    struct key_value_pair *s;
-
-    for (s = *hashtable; s != NULL; s = (struct key_value_pair *)(s->hh.next)) {
-        printf("key %s  value %u\n", s->state, s->value);
+    if (color) {
+        printf("\033[%dm%c\033[0m ", color, sticker);
+    } else {
+        printf("%c ", sticker);
     }
 }
 
 void print_cube(char *cube, int size) {
     int squares_per_side = size * size;
-    int square_count = squares_per_side * 6;
     int rows = size * 3;
     printf("\n");
 
@@ -135,7 +156,7 @@ void print_cube(char *cube, int size) {
             }
 
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             printf("\n");
@@ -158,7 +179,7 @@ void print_cube(char *cube, int size) {
             }
 
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
             printf("\n");
 
@@ -169,28 +190,28 @@ void print_cube(char *cube, int size) {
             int i_end = i_start + size - 1;
             int i = i_start;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             // F
             i = i_start + squares_per_side;
             i_end = i + size - 1;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             // R
             i = i_start + (squares_per_side * 2);
             i_end = i + size - 1;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             // B
             i = i_start + (squares_per_side * 3);
             i_end = i + size - 1;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             printf("\n");
@@ -1366,4 +1387,359 @@ unsigned char invalid_prune(unsigned char cost_to_here, move_type *moves_to_here
     }
 
     return 0;
+}
+
+uint64_t binom[IDA_BINOM_MAX + 1][IDA_BINOM_MAX + 1];
+
+void init_binom(void)
+{
+    for (unsigned int n = 0; n <= IDA_BINOM_MAX; n++) {
+        binom[n][0] = 1;
+        binom[n][n] = 1;
+        for (unsigned int k = 1; k < n; k++) {
+            binom[n][k] = binom[n - 1][k - 1] + binom[n - 1][k];
+        }
+    }
+}
+
+move_type ida_parse_move(const char *move_string, const move_type *moves, unsigned int move_count)
+{
+    for (unsigned int move_index = 0; move_index < move_count; move_index++) {
+        move_type move = moves[move_index];
+
+        if (strmatch((char *)move2str[move], (char *)move_string)) {
+            return move;
+        }
+    }
+    return MOVE_NONE;
+}
+
+void ida_init_move_tables(
+    const move_type *moves,
+    unsigned int move_count,
+    int (*move_is_allowed)(move_type),
+    unsigned char legal_move_count[MOVE_MAX],
+    unsigned char legal_move_index[MOVE_MAX][IDA_MOVE_INDEX_MAX],
+    move_type inverse_move[MOVE_MAX]
+)
+{
+    memset(legal_move_count, 0, MOVE_MAX);
+
+    for (unsigned int move_index = 0; move_index < move_count; move_index++) {
+        move_type move = moves[move_index];
+        unsigned int quarter_turn_offset = ((unsigned int)move - 1) % 3;
+
+        inverse_move[move] = quarter_turn_offset == 0 ? move + 1 :
+                             quarter_turn_offset == 1 ? move - 1 : move;
+        if (move_is_allowed(move)) {
+            legal_move_index[MOVE_NONE][legal_move_count[MOVE_NONE]++] = (unsigned char)move_index;
+        }
+    }
+
+    for (unsigned int previous_index = 0; previous_index < move_count; previous_index++) {
+        move_type previous_move = moves[previous_index];
+
+        if (!move_is_allowed(previous_move)) {
+            continue;
+        }
+        for (unsigned int move_index = 0; move_index < move_count; move_index++) {
+            move_type move = moves[move_index];
+
+            if (!move_is_allowed(move) ||
+                steps_on_same_face_and_layer(previous_move, move) ||
+                !outer_layer_moves_in_order(previous_move, move) ||
+                !steps_on_same_face_in_order(previous_move, move) ||
+                !steps_on_opposite_faces_in_order(previous_move, move)) {
+                continue;
+            }
+            legal_move_index[previous_move][legal_move_count[previous_move]++] = (unsigned char)move_index;
+        }
+    }
+}
+
+void ida_init_cube(char *cube, unsigned int cube_size, const char *kociemba)
+{
+    const unsigned int face_size = cube_size * cube_size;
+    const unsigned int expected = face_size * 6;
+
+    if (strlen(kociemba) != expected) {
+        fprintf(
+            stderr,
+            "ERROR: --kociemba must contain %u stickers for a %ux%ux%u cube\n",
+            expected, cube_size, cube_size, cube_size
+        );
+        exit(1);
+    }
+    cube[0] = 'x';
+    memcpy(&cube[1], &kociemba[0], face_size);                            /* U */
+    memcpy(&cube[1 + face_size], &kociemba[face_size * 4], face_size);    /* L */
+    memcpy(&cube[1 + face_size * 2], &kociemba[face_size * 2], face_size); /* F */
+    memcpy(&cube[1 + face_size * 3], &kociemba[face_size], face_size);    /* R */
+    memcpy(&cube[1 + face_size * 4], &kociemba[face_size * 5], face_size); /* B */
+    memcpy(&cube[1 + face_size * 5], &kociemba[face_size * 3], face_size); /* D */
+}
+
+int ida_is_edge_or_corner(unsigned int square, unsigned int cube_size)
+{
+    unsigned int face_offset = (square - 1) % (cube_size * cube_size);
+    unsigned int row = face_offset / cube_size;
+    unsigned int col = face_offset % cube_size;
+
+    return row == 0 || row == cube_size - 1 || col == 0 || col == cube_size - 1;
+}
+
+uint64_t ida_mixed_radix_rank(const uint64_t *ranks, unsigned int count, uint64_t radix)
+{
+    uint64_t mixed = 0;
+
+    for (unsigned int index = 0; index < count; index++) {
+        if (ranks[index] == UINT64_MAX) {
+            return UINT64_MAX;
+        }
+        mixed = mixed * radix + ranks[index];
+    }
+    return mixed;
+}
+
+uint64_t ida_combination_rank_ud(
+    const char *cube,
+    const unsigned int *squares,
+    unsigned int group_size,
+    unsigned int ud_count
+)
+{
+    unsigned int u_remaining = ud_count;
+    uint64_t rank = 0;
+
+    for (unsigned int position = 0; position < group_size; position++) {
+        unsigned int positions_after = group_size - position - 1;
+        char sticker = cube[squares[position]];
+
+        if (sticker == 'U' || sticker == 'D') {
+            if (!u_remaining) {
+                return UINT64_MAX;
+            }
+            u_remaining--;
+        } else if (u_remaining) {
+            rank += binom[positions_after][u_remaining - 1];
+        }
+    }
+    return u_remaining ? UINT64_MAX : rank;
+}
+
+uint64_t ida_combination_rank_pair(
+    const char *cube,
+    const unsigned int *squares,
+    unsigned int group_size,
+    unsigned int color_count,
+    uint64_t universe,
+    char small,
+    char large
+)
+{
+    unsigned int remaining[2] = {color_count, color_count};
+    uint64_t permutations = universe;
+    uint64_t rank = 0;
+    unsigned int slots = group_size;
+
+    for (unsigned int position = 0; position < group_size; position++) {
+        char sticker = cube[squares[position]];
+        unsigned int symbol_index;
+
+        if (sticker == small) {
+            symbol_index = 0;
+        } else if (sticker == large) {
+            symbol_index = 1;
+        } else {
+            return UINT64_MAX;
+        }
+        if (!remaining[symbol_index]) {
+            return UINT64_MAX;
+        }
+        for (unsigned int smaller = 0; smaller < symbol_index; smaller++) {
+            rank += permutations * remaining[smaller] / slots;
+        }
+        permutations = permutations * remaining[symbol_index] / slots;
+        remaining[symbol_index]--;
+        slots--;
+    }
+    return rank;
+}
+
+struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expected_size)
+{
+    struct mapped_cost_file result = {-1, NULL, 0};
+    struct stat file_stat;
+    int mmap_flags = MAP_SHARED;
+
+    result.fd = open(filename, O_RDONLY);
+    if (result.fd < 0) {
+        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    if (fstat(result.fd, &file_stat) != 0) {
+        fprintf(stderr, "ERROR: could not stat %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    if ((uint64_t)file_stat.st_size != expected_size) {
+        fprintf(
+            stderr,
+            "ERROR: %s is %" PRIu64 " bytes, expected %" PRIu64 "\n",
+            filename,
+            (uint64_t)file_stat.st_size,
+            expected_size
+        );
+        exit(1);
+    }
+#ifdef MAP_POPULATE
+    if ((uint64_t)file_stat.st_blocks * 512 >= expected_size) {
+        mmap_flags |= MAP_POPULATE;
+    }
+#endif
+    result.size = (size_t)expected_size;
+    result.costs = mmap(NULL, result.size, PROT_READ, mmap_flags, result.fd, 0);
+    if (result.costs == MAP_FAILED) {
+        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    return result;
+}
+
+void ida_unmap_cost_file(int fd, unsigned char *costs, size_t size)
+{
+    if (costs && costs != MAP_FAILED) {
+        munmap(costs, size);
+    }
+    if (fd >= 0) {
+        close(fd);
+    }
+}
+
+static uint64_t symmetry_select_zero(const struct symmetry_index *index, uint64_t zero)
+{
+    const struct symmetry_index_header *header = index->header;
+    uint64_t base = (zero / header->zero_sample_rate) * header->zero_sample_rate;
+    uint64_t position = index->zero_samples[zero / header->zero_sample_rate];
+    uint64_t remaining = zero - base;
+
+    if (!remaining) {
+        return position;
+    }
+    position++;
+    while (position < header->high_bit_count) {
+        uint64_t word_index = position >> 6;
+        unsigned int offset = position & 63;
+        uint64_t zeros = ~index->high[word_index] & (UINT64_MAX << offset);
+
+        if (word_index + 1 == header->high_word_count &&
+                (header->high_bit_count & 63)) {
+            zeros &= (UINT64_C(1) << (header->high_bit_count & 63)) - 1;
+        }
+        unsigned int count = __builtin_popcountll(zeros);
+        if (remaining <= count) {
+            for (uint64_t candidate = zeros; candidate; candidate &= candidate - 1) {
+                if (!--remaining) {
+                    return (word_index << 6) + __builtin_ctzll(candidate);
+                }
+            }
+        }
+        remaining -= count;
+        position = (word_index + 1) << 6;
+    }
+    return UINT64_MAX;
+}
+
+static uint64_t symmetry_low_value(const struct symmetry_index *index, uint64_t dense)
+{
+    uint64_t bit = dense * index->header->low_bits;
+    unsigned int offset = bit & 63;
+    uint64_t value = index->low[bit >> 6] >> offset;
+
+    if (offset > 64 - index->header->low_bits) {
+        value |= index->low[(bit >> 6) + 1] << (64 - offset);
+    }
+    return value & ((UINT64_C(1) << index->header->low_bits) - 1);
+}
+
+uint64_t symmetry_dense_rank(const struct symmetry_index *index, uint64_t raw)
+{
+    uint64_t high = raw >> index->header->low_bits;
+    uint64_t low = raw & ((UINT64_C(1) << index->header->low_bits) - 1);
+    uint64_t start = high
+        ? symmetry_select_zero(index, high - 1) - (high - 1)
+        : 0;
+    uint64_t end = symmetry_select_zero(index, high) - high;
+
+    if (start == UINT64_MAX || end == UINT64_MAX || end > index->header->orbit_count) {
+        return UINT64_MAX;
+    }
+    for (uint64_t dense = start; dense < end; dense++) {
+        uint64_t candidate = symmetry_low_value(index, dense);
+        if (candidate == low) {
+            return dense;
+        }
+        if (candidate > low) {
+            break;
+        }
+    }
+    return UINT64_MAX;
+}
+
+void map_symmetry_index(
+    struct symmetry_index *index,
+    const char *filename,
+    uint64_t expected_raw_universe,
+    const char *kind
+)
+{
+    struct stat file_stat;
+    uint64_t expected_size;
+
+    index->fd = open(filename, O_RDONLY);
+    if (index->fd < 0 || fstat(index->fd, &file_stat) != 0) {
+        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    index->size = (size_t)file_stat.st_size;
+    index->mapping = mmap(NULL, index->size, PROT_READ, MAP_SHARED, index->fd, 0);
+    if (index->mapping == MAP_FAILED) {
+        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    index->header = (const struct symmetry_index_header *)index->mapping;
+    if (index->size < sizeof(*index->header) ||
+            memcmp(index->header->magic, "CS444EF1", 8) ||
+            index->header->raw_universe != expected_raw_universe ||
+            index->header->low_bits != 5 ||
+            index->header->zero_sample_rate != 512) {
+        fprintf(stderr, "ERROR: %s is not a supported %s\n", filename, kind);
+        exit(1);
+    }
+    expected_size = sizeof(*index->header) +
+        (index->header->low_word_count * sizeof(uint64_t)) +
+        (index->header->high_word_count * sizeof(uint64_t)) +
+        (index->header->zero_sample_count * sizeof(uint32_t));
+    if (expected_size != index->size) {
+        fprintf(stderr, "ERROR: %s has an invalid size\n", filename);
+        exit(1);
+    }
+    index->low = (const uint64_t *)(index->mapping + sizeof(*index->header));
+    index->high = index->low + index->header->low_word_count;
+    index->zero_samples = (const uint32_t *)(index->high + index->header->high_word_count);
+}
+
+void unmap_symmetry_index(struct symmetry_index *index)
+{
+    if (index->mapping && index->mapping != MAP_FAILED) {
+        munmap(index->mapping, index->size);
+    }
+    if (index->fd >= 0) {
+        close(index->fd);
+    }
+    index->fd = -1;
+    index->mapping = NULL;
+    index->header = NULL;
+    index->low = NULL;
+    index->high = NULL;
+    index->zero_samples = NULL;
 }

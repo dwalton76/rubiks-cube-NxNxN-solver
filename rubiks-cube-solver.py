@@ -39,8 +39,6 @@ parser.add_argument(
     action="store_true",
     help="Load smaller tables to use less memory...takes longer to run",
 )
-
-action = parser.add_mutually_exclusive_group(required=False)
 parser.add_argument("--openwith", default=None, type=str, help="Colors for sides U, L, etc")
 parser.add_argument("--colormap", default=None, type=str, help="Colors for sides U, L, etc")
 parser.add_argument("--order", type=str, default="URFDLB", help="order of sides in --state, default kociemba URFDLB")

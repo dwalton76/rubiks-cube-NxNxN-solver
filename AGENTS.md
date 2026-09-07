@@ -1,0 +1,215 @@
+# Agent handbook: rubiks-cube-NxNxN-solve
+
+Python reduction solver for any even/odd NxNxN cube, plus C IDA searchers. Sibling repo: `../rubiks-cube-lookup-tables` (installed as the `rubikscubelookuptables` module). `make 444-tables` (also 333, 555, 666, 777) builds that size's tables into `lookup-tables/`.
+
+## Rules
+
+- Do **not** commit unless the user asks.
+- Do **not** start a full `make 333-tables`/`444-tables`/`555-tables`/`666-tables`/`777-tables` rebuild unless the user asks. A missing table is not built during a solve: `download_file_if_needed()` prints the matching target and exits 1.
+- Do **not** force-push, amend pushed commits, or skip git hooks.
+- Prefer editing existing phase code over inventing a parallel Python IDA. New ranked searches belong in a dedicated `ida_search_*.c`.
+- Run C compiles and tests from **this repo root**. Python `Popen`s `./ida_search_*`.
+- On the Windows workstation, compile and test inside WSL Ubuntu (`wsl -d Ubuntu-22.04`), not native PowerShell gcc.
+- Project skills in `.cursor/skills/`: never CRLF (always LF); never keep unused lookup-table code in either repo; if a phase is slow, sample a heuristic matrix instead of shipping `--multiplier`.
+
+## Layout
+
+| Path | Role |
+| --- | --- |
+| `rubiks-cube-solver.py` | CLI: `--state` kociemba string, default order `URFDLB` |
+| `rubikscubennnsolver/` | Cube classes, lookup-table loaders, C sources |
+| `rubikscubennnsolver/ida_search_*.c` | Dedicated ranked IDA binaries |
+| `rubikscubennnsolver/rotate_xxx.c`, `ida_search_core.c` | Shared rotate + IDA helpers |
+| `lookup-tables/` | Tables built by `make NNN-tables`. |
+| `tests/` | Unit tests; several skip if the matching binary is missing |
+| `utils/` | Benchmarks, cost-matrix rebuilders, `test-cubes.json` |
+| `Makefile` | `init` (compile + venv), `format`, `test` |
+
+Cube state arrays are **1-indexed** (index 0 unused). Face order in kociemba strings is U, R, F, D, L, B unless a caller passes another `--order`.
+
+## Environment
+
+```bash
+make init          # gcc -O3 all searchers, venv, pip install -e .
+source venv/bin/activate
+```
+
+3x3x3 finish needs the external kociemba binary (`dwalton76/kociemba`). Missing kociemba breaks `solve_333`, not center staging.
+
+Missing tables: `download_file_if_needed()` prints `make 444-tables` (or 333, 555, 666, 777) and exits 1. That target builds every table for the size, including the 6x6 LR oblique bar file, into `lookup-tables/`. `make init` clones that package to `../rubiks-cube-lookup-tables` if the directory is missing, then installs it. Always run from repo root.
+
+Recompile a single searcher after C edits (example):
+
+```bash
+gcc -O3 -o ida_search_777_UD_centers_stage \
+  rubikscubennnsolver/ida_search_core.c \
+  rubikscubennnsolver/rotate_xxx.c \
+  rubikscubennnsolver/ida_search_777_UD_centers_stage.c -lm -lpthread
+```
+
+`make init` / `make clean` rebuilds or deletes every binary listed below. After C changes, rebuild the binary the tests invoke.
+
+## Test and format
+
+```bash
+make format        # isort (limited dirs), black 120, flake8
+make test          # pytest -vv tests
+PYTHONPATH=. ./venv/bin/python3 -m unittest -v tests.test_ida_search_with_rotate.CenterStagingTablesTest
+```
+
+Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_centers_stage.py`, …) and skip if the binary is absent. `tests/test_solve.py` solves one scramble per size from `utils/test-cubes.json` and needs tables plus kociemba.
+
+`make format` isort only covers `rubikscubennnsolver usr utils` (not `tests/`). Black still formats the whole tree except venv.
+
+## C searchers
+
+| Binary | Source | Used for |
+| --- | --- | --- |
+| `ida_search_555_phase1` | `ida_search_555_phase1.c` | 5x5 LR t/x center staging |
+| `ida_search_555_phase2` | `ida_search_555_phase2.c` | 5x5 FB t/x center staging |
+| `ida_search_555_phase3` | `ida_search_555_phase3.c` | 5x5 EO + LR 1-of-432 |
+| `ida_search_555_phase4` | `ida_search_555_phase4.c` | 5x5 park one four-edge group on x-plane |
+| `ida_search_555_phase5` | `ida_search_555_phase5.c` | 5x5 pair four x-plane edges |
+| `ida_search_555_phase6` | `ida_search_555_phase6.c` | 5x5 pair the last eight edges and solve centers |
+| `ida_search_444_phase1` | `ida_search_444_phase1.c` | 4x4 combined center staging + EO |
+| `ida_search_444_phase2` | `ida_search_444_phase2.c` | 4x4 combined edge pairing + centers |
+| `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 LR-oblique pairing / ranked UD phase 4 |
+| `ida_search_666_daisy_centers` | `ida_search_666_daisy_centers.c` | 6x6 daisy |
+| `ida_search_777_centers_stage` | `ida_search_777_centers_stage.c` | 7x7 LR phase 2 (UD inner + LR obliques); `--obliques-only` for NNNOdd partial rings |
+| `ida_search_777_UD_centers_stage` | `ida_search_777_UD_centers_stage.c` | 7x7 UD outer-x + obliques (6 tables) or `--obliques-only` (3 tables) |
+| `ida_search_777_daisy_centers` | `ida_search_777_daisy_centers.c` | 7x7: phase 7 LR, phase 8 UD/FB pairing, phase 9 daisy. `--native-only` applies to phase 9 for 9x9+ |
+
+Ranked searchers are pthread IDA. A `SOLUTION (N steps): …` line on stdout is the contract Python parses.
+
+### Ranked `cost-only.bin`
+
+Dense byte array, one byte per mixed-radix rank.
+
+| Byte | Meaning |
+| --- | --- |
+| `0` | unseen / unreachable |
+| `n > 0` | cost `n - 1` |
+
+Pairwise 7x7 UD tables are \(C(16,8)^2 = 165{,}636{,}900\) bytes. C mmap size checks must match the builder metadata (`*.cost-only.bin.json`).
+
+Sampled **cost matrices** (when max-of-axis is too weak) live as C arrays in the searcher and are rebuilt from the **solver** tree:
+
+- `utils/build-666-daisy-cost-matrix.py`
+- `utils/build-777-UD-inner-centers-oblique-matrix.py`
+
+Do not start those jobs unless asked; they sample long IDA runs.
+
+## Cube classes and reduction
+
+```mermaid
+flowchart TD
+  subgraph odd [Odd N]
+    NNNOdd["N>=9 RubiksCubeNNNOdd"] --> fake777["fake 7x7 orbits"]
+    fake777 --> R555["reduce to 5x5"]
+    C777["7x7 RubiksCube777"] --> R555
+    C555["5x5 RubiksCube555"] --> R333["reduce to 3x3"]
+    R555 --> C555
+  end
+  subgraph even [Even N]
+    NNNEven["N>=8 RubiksCubeNNNEven"] --> fake666["fake 6x6 plus-sign"]
+    fake666 --> oddNminus1["RubiksCubeNNNOdd N-1"]
+    C666["6x6 RubiksCube666"] --> C555
+    C444["4x4 RubiksCube444"] --> R333
+  end
+  R333 --> Kociemba["kociemba 3x3"]
+```
+
+| Size | Class | Reduce to | Notes |
+| --- | --- | --- | --- |
+| 2 | `RubiksCube222` | solved | Tiny tables |
+| 3 | `RubiksCube333` | solved | kociemba |
+| 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1 and 2 |
+| 5 | `RubiksCube555` | 3x3 | Six ranked C phases stage centers, orient wings, pair edges, and solve centers |
+| 6 | `RubiksCube666` | 5x5 | Ranked center staging, three 70^5 inner-x-spine daisy tables, then fake-4x4 inside-edge pairing |
+| 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, then phases 7, 8, and 9 |
+| even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
+| odd ≥9 | `RubiksCubeNNNOdd` | 5x5 | Fake 7x7 per center orbit/cycle, then 5x5 edges |
+
+Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNEven.py` are the phase-level source of truth. Update them when you change a pipeline.
+
+### 4x4 combined searches, 5x5 portfolios, and parity
+
+- `--solution-count` is passed from Python when it is not 1. `0` means every solution at the shortest length. C default is 1.
+- 4x4 phase 1 is one ranked IDA (``ida_search_444_phase1``) over the full move set. Heuristic is max of the 48-symmetry all-center table, the 51M LR-center table, and the high/low wing table (min over all 2048 even edge mappings). One of ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w`` is required. Last-ply pruning skips a rotate if the next ply cannot meet that parity.
+- 4x4 phase 2 is one ranked IDA (``ida_search_444_phase2``). When ``consider_solve_333`` is set, `--solution-count 1000000` is passed and PLL-free reductions are scored with kociemba until a 20-move 3x3x3 appears or ``PHASE2_SOLUTIONS_TO_EVALUATE`` have been tried. The fake 4x4 used to pair a 6x6/even inside orbit (`consider_solve_333=False`) uses `--avoid-pll` with the C default solution count of 1, so the search stops at its first PLL-free reduction.
+- `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
+- 6x6: phase 1 uses the fixed-axis C(24,8) LR inner-x table only and keeps every shortest solution. Phase 2 ranks the distinct endings by its initial heuristic, keeps the best 8, and searches them in one process; heuristic ties try the ending with more LR oblique pairs first. It uses the UD C(24,8) table while pairing LR obliques anywhere. The solver passes `--lr-bar-cost` and no multiplier: the cost is the max of the UD table, the orbit-1 parity distance, and the LR bar table. The bar table's 48-bit key is one bit per oblique sticker that holds L or R, canonicalized under the 16 rotations and mirrors that preserve the LR axis. `rubiks-cube-lookup-tables` builds it breadth first from all C(24,8) paired placements through depth 3 (`make 666-tables`); this searcher only loads the file. A miss checks all 46 legal moves: a depth-3 child costs 4, and no child proves a lower bound of 5. It preserves LR inner x by forbidding `3Uw`/`3Dw`/`3Fw`/`3Bw` quarters, retains `3Lw`/`3Rw` quarters to rebalance the oblique orbits, and owns **orbit1** OLL. Phase 3 stages LR through a fake 5x5, and ranked phase 4 owns **orbit0**. Phase 5 uses three 70^5 tables; each combines all three inner-x orbits with both obliques from one axis.
+- 7x7 phase 1 stages LR inner centers through a fake 5x5x5, then keeps the shortest solution with the most LR oblique pairs. Phase 2 uses `ida_search_777_centers_stage` (UD inner t/x plus LR obliques). Daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.
+- All six 5x5 phases are dedicated ranked-cost C searches. Phases 1+2 are a portfolio (default 64 phase-1 solutions); each takes the max of separate t- and x-center combination tables, and phase 2 searches all distinct phase-1 roots in each orbit-0 parity group. Phase 3 (`ida_search_555_phase3`) orients wings and midges while shrinking LR centers to 1-of-432, using a 70² LR table, a C(24,12) outer-EO table, and a 12-bit inner-EO table; `eo_edges` ranks all 2048 even mappings in one search. `reduce_333` ranks every shortest phase-3 endpoint by its phase-4 table lower bound and carries the best two into phases 4+5+6. Phase 4 (`ida_search_555_phase4`) searches all 495 four-edge choices together against the C(12,4)³ table and returns every choice solved in fewer than three moves. Phase 5 (`ida_search_555_phase5`) searches the surviving roots against one 70⁴ center table and two 70²×1680×70 FB-center/edge/midge tables, returning up to 500 minimum-threshold solutions for phase 6. Phase 6 (`ida_search_555_phase6`) takes the max of the 812,851,200-state shared-parity edge cost and the 176,400-state grouped-center cost. The cheapest phase 3+4+5 prefix is kept for each root, and roots are searched one prefix-length group at a time. Later groups pass ``--max-ida-threshold`` of one less than the incumbent total minus their prefix length, so only a strictly shorter total is kept. There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse `ida_search_555_phase1` / `ida_search_555_phase2` (including phase 1's t-center-only mode).
+
+### 7x7 and NNNOdd centers
+
+```mermaid
+flowchart LR
+  subgraph lr [LR staging]
+    LRfull["full mapping: 7x7 stage_LR_centers"]
+    LRpair["partial: --obliques-only"]
+    LRt["last dummy cycle: pair + 5x5 t-centers"]
+  end
+  subgraph ud [UD staging]
+    UDfull["full mapping: group inner UD if needed, then 5s admissible phase 5, 6s matrix, else oblique stage + 5x5 phase 2"]
+    UDpair["partial: 3-table --obliques-only"]
+    UDt["last dummy cycle: inner UD if needed + 3-table search"]
+  end
+  subgraph sol [Solve]
+    native["phase 7, phase 8, then phase 9 --native-only"]
+  end
+  LRfull --> UDfull
+  LRpair --> UDpair
+  LRt --> UDt
+  UDfull --> native
+  UDpair --> native
+  UDt --> native
+```
+
+Dispatch is `RubiksCubeNNNOdd.stage_or_solve_inside_777`. Outer-x of the fake 7x7 are real only when `(orbit == 0 and cycle == 0)` or `(orbit == max and cycle == max)`.
+
+| Slice | LR | UD |
+| --- | --- | --- |
+| Full mapping | Inherit 7x7 phase 1–3 (inner LR 5x5, combined phase 2, outer LR 5x5) | `group_inside_UD_centers()` (no-op if already staged) + the 7x7 phase-5 cascade |
+| Intermediate cycle | `ida_search_777_centers_stage --obliques-only` (unpaired-count heuristic, no tables) | 3 ranked oblique tables, **no** outer-x |
+| Last dummy cycle | Pair obliques, then fake-5x5 `lt_LR_t_centers_stage_ida` | Same 3-table search (middle obliques **are** outer t-centers) |
+
+The native 7x7 center pipeline keeps the 16 best phase-1 roots after the phase-2 heuristic ranking. Phase 2 scales its matrix cost by 1.05 for 25 seconds, then by 1.10. Phase 3 collects up to 8 distinct phase-5 endings; its C dedup key is the folded UFBD oblique/outer-x state plus orbit-0 parity. Phase 5 is the six-table UD oblique and outer-x search: 5 seconds admissible, then 6 seconds with the pair-cost matrix. If both time out, phase 5 stages UD obliques with the three oblique tables and phase 6 replays 5x5 phase 2 on the outside centers, using this cube's orbit-0 parity. Phases 7 and 8 each collect up to 16 distinct downstream center states. Phase 7's unpaired multiplier defaults to 0.40. Phase 8's unpaired multiplier defaults to 0.20, and its cost multiplier remains 1.2.
+
+NNNOdd center **solve** runs phase 7, then phase 8, on every cycle, then phase 9 with `native_only=True` on the last cycle of each orbit. Phase 8 solves the UD/FB inners and pairs the UD/FB bars, keeping LR. Its cost is the max of the two `PHASE8_PAIRED_TABLES_777` files and the two `PHASE8_INNER_OBLIQUE_TABLES_777` files, scaled by `--multiplier 1.2`. Each file is 70^5 with 70 paired-bar goals. Phase 9 daisy-solves with no 3-wide move. It costs the max of the eight `PHASE9_TABLES_777` files, built for that smaller move set, with no multiplier. Phase 7 defaults to unpaired multiplier 0.40 (0.25 is the admissible lower bound). Phase 8 defaults to unpaired multiplier 0.20 (0.125 is the admissible lower bound). The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
+
+Walk orbits **inside-out**. On 9x9, inner-orbit `w` rewrites as `3w` and would smash an already-solved outer ring.
+
+Do not:
+
+- Run the 6-table UD search on dummy outer-x (placeholders are painted as the face color).
+- Collapse LR t-center staging into `--obliques-only` (LR t-centers are not LR obliques).
+- Let phase 9 accept the swapped daisy orientation on NNNOdd rings.
+- Interleave LR and UD per orbit (tried; keep all-LR then all-UD then all-solve).
+
+Optional leftover: partial LR/UD searches do not pass `--orbit0-need-*`. Staging OLL on those rings can dump parity onto the matching wings.
+
+## Table file types the solver reads
+
+| Suffix | Typical consumer |
+| --- | --- |
+| `.cost-only.bin` | Ranked C mmap |
+| `.cost-only.bin.json` | Builder metadata (rank groups, universe size) |
+
+Python ranked drivers (`LookupTableIDA777UDObliquesOuterXStage`, daisy, 6x6 daisy, NNNOdd pairing) `Popen` the C binary with `--kociemba` plus `--*-cost FILE` flags.
+
+## Adding or changing a ranked phase
+
+1. Builder class + Makefile target in **lookup-tables** (user must ask before a real build).
+2. C searcher: legal moves, rank function, mmap size, last-ply OLL if the phase can still flip an orbit.
+3. Python: pass the table path to `download_file_if_needed()`, set `avoid_oll` if needed, and comment the cube module docstring. `make NNN-tables` builds that file; a solve does not.
+4. Unit test that can run on sparse temp tables (see existing `tests/test_ida_search_*`).
+5. Rebuild the binary; run the focused test with `PYTHONPATH=.`.
+
+## Pitfalls
+
+- CWD must be the solver root. Table builds and `./ida_search_*` both use paths relative to it.
+- `make clean` deletes searcher binaries; tests then skip or fail.
+- `NOTES.txt` is historical scratch, not current architecture.
+- Lookup-table **builders** import `rubikscubennnsolver`; keep rotate tables and square-index tuples in sync across repos.

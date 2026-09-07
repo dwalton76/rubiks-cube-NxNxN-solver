@@ -68,6 +68,10 @@ Run rubiks-cube-solver.py where --state is your cube state in kociemba
 order (URFDLB). You must run rubiks-cube-solver.py from the directory that
 holds your lookup-table\*.txt files
 
+By default the solver uses tables that fit in modest RAM. Pass `--high-memory`
+to load much larger tables when you have the RAM for them. On 5x5x5 that
+switches center staging to two ~8.8 GB tables.
+
 Example:
 ```bash
 $ cd ~/rubiks-cube-NxNxN-solver

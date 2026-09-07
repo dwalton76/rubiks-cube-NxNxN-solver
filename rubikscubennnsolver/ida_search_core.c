@@ -1,11 +1,47 @@
 
 #include "ida_search_core.h"
 
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
+
+#define GROUPED_UINT64_DIGITS 20
+
+const char *grouped_uint64(uint64_t value, char *buffer, size_t buffer_size)
+{
+    char digits[GROUPED_UINT64_DIGITS + 1];
+    int digit_count;
+    int comma_count;
+    int out;
+    int index;
+
+    digit_count = snprintf(digits, sizeof(digits), "%" PRIu64, value);
+    if (digit_count <= 0 || (size_t)digit_count >= sizeof(digits) || buffer_size < 2) {
+        if (buffer_size) {
+            buffer[0] = '\0';
+        }
+        return buffer;
+    }
+
+    comma_count = (digit_count - 1) / 3;
+    if ((size_t)digit_count + (size_t)comma_count >= buffer_size) {
+        snprintf(buffer, buffer_size, "%" PRIu64, value);
+        return buffer;
+    }
+
+    out = digit_count + comma_count;
+    buffer[out] = '\0';
+    for (index = digit_count - 1; index >= 0; index--) {
+        buffer[--out] = digits[index];
+        if (index && (digit_count - index) % 3 == 0) {
+            buffer[--out] = ',';
+        }
+    }
+    return buffer;
+}
 
 void LOG(const char *fmt, ...) {
     char date[20];
@@ -21,6 +57,7 @@ void LOG(const char *fmt, ...) {
     va_start(args, fmt);
     vprintf(fmt, args);
     va_end(args);
+    fflush(stdout);
 }
 
 unsigned long hex_to_int(char value) {

@@ -39,8 +39,14 @@ parser.add_argument(
     action="store_true",
     help="Load smaller tables to use less memory...takes longer to run",
 )
+parser.add_argument(
+    "--high-memory",
+    default=False,
+    action="store_true",
+    help="Use large lookup tables that need a lot of RAM. For 5x5x5 this loads the "
+    "one-phase X-center and T-center staging tables (~8.8 GB each).",
+)
 
-action = parser.add_mutually_exclusive_group(required=False)
 parser.add_argument("--openwith", default=None, type=str, help="Colors for sides U, L, etc")
 parser.add_argument("--colormap", default=None, type=str, help="Colors for sides U, L, etc")
 parser.add_argument("--order", type=str, default="URFDLB", help="order of sides in --state, default kociemba URFDLB")
@@ -106,6 +112,7 @@ else:
 
     cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap)
 
+cube.high_memory = args.high_memory
 cube.sanity_check()
 cube.print_cube("Initial Cube")
 cube.www_header()

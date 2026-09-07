@@ -1534,6 +1534,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def get_fake_555(self):
         if self.fake_555 is None:
             self.fake_555 = RubiksCube555(solved_555, "URFDLB")
+            self.fake_555.high_memory = self.high_memory
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
 

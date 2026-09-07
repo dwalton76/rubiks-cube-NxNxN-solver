@@ -4,6 +4,9 @@
 
 #include "uthash.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
 typedef enum {
     MOVE_NONE,
 
@@ -122,12 +125,15 @@ static const move_type moves_777[MOVE_COUNT_777] = {
     B, B_PRIME, B2, Bw, Bw_PRIME, Bw2, threeBw, threeBw_PRIME, threeBw2,
     D, D_PRIME, D2, Dw, Dw_PRIME, Dw2, threeDw, threeDw_PRIME, threeDw2};
 
+void rotate_555(char *cube, char *cube_tmp, int array_size, move_type move);
+void rotate_555_centers(char *cube, char *cube_tmp, int array_size, move_type move);
 void rotate_666(char *cube, char *cube_tmp, int array_size, move_type move);
-void rotate_777(char *cube, char *cube_tmp, int array_size, move_type move);
 void rotate_666_centers(char *cube, char *cube_tmp, int array_size, move_type move);
+void rotate_777(char *cube, char *cube_tmp, int array_size, move_type move);
 void rotate_777_centers(char *cube, char *cube_tmp, int array_size, move_type move);
 
 void LOG(const char *fmt, ...);
+const char *grouped_uint64(uint64_t value, char *buffer, size_t buffer_size);
 unsigned long hex_to_int(char value);
 unsigned long max(unsigned long a, unsigned long b);
 

@@ -1,10 +1,11 @@
 
 clean:
-	rm -rf build dist venv rubikscubennnsolver.egg-info cache ida_search ida_search_via_graph my-pt-states.txt
+	rm -rf build dist venv rubikscubennnsolver.egg-info cache ida_search ida_search_via_graph ida_search_with_rotate my-pt-states.txt
 	find . -name __pycache__ | xargs rm -rf
 
 init: clean
 	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666.c rubikscubennnsolver/ida_search_777.c rubikscubennnsolver/ida_search_via_graph.c -lm
+	gcc -O3 -o ida_search_with_rotate rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_with_rotate.c -lm -lpthread
 	python3 -m venv venv
 	@./venv/bin/python3 -m pip install -U pip==26.2.1
 	@./venv/bin/python3 -m pip install -r requirements.dev.txt
@@ -19,6 +20,7 @@ wheel:
 	@./venv/bin/python3 setup.py bdist_wheel
 
 test:
+	./venv/bin/python3 -m unittest -v tests/test_ida_search_with_rotate.py
 	./rubiks-cube-solver.py --state DLRRFULLDUBFDURDBFBRBLFU
 	./rubiks-cube-solver.py --state RRBBUFBFBRLRRRFRDDURUBFBBRFLUDUDFLLFFLLLLDFBDDDUUBDLUU
 	./rubiks-cube-solver.py --state BRBLLLBRDLBBDDRRFUDFUDUDFUDDDRURBBBUUDRLFRDLLFBRFLRFLFFFBRULDRUBUBBLDBFRDLLUBUDDULFLRRFLFUBFUFUR

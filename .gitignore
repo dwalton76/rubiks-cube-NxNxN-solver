@@ -102,6 +102,7 @@ perf.data
 tmp
 ida_search.dSYM
 ida_search_via_graph
+ida_search_with_rotate
 lookup-tables
 my-pt-states.txt
 gmon.out

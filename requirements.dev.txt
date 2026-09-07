@@ -2,6 +2,7 @@
 pip==26.2.1
 setuptools==84.0.0
 wheel==0.48.0
+pytest==9.1.1
 
 # make format/lint
 black==26.5.1

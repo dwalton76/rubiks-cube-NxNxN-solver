@@ -1,17 +1,83 @@
+"""
+5x5x5 solver: reduce the cube to a 3x3x3, then finish with the 3x3x3 solver.
+
+A 5x5x5 has 54 centers (nine per face: four t-centers, four x-centers, and a
+fixed middle), 24 wings (the outer edge orbit), 12 midges (the inner edge
+orbit), and 8 corners. Reduction pairs each wing with its midge and solves the
+centers so the remaining puzzle is a 3x3x3. ``RubiksCube555.reduce_333`` runs
+six phases; ``solve_333`` then solves the paired cube.
+
+Each IDA phase is guided by prune tables. All six phases use dedicated C solvers
+over dense ranked costs and are searched as a portfolio: many solutions of the
+earlier phase are collected, later phases are solved from those endpoints, and
+the shortest combined path is kept. Phases 4+5+6 do the same.
+
+Phase 1 - stage LR centers
+    Put all eight LR t-centers and eight LR x-centers onto the L and R faces
+    (they need not be solved). ``group_centers_phase1_and_2`` takes a portfolio
+    of optimal LR-staging solutions (default 64). Endpoints are grouped by
+    whether orbit-0 wide turns would cause OLL parity, because phase 2 must use
+    a matching even/odd constraint.
+
+Phase 2 - stage FB (and UD) centers
+    Stage the FB t-centers and x-centers onto FB, which also puts the
+    remaining centers onto UD. Quarter-turn wide moves that would unstage LR
+    are illegal. Orbit-0 OLL is avoided so the later 3x3x3 solve is not left
+    with that parity. The search keeps the shortest phase-1 plus phase-2 pair.
+
+Phase 3 - EO the wings and midges; LR centers to 1-of-432
+    Split the 24 wings and 12 midges into high/low groups. Each of the 12
+    edges can be in its final orientation or not, but only an even number may
+    be flipped, so there are 2048 legal EO permutations. All of them are
+    searched together. The two shortest-solution endpoints with the best
+    phase-4 lower bound continue into phases 4+5+6. LR centers are reduced to
+    one of 432 shapes along the way.
+
+Phases 4 and 5 - pair four edges on the x-plane; LR/FB centers to vertical bars
+    Phase 4 ranks the high wing, midge, and low wing locations as three
+    C(12,4) coordinates. One C invocation searches all 495 four-edge choices;
+    ``pair_edges`` only keeps choices that finish in fewer than three moves.
+    Phase 5 then pairs the x-plane high wings, low wings, and midges and puts
+    the LR and FB centers into vertical bars. Its ranked C solver uses a center
+    table plus FB-center/high-edge/midge and FB-center/low-edge/midge tables.
+    A large portfolio of phase-5 solutions (default 500) is passed to phase 6.
+
+Phase 6 - pair the last eight edges and solve the centers
+    Pair the remaining wings with their midges and fully solve all 54 centers.
+    Dense shared-parity edge and grouped-center cost tables guide this phase.
+    pairs whatever sits in the y-plane and z-plane, so it requires the four
+    edges already paired to be the ones in the x-plane. Every shortest phase-3
+    endpoint contributes its phase-6 states. The cheapest phase 3+4+5 prefix
+    is kept for each state, and those prefixes are searched one length group
+    at a time so the total, not just the phase-6 suffix, is minimized. A later
+    group is capped one move below a tie with the incumbent.
+
+Larger cubes that have already reduced to a 5x5x5 reuse the phase-1 and
+phase-2 ranked solvers (``lt_LR_centers_stage``, ``lt_FB_centers_stage``,
+and ``lt_LR_t_centers_stage_ida``) without going through this six-phase
+reduction. Their remaining centers are solved by the 6x6/7x7 daisy searches,
+not by a separate 5x5 center-solve IDA.
+"""
+
 # standard libraries
 import itertools
 import logging
-from typing import List
+import os
+import re
+import subprocess
+import tempfile
+from math import comb
 
 # rubiks cube libraries
-from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
-from rubikscubennnsolver.LookupTable import LookupTable
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver import RubiksCube, wing_str_map, wing_strs_all
+from rubikscubennnsolver.LookupTable import NoIDASolution, download_file_if_needed
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
 from rubikscubennnsolver.swaps import swaps_555
 
 logger = logging.getLogger(__name__)
+
+PHASE3_ENDPOINT_CAP = 2
 
 # fmt: off
 moves_555 = (
@@ -27,8 +93,18 @@ moves_555 = (
     # "2F", "2F'", "2F2", "2B", "2B'", "2B2"
 )
 solved_555 = "UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB"
-
-dead_centers = [13, 38, 63, 88, 113, 138]
+PHASE1_T_CENTERS_TABLE_555 = (
+    "lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin"
+)
+PHASE1_X_CENTERS_TABLE_555 = (
+    "lookup-tables/lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.bin"
+)
+PHASE2_T_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin"
+PHASE2_X_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin"
+PHASE3_LR_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin"
+PHASE3_EO_OUTER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin"
+PHASE3_EO_INNER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin"
+PHASE4_EDGES_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step40-phase4.cost-only.bin"
 
 centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
@@ -81,10 +157,35 @@ LR_centers_555 = (
     82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
 )
 
+LR_t_centers_555 = (
+    33, 37, 39, 43,  # Left
+    83, 87, 89, 93,  # Right
+)
+
+LR_x_centers_555 = (
+    32, 34, 42, 44,  # Left
+    82, 84, 92, 94,  # Right
+)
+
 FB_centers_555 = (
     57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
     107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
 )
+
+FB_t_centers_555 = (
+    58, 62, 64, 68,  # Front
+    108, 112, 114, 118,  # Back
+)
+
+FB_x_centers_555 = (
+    57, 59, 67, 69,  # Front
+    107, 109, 117, 119,  # Back
+)
+
+# x-plane union y-plane: the four parked edges stay in this 8-slot orbit under phase-5 moves.
+PHASE5_XY_HIGH_SQUARES_555 = (2, 24, 35, 41, 85, 91, 127, 149)
+PHASE5_XY_MIDGE_SQUARES_555 = (3, 23, 36, 40, 86, 90, 128, 148)
+PHASE5_XY_LOW_SQUARES_555 = (4, 22, 31, 45, 81, 95, 129, 147)
 
 UFBD_centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
@@ -121,6 +222,33 @@ LFRB_t_centers_555 = (
     108, 112, 113, 114, 118,  # Back
 )
 
+t_centers_without_middles_555 = (
+    8, 12, 14, 18,  # Upper
+    33, 37, 39, 43,  # Left
+    58, 62, 64, 68,  # Front
+    83, 87, 89, 93,  # Right
+    108, 112, 114, 118,  # Back
+    133, 137, 139, 143,  # Down
+)
+
+x_centers_without_middles_555 = (
+    7, 9, 17, 19,  # Upper
+    32, 34, 42, 44,  # Left
+    57, 59, 67, 69,  # Front
+    82, 84, 92, 94,  # Right
+    107, 109, 117, 119,  # Back
+    132, 134, 142, 144,  # Down
+)
+
+outer_orbit_indexes = (
+    0, 2, 3, 4, 7, 8, 9,
+    11, 12, 14, 15, 16, 19, 20,
+    21, 23, 24, 26, 27, 28, 31,
+    32, 33, 35, 36, 38, 39, 40,
+    43, 44, 45, 47, 48, 50, 51,
+    52, 55, 56, 57, 59, 60, 62,
+    63, 64, 67, 68, 69, 71,
+)
 
 """
 000 000 000 011 111 111 112 222 222 222 333 333
@@ -351,6 +479,13 @@ midges_recolor_tuples_555 = (
     ("z", 148, 123),
 )
 
+PHASE4_HIGH_EDGE_SQUARES_555 = tuple(square for square, _ in high_edges_555)
+PHASE4_HIGH_EDGE_PARTNERS_555 = tuple(partner for _, partner in high_edges_555)
+PHASE4_MIDGE_SQUARES_555 = tuple(square for _, square, _ in midges_recolor_tuples_555)
+PHASE4_MIDGE_PARTNERS_555 = tuple(partner for _, _, partner in midges_recolor_tuples_555)
+PHASE4_LOW_EDGE_SQUARES_555 = tuple(square for square, _ in low_edges_555)
+PHASE4_LOW_EDGE_PARTNERS_555 = tuple(partner for _, partner in low_edges_555)
+
 midge_indexes = (
     3, 11, 15, 23,  # Upper
     28, 36, 40, 48,  # Left
@@ -387,6 +522,9 @@ wings_for_recolor_555 = (
     ("n", 149, 122),
 )
 
+PHASE3_OUTER_WING_SQUARES_555 = tuple(square for _, square, _ in wings_for_recolor_555)
+PHASE3_OUTER_WING_PARTNERS_555 = tuple(partner for _, _, partner in wings_for_recolor_555)
+
 MIDGE_TUPLES_555 = (
     ((3, 103), (103, 3)),  # Upper
     ((11, 28), (28, 11)),
@@ -401,6 +539,9 @@ MIDGE_TUPLES_555 = (
     ((140, 98), (98, 140)),
     ((148, 123), (123, 148)),
 )
+
+PHASE3_INNER_MIDGE_SQUARES_555 = tuple(pair[0][0] for pair in MIDGE_TUPLES_555)
+PHASE3_INNER_MIDGE_PARTNERS_555 = tuple(pair[0][1] for pair in MIDGE_TUPLES_555)
 
 LR_centers_and_midges_555 = (
     3, 11, 15, 23,  # Upper
@@ -541,17 +682,161 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
     return "".join(state)
 
 
+# fmt: off
+PHASE2_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Dw", "Dw'",
+)
+
+PHASE3_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Lw", "Lw'",
+    "Rw", "Rw'",
+)
+
+PHASE5_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Lw", "Lw'",
+    "Rw", "Rw'",
+    "L", "L'",
+    "R", "R'",
+    "U", "U'",
+    "D", "D'",
+)
+
+PHASE6_ILLEGAL_MOVES = (
+    "Uw", "Uw'", "Uw2",
+    "Dw", "Dw'", "Dw2",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Lw", "Lw'",
+    "Rw", "Rw'",
+    "L", "L'",
+    "R", "R'",
+    "F", "F'",
+    "B", "B'",
+)
+
+# fmt: on
+
+
 class NoEdgeSolution(Exception):
     pass
 
 
-# phase 1
-class LookupTable555LRTCenterStage(LookupTable):
+class RankedCenterCoordinate555:
+    """One dense binary center coordinate used by a dedicated 5x5 IDA."""
+
+    def __init__(self, parent, filename, squares, selected_colors):
+        self.parent = parent
+        self.filename = filename
+        self.squares = tuple(squares)
+        self.selected_colors = tuple(selected_colors)
+
+    def rank(self):
+        selected_remaining = sum(self.parent.state[square] in self.selected_colors for square in self.squares)
+        rank = 0
+
+        if selected_remaining != 8:
+            raise SolveError(f"{self}: expected 8 selected centers, found {selected_remaining}")
+        for position, square in enumerate(self.squares):
+            positions_after = len(self.squares) - position - 1
+            if self.parent.state[square] in self.selected_colors:
+                selected_remaining -= 1
+            elif selected_remaining:
+                rank += comb(positions_after, selected_remaining - 1)
+
+        return rank
+
+
+class LookupTableIDA555RankedCenters:
     """
-    lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.txt
-    ============================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
+    Shared process and output handling for the two dedicated center solvers.
+
+    This base owns no cost file. The LR t-center goal is:
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+    """
+
+    avoid_oll = None
+
+    def _parity_args(self):
+        if self.avoid_oll is None:
+            return []
+        if self.avoid_oll != 0:
+            raise SolveError(f"{self}: only orbit-0 parity is supported")
+        if 0 in self.parent.center_solution_leads_to_oll_parity():
+            return ["--orbit0-need-odd-w"]
+        return ["--orbit0-need-even-w"]
+
+    def _run(self, cmd):
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        output = subprocess.check_output(cmd).decode("utf-8")
+        self.parent.solve_via_c_output = f"\n{' '.join(cmd)}\n{output}\n"
+        logger.info("\n%s\n", output)
+        return output
+
+    def solve_via_c(self, **kwargs):
+        solution = self.solutions_via_c(**kwargs)[0][0]
+        for step in solution:
+            self.parent.rotate(step)
+
+
+# ==================================================
+# phase 1
+# stage LR centers
+# ==================================================
+class LookupTable555LRTCenterStage(RankedCenterCoordinate555):
+    """
+    24! / (8! * 16!) = 735,471 states
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin
+    =====================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
     3 steps has 900 entries (0 percent, 13.64x previous step)
     4 steps has 9,626 entries (1 percent, 10.70x previous step)
     5 steps has 80,202 entries (10 percent, 8.33x previous step)
@@ -563,54 +848,41 @@ class LookupTable555LRTCenterStage(LookupTable):
     Average: 6.31 moves
     """
 
-    # fmt: off
-    t_centers_555 = (
-        8, 12, 14, 18,  # Upper
-        33, 37, 39, 43,  # Left
-        58, 62, 64, 68,  # Front
-        83, 87, 89, 93,  # Right
-        108, 112, 114, 118,  # Back
-        133, 137, 139, 143,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
+        del build_state_index
+        RankedCenterCoordinate555.__init__(
             self,
             parent,
-            "lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.txt",
-            "0f0f00",
-            linecount=735471,
-            max_depth=8,
-            legal_moves=moves_555,
-            use_state_index=True,
-            build_state_index=build_state_index,
+            PHASE1_T_CENTERS_TABLE_555,
+            t_centers_without_middles_555,
+            ("L", "R"),
         )
 
-    def state(self):
-        parent_state = self.parent.state
-        LR_colors = (parent_state[38], parent_state[88])
 
-        if LR_colors == (".", "."):
-            LR_colors = ("L", "R")
-
-        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.t_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(24)
-
-        for pos, pos_state in zip(self.t_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "L"
-
-
-class LookupTable555LRXCenterStage(LookupTable):
+class LookupTable555LRXCenterStage(RankedCenterCoordinate555):
     """
-    lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.txt
-    ============================================================
+    24! / (8! * 16!) = 735,471 states
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
+    lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.bin
+    =====================================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 4 entries (0 percent, 4.00x previous step)
     2 steps has 82 entries (0 percent, 20.50x previous step)
@@ -625,82 +897,232 @@ class LookupTable555LRXCenterStage(LookupTable):
     Average: 6.03 moves
     """
 
-    # fmt: off
-    x_centers_555 = (
-        7, 9, 17, 19,  # Upper
-        32, 34, 42, 44,  # Left
-        57, 59, 67, 69,  # Front
-        82, 84, 92, 94,  # Right
-        107, 109, 117, 119,  # Back
-        132, 134, 142, 144,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
+        del build_state_index
+        super().__init__(
             parent,
-            "lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.txt",
-            "0f0f00",
-            linecount=735471,
-            max_depth=8,
-            legal_moves=moves_555,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        LR_colors = (parent_state[38], parent_state[88])
-
-        if LR_colors == (".", "."):
-            LR_colors = ("L", "R")
-
-        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.x_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(24)
-
-        for pos, pos_state in zip(self.x_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "L"
-
-
-class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=(),
-            prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
-            centers_only=True,
-            # C_ida_type="5x5x5-lr-centers-stage",
+            PHASE1_X_CENTERS_TABLE_555,
+            x_centers_without_middles_555,
+            ("L", "R"),
         )
 
 
-class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=(),
-            prune_tables=(parent.lt_LR_t_centers_stage,),
-            centers_only=True,
-        )
-
-
-# phase 2
-class LookupTable555FBTCenterStage(LookupTable):
+class LookupTableIDA555LRCenterStage(LookupTableIDA555RankedCenters):
     """
-    lookup-table-5x5x5-step21-FB-t-centers-stage.txt
-    ================================================
-    1 steps has 3 entries (0 percent, 0.00x previous step)
-    2 steps has 25 entries (0 percent, 8.33x previous step)
+    Phase-1 IDA (``ida_search_555_phase1``): stage the LR t-centers and x-centers onto L and R.
+
+    Component tables (diagrams and histograms live on the classes named below):
+        lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin - LookupTable555LRTCenterStage
+        lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.bin - LookupTable555LRXCenterStage
+
+    Heuristic is the max of the two component costs; a state is pruned when either table reports
+    an unreachable rank. The search always starts from the live cube (``--kociemba``) and rejects
+    pre-ranked roots. ``solution_count`` returns a portfolio of optimal LR-staging solutions
+    (``group_centers_phase1_and_2`` asks for 64) that phase 2 then searches from.
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin
+    =====================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
+
+    lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.bin
+    =====================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.prune_tables = (parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage)
+
+    def solutions_via_c(
+        self,
+        pt_states=(),
+        min_ida_threshold=None,
+        max_ida_threshold=None,
+        solution_count=1,
+        **_kwargs,
+    ):
+        if pt_states:
+            raise SolveError("5x5 phase 1 does not accept pre-ranked roots")
+        download_file_if_needed(PHASE1_T_CENTERS_TABLE_555)
+        download_file_if_needed(PHASE1_X_CENTERS_TABLE_555)
+        cmd = [
+            "./ida_search_555_phase1",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--t-center-cost",
+            PHASE1_T_CENTERS_TABLE_555,
+            "--x-center-cost",
+            PHASE1_X_CENTERS_TABLE_555,
+        ]
+        if min_ida_threshold is not None:
+            cmd.extend(("--min-ida-threshold", str(min_ida_threshold)))
+        if max_ida_threshold is not None:
+            cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
+        if solution_count != 1:
+            cmd.extend(("--solution-count", str(solution_count)))
+        output = self._run(cmd)
+        solutions = []
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                solutions.append((tuple(line.split(":", 1)[1].strip().split()), (None,) * 5))
+        if not solutions:
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
+        return solutions
+
+
+class LookupTableIDA555LRTCenterStage(LookupTableIDA555RankedCenters):
+    """
+    LR t-center staging IDA used by 7x7/NNNOdd after they have reduced to a 5x5x5.
+
+    Component table (diagram and histogram live on the class named below):
+        lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin - LookupTable555LRTCenterStage
+
+    Same ``ida_search_555_phase1`` binary as LookupTableIDA555LRCenterStage, run with
+    ``--t-centers-only`` so the x-center term contributes nothing and the heuristic is the
+    t-center cost alone. Pre-ranked roots are rejected; the search starts from the live cube.
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin
+    =====================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.prune_tables = (parent.lt_LR_t_centers_stage,)
+
+    def solutions_via_c(
+        self,
+        pt_states=(),
+        min_ida_threshold=None,
+        max_ida_threshold=None,
+        solution_count=1,
+        **_kwargs,
+    ):
+        if pt_states:
+            raise SolveError("5x5 phase 1 t-center search does not accept pre-ranked roots")
+        download_file_if_needed(PHASE1_T_CENTERS_TABLE_555)
+        cmd = [
+            "./ida_search_555_phase1",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--t-center-cost",
+            PHASE1_T_CENTERS_TABLE_555,
+            "--t-centers-only",
+        ]
+        if min_ida_threshold is not None:
+            cmd.extend(("--min-ida-threshold", str(min_ida_threshold)))
+        if max_ida_threshold is not None:
+            cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
+        if solution_count != 1:
+            cmd.extend(("--solution-count", str(solution_count)))
+        output = self._run(cmd)
+        solutions = []
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                solutions.append((tuple(line.split(":", 1)[1].strip().split()), (None,) * 5))
+        if not solutions:
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
+        return solutions
+
+
+# ==================================================
+# phase 2
+# stage FB (and UD) centers
+# ==================================================
+class LookupTable555FBTCenterStage(RankedCenterCoordinate555):
+    """
+    16! / (8! * 8!) = 12,870 states
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin
+    =========================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (0 percent, 12.50x previous step)
     3 steps has 210 entries (1 percent, 8.40x previous step)
     4 steps has 722 entries (5 percent, 3.44x previous step)
     5 steps has 1,752 entries (13 percent, 2.43x previous step)
@@ -714,43 +1136,39 @@ class LookupTable555FBTCenterStage(LookupTable):
     """
 
     def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
+        del build_state_index
+        super().__init__(
             parent,
-            "lookup-table-5x5x5-step21-FB-t-centers-stage.txt",
-            "0ff0",
-            linecount=12870,
-            max_depth=9,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
+            PHASE2_T_CENTERS_TABLE_555,
+            UFBD_t_centers_555,
+            ("F", "B"),
         )
 
-    def state(self):
-        parent_state = self.parent.state
-        FB_colors = (parent_state[63], parent_state[113])
 
-        if FB_colors == (".", "."):
-            FB_colors = ("F", "B")
-
-        state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_t_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(16)
-
-        for pos, pos_state in zip(UFBD_t_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "F"
-
-
-class LookupTable555FBXCenterStage(LookupTable):
+class LookupTable555FBXCenterStage(RankedCenterCoordinate555):
     """
-    lookup-table-5x5x5-step22-FB-x-centers-stage.txt
-    ================================================
+    16! / (8! * 8!) = 12,870 states
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
+    lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin
+    =========================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
     2 steps has 29 entries (0 percent, 14.50x previous step)
@@ -765,555 +1183,226 @@ class LookupTable555FBXCenterStage(LookupTable):
     """
 
     def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
+        del build_state_index
+        super().__init__(
             parent,
-            "lookup-table-5x5x5-step22-FB-x-centers-stage.txt",
-            "0ff0",
-            linecount=12870,
-            max_depth=7,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        FB_colors = (parent_state[63], parent_state[113])
-
-        if FB_colors == (".", "."):
-            FB_colors = ("F", "B")
-
-        state = "".join(["1" if parent_state[x] in FB_colors else "0" for x in UFBD_x_centers_555])
-        return self.hex_format % int(state, 2)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        binary_state = bin(int(state, 16))[2:].zfill(16)
-
-        for pos, pos_state in zip(UFBD_x_centers_555, binary_state):
-            if pos_state == "0":
-                cube[pos] = "x"
-            else:
-                cube[pos] = "F"
-
-
-class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
-            prune_tables=[
-                parent.lt_FB_t_centers_stage,
-                parent.lt_FB_x_centers_stage,
-            ],
-            centers_only=True,
-        )
-        # fmt: on
-
-
-class LookupTableIDA555UDTCenterStage(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
-            prune_tables=(parent.lt_FB_t_centers_stage,),
-            centers_only=True,
+            PHASE2_X_CENTERS_TABLE_555,
+            UFBD_x_centers_555,
+            ("F", "B"),
         )
 
 
-# phase 3
-class LookupTable555Phase3LRCenterStage(LookupTable):
+class LookupTableIDA555FBCentersStage(LookupTableIDA555RankedCenters):
     """
-    lookup-table-5x5x5-step901-LR-center-stage.txt
-    ==============================================
-    0 steps has 27 entries (0 percent, 0.00x previous step)
-    1 steps has 801 entries (16 percent, 29.67x previous step)
-    2 steps has 1,064 entries (21 percent, 1.33x previous step)
+    Phase-2 IDA (``ida_search_555_phase2``): stage FB centers onto F and B, which leaves the
+    remaining centers on U and D.
+
+    Component tables (diagrams and histograms live on the classes named below):
+        lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin - LookupTable555FBTCenterStage
+        lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin - LookupTable555FBXCenterStage
+
+    Heuristic is the max of the two component costs, floored by the orbit-0 parity requirement so
+    an already-staged state still pays for the wide turn it needs. Quarter-turn wide moves that
+    would unstage LR are illegal. ``avoid_oll = 0`` turns into ``--orbit0-need-even-w`` or
+    ``--orbit0-need-odd-w`` depending on whether the phase-1 endpoint already leads to OLL parity.
+    A portfolio of phase-1 endpoints is passed as ``pt_states`` and written to a roots file;
+    solutions come back sorted shortest first, each tagged with the root it came from.
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin
+    =========================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (0 percent, 12.50x previous step)
+    3 steps has 210 entries (1 percent, 8.40x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.34 moves
+
+    lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin
+    =========================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+
+    Total: 12,870 entries
+    Average: 5.45 moves
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.prune_tables = (parent.lt_FB_t_centers_stage, parent.lt_FB_x_centers_stage)
+        self.avoid_oll = 0
+
+    def solutions_via_c(
+        self,
+        pt_states=(),
+        min_ida_threshold=None,
+        max_ida_threshold=None,
+        solution_count=1,
+        **_kwargs,
+    ):
+        roots_filename = None
+        roots = []
+        download_file_if_needed(PHASE2_T_CENTERS_TABLE_555)
+        download_file_if_needed(PHASE2_X_CENTERS_TABLE_555)
+        cmd = [
+            "./ida_search_555_phase2",
+            "--t-center-cost",
+            PHASE2_T_CENTERS_TABLE_555,
+            "--x-center-cost",
+            PHASE2_X_CENTERS_TABLE_555,
+            *self._parity_args(),
+        ]
+        try:
+            if pt_states:
+                roots = sorted(set(tuple(root[:2]) for root in pt_states))
+                with tempfile.NamedTemporaryFile(mode="w", delete=False) as roots_file:
+                    roots_filename = roots_file.name
+                    for root_id, (t_rank, x_rank) in enumerate(roots):
+                        roots_file.write(f"{root_id},{t_rank},{x_rank}\n")
+                cmd.extend(("--roots-file", roots_filename))
+            else:
+                roots = [(self.prune_tables[0].rank(), self.prune_tables[1].rank())]
+                cmd.extend(("--kociemba", self.parent.get_kociemba_string(True)))
+            if min_ida_threshold is not None:
+                cmd.extend(("--min-ida-threshold", str(min_ida_threshold)))
+            if max_ida_threshold is not None:
+                cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
+            if solution_count != 1:
+                cmd.extend(("--solution-count", str(solution_count)))
+            output = self._run(cmd)
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
+
+        solutions = []
+        solution_re = re.compile(r"^SOLUTION ROOT (\d+) \(\d+ steps\):(.*)$")
+        for line in output.splitlines():
+            match = solution_re.match(line)
+            if match:
+                root = roots[int(match.group(1))]
+                solution = tuple(match.group(2).strip().split())
+                solutions.append((len(solution), solution, root + (None, None, None)))
+        if not solutions:
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
+        solutions.sort()
+        return [(solution, states) for _, solution, states in solutions]
+
+
+# ==================================================
+# phase 3
+# EO the wings and midges; LR centers to 1-of-432
+# ==================================================
+class LookupTable555Phase3LRCenterStage:
+    """
+    (8! / (4! * 4!))^2 = 4,900 states
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . . . . .  . R R R .  . . . . .
+    . L . L .  . . . . .  . R . R .  . . . . .
+    . L L L .  . . . . .  . R R R .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin
+    ========================================================
+    0 steps has 432 entries (8 percent, 0.00x previous step)
+    1 steps has 396 entries (8 percent, 0.92x previous step)
+    2 steps has 1,064 entries (21 percent, 2.69x previous step)
     3 steps has 1,692 entries (34 percent, 1.59x previous step)
     4 steps has 1,220 entries (24 percent, 0.72x previous step)
     5 steps has 96 entries (1 percent, 0.08x previous step)
 
     Total: 4,900 entries
-    Average: 2.73 moves
+    Average: 2.64 moves
     """
-
-    state_targets = (
-        "LLLLLLLLLRRRRRRRRR",
-        "LLLLLLLRLRLRRRRRRR",
-        "LLLLLLLRLRRRRRRRLR",
-        "LLLLLLRLRLRLRRRRRR",
-        "LLLLLLRLRRRRRRRLRL",
-        "LLLLLLRRRLLLRRRRRR",
-        "LLLLLLRRRLRLRRRRLR",
-        "LLLLLLRRRRLRRRRLRL",
-        "LLLLLLRRRRRRRRRLLL",
-        "LLLLLRLLLRRRLRRRRR",
-        "LLLLLRLLLRRRRRLRRR",
-        "LLLLLRLRLRLRLRRRRR",
-        "LLLLLRLRLRLRRRLRRR",
-        "LLLLLRLRLRRRLRRRLR",
-        "LLLLLRLRLRRRRRLRLR",
-        "LLLLLRRLRLRLLRRRRR",
-        "LLLLLRRLRLRLRRLRRR",
-        "LLLLLRRLRRRRLRRLRL",
-        "LLLLLRRLRRRRRRLLRL",
-        "LLLLLRRRRLLLLRRRRR",
-        "LLLLLRRRRLLLRRLRRR",
-        "LLLLLRRRRLRLLRRRLR",
-        "LLLLLRRRRLRLRRLRLR",
-        "LLLLLRRRRRLRLRRLRL",
-        "LLLLLRRRRRLRRRLLRL",
-        "LLLLLRRRRRRRLRRLLL",
-        "LLLLLRRRRRRRRRLLLL",
-        "LLLRLLLLLRRRLRRRRR",
-        "LLLRLLLLLRRRRRLRRR",
-        "LLLRLLLRLRLRLRRRRR",
-        "LLLRLLLRLRLRRRLRRR",
-        "LLLRLLLRLRRRLRRRLR",
-        "LLLRLLLRLRRRRRLRLR",
-        "LLLRLLRLRLRLLRRRRR",
-        "LLLRLLRLRLRLRRLRRR",
-        "LLLRLLRLRRRRLRRLRL",
-        "LLLRLLRLRRRRRRLLRL",
-        "LLLRLLRRRLLLLRRRRR",
-        "LLLRLLRRRLLLRRLRRR",
-        "LLLRLLRRRLRLLRRRLR",
-        "LLLRLLRRRLRLRRLRLR",
-        "LLLRLLRRRRLRLRRLRL",
-        "LLLRLLRRRRLRRRLLRL",
-        "LLLRLLRRRRRRLRRLLL",
-        "LLLRLLRRRRRRRRLLLL",
-        "LLLRLRLLLRRRLRLRRR",
-        "LLLRLRLRLRLRLRLRRR",
-        "LLLRLRLRLRRRLRLRLR",
-        "LLLRLRRLRLRLLRLRRR",
-        "LLLRLRRLRRRRLRLLRL",
-        "LLLRLRRRRLLLLRLRRR",
-        "LLLRLRRRRLRLLRLRLR",
-        "LLLRLRRRRRLRLRLLRL",
-        "LLLRLRRRRRRRLRLLLL",
-        "LLRLLLLLRLRRRRRLRR",
-        "LLRLLLLLRRRLRRRRRL",
-        "LLRLLLLRRLLRRRRLRR",
-        "LLRLLLLRRLRRRRRLLR",
-        "LLRLLLLRRRLLRRRRRL",
-        "LLRLLLLRRRRLRRRRLL",
-        "LLRLLLRLLRRLRRRLRR",
-        "LLRLLLRRLRLLRRRLRR",
-        "LLRLLLRRLRRLRRRLLR",
-        "LLRLLRLLRLRRLRRLRR",
-        "LLRLLRLLRLRRRRLLRR",
-        "LLRLLRLLRRRLLRRRRL",
-        "LLRLLRLLRRRLRRLRRL",
-        "LLRLLRLRRLLRLRRLRR",
-        "LLRLLRLRRLLRRRLLRR",
-        "LLRLLRLRRLRRLRRLLR",
-        "LLRLLRLRRLRRRRLLLR",
-        "LLRLLRLRRRLLLRRRRL",
-        "LLRLLRLRRRLLRRLRRL",
-        "LLRLLRLRRRRLLRRRLL",
-        "LLRLLRLRRRRLRRLRLL",
-        "LLRLLRRLLRRLLRRLRR",
-        "LLRLLRRLLRRLRRLLRR",
-        "LLRLLRRRLRLLLRRLRR",
-        "LLRLLRRRLRLLRRLLRR",
-        "LLRLLRRRLRRLLRRLLR",
-        "LLRLLRRRLRRLRRLLLR",
-        "LLRRLLLLRLRRLRRLRR",
-        "LLRRLLLLRLRRRRLLRR",
-        "LLRRLLLLRRRLLRRRRL",
-        "LLRRLLLLRRRLRRLRRL",
-        "LLRRLLLRRLLRLRRLRR",
-        "LLRRLLLRRLLRRRLLRR",
-        "LLRRLLLRRLRRLRRLLR",
-        "LLRRLLLRRLRRRRLLLR",
-        "LLRRLLLRRRLLLRRRRL",
-        "LLRRLLLRRRLLRRLRRL",
-        "LLRRLLLRRRRLLRRRLL",
-        "LLRRLLLRRRRLRRLRLL",
-        "LLRRLLRLLRRLLRRLRR",
-        "LLRRLLRLLRRLRRLLRR",
-        "LLRRLLRRLRLLLRRLRR",
-        "LLRRLLRRLRLLRRLLRR",
-        "LLRRLLRRLRRLLRRLLR",
-        "LLRRLLRRLRRLRRLLLR",
-        "LLRRLRLLRLRRLRLLRR",
-        "LLRRLRLLRRRLLRLRRL",
-        "LLRRLRLRRLLRLRLLRR",
-        "LLRRLRLRRLRRLRLLLR",
-        "LLRRLRLRRRLLLRLRRL",
-        "LLRRLRLRRRRLLRLRLL",
-        "LLRRLRRLLRRLLRLLRR",
-        "LLRRLRRRLRLLLRLLRR",
-        "LLRRLRRRLRRLLRLLLR",
-        "LRLLLLLLLRLRRRRRRR",
-        "LRLLLLLLLRRRRRRRLR",
-        "LRLLLLLRLRLRRRRRLR",
-        "LRLLLLRLRLLLRRRRRR",
-        "LRLLLLRLRLRLRRRRLR",
-        "LRLLLLRLRRLRRRRLRL",
-        "LRLLLLRLRRRRRRRLLL",
-        "LRLLLLRRRLLLRRRRLR",
-        "LRLLLLRRRRLRRRRLLL",
-        "LRLLLRLLLRLRLRRRRR",
-        "LRLLLRLLLRLRRRLRRR",
-        "LRLLLRLLLRRRLRRRLR",
-        "LRLLLRLLLRRRRRLRLR",
-        "LRLLLRLRLRLRLRRRLR",
-        "LRLLLRLRLRLRRRLRLR",
-        "LRLLLRRLRLLLLRRRRR",
-        "LRLLLRRLRLLLRRLRRR",
-        "LRLLLRRLRLRLLRRRLR",
-        "LRLLLRRLRLRLRRLRLR",
-        "LRLLLRRLRRLRLRRLRL",
-        "LRLLLRRLRRLRRRLLRL",
-        "LRLLLRRLRRRRLRRLLL",
-        "LRLLLRRLRRRRRRLLLL",
-        "LRLLLRRRRLLLLRRRLR",
-        "LRLLLRRRRLLLRRLRLR",
-        "LRLLLRRRRRLRLRRLLL",
-        "LRLLLRRRRRLRRRLLLL",
-        "LRLRLLLLLRLRLRRRRR",
-        "LRLRLLLLLRLRRRLRRR",
-        "LRLRLLLLLRRRLRRRLR",
-        "LRLRLLLLLRRRRRLRLR",
-        "LRLRLLLRLRLRLRRRLR",
-        "LRLRLLLRLRLRRRLRLR",
-        "LRLRLLRLRLLLLRRRRR",
-        "LRLRLLRLRLLLRRLRRR",
-        "LRLRLLRLRLRLLRRRLR",
-        "LRLRLLRLRLRLRRLRLR",
-        "LRLRLLRLRRLRLRRLRL",
-        "LRLRLLRLRRLRRRLLRL",
-        "LRLRLLRLRRRRLRRLLL",
-        "LRLRLLRLRRRRRRLLLL",
-        "LRLRLLRRRLLLLRRRLR",
-        "LRLRLLRRRLLLRRLRLR",
-        "LRLRLLRRRRLRLRRLLL",
-        "LRLRLLRRRRLRRRLLLL",
-        "LRLRLRLLLRLRLRLRRR",
-        "LRLRLRLLLRRRLRLRLR",
-        "LRLRLRLRLRLRLRLRLR",
-        "LRLRLRRLRLLLLRLRRR",
-        "LRLRLRRLRLRLLRLRLR",
-        "LRLRLRRLRRLRLRLLRL",
-        "LRLRLRRLRRRRLRLLLL",
-        "LRLRLRRRRLLLLRLRLR",
-        "LRLRLRRRRRLRLRLLLL",
-        "LRRLLLLLRLLRRRRLRR",
-        "LRRLLLLLRLRRRRRLLR",
-        "LRRLLLLLRRLLRRRRRL",
-        "LRRLLLLLRRRLRRRRLL",
-        "LRRLLLLRRLLRRRRLLR",
-        "LRRLLLLRRRLLRRRRLL",
-        "LRRLLLRLLRLLRRRLRR",
-        "LRRLLLRLLRRLRRRLLR",
-        "LRRLLLRRLRLLRRRLLR",
-        "LRRLLRLLRLLRLRRLRR",
-        "LRRLLRLLRLLRRRLLRR",
-        "LRRLLRLLRLRRLRRLLR",
-        "LRRLLRLLRLRRRRLLLR",
-        "LRRLLRLLRRLLLRRRRL",
-        "LRRLLRLLRRLLRRLRRL",
-        "LRRLLRLLRRRLLRRRLL",
-        "LRRLLRLLRRRLRRLRLL",
-        "LRRLLRLRRLLRLRRLLR",
-        "LRRLLRLRRLLRRRLLLR",
-        "LRRLLRLRRRLLLRRRLL",
-        "LRRLLRLRRRLLRRLRLL",
-        "LRRLLRRLLRLLLRRLRR",
-        "LRRLLRRLLRLLRRLLRR",
-        "LRRLLRRLLRRLLRRLLR",
-        "LRRLLRRLLRRLRRLLLR",
-        "LRRLLRRRLRLLLRRLLR",
-        "LRRLLRRRLRLLRRLLLR",
-        "LRRRLLLLRLLRLRRLRR",
-        "LRRRLLLLRLLRRRLLRR",
-        "LRRRLLLLRLRRLRRLLR",
-        "LRRRLLLLRLRRRRLLLR",
-        "LRRRLLLLRRLLLRRRRL",
-        "LRRRLLLLRRLLRRLRRL",
-        "LRRRLLLLRRRLLRRRLL",
-        "LRRRLLLLRRRLRRLRLL",
-        "LRRRLLLRRLLRLRRLLR",
-        "LRRRLLLRRLLRRRLLLR",
-        "LRRRLLLRRRLLLRRRLL",
-        "LRRRLLLRRRLLRRLRLL",
-        "LRRRLLRLLRLLLRRLRR",
-        "LRRRLLRLLRLLRRLLRR",
-        "LRRRLLRLLRRLLRRLLR",
-        "LRRRLLRLLRRLRRLLLR",
-        "LRRRLLRRLRLLLRRLLR",
-        "LRRRLLRRLRLLRRLLLR",
-        "LRRRLRLLRLLRLRLLRR",
-        "LRRRLRLLRLRRLRLLLR",
-        "LRRRLRLLRRLLLRLRRL",
-        "LRRRLRLLRRRLLRLRLL",
-        "LRRRLRLRRLLRLRLLLR",
-        "LRRRLRLRRRLLLRLRLL",
-        "LRRRLRRLLRLLLRLLRR",
-        "LRRRLRRLLRRLLRLLLR",
-        "LRRRLRRRLRLLLRLLLR",
-        "RLLLLLLLRLRRRRRRRL",
-        "RLLLLLLRRLLRRRRRRL",
-        "RLLLLLLRRLRRRRRRLL",
-        "RLLLLLRLLLRRRRRLRR",
-        "RLLLLLRLLRRLRRRRRL",
-        "RLLLLLRRLLLRRRRLRR",
-        "RLLLLLRRLLRRRRRLLR",
-        "RLLLLLRRLRLLRRRRRL",
-        "RLLLLLRRLRRLRRRRLL",
-        "RLLLLRLLRLRRLRRRRL",
-        "RLLLLRLLRLRRRRLRRL",
-        "RLLLLRLRRLLRLRRRRL",
-        "RLLLLRLRRLLRRRLRRL",
-        "RLLLLRLRRLRRLRRRLL",
-        "RLLLLRLRRLRRRRLRLL",
-        "RLLLLRRLLLRRLRRLRR",
-        "RLLLLRRLLLRRRRLLRR",
-        "RLLLLRRLLRRLLRRRRL",
-        "RLLLLRRLLRRLRRLRRL",
-        "RLLLLRRRLLLRLRRLRR",
-        "RLLLLRRRLLLRRRLLRR",
-        "RLLLLRRRLLRRLRRLLR",
-        "RLLLLRRRLLRRRRLLLR",
-        "RLLLLRRRLRLLLRRRRL",
-        "RLLLLRRRLRLLRRLRRL",
-        "RLLLLRRRLRRLLRRRLL",
-        "RLLLLRRRLRRLRRLRLL",
-        "RLLRLLLLRLRRLRRRRL",
-        "RLLRLLLLRLRRRRLRRL",
-        "RLLRLLLRRLLRLRRRRL",
-        "RLLRLLLRRLLRRRLRRL",
-        "RLLRLLLRRLRRLRRRLL",
-        "RLLRLLLRRLRRRRLRLL",
-        "RLLRLLRLLLRRLRRLRR",
-        "RLLRLLRLLLRRRRLLRR",
-        "RLLRLLRLLRRLLRRRRL",
-        "RLLRLLRLLRRLRRLRRL",
-        "RLLRLLRRLLLRLRRLRR",
-        "RLLRLLRRLLLRRRLLRR",
-        "RLLRLLRRLLRRLRRLLR",
-        "RLLRLLRRLLRRRRLLLR",
-        "RLLRLLRRLRLLLRRRRL",
-        "RLLRLLRRLRLLRRLRRL",
-        "RLLRLLRRLRRLLRRRLL",
-        "RLLRLLRRLRRLRRLRLL",
-        "RLLRLRLLRLRRLRLRRL",
-        "RLLRLRLRRLLRLRLRRL",
-        "RLLRLRLRRLRRLRLRLL",
-        "RLLRLRRLLLRRLRLLRR",
-        "RLLRLRRLLRRLLRLRRL",
-        "RLLRLRRRLLLRLRLLRR",
-        "RLLRLRRRLLRRLRLLLR",
-        "RLLRLRRRLRLLLRLRRL",
-        "RLLRLRRRLRRLLRLRLL",
-        "RLRLLLLLLLRLRRRRRR",
-        "RLRLLLLLLRRRRRRLRL",
-        "RLRLLLLRLLLLRRRRRR",
-        "RLRLLLLRLLRLRRRRLR",
-        "RLRLLLLRLRLRRRRLRL",
-        "RLRLLLLRLRRRRRRLLL",
-        "RLRLLLRLRLRLRRRLRL",
-        "RLRLLLRRRLLLRRRLRL",
-        "RLRLLLRRRLRLRRRLLL",
-        "RLRLLRLLLLRLLRRRRR",
-        "RLRLLRLLLLRLRRLRRR",
-        "RLRLLRLLLRRRLRRLRL",
-        "RLRLLRLLLRRRRRLLRL",
-        "RLRLLRLRLLLLLRRRRR",
-        "RLRLLRLRLLLLRRLRRR",
-        "RLRLLRLRLLRLLRRRLR",
-        "RLRLLRLRLLRLRRLRLR",
-        "RLRLLRLRLRLRLRRLRL",
-        "RLRLLRLRLRLRRRLLRL",
-        "RLRLLRLRLRRRLRRLLL",
-        "RLRLLRLRLRRRRRLLLL",
-        "RLRLLRRLRLRLLRRLRL",
-        "RLRLLRRLRLRLRRLLRL",
-        "RLRLLRRRRLLLLRRLRL",
-        "RLRLLRRRRLLLRRLLRL",
-        "RLRLLRRRRLRLLRRLLL",
-        "RLRLLRRRRLRLRRLLLL",
-        "RLRRLLLLLLRLLRRRRR",
-        "RLRRLLLLLLRLRRLRRR",
-        "RLRRLLLLLRRRLRRLRL",
-        "RLRRLLLLLRRRRRLLRL",
-        "RLRRLLLRLLLLLRRRRR",
-        "RLRRLLLRLLLLRRLRRR",
-        "RLRRLLLRLLRLLRRRLR",
-        "RLRRLLLRLLRLRRLRLR",
-        "RLRRLLLRLRLRLRRLRL",
-        "RLRRLLLRLRLRRRLLRL",
-        "RLRRLLLRLRRRLRRLLL",
-        "RLRRLLLRLRRRRRLLLL",
-        "RLRRLLRLRLRLLRRLRL",
-        "RLRRLLRLRLRLRRLLRL",
-        "RLRRLLRRRLLLLRRLRL",
-        "RLRRLLRRRLLLRRLLRL",
-        "RLRRLLRRRLRLLRRLLL",
-        "RLRRLLRRRLRLRRLLLL",
-        "RLRRLRLLLLRLLRLRRR",
-        "RLRRLRLLLRRRLRLLRL",
-        "RLRRLRLRLLLLLRLRRR",
-        "RLRRLRLRLLRLLRLRLR",
-        "RLRRLRLRLRLRLRLLRL",
-        "RLRRLRLRLRRRLRLLLL",
-        "RLRRLRRLRLRLLRLLRL",
-        "RLRRLRRRRLLLLRLLRL",
-        "RLRRLRRRRLRLLRLLLL",
-        "RRLLLLLLRLLRRRRRRL",
-        "RRLLLLLLRLRRRRRRLL",
-        "RRLLLLLRRLLRRRRRLL",
-        "RRLLLLRLLLLRRRRLRR",
-        "RRLLLLRLLLRRRRRLLR",
-        "RRLLLLRLLRLLRRRRRL",
-        "RRLLLLRLLRRLRRRRLL",
-        "RRLLLLRRLLLRRRRLLR",
-        "RRLLLLRRLRLLRRRRLL",
-        "RRLLLRLLRLLRLRRRRL",
-        "RRLLLRLLRLLRRRLRRL",
-        "RRLLLRLLRLRRLRRRLL",
-        "RRLLLRLLRLRRRRLRLL",
-        "RRLLLRLRRLLRLRRRLL",
-        "RRLLLRLRRLLRRRLRLL",
-        "RRLLLRRLLLLRLRRLRR",
-        "RRLLLRRLLLLRRRLLRR",
-        "RRLLLRRLLLRRLRRLLR",
-        "RRLLLRRLLLRRRRLLLR",
-        "RRLLLRRLLRLLLRRRRL",
-        "RRLLLRRLLRLLRRLRRL",
-        "RRLLLRRLLRRLLRRRLL",
-        "RRLLLRRLLRRLRRLRLL",
-        "RRLLLRRRLLLRLRRLLR",
-        "RRLLLRRRLLLRRRLLLR",
-        "RRLLLRRRLRLLLRRRLL",
-        "RRLLLRRRLRLLRRLRLL",
-        "RRLRLLLLRLLRLRRRRL",
-        "RRLRLLLLRLLRRRLRRL",
-        "RRLRLLLLRLRRLRRRLL",
-        "RRLRLLLLRLRRRRLRLL",
-        "RRLRLLLRRLLRLRRRLL",
-        "RRLRLLLRRLLRRRLRLL",
-        "RRLRLLRLLLLRLRRLRR",
-        "RRLRLLRLLLLRRRLLRR",
-        "RRLRLLRLLLRRLRRLLR",
-        "RRLRLLRLLLRRRRLLLR",
-        "RRLRLLRLLRLLLRRRRL",
-        "RRLRLLRLLRLLRRLRRL",
-        "RRLRLLRLLRRLLRRRLL",
-        "RRLRLLRLLRRLRRLRLL",
-        "RRLRLLRRLLLRLRRLLR",
-        "RRLRLLRRLLLRRRLLLR",
-        "RRLRLLRRLRLLLRRRLL",
-        "RRLRLLRRLRLLRRLRLL",
-        "RRLRLRLLRLLRLRLRRL",
-        "RRLRLRLLRLRRLRLRLL",
-        "RRLRLRLRRLLRLRLRLL",
-        "RRLRLRRLLLLRLRLLRR",
-        "RRLRLRRLLLRRLRLLLR",
-        "RRLRLRRLLRLLLRLRRL",
-        "RRLRLRRLLRRLLRLRLL",
-        "RRLRLRRRLLLRLRLLLR",
-        "RRLRLRRRLRLLLRLRLL",
-        "RRRLLLLLLLLLRRRRRR",
-        "RRRLLLLLLLRLRRRRLR",
-        "RRRLLLLLLRLRRRRLRL",
-        "RRRLLLLLLRRRRRRLLL",
-        "RRRLLLLRLLLLRRRRLR",
-        "RRRLLLLRLRLRRRRLLL",
-        "RRRLLLRLRLLLRRRLRL",
-        "RRRLLLRLRLRLRRRLLL",
-        "RRRLLLRRRLLLRRRLLL",
-        "RRRLLRLLLLLLLRRRRR",
-        "RRRLLRLLLLLLRRLRRR",
-        "RRRLLRLLLLRLLRRRLR",
-        "RRRLLRLLLLRLRRLRLR",
-        "RRRLLRLLLRLRLRRLRL",
-        "RRRLLRLLLRLRRRLLRL",
-        "RRRLLRLLLRRRLRRLLL",
-        "RRRLLRLLLRRRRRLLLL",
-        "RRRLLRLRLLLLLRRRLR",
-        "RRRLLRLRLLLLRRLRLR",
-        "RRRLLRLRLRLRLRRLLL",
-        "RRRLLRLRLRLRRRLLLL",
-        "RRRLLRRLRLLLLRRLRL",
-        "RRRLLRRLRLLLRRLLRL",
-        "RRRLLRRLRLRLLRRLLL",
-        "RRRLLRRLRLRLRRLLLL",
-        "RRRLLRRRRLLLLRRLLL",
-        "RRRLLRRRRLLLRRLLLL",
-        "RRRRLLLLLLLLLRRRRR",
-        "RRRRLLLLLLLLRRLRRR",
-        "RRRRLLLLLLRLLRRRLR",
-        "RRRRLLLLLLRLRRLRLR",
-        "RRRRLLLLLRLRLRRLRL",
-        "RRRRLLLLLRLRRRLLRL",
-        "RRRRLLLLLRRRLRRLLL",
-        "RRRRLLLLLRRRRRLLLL",
-        "RRRRLLLRLLLLLRRRLR",
-        "RRRRLLLRLLLLRRLRLR",
-        "RRRRLLLRLRLRLRRLLL",
-        "RRRRLLLRLRLRRRLLLL",
-        "RRRRLLRLRLLLLRRLRL",
-        "RRRRLLRLRLLLRRLLRL",
-        "RRRRLLRLRLRLLRRLLL",
-        "RRRRLLRLRLRLRRLLLL",
-        "RRRRLLRRRLLLLRRLLL",
-        "RRRRLLRRRLLLRRLLLL",
-        "RRRRLRLLLLLLLRLRRR",
-        "RRRRLRLLLLRLLRLRLR",
-        "RRRRLRLLLRLRLRLLRL",
-        "RRRRLRLLLRRRLRLLLL",
-        "RRRRLRLRLLLLLRLRLR",
-        "RRRRLRLRLRLRLRLLLL",
-        "RRRRLRRLRLLLLRLLRL",
-        "RRRRLRRLRLRLLRLLLL",
-        "RRRRLRRRRLLLLRLLLL",
-    )
-
-    # fmt: off
-    LR_centers_555 = (
-        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
-        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
-    )
-    # fmt: on
 
     def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step901-LR-center-stage.txt",
-            self.state_targets,
-            linecount=4900,
-            max_depth=5,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
+        del build_state_index
+        self.parent = parent
+        self.filename = PHASE3_LR_CENTERS_TABLE_555
 
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_555])
+    def _group_rank(self, squares):
+        selected_remaining = sum(self.parent.state[square] == "L" for square in squares)
+        rank = 0
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
+        if selected_remaining != 4:
+            raise SolveError(f"{self}: expected 4 L stickers, found {selected_remaining}")
+        for position, square in enumerate(squares):
+            positions_after = len(squares) - position - 1
+            if self.parent.state[square] == "L":
+                selected_remaining -= 1
+            elif selected_remaining:
+                rank += comb(positions_after, selected_remaining - 1)
+        return rank
 
-        for pos, pos_state in zip(self.LR_centers_555, state):
-            cube[pos] = pos_state
+    def rank(self):
+        return self._group_rank(LR_t_centers_555) * 70 + self._group_rank(LR_x_centers_555)
 
 
-class LookupTable555EdgeOrientOuterOrbit(LookupTable):
+class LookupTable555EdgeOrientOuterOrbit:
     """
-    lookup-table-5x5x5-step902-EO-outer-orbit.txt
-    =============================================
+    24! / (12! * 12!) = 2,704,156 states
+
+               . U . D .
+               D . . . U
+               . . . . .
+               U . . . D
+               . D . U .
+
+    . D . U .  . D . U .  . D . U .  . D . U .
+    D . . . U  U . . . D  D . . . U  U . . . D
+    . . . . .  . . . . .  . . . . .  . . . . .
+    U . . . D  D . . . U  U . . . D  D . . . U
+    . U . D .  . U . D .  . U . D .  . U . D .
+
+               . U . D .
+               D . . . U
+               . . . . .
+               U . . . D
+               . D . U .
+
+    lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin
+    ======================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
     2 steps has 29 entries (0 percent, 14.50x previous step)
@@ -1330,66 +1419,59 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
     Average: 7.95 moves
     """
 
-    # fmt: off
-    outer_orbit_indexes = (
-        0, 2, 3, 4, 7, 8, 9,
-        11, 12, 14, 15, 16, 19, 20,
-        21, 23, 24, 26, 27, 28, 31,
-        32, 33, 35, 36, 38, 39, 40,
-        43, 44, 45, 47, 48, 50, 51,
-        52, 55, 56, 57, 59, 60, 62,
-        63, 64, 67, 68, 69, 71,
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step902-EO-outer-orbit.txt",
-            "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-            linecount=2704156,
-            max_depth=10,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
+        del build_state_index
+        self.parent = parent
+        self.filename = PHASE3_EO_OUTER_TABLE_555
 
-    def state(self):
-        eo_state_both_orbits = self.parent.highlow_edges_state()
-        return "".join([eo_state_both_orbits[x] for x in self.outer_orbit_indexes])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
-
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
+    def highlow_by_square(self):
+        return dict(
+            zip(
+                (square for square, _ in self.parent.reduce333_orient_edges_tuples),
+                self.parent.highlow_edges_state(),
             )
         )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
 
-        # nuke the midges
-        for edge_pos in edge_orbit_1_555:
-            self.parent.state[edge_pos] = "."
+    def rank(self):
+        highlow = self.highlow_by_square()
+        selected_remaining = 12
+        rank = 0
 
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
+        for position, square in enumerate(PHASE3_OUTER_WING_SQUARES_555):
+            positions_after = 23 - position
+            if highlow[square] == "D":
+                selected_remaining -= 1
+            elif selected_remaining:
+                rank += comb(positions_after, selected_remaining - 1)
+        if selected_remaining:
+            raise SolveError(f"{self}: expected 12 D wings, found {12 - selected_remaining}")
+        return rank
 
-    def ida_heuristic(self):
-        state = self.state()
-        cost_to_goal = self.heuristic(state)
-        return (state, cost_to_goal)
 
-
-class LookupTable555EdgeOrientInnerOrbit(LookupTable):
+class LookupTable555EdgeOrientInnerOrbit:
     """
-    lookup-table-5x5x5-step903-EO-inner-orbit.txt
-    =============================================
+    2^12 = 4,096 dense ranks; 2,048 even-parity states are reachable
+
+               . . U . .
+               . . . . .
+               U . . . U
+               . . . . .
+               . . U . .
+
+    . . U . .  . . U . .  . . U . .  . . U . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    U . . . U  U . . . U  U . . . U  U . . . U
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . U . .  . . U . .  . . U . .  . . U . .
+
+               . . U . .
+               . . . . .
+               U . . . U
+               . . . . .
+               . . U . .
+
+    lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin
+    ======================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
     2 steps has 25 entries (1 percent, 12.50x previous step)
@@ -1404,172 +1486,380 @@ class LookupTable555EdgeOrientInnerOrbit(LookupTable):
     """
 
     midge_states = {
-        (3, 103): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Upper
+        (3, 103): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (11, 28): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (23, 53): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (15, 78): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
-        (36, 115): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Left
+        (36, 115): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (40, 61): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
-        (86, 65): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Right
+        (86, 65): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (90, 111): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
-        (128, 73): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],  # Down
+        (128, 73): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (136, 48): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (140, 98): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
         (148, 123): ["UB", "UL", "UR", "UF", "LB", "LF", "RB", "RF", "DB", "DL", "DR", "DF"],
     }
 
     def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step903-EO-inner-orbit.txt",
-            "UUUUUUUUUUUUUUUUUUUUUUUU",
-            linecount=2048,
-            max_depth=7,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
+        del build_state_index
+        self.parent = parent
+        self.filename = PHASE3_EO_INNER_TABLE_555
 
-    def state(self):
-        lt_state = self.parent.state[:]
-
-        for edge_position in MIDGE_TUPLES_555:
-            for e0, e1 in edge_position:
-                edge_str = lt_state[e0] + lt_state[e1]
-
-                if edge_str in self.midge_states.get((e0, e1), ()):
-                    lt_state[e0] = "U"
-                    lt_state[e1] = "U"
-                    break
-            else:
-                lt_state[e0] = "D"
-                lt_state[e1] = "D"
-
-        return "".join([lt_state[x] for x in midge_indexes])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        # populate the midges
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
-
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
-            )
-        )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
-
-        # nuke the outer orbit of edges
-        for edge_pos in edge_orbit_0_555:
-            self.parent.state[edge_pos] = "."
-
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
+    def rank(self):
+        parent_state = self.parent.state
+        rank = 0
+        for index, (square, partner) in enumerate(zip(PHASE3_INNER_MIDGE_SQUARES_555, PHASE3_INNER_MIDGE_PARTNERS_555)):
+            edge_str = parent_state[square] + parent_state[partner]
+            oriented = edge_str in self.midge_states.get((square, partner), ())
+            if not oriented:
+                rank |= 1 << index
+        return rank
 
 
-class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            prune_tables=(
-                parent.lt_phase3_lr_center_stage,
-                parent.lt_phase3_eo_outer_orbit,
-                parent.lt_phase3_eo_inner_orbit,
-            ),
-        )
-
-
-# phase 4
-class LookupTable555Phase4(LookupTable):
+class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA555RankedCenters):
     """
-    lookup-table-5x5x5-step40-phase4.txt
-    ====================================
-    0 steps has 4,239 entries (0 percent, 0.00x previous step)
-    1 steps has 1,018,011 entries (0 percent, 240.15x previous step)
-    2 steps has 6,276,787 entries (5 percent, 6.17x previous step)
+    Phase-3 IDA (``ida_search_555_phase3``): orient the 24 wings and 12 midges while reducing the
+    LR centers to one of 432 shapes.
+
+    Component tables (diagrams and histograms live on the classes named below):
+        lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin - LookupTable555Phase3LRCenterStage
+        lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin  - LookupTable555EdgeOrientOuterOrbit
+        lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin  - LookupTable555EdgeOrientInnerOrbit
+
+    Heuristic is the max of the three component costs; a state is pruned when any of them reports
+    an unreachable rank. Every search goes through a roots file: when the caller passes no
+    ``pt_states`` the current cube is ranked into a single root, and ``eo_edges`` instead hands in
+    one root per legal EO mapping so all 2048 even-parity mappings are searched together.
+    Solutions come back sorted shortest first, each tagged with the root it came from.
+    ``reduce_333`` asks for every solution at that minimum length and keeps the endpoint whose
+    phase 4+5+6 continuation is shortest.
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . . . . .  . R R R .  . . . . .
+    . L . L .  . . . . .  . R . R .  . . . . .
+    . L L L .  . . . . .  . R R R .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin
+    ========================================================
+    0 steps has 432 entries (8 percent, 0.00x previous step)
+    1 steps has 396 entries (8 percent, 0.92x previous step)
+    2 steps has 1,064 entries (21 percent, 2.69x previous step)
+    3 steps has 1,692 entries (34 percent, 1.59x previous step)
+    4 steps has 1,220 entries (24 percent, 0.72x previous step)
+    5 steps has 96 entries (1 percent, 0.08x previous step)
+
+    Total: 4,900 entries
+    Average: 2.64 moves
+
+    lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 278 entries (0 percent, 9.59x previous step)
+    4 steps has 1,934 entries (0 percent, 6.96x previous step)
+    5 steps has 15,640 entries (0 percent, 8.09x previous step)
+    6 steps has 124,249 entries (4 percent, 7.94x previous step)
+    7 steps has 609,241 entries (22 percent, 4.90x previous step)
+    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+    9 steps has 688,124 entries (25 percent, 0.56x previous step)
+    10 steps has 40,560 entries (1 percent, 0.06x previous step)
+
+    Total: 2,704,156 entries
+    Average: 7.95 moves
+
+    lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (1 percent, 12.50x previous step)
+    3 steps has 202 entries (9 percent, 8.08x previous step)
+    4 steps has 620 entries (30 percent, 3.07x previous step)
+    5 steps has 900 entries (43 percent, 1.45x previous step)
+    6 steps has 285 entries (13 percent, 0.32x previous step)
+    7 steps has 13 entries (0 percent, 0.05x previous step)
+
+    Total: 2,048 entries
+    Average: 4.61 moves
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.prune_tables = (
+            parent.lt_phase3_lr_center_stage,
+            parent.lt_phase3_eo_outer_orbit,
+            parent.lt_phase3_eo_inner_orbit,
+        )
+
+    def solutions_via_c(
+        self,
+        pt_states=(),
+        min_ida_threshold=None,
+        max_ida_threshold=None,
+        solution_count=1,
+        **_kwargs,
+    ):
+        roots_filename = None
+        roots = []
+        download_file_if_needed(PHASE3_LR_CENTERS_TABLE_555)
+        download_file_if_needed(PHASE3_EO_OUTER_TABLE_555)
+        download_file_if_needed(PHASE3_EO_INNER_TABLE_555)
+        cmd = [
+            "./ida_search_555_phase3",
+            "--lr-center-cost",
+            PHASE3_LR_CENTERS_TABLE_555,
+            "--eo-outer-cost",
+            PHASE3_EO_OUTER_TABLE_555,
+            "--eo-inner-cost",
+            PHASE3_EO_INNER_TABLE_555,
+        ]
+        try:
+            if not pt_states:
+                pt_states = [
+                    (
+                        self.prune_tables[0].rank(),
+                        self.prune_tables[1].rank(),
+                        self.prune_tables[2].rank(),
+                    )
+                ]
+            roots = list(pt_states)
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as roots_file:
+                roots_filename = roots_file.name
+                for root_id, (lr_rank, outer_rank, inner_rank) in enumerate(roots):
+                    roots_file.write(f"{root_id},{lr_rank},{outer_rank},{inner_rank}\n")
+            cmd.extend(("--roots-file", roots_filename))
+            if min_ida_threshold is not None:
+                cmd.extend(("--min-ida-threshold", str(min_ida_threshold)))
+            if max_ida_threshold is not None:
+                cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
+            if solution_count != 1:
+                cmd.extend(("--solution-count", str(solution_count)))
+            output = self._run(cmd)
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
+
+        solutions = []
+        solution_re = re.compile(r"^SOLUTION ROOT (\d+) \(\d+ steps\):(.*)$")
+        for line in output.splitlines():
+            match = solution_re.match(line)
+            if match:
+                root = roots[int(match.group(1))]
+                solution = tuple(match.group(2).strip().split())
+                solutions.append((len(solution), solution, root + (None, None)))
+        if not solutions:
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
+        solutions.sort()
+        return [(solution, states) for _, solution, states in solutions]
+
+
+# ==================================================
+# phase 4
+# park four edges on the x-plane
+# ==================================================
+class LookupTable555Phase4:
+    """
+    Move one group of 4-edges out of the z-plane.
+
+    (12! / (4! * 8!))^3 = 121,287,375 states
+
+               . x x x .
+               x . . . x
+               x . . . x
+               x . . . x
+               . x x x .
+
+    . x x x .  . x x x .  . x x x .  . x x x .
+    L . . . L  L . . . L  L . . . L  L . . . L
+    L . . . L  L . . . L  L . . . L  L . . . L
+    L . . . L  L . . . L  L . . . L  L . . . L
+    . x x x .  . x x x .  . x x x .  . x x x .
+
+               . x x x .
+               x . . . x
+               x . . . x
+               x . . . x
+               . x x x .
+
+    lookup-table-5x5x5-step40-phase4.cost-only.bin
+    ==============================================
+    0 steps has 343,000 entries (0 percent, 0.00x previous step)
+    1 steps has 679,250 entries (0 percent, 1.98x previous step)
+    2 steps has 6,276,787 entries (5 percent, 9.24x previous step)
     3 steps has 25,090,688 entries (20 percent, 4.00x previous step)
-
-    The full table was 5.1G and I didn't need to keep that deep so I kept
-    up to 3-deep. Here are the remaining distributions.
-
     4 steps has 50,710,890 entries (41 percent, 2.02x previous step)
     5 steps has 34,813,744 entries (28 percent, 0.69x previous step)
     6 steps has 3,360,706 entries (2 percent, 0.10x previous step)
     7 steps has 12,310 entries (0 percent, 0.00x previous step)
 
     Total: 121,287,375 entries
-    Average: 4.01 moves
+    Average: 4.00 moves
+
+    This class is both the table descriptor and the driver for ``ida_search_555_phase4``. The cost
+    is a single table lookup over the C(12,4) high-wing, midge, and low-wing ranks packed in radix
+    495. One C invocation searches every four-edge choice written to the roots file; ``pair_edges``
+    only keeps the choices that finish in fewer than three moves.
     """
 
     def __init__(self, parent):
-        LookupTable.__init__(
-            self, parent, "lookup-table-5x5x5-step40-phase4.txt", "TBD", linecount=32389725, max_depth=3
-        )
+        self.parent = parent
+        self.filename = PHASE4_EDGES_TABLE_555
         self.wing_strs = None
+        self.solution_by_wing_strs = {}
 
-    def ida_heuristic(self):
-        assert self.wing_strs
-        original_state = self.parent.state[:]
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
-        parent_state = self.parent.state
+    @staticmethod
+    def _combination_rank(selected):
+        remaining = 4
+        rank = 0
 
-        for square_index in wings_for_edges_pattern_555:
-            partner_index = edges_partner_555[square_index]
-            square_value = parent_state[square_index]
-            partner_value = parent_state[partner_index]
-            wing_str = square_value + partner_value
+        if sum(selected) != remaining:
+            raise SolveError(f"phase-4 orbit must contain four selected edges, found {sum(selected)}")
+        for position, is_selected in enumerate(selected):
+            positions_after = len(selected) - position - 1
+            if is_selected:
+                remaining -= 1
+            elif remaining:
+                rank += comb(positions_after, remaining - 1)
+        return rank
 
-            if not (wing_str == "LL" or wing_str == "xx"):
-                wing_str = wing_str_map[square_value + partner_value]
+    def rank(self, wing_strs=None):
+        selected = set(wing_strs if wing_strs is not None else self.wing_strs)
+        rank = 0
 
-                if wing_str in self.wing_strs:
-                    self.parent.state[square_index] = "L"
-                    self.parent.state[partner_index] = "L"
-                else:
-                    self.parent.state[square_index] = "x"
-                    self.parent.state[partner_index] = "x"
+        if len(selected) != 4:
+            raise SolveError(f"phase 4 needs four distinct edges, found {len(selected)}")
+        for squares, partners in (
+            (PHASE4_HIGH_EDGE_SQUARES_555, PHASE4_HIGH_EDGE_PARTNERS_555),
+            (PHASE4_MIDGE_SQUARES_555, PHASE4_MIDGE_PARTNERS_555),
+            (PHASE4_LOW_EDGE_SQUARES_555, PHASE4_LOW_EDGE_PARTNERS_555),
+        ):
+            orbit_selected = []
+            for square, partner in zip(squares, partners):
+                edge = wing_str_map[self.parent.state[square] + self.parent.state[partner]]
+                orbit_selected.append(edge in selected)
+            rank = (rank * 495) + self._combination_rank(orbit_selected)
+        return rank
 
-        state = "".join(["1" if parent_state[x] == "L" else "0" for x in edges_555])
-        state = self.hex_format % int(state, 2)
-        cost_to_goal = self.heuristic(state)
-        self.parent.state = original_state
-        # logger.info("%s: state %s, cost_to_goal %s" % (self, state, cost_to_goal))
-        return (state, cost_to_goal)
+    def solutions_via_c(self, wing_str_combos, max_ida_threshold=2):
+        download_file_if_needed(self.filename)
+        combos = [tuple(sorted(combo)) for combo in wing_str_combos]
+        roots_filename = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as roots_file:
+                roots_filename = roots_file.name
+                for root_id, combo in enumerate(combos):
+                    roots_file.write(f"{root_id},{self.rank(combo)}\n")
+            cmd = [
+                "./ida_search_555_phase4",
+                "--roots-file",
+                roots_filename,
+                "--cost-table",
+                self.filename,
+                "--max-ida-threshold",
+                str(max_ida_threshold),
+            ]
+            logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+            process = subprocess.run(cmd, capture_output=True, text=True)
+            output = process.stdout
+            self.parent.solve_via_c_output = f"\n{' '.join(cmd)}\n{output}\n"
+            if process.returncode not in (0, 1):
+                raise SolveError(f"{' '.join(cmd)} failed:\n{output}\n{process.stderr}")
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
+
+        results = []
+        for line in output.splitlines():
+            match = re.match(r"^SOLUTION ROOT (\d+) \((\d+) steps\):(.*)$", line)
+            if not match:
+                continue
+            combo = combos[int(match.group(1))]
+            solution = tuple(match.group(3).split())
+            self.solution_by_wing_strs[combo] = solution
+            results.append((len(solution), list(combo), solution))
+        results.sort()
+        return results
 
     def solve(self, print_steps=False) -> bool:
-        """
-        We override the normal solve() so that we do not have to enter all 343,000
-        state_targets for this class.
-        """
-        state, _cost_to_goal = self.ida_heuristic()
-        steps = self.steps(state)
-
-        if steps:
-            for step in steps:
-                self.parent.rotate(step)
-                if print_steps:
-                    logger.info(f"{self}: step {step}")
-            return True
-        else:
+        combo = tuple(sorted(self.wing_strs))
+        if combo not in self.solution_by_wing_strs:
+            self.solutions_via_c((combo,))
+        steps = self.solution_by_wing_strs.get(combo)
+        if steps is None:
             return False
+        for step in steps:
+            self.parent.rotate(step)
+            if print_steps:
+                logger.info(f"{self}: step {step}")
+        return True
 
 
+# ==================================================
 # phase 5
-class LookupTable555Phase5Centers(LookupTable):
+# pair those four edges; LR/FB centers to vertical bars
+# ==================================================
+class LookupTableIDA555Phase5:
     """
-    lookup-table-5x5x5-step51-phase5-centers.txt
-    ============================================
-    0 steps has 7 entries (0 percent, 0.00x previous step)
-    1 steps has 161 entries (0 percent, 23.00x previous step)
-    2 steps has 1,146 entries (0 percent, 7.12x previous step)
+    Phase-5 IDA (``ida_search_555_phase5``): pair the four parked x-plane edges and put the LR and
+    FB centers into vertical bars.
+
+    Component tables (diagrams and histograms live with their builder classes in
+    ``rubiks-cube-lookup-tables``):
+        lookup-table-5x5x5-step51-phase5-centers.cost-only.bin
+            LR t/x and FB t/x occupancy. C(8,4)^4 = 24,010,000 dense ranks, of which phase-5 moves
+            reach 2,116,800. Builder: Build555Phase5Centers.
+        lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.cost-only.bin
+            FB t/x occupancy, the four high wings labeled relative to the occupied
+            midges in slot order, and midge occupancy. C(8,4)^2 * P(8,4) * C(8,4) = 576,240,000 ranks.
+            Builder: Build555Phase5FBCentersHighEdgeMidge.
+        lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.cost-only.bin
+            Same coordinate against the low wings, also 576,240,000 ranks.
+            Builder: Build555Phase5FBCentersLowEdgeMidge.
+
+    Heuristic is the max of the three component costs; a state is pruned when any of them reports
+    an unreachable rank. Roots are the ``ranks()`` tuples of the phase-4 endpoints that survived,
+    deduplicated and written to a roots file.
+
+    Every solution the searcher emits is exactly ``threshold`` moves long, so a portfolio buys
+    phase 6 a choice of landing states rather than a choice of phase-5 lengths. ``pair_edges``
+    asks for 10 with ``find_extra``, which measured the same move counts as asking for 500 while
+    letting the searcher stop sweeping the threshold level early on cubes where solutions are
+    plentiful. Solutions come back sorted shortest first, each tagged with the root it came from.
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . B F B .  . R R R .  . F B F .
+    . L . L .  . B . B .  . R . R .  . F . F .
+    . L L L .  . B F B .  . R R R .  . F B F .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    lookup-table-5x5x5-step51-phase5-centers.cost-only.bin
+    ======================================================
+    0 steps has 36 entries (0 percent, 0.00x previous step)
+    1 steps has 132 entries (0 percent, 3.67x previous step)
+    2 steps has 1,146 entries (0 percent, 8.68x previous step)
     3 steps has 7,176 entries (0 percent, 6.26x previous step)
     4 steps has 36,836 entries (1 percent, 5.13x previous step)
     5 steps has 171,754 entries (8 percent, 4.66x previous step)
@@ -1581,163 +1871,32 @@ class LookupTable555Phase5Centers(LookupTable):
 
     Total: 2,116,800 entries
     Average: 6.91 moves
-    """
 
-    state_targets = (
-        "LLLLLLLLLBFBBFBBFBRRRRRRRRRFBFFBFFBF",
-        "LLLLLLLLLBFFBFFBFFRRRRRRRRRBBFBBFBBF",
-        "LLLLLLLLLBFFBFFBFFRRRRRRRRRFBBFBBFBB",
-        "LLLLLLLLLFFBFFBFFBRRRRRRRRRBBFBBFBBF",
-        "LLLLLLLLLFFBFFBFFBRRRRRRRRRFBBFBBFBB",
-        "LLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBB",
-        "LLRLLRLLRBFBBFBBFBLRRLRRLRRFBFFBFFBF",
-        "LLRLLRLLRBFBBFBBFBRRLRRLRRLFBFFBFFBF",
-        "LLRLLRLLRBFFBFFBFFLRRLRRLRRBBFBBFBBF",
-        "LLRLLRLLRBFFBFFBFFLRRLRRLRRFBBFBBFBB",
-        "LLRLLRLLRBFFBFFBFFRRLRRLRRLBBFBBFBBF",
-        "LLRLLRLLRBFFBFFBFFRRLRRLRRLFBBFBBFBB",
-        "LLRLLRLLRFFBFFBFFBLRRLRRLRRBBFBBFBBF",
-        "LLRLLRLLRFFBFFBFFBLRRLRRLRRFBBFBBFBB",
-        "LLRLLRLLRFFBFFBFFBRRLRRLRRLBBFBBFBBF",
-        "LLRLLRLLRFFBFFBFFBRRLRRLRRLFBBFBBFBB",
-        "LLRLLRLLRFFFFFFFFFLRRLRRLRRBBBBBBBBB",
-        "LLRLLRLLRFFFFFFFFFRRLRRLRRLBBBBBBBBB",
-        "RLLRLLRLLBFBBFBBFBLRRLRRLRRFBFFBFFBF",
-        "RLLRLLRLLBFBBFBBFBRRLRRLRRLFBFFBFFBF",
-        "RLLRLLRLLBFFBFFBFFLRRLRRLRRBBFBBFBBF",
-        "RLLRLLRLLBFFBFFBFFLRRLRRLRRFBBFBBFBB",
-        "RLLRLLRLLBFFBFFBFFRRLRRLRRLBBFBBFBBF",
-        "RLLRLLRLLBFFBFFBFFRRLRRLRRLFBBFBBFBB",
-        "RLLRLLRLLFFBFFBFFBLRRLRRLRRBBFBBFBBF",
-        "RLLRLLRLLFFBFFBFFBLRRLRRLRRFBBFBBFBB",
-        "RLLRLLRLLFFBFFBFFBRRLRRLRRLBBFBBFBBF",
-        "RLLRLLRLLFFBFFBFFBRRLRRLRRLFBBFBBFBB",
-        "RLLRLLRLLFFFFFFFFFLRRLRRLRRBBBBBBBBB",
-        "RLLRLLRLLFFFFFFFFFRRLRRLRRLBBBBBBBBB",
-        "RLRRLRRLRBFBBFBBFBLRLLRLLRLFBFFBFFBF",
-        "RLRRLRRLRBFFBFFBFFLRLLRLLRLBBFBBFBBF",
-        "RLRRLRRLRBFFBFFBFFLRLLRLLRLFBBFBBFBB",
-        "RLRRLRRLRFFBFFBFFBLRLLRLLRLBBFBBFBBF",
-        "RLRRLRRLRFFBFFBFFBLRLLRLLRLFBBFBBFBB",
-        "RLRRLRRLRFFFFFFFFFLRLLRLLRLBBBBBBBBB",
-    )
+    lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.cost-only.bin
+    ===========================================================================
+    0 steps has 6 entries (0 percent, 0.00x previous step)
+    1 steps has 24 entries (0 percent, 4.00x previous step)
+    2 steps has 216 entries (0 percent, 9.00x previous step)
+    3 steps has 1,622 entries (0 percent, 7.51x previous step)
+    4 steps has 11,198 entries (0 percent, 6.90x previous step)
+    5 steps has 75,990 entries (0 percent, 6.79x previous step)
+    6 steps has 498,774 entries (0 percent, 6.56x previous step)
+    7 steps has 3,105,912 entries (0 percent, 6.23x previous step)
+    8 steps has 17,585,391 entries (3 percent, 5.66x previous step)
+    9 steps has 81,079,954 entries (14 percent, 4.61x previous step)
+    10 steps has 230,361,431 entries (39 percent, 2.84x previous step)
+    11 steps has 220,472,982 entries (38 percent, 0.96x previous step)
+    12 steps has 23,022,104 entries (3 percent, 0.10x previous step)
+    13 steps has 24,396 entries (0 percent, 0.00x previous step)
 
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step51-phase5-centers.txt",
-            self.state_targets,
-            linecount=2116800,
-            max_depth=10,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
+    Total: 576,240,000 entries
+    Average: 10.24 moves
 
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in LFRB_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(LFRB_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555Phase5HighEdgeMidge(LookupTable):
-    """
-    lookup-table-5x5x5-step53-phase5-high-edge-and-midge.txt
-    ========================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 30 entries (0 percent, 6.00x previous step)
-    3 steps has 184 entries (0 percent, 6.13x previous step)
-    4 steps has 992 entries (0 percent, 5.39x previous step)
-    5 steps has 4,845 entries (4 percent, 4.88x previous step)
-    6 steps has 17,792 entries (15 percent, 3.67x previous step)
-    7 steps has 40,048 entries (34 percent, 2.25x previous step)
-    8 steps has 43,400 entries (36 percent, 1.08x previous step)
-    9 steps has 10,252 entries (8 percent, 0.24x previous step)
-    10 steps has 52 entries (0 percent, 0.01x previous step)
-
-    Total: 117,600 entries
-    Average: 7.28 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step53-phase5-high-edge-and-midge.txt",
-            "-------------SSTT--UUVV-------------",
-            linecount=117600,
-            max_depth=10,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        self.wing_strs = ("LB", "LF", "RB", "RF")
-
-    def state(self):
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
-
-        result = []
-        for index in wings_for_edges_pattern_555:
-            if state[index] == "." or index not in high_wings_and_midges_555:
-                result.append("-")
-            else:
-                result.append(state[index])
-
-        return "".join(result)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
-
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
-            )
-        )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
-        self.parent.nuke_edges_low()
-        self.parent.nuke_edges_in_y_plane()
-        self.parent.nuke_edges_in_z_plane()
-
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
-
-
-# Only used to create a perfect hash file
-'''
-class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
-    """
-    lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.txt
-    ===================================================================
-    1 steps has 30 entries (0 percent, 0.00x previous step)
-    2 steps has 216 entries (0 percent, 7.20x previous step)
+    lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.cost-only.bin
+    ==========================================================================
+    0 steps has 6 entries (0 percent, 0.00x previous step)
+    1 steps has 24 entries (0 percent, 4.00x previous step)
+    2 steps has 216 entries (0 percent, 9.00x previous step)
     3 steps has 1,622 entries (0 percent, 7.51x previous step)
     4 steps has 11,198 entries (0 percent, 6.90x previous step)
     5 steps has 75,990 entries (0 percent, 6.79x previous step)
@@ -1754,508 +1913,202 @@ class LookupTable555Phase5FBCentersHighEdgeMidge(LookupTableIDAViaGraph):
     Average: 10.24 moves
     """
 
-    state_targets = (
-        "BFBBFBBFBFBFFBFFBF-------------SSTT--UUVV-------------",
-        "BFFBFFBFFBBFBBFBBF-------------SSTT--UUVV-------------",
-        "BFFBFFBFFFBBFBBFBB-------------SSTT--UUVV-------------",
-        "FFBFFBFFBBBFBBFBBF-------------SSTT--UUVV-------------",
-        "FFBFFBFFBFBBFBBFBB-------------SSTT--UUVV-------------",
-        "FFFFFFFFFBBBBBBBBB-------------SSTT--UUVV-------------",
-    )
+    centers_filename = "lookup-tables/lookup-table-5x5x5-step51-phase5-centers.cost-only.bin"
+    high_filename = "lookup-tables/lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.cost-only.bin"
+    low_filename = "lookup-tables/lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.cost-only.bin"
 
     def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            filename='lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.txt',
-            state_target=self.state_targets,
-            linecount=576240000,
-            max_depth=13,
-            all_moves=moves_555,
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'",
-                "U", "U'",
-                "D", "D'",
-            ),
-            prune_tables=(
-                parent.lt_phase5_fb_centers,
-                parent.lt_phase5_high_edge_midge,
-            ),
+        self.parent = parent
+
+    @staticmethod
+    def _multiset_rank(state, symbols, counts):
+        remaining = list(counts)
+        permutations = 1
+        slots = sum(counts)
+
+        for count in counts:
+            permutations *= comb(slots, count)
+            slots -= count
+
+        rank = 0
+        for position, char in enumerate(state):
+            slots = len(state) - position
+            try:
+                symbol_index = symbols.index(char)
+            except ValueError as error:
+                raise SolveError(f"phase-5 rank contains unknown symbol {char!r}") from error
+            if not remaining[symbol_index]:
+                raise SolveError(f"phase-5 rank contains too many {char!r} symbols")
+            for smaller in range(symbol_index):
+                rank += permutations * remaining[smaller] // slots
+            permutations = permutations * remaining[symbol_index] // slots
+            remaining[symbol_index] -= 1
+
+        if any(remaining):
+            raise SolveError("phase-5 rank has the wrong symbol counts")
+        return rank
+
+    def _binary_rank(self, squares, selected):
+        state = ["L" if self.parent.state[square] in selected else "x" for square in squares]
+        return self._multiset_rank(state, "Lx", (4, 4))
+
+    def _fb_ranks(self):
+        return (
+            self._binary_rank(FB_t_centers_555, {"B"}),
+            self._binary_rank(FB_x_centers_555, {"B"}),
         )
 
-    def build_ida_graph_set_cube_state(self, state, steps_to_scramble):
-        # Use the normal approach for populating the edges state
-        self.parent.re_init()
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
+    def _label_by_midge(self, wing_strs):
+        selected = tuple(sorted(wing_strs))
+        if len(selected) != 4 or len(set(selected)) != 4:
+            raise SolveError(f"phase 5 needs four distinct edges, found {len(set(selected))}")
 
-        # The FB centers have multiple goal states though so set those explicitly
-        FB_state = state[0:18]
-        for (pos, x) in zip(FB_centers_555, FB_state):
-            self.parent.state[pos] = x
+        def edge_at(square):
+            partner = edges_partner_555[square]
+            return wing_str_map[self.parent.state[square] + self.parent.state[partner]]
 
+        label_by_edge = {}
+        for square in PHASE5_XY_MIDGE_SQUARES_555:
+            edge = edge_at(square)
+            if edge in selected and edge not in label_by_edge:
+                label_by_edge[edge] = chr(ord("A") + len(label_by_edge))
+        if len(label_by_edge) != 4:
+            raise SolveError("phase 5 could not label the four selected midges")
+        return label_by_edge, edge_at
 
-class LookupTable555Phase5FBCentersLowEdgeMidge(LookupTableIDAViaGraph):
-    """
-    lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.txt
-    ==================================================================
-    1 steps has 30 entries (0 percent, 0.00x previous step)
-    2 steps has 216 entries (0 percent, 7.20x previous step)
-    3 steps has 1,622 entries (0 percent, 7.51x previous step)
-    4 steps has 11,198 entries (0 percent, 6.90x previous step)
-    5 steps has 75,990 entries (0 percent, 6.79x previous step)
-    6 steps has 498,774 entries (0 percent, 6.56x previous step)
-    7 steps has 3,105,912 entries (0 percent, 6.23x previous step)
-    8 steps has 17,585,391 entries (3 percent, 5.66x previous step)
-    9 steps has 81,079,954 entries (14 percent, 4.61x previous step)
-    10 steps has 230,361,431 entries (39 percent, 2.84x previous step)
-    11 steps has 220,472,982 entries (38 percent, 0.96x previous step)
-    12 steps has 23,022,104 entries (3 percent, 0.10x previous step)
-    13 steps has 24,396 entries (0 percent, 0.00x previous step)
+    def _combo_rank(self, wing_strs, wing_squares):
+        label_by_edge, edge_at = self._label_by_midge(wing_strs)
+        wing_state = "".join(label_by_edge.get(edge_at(square), "x") for square in wing_squares)
+        midge_state = "".join(
+            "L" if edge_at(square) in label_by_edge else "x" for square in PHASE5_XY_MIDGE_SQUARES_555
+        )
+        fb_t_rank, fb_x_rank = self._fb_ranks()
+        wing_rank = self._multiset_rank(wing_state, "ABCDx", (1, 1, 1, 1, 4))
+        midge_rank = self._multiset_rank(midge_state, "Lx", (4, 4))
+        return (((fb_t_rank * 70) + fb_x_rank) * 1680 + wing_rank) * 70 + midge_rank
 
-    Total: 576,240,000 entries
-    Average: 10.24 moves
-    """
+    def _midge_rank(self, wing_strs):
+        label_by_edge, edge_at = self._label_by_midge(wing_strs)
+        state = "".join(label_by_edge.get(edge_at(square), "x") for square in PHASE5_XY_MIDGE_SQUARES_555)
+        return self._multiset_rank(state, "ABCDx", (1, 1, 1, 1, 4))
 
-    state_targets = (
-        "BFBBFBBFBFBFFBFFBF------------sS--TtuU--Vv------------",
-        "BFFBFFBFFBBFBBFBBF------------sS--TtuU--Vv------------",
-        "BFFBFFBFFFBBFBBFBB------------sS--TtuU--Vv------------",
-        "FFBFFBFFBBBFBBFBBF------------sS--TtuU--Vv------------",
-        "FFBFFBFFBFBBFBBFBB------------sS--TtuU--Vv------------",
-        "FFFFFFFFFBBBBBBBBB------------sS--TtuU--Vv------------",
-    )
-
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            filename='lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.txt',
-            state_target=self.state_targets,
-            linecount=576240000,
-            max_depth=13,
-            all_moves=moves_555,
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'",
-                "U", "U'",
-                "D", "D'",
-            ),
-            prune_tables=(
-                parent.lt_phase5_fb_centers,
-                parent.lt_phase5_low_edge_midge,
-            ),
+    def ranks(self, wing_strs):
+        lr_t_rank = self._binary_rank(LR_t_centers_555, {"L"})
+        lr_x_rank = self._binary_rank(LR_x_centers_555, {"L"})
+        fb_t_rank, fb_x_rank = self._fb_ranks()
+        centers_rank = (((lr_t_rank * 70) + lr_x_rank) * 70 + fb_t_rank) * 70 + fb_x_rank
+        return (
+            centers_rank,
+            self._combo_rank(wing_strs, PHASE5_XY_HIGH_SQUARES_555),
+            self._combo_rank(wing_strs, PHASE5_XY_LOW_SQUARES_555),
+            self._midge_rank(wing_strs),
         )
 
-    def build_ida_graph_set_cube_state(self, state, steps_to_scramble):
-        # Use the normal approach for populating the edges state
-        self.parent.re_init()
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
+    def solutions_via_c(self, pt_states, solution_count=1, find_extra=False, max_ida_threshold=None):
+        for filename in (self.centers_filename, self.high_filename, self.low_filename):
+            download_file_if_needed(filename)
 
-        # The FB centers have multiple goal states though so set those explicitly
-        FB_state = state[0:18]
-        for (pos, x) in zip(FB_centers_555, FB_state):
-            self.parent.state[pos] = x
-'''
+        roots = sorted(set(pt_states))
+        roots_filename = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as roots_file:
+                roots_filename = roots_file.name
+                for root_id, root in enumerate(roots):
+                    roots_file.write(f"{root_id},{root[0]},{root[1]},{root[2]},{root[3]}\n")
 
+            cmd = [
+                "./ida_search_555_phase5",
+                "--roots-file",
+                roots_filename,
+                "--centers-cost",
+                self.centers_filename,
+                "--high-combo-cost",
+                self.high_filename,
+                "--low-combo-cost",
+                self.low_filename,
+                "--solution-count",
+                str(solution_count),
+            ]
+            if find_extra:
+                cmd.append("--find-extra")
+            if max_ida_threshold is not None:
+                cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
 
-class LookupTable555Phase5FBCenters(LookupTable):
-    """
-    lookup-table-5x5x5-step56-phase5-fb-centers.txt
-    ===============================================
-    0 steps has 4 entries (0 percent, 0.00x previous step)
-    1 steps has 24 entries (0 percent, 6.00x previous step)
-    2 steps has 110 entries (2 percent, 4.58x previous step)
-    3 steps has 396 entries (8 percent, 3.60x previous step)
-    4 steps has 1,196 entries (24 percent, 3.02x previous step)
-    5 steps has 2,102 entries (42 percent, 1.76x previous step)
-    6 steps has 1,016 entries (20 percent, 0.48x previous step)
-    7 steps has 52 entries (1 percent, 0.05x previous step)
+            logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+            process = subprocess.run(cmd, capture_output=True, text=True)
+            output = process.stdout
+            self.parent.solve_via_c_output = f"\n{' '.join(cmd)}\n{output}\n"
+            if process.returncode not in (0, 1):
+                raise SolveError(f"{' '.join(cmd)} failed:\n{output}\n{process.stderr}")
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
 
-    Total: 4,900 entries
-    Average: 4.73 moves
-    """
+        solutions = []
+        pattern = re.compile(r"^SOLUTION ROOT (\d+) \((\d+) steps\):(.*)$")
+        for line in output.splitlines():
+            match = pattern.match(line)
+            if match:
+                root_id = int(match.group(1))
+                solution = tuple(match.group(3).strip().split())
+                solutions.append((len(solution), solution, roots[root_id]))
 
-    state_targets = (
-        "BFBBFBBFBFBFFBFFBF",
-        "BFFBFFBFFBBFBBFBBF",
-        "BFFBFFBFFFBBFBBFBB",
-        "FFBFFBFFBBBFBBFBBF",
-        "FFBFFBFFBFBBFBBFBB",
-        "FFFFFFFFFBBBBBBBBB",
-    )
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step56-phase5-fb-centers.txt",
-            self.state_targets,
-            linecount=4900,
-            max_depth=7,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in FB_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(FB_centers_555, state):
-            cube[pos] = pos_state
+        if not solutions:
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
+        solutions.sort()
+        return [(solution, root) for _, solution, root in solutions]
 
 
-class LookupTable555Phase5LowEdgeMidge(LookupTable):
-    """
-    lookup-table-5x5x5-step54-phase5-low-edge-and-midge.txt
-    =======================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 30 entries (0 percent, 6.00x previous step)
-    3 steps has 184 entries (0 percent, 6.13x previous step)
-    4 steps has 992 entries (0 percent, 5.39x previous step)
-    5 steps has 4,845 entries (4 percent, 4.88x previous step)
-    6 steps has 17,792 entries (15 percent, 3.67x previous step)
-    7 steps has 40,048 entries (34 percent, 2.25x previous step)
-    8 steps has 43,400 entries (36 percent, 1.08x previous step)
-    9 steps has 10,252 entries (8 percent, 0.24x previous step)
-    10 steps has 52 entries (0 percent, 0.01x previous step)
-
-    Total: 117,600 entries
-    Average: 7.28 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step54-phase5-low-edge-and-midge.txt",
-            "------------sS--TtuU--Vv------------",
-            linecount=117600,
-            max_depth=10,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        self.wing_strs = ("LB", "LF", "RB", "RF")
-
-    def state(self):
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
-
-        result = []
-        for index in wings_for_edges_pattern_555:
-            if state[index] == "." or index not in low_wings_and_midges_555:
-                result.append("-")
-            else:
-                result.append(state[index])
-
-        return "".join(result)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
-
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
-            )
-        )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
-        self.parent.nuke_edges_high()
-        self.parent.nuke_edges_in_y_plane()
-        self.parent.nuke_edges_in_z_plane()
-
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
-
-
-class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
-    # There could be 4 perfect hashes for this phase
-    # - LR centers x high-edge-and-midge - this would be small as there are only 432 LR center states
-    # - LR centers x low-edge-and-midge - this would be small as there are only 432 LR center states
-    # - FB centers x high-edge-and-midge
-    # - FB centers x low-edge-and-midge
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
-            prune_tables=(
-                parent.lt_phase5_fb_centers,
-                parent.lt_phase5_high_edge_midge,
-                parent.lt_phase5_low_edge_midge,
-                parent.lt_phase5_centers,
-            ),
-            # parent.lt_phase5_fb_centers and parent.lt_phase5_high_edge_midge are used to
-            # compute the lookup index in the step55 perfect hash file
-            #
-            # parent.lt_phase5_fb_centers and parent.lt_phase5_low_edge_midge are used to
-            # compute the lookup index in the step57 perfect hash file
-            perfect_hash01_filename="lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.pt-state-perfect-hash",
-            perfect_hash02_filename="lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.pt-state-perfect-hash",
-            pt1_state_max=117600,
-            pt2_state_max=117600,
-        )
-
-
+# ==================================================
 # phase 6
-class LookupTable555Phase6Centers(LookupTable):
+# pair the last eight edges and solve the centers
+# ==================================================
+class LookupTableIDA555Phase6:
     """
-    lookup-table-5x5x5-step61-phase6-centers.txt
-    ============================================
+    Phase-6 IDA (``ida_search_555_phase6``): pair the last eight edges and fully solve all 54
+    centers.
+
+    Component tables (diagrams and histograms live with their builder classes in
+    ``rubiks-cube-lookup-tables``):
+        lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin
+            Shared-parity edge coordinate: the high-wing permutation relative to the midges times
+            the even low-wing delta, (8!)^2 / 2 = 812,851,200 ranks.
+            Builder: Build555PairLastEightEdgesEdgesOnly.
+        lookup-table-5x5x5-step61-phase6-centers.cost-only.bin
+            Grouped centers: the LR x-center pair, the FB x-center pair, the UD x-centers, and the
+            UD t-centers packed in radix 6, 6, 70, 70 for 176,400 ranks.
+            Builder: Build555Phase6Centers.
+
+    Heuristic is the max of the edge cost and the center cost; a state is pruned when either
+    reports an unreachable rank. Roots are the ``ranks()`` tuples reached by each phase-4/phase-5
+    prefix, deduplicated and written to a roots file. Because the C search returns the first root
+    that solves at the minimum threshold and knows nothing about prefix cost, the caller groups
+    roots by prefix length and searches each group separately. ``reduce_333`` builds that portfolio
+    from the two shortest phase-3 endpoints with the best phase-4 lower bound. After an incumbent
+    total is known, a later group is capped one move below a tie with that total.
+               . U U U .
+               U . . . U
+               U . . . U
+               U . . . U
+               . U U U .
+
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . F F F .  . R R R .  . B B B .
+
+               . D D D .
+               D . . . D
+               D . . . D
+               D . . . D
+               . D D D .
+
+    lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin
+    =========================================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 42 entries (0 percent, 10.50x previous step)
-    3 steps has 280 entries (0 percent, 6.67x previous step)
-    4 steps has 1,691 entries (0 percent, 6.04x previous step)
-    5 steps has 8,806 entries (4 percent, 5.21x previous step)
-    6 steps has 36,264 entries (20 percent, 4.12x previous step)
-    7 steps has 77,966 entries (44 percent, 2.15x previous step)
-    8 steps has 46,518 entries (26 percent, 0.60x previous step)
-    9 steps has 4,828 entries (2 percent, 0.10x previous step)
-
-    Total: 176,400 entries
-    Average: 6.98 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step61-phase6-centers.txt",
-            "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD",
-            linecount=176400,
-            max_depth=9,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555Phase6HighEdgeMidge(LookupTable):
-    """
-    lookup-table-5x5x5-step62-phase6-high-edge-midge.txt
-    ====================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 5.20x previous step)
-    3 steps has 128 entries (0 percent, 4.92x previous step)
-    4 steps has 511 entries (1 percent, 3.99x previous step)
-    5 steps has 1,772 entries (4 percent, 3.47x previous step)
-    6 steps has 5,404 entries (13 percent, 3.05x previous step)
-    7 steps has 11,596 entries (28 percent, 2.15x previous step)
-    8 steps has 14,656 entries (36 percent, 1.26x previous step)
-    9 steps has 6,146 entries (15 percent, 0.42x previous step)
-    10 steps has 76 entries (0 percent, 0.01x previous step)
-
-    Total: 40,320 entries
-    Average: 7.40 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step62-phase6-high-edge-midge.txt",
-            "OO--PPQQ--RR------------WW--XXYY--ZZ",
-            linecount=40320,
-            max_depth=10,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
-
-    def state(self):
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
-
-        result = []
-        for index in wings_for_edges_pattern_555:
-            if state[index] == "." or index not in high_wings_and_midges_555:
-                result.append("-")
-            else:
-                result.append(state[index])
-
-        return "".join(result)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
-
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
-            )
-        )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
-        self.parent.nuke_edges_low()
-        self.parent.nuke_edges_in_x_plane()
-
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
-
-
-class LookupTable555Phase6LowEdgeMidge(LookupTable):
-    """
-    lookup-table-5x5x5-step63-phase6-low-edge-midge.txt
-    ===================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 5.20x previous step)
-    3 steps has 128 entries (0 percent, 4.92x previous step)
-    4 steps has 511 entries (1 percent, 3.99x previous step)
-    5 steps has 1,772 entries (4 percent, 3.47x previous step)
-    6 steps has 5,404 entries (13 percent, 3.05x previous step)
-    7 steps has 11,596 entries (28 percent, 2.15x previous step)
-    8 steps has 14,656 entries (36 percent, 1.26x previous step)
-    9 steps has 6,146 entries (15 percent, 0.42x previous step)
-    10 steps has 76 entries (0 percent, 0.01x previous step)
-
-    Total: 40,320 entries
-    Average: 7.40 moves
-    """
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step63-phase6-low-edge-midge.txt",
-            "-OopP--QqrR--------------WwxX--YyzZ-",
-            linecount=40320,
-            max_depth=10,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        self.wing_strs = ("UB", "UL", "UR", "UF", "DB", "DL", "DR", "DF")
-
-    def state(self):
-        parent_state = self.parent.state
-        state = edges_recolor_pattern_555(parent_state[:], self.wing_strs)
-
-        result = []
-        for index in wings_for_edges_pattern_555:
-            if state[index] == "." or index not in low_wings_and_midges_555:
-                result.append("-")
-            else:
-                result.append(state[index])
-
-        return "".join(result)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
-
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDD"
-            )
-        )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
-        self.parent.nuke_edges_high()
-        self.parent.nuke_edges_in_x_plane()
-
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
-
-
-'''
-class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
-    """
-    This was used to build lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state
-    which was then converted to lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash
-
-    lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt
-    ===============================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 5.20x previous step)
+    2 steps has 26 entries (0 percent, 6.50x previous step)
     3 steps has 156 entries (0 percent, 6.00x previous step)
     4 steps has 999 entries (0 percent, 6.40x previous step)
     5 steps has 5,892 entries (0 percent, 5.90x previous step)
@@ -2272,252 +2125,172 @@ class LookupTableIDA555Phase6Edges(LookupTableIDAViaGraph):
 
     Total: 812,851,200 entries
     Average: 12.06 moves
+
+    lookup-table-5x5x5-step61-phase6-centers.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 42 entries (0 percent, 10.50x previous step)
+    3 steps has 280 entries (0 percent, 6.67x previous step)
+    4 steps has 1,691 entries (0 percent, 6.04x previous step)
+    5 steps has 8,806 entries (4 percent, 5.21x previous step)
+    6 steps has 36,264 entries (20 percent, 4.12x previous step)
+    7 steps has 77,966 entries (44 percent, 2.15x previous step)
+    8 steps has 46,518 entries (26 percent, 0.60x previous step)
+    9 steps has 4,828 entries (2 percent, 0.10x previous step)
+
+    Total: 176,400 entries
+    Average: 6.98 moves
     """
+
+    edge_filename = "lookup-tables/lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin"
+    center_filename = "lookup-tables/lookup-table-5x5x5-step61-phase6-centers.cost-only.bin"
+    edge_square_groups = (
+        (2, 24, 16, 10, 127, 149, 141, 135),
+        (3, 23, 11, 15, 128, 148, 136, 140),
+        (4, 22, 6, 20, 129, 147, 131, 145),
+    )
+    center_square_groups = (
+        (32, 44, 82, 94),
+        (57, 69, 107, 119),
+        (7, 9, 17, 19, 132, 134, 142, 144),
+        (8, 12, 14, 18, 133, 137, 139, 143),
+    )
+    center_symbols_counts = (("LR", (2, 2)), ("BF", (2, 2)), ("DU", (4, 4)), ("DU", (4, 4)))
+    center_radices = (6, 6, 70, 70)
 
     def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            state_target='OOopPPQQqrRR------------WWwxXXYYyzZZ',
-            filename='lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.txt',
-            max_depth=9,
-            linecount=8806048,
-            all_moves=moves_555,
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2",
-                "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Lw", "Lw'",
-                "Rw", "Rw'",
-                "L", "L'",
-                "R", "R'",
-                "F", "F'",
-                "B", "B'",
-            ),
-            prune_tables=(
-                parent.lt_phase6_high_edge_midge,
-                parent.lt_phase6_low_edge_midge,
-            ),
-        )
-'''
+        self.parent = parent
 
+    @staticmethod
+    def _permutation_rank(permutation):
+        remaining = list(range(len(permutation)))
+        rank = 0
+        for position, value in enumerate(permutation):
+            try:
+                digit = remaining.index(value)
+            except ValueError as error:
+                raise SolveError("phase-6 edge coordinate is not a permutation") from error
+            rank = rank * (len(permutation) - position) + digit
+            remaining.pop(digit)
+        return rank
 
-class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
-    """
-    Pair the last eight edges and solve the centers
-    """
+    @staticmethod
+    def _even_permutation_rank(permutation):
+        remaining = list(range(len(permutation)))
+        digits = []
+        for value in permutation:
+            try:
+                digit = remaining.index(value)
+            except ValueError as error:
+                raise SolveError("phase-6 edge delta is not a permutation") from error
+            digits.append(digit)
+            remaining.pop(digit)
+        if sum(digits) % 2:
+            raise SolveError("phase-6 high/low edge permutations have different parity")
+        rank = 0
+        for position, digit in enumerate(digits[:-2]):
+            rank = rank * (len(permutation) - position) + digit
+        return rank
 
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
-            prune_tables=(parent.lt_phase6_high_edge_midge, parent.lt_phase6_low_edge_midge, parent.lt_phase6_centers),
-            # parent.lt_phase6_high_edge_midge and parent.lt_phase6_low_edge_midge are used to
-            # compute the lookup index in the perfect hash file
-            perfect_hash01_filename="lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.pt-state-perfect-hash",
-            pt1_state_max=40320,
-        )
+    def _edge_at(self, square):
+        partner = edges_partner_555[square]
+        try:
+            return wing_str_map[self.parent.state[square] + self.parent.state[partner]]
+        except KeyError as error:
+            raise SolveError(f"phase-6 edge at square {square} is invalid") from error
 
+    def edge_rank(self):
+        high, midge, low = (tuple(self._edge_at(square) for square in group) for group in self.edge_square_groups)
+        if len(set(midge)) != 8 or set(high) != set(midge) or set(low) != set(midge):
+            raise SolveError("phase-6 edge groups must contain the same eight distinct edges")
+        midge_position = {edge: position for position, edge in enumerate(midge)}
+        high_permutation = tuple(midge_position[edge] for edge in high)
+        low_permutation = tuple(midge_position[edge] for edge in low)
+        inverse_high = [0] * 8
+        for position, value in enumerate(high_permutation):
+            inverse_high[value] = position
+        delta = tuple(inverse_high[value] for value in low_permutation)
+        return self._permutation_rank(high_permutation) * 20160 + self._even_permutation_rank(delta)
 
-class LookupTable555UDCenterSolve(LookupTable):
-    """
-    lookup-table-5x5x5-step34-UD-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 6.00x previous step)
-    2 steps has 71 entries (0 percent, 11.83x previous step)
-    3 steps has 560 entries (0 percent, 7.89x previous step)
-    4 steps has 3,136 entries (0 percent, 5.60x previous step)
-    5 steps has 15,246 entries (4 percent, 4.86x previous step)
-    6 steps has 58,108 entries (16 percent, 3.81x previous step)
-    7 steps has 130,214 entries (37 percent, 2.24x previous step)
-    8 steps has 109,626 entries (31 percent, 0.84x previous step)
-    9 steps has 24,832 entries (7 percent, 0.23x previous step)
-    10 steps has 1,200 entries (0 percent, 0.05x previous step)
+    def center_rank(self):
+        rank = 0
+        for squares, (symbols, counts), radix in zip(
+            self.center_square_groups, self.center_symbols_counts, self.center_radices
+        ):
+            state = "".join(self.parent.state[square] for square in squares)
+            part = LookupTableIDA555Phase5._multiset_rank(state, symbols, counts)
+            rank = rank * radix + part
+        return rank
 
-    Total: 343,000 entries
-    Average: 7.18 moves
-    """
+    def ranks(self):
+        return self.edge_rank(), self.center_rank()
 
-    # fmt: off
-    UD_centers_LR_t_centers_555 = sorted([
-        7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
-        33, 37, 39, 43,  # Left
-        83, 87, 89, 93,  # Right
-        132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
-    ])
-    # fmt: on
+    def solutions_via_c(
+        self,
+        pt_states,
+        solution_count=1,
+        find_extra=False,
+        max_ida_threshold=None,
+    ):
+        for filename in (self.edge_filename, self.center_filename):
+            download_file_if_needed(filename)
 
-    state_targets = ("UUUUUUUUULLLLRRRRDDDDDDDDD",)
+        roots = sorted(set(tuple(root[:2]) for root in pt_states))
+        roots_filename = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as roots_file:
+                roots_filename = roots_file.name
+                for root_id, (edge_rank, center_rank) in enumerate(roots):
+                    roots_file.write(f"{root_id},{edge_rank},{center_rank}\n")
 
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step34-UD-centers-solve.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
+            cmd = [
+                "./ida_search_555_phase6",
+                "--roots-file",
+                roots_filename,
+                "--edge-cost",
+                self.edge_filename,
+                "--center-cost",
+                self.center_filename,
+                "--solution-count",
+                str(solution_count),
+            ]
+            if find_extra:
+                cmd.append("--find-extra")
+            if max_ida_threshold is not None:
+                cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
 
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_centers_LR_t_centers_555])
+            logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+            process = subprocess.run(cmd, capture_output=True, text=True)
+            output = process.stdout
+            self.parent.solve_via_c_output = f"\n{' '.join(cmd)}\n{output}\n"
+            if process.returncode not in (0, 1):
+                raise SolveError(f"{' '.join(cmd)} failed:\n{output}\n{process.stderr}")
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.UD_centers_LR_t_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555LRCenterSolve(LookupTable):
-    """
-    lookup-table-5x5x5-step35-LR-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 6.00x previous step)
-    2 steps has 67 entries (0 percent, 11.17x previous step)
-    3 steps has 476 entries (0 percent, 7.10x previous step)
-    4 steps has 2,571 entries (0 percent, 5.40x previous step)
-    5 steps has 11,792 entries (3 percent, 4.59x previous step)
-    6 steps has 43,263 entries (12 percent, 3.67x previous step)
-    7 steps has 98,148 entries (28 percent, 2.27x previous step)
-    8 steps has 111,960 entries (32 percent, 1.14x previous step)
-    9 steps has 61,836 entries (18 percent, 0.55x previous step)
-    10 steps has 12,336 entries (3 percent, 0.20x previous step)
-    11 steps has 544 entries (0 percent, 0.04x previous step)
-
-    Total: 343,000 entries
-    Average: 7.58 moves
-    """
-
-    # fmt: off
-    LR_centers_FB_x_centers_555 = sorted([
-        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
-        57, 59, 67, 69,  # Front
-        107, 109, 117, 119,  # Back
-        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
-    ])
-    # fmt: on
-
-    state_targets = ("LLLLLLLLLFFFFRRRRRRRRRBBBB",)
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step35-LR-centers-solve.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_FB_x_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.LR_centers_FB_x_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555FBCenterSolve(LookupTable):
-    """
-    lookup-table-5x5x5-step36-FB-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 6.00x previous step)
-    2 steps has 71 entries (0 percent, 11.83x previous step)
-    3 steps has 560 entries (0 percent, 7.89x previous step)
-    4 steps has 3,136 entries (0 percent, 5.60x previous step)
-    5 steps has 15,246 entries (4 percent, 4.86x previous step)
-    6 steps has 58,108 entries (16 percent, 3.81x previous step)
-    7 steps has 130,214 entries (37 percent, 2.24x previous step)
-    8 steps has 109,626 entries (31 percent, 0.84x previous step)
-    9 steps has 24,832 entries (7 percent, 0.23x previous step)
-    10 steps has 1,200 entries (0 percent, 0.05x previous step)
-
-    Total: 343,000 entries
-    Average: 7.18 moves
-    """
-
-    # fmt: off
-    FB_centers_UD_t_centers_555 = sorted([
-        8, 12, 14, 18,  # Upper
-        57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
-        107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
-        133, 137, 139, 143,  # Down
-    ])
-    # fmt: on
-
-    state_targets = ("UUUUFFFFFFFFFBBBBBBBBBDDDD",)
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step36-FB-centers-solve.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_centers_UD_t_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.FB_centers_UD_t_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
-            prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
-        )
+        solutions = []
+        pattern = re.compile(r"^SOLUTION ROOT (\d+) \((\d+) steps\):(.*)$")
+        for line in output.splitlines():
+            match = pattern.match(line)
+            if match:
+                root_id = int(match.group(1))
+                if root_id >= len(roots):
+                    raise SolveError(f"phase-6 solver returned unknown root {root_id}")
+                solution = tuple(match.group(3).strip().split())
+                solutions.append((len(solution), solution, roots[root_id]))
+        if not solutions:
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
+        solutions.sort()
+        return [(solution, root) for _, solution, root in solutions]
 
 
 class RubiksCube555(RubiksCube):
     """
-    5x5x5 strategy
-    - stage UD centers to sides U or D (use IDA)
-    - stage LR centers to sides L or R...this in turn stages FB centers to sides F or B
-    - solve all centers (use IDA)
-    - pair edges
-    - solve as 3x3x3
+    5x5x5 reduction: stage LR then FB centers, EO the edges, park and pair four
+    x-plane edges, pair the last eight while solving the centers, then finish
+    as a 3x3x3. See the module docstring for the six phases.
     """
 
     reduce333_orient_edges_tuples = (
@@ -2595,10 +2368,6 @@ class RubiksCube555(RubiksCube):
         (149, 122),  # Down
     )
 
-    def nuke_centers_specific(self, centers):
-        for square_index in centers:
-            self.state[square_index] = "."
-
     def nuke_edges_specific(self, edges):
         for square_index in edges:
             partner_index = edges_partner_555[square_index]
@@ -2625,45 +2394,6 @@ class RubiksCube555(RubiksCube):
         z_plane_edges = (6, 11, 16, 10, 15, 20, 131, 136, 141, 135, 140, 145)
         self.nuke_edges_specific(z_plane_edges)
 
-    def x_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
-
-    def y_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (2, 3, 4, 22, 23, 24, 127, 128, 129, 147, 148, 149):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
-
-    def z_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (6, 11, 16, 10, 15, 20, 131, 136, 141, 135, 140, 145):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
-
     def sanity_check(self):
         centers = (13, 38, 63, 88, 113, 138)
 
@@ -2679,47 +2409,34 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        # phase 1
+        # phase 1 - stage LR centers
+        # t-center and x-center prune tables plus the IDA that reduce_333 searches.
+        # lt_LR_t_centers_stage_ida is for larger cubes that have reduced to 555.
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
         self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
 
-        # phase 2
+        # phase 2 - stage FB (and UD) centers
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
 
-        self.lt_UD_t_centers_stage_ida = LookupTableIDA555UDTCenterStage(self)
-
-        # phase 3
+        # phase 3 - EO the wings and midges; LR centers to 1-of-432
         self.lt_phase3_lr_center_stage = LookupTable555Phase3LRCenterStage(self)
         self.lt_phase3_eo_outer_orbit = LookupTable555EdgeOrientOuterOrbit(self)
         self.lt_phase3_eo_inner_orbit = LookupTable555EdgeOrientInnerOrbit(self)
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
-        # phase 4
+        # phase 4 - park four edges on the x-plane
         self.lt_phase4 = LookupTable555Phase4(self)
 
-        # phase 5
-        self.lt_phase5_centers = LookupTable555Phase5Centers(self)
-        self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
-        self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
-        self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
+        # phase 5 - pair those four edges; LR/FB centers to vertical bars
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
-        # phase 6
-        self.lt_phase6_centers = LookupTable555Phase6Centers(self)
-        self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
-        self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
+        # phase 6 - pair the last eight edges and solve the centers
         self.lt_phase6 = LookupTableIDA555Phase6(self)
-
-        # for larger cubes that have reduced to 555
-        self.lt_UD_centers_solve = LookupTable555UDCenterSolve(self)
-        self.lt_LR_centers_solve = LookupTable555LRCenterSolve(self)
-        self.lt_FB_centers_solve = LookupTable555FBCenterSolve(self)
-        self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 
     def highlow_edges_state(self):
         state = self.state
@@ -2803,31 +2520,6 @@ class RubiksCube555(RubiksCube):
                 self.state[square_index] = partner_value
                 self.state[partner_index] = square_value
 
-    def get_x_plane_z_plane_wing_strs(self):
-        result = []
-
-        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
-        for square_index in (36, 40, 86, 90, 11, 15, 136, 140):
-            partner_index = edges_partner_555[square_index]
-            square_value = self.state[square_index]
-            partner_value = self.state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            result.append(wing_str)
-
-        return set(result)
-
-    def get_x_plane_wing_strs(self):
-        result = []
-
-        for square_index in (36, 40, 86, 90):
-            partner_index = edges_partner_555[square_index]
-            square_value = self.state[square_index]
-            partner_value = self.state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            result.append(wing_str)
-
-        return set(result)
-
     def get_y_plane_wing_strs(self):
         result = []
 
@@ -2852,79 +2544,29 @@ class RubiksCube555(RubiksCube):
 
         return set(result)
 
-    def get_y_plane_z_plane_wing_strs(self):
-        result = []
-
-        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
-        for square_index in (3, 11, 15, 23, 128, 136, 140, 148):
-            partner_index = edges_partner_555[square_index]
-            square_value = self.state[square_index]
-            partner_value = self.state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            result.append(wing_str)
-
-        return set(result)
-
-    def group_centers_stage_LR(self):
+    def _phase3_eo_roots(self):
         """
-        Stage LR centers
-        """
+        Rank every even EO mapping of the current cube.
 
-        if not self.LR_centers_staged():
-            tmp_solution_len = len(self.solution)
-            self.lt_LR_centers_stage.solve_via_c()
-            self.print_cube_add_comment("LR centers staged", tmp_solution_len)
-
-    def group_centers_stage_FB(self, max_ida_threshold: int = None):
+        Each edge can be in its final orientation or not, and an odd number of flips
+        is illegal, so there are 2048 roots. The cube is restored before returning.
         """
-        Stage FB centers
-        """
-        if self.FB_centers_staged():
-            if self.edge_swaps_odd(False, 0, False):
-                self.prevent_OLL()
-        else:
-            tmp_solution_len = len(self.solution)
-            self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
-            self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
-
-    def group_centers_stage_UD(self, max_ida_threshold: int = None):
-        self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
-
-    def eo_edges(self):
-        """
-        Our goal is to get the edges split into high/low groups but we do not care what
-        the final orienation is of the edges. Each edge can either be in its final
-        orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2
-        is because there cannot be an odd number of edges not in their final orientation.
-        """
-        logger.info("eo_edges called")
         permutations = []
         original_state = self.state[:]
         original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-
-        # Build a list of the wing strings at each midge
         wing_strs = []
 
         for _, square_index, partner_index in midges_recolor_tuples_555:
             square_value = self.state[square_index]
             partner_value = self.state[partner_index]
-            wing_str = square_value + partner_value
-            wing_str = wing_str_map[square_value + partner_value]
-            wing_strs.append(wing_str)
+            wing_strs.append(wing_str_map[square_value + partner_value])
 
-        # build a list of all possible EO permutations...an even number of edges must be high
         for num in range(4096):
-            num = str(bin(num)).lstrip("0b").zfill(12)
-            if num.count("1") % 2 == 0:
-                permutations.append(list(map(int, num)))
+            bits = str(bin(num)).lstrip("0b").zfill(12)
+            if bits.count("1") % 2 == 0:
+                permutations.append(list(map(int, bits)))
 
-        # Put all 2048 starting states in a file and point ida-via-graph
-        # at the file so it can solve all of them and apply the one that is the shortest.
-        lr_center_stage_states = []
-        eo_outer_orbit_states = []
-        eo_inner_orbit_states = []
-
+        pt_state_indexes = []
         for permutation in permutations:
             must_be_uppercase = []
             must_be_lowercase = []
@@ -2936,188 +2578,319 @@ class RubiksCube555(RubiksCube):
                 else:
                     must_be_lowercase.append(wing_str)
 
-            # logger.info("%s: %s permutation %s" % (self, index, "".join(map(str, permutation))))
             self.edges_flip_orientation(must_be_uppercase, must_be_lowercase)
-
-            # build lists of the states that we need to find state_indexes for
-            lr_center_stage_states.append(self.lt_phase3_lr_center_stage.state())
-            eo_outer_orbit_states.append(self.lt_phase3_eo_outer_orbit.state())
-            eo_inner_orbit_states.append(self.lt_phase3_eo_inner_orbit.state())
-
-        # now we have a huge list of states to lookup, do a binary search on multiple states at once (this is drastically faster
-        # than binary searching for them individually).  state_index_multiple() will return a dict where the state is the key
-        # and the state_index is the value.
-        lr_center_stage_eo_inner_orbit_state_indexes = self.lt_phase3_lr_center_stage.state_index_multiple(
-            lr_center_stage_states
-        )
-        eo_outer_orbit_state_indexes = self.lt_phase3_eo_outer_orbit.state_index_multiple(eo_outer_orbit_states)
-        eo_inner_orbit_state_indexes = self.lt_phase3_eo_inner_orbit.state_index_multiple(eo_inner_orbit_states)
-
-        # build a list of tuples of the state indexes
-        pt_state_indexes = []
-        for lr_center_stage_eo_inner_orbit_state, eo_outer_orbit_state, eo_inner_orbit_state in zip(
-            lr_center_stage_states, eo_outer_orbit_states, eo_inner_orbit_states
-        ):
             pt_state_indexes.append(
                 (
-                    lr_center_stage_eo_inner_orbit_state_indexes[lr_center_stage_eo_inner_orbit_state],
-                    eo_outer_orbit_state_indexes[eo_outer_orbit_state],
-                    eo_inner_orbit_state_indexes[eo_inner_orbit_state],
+                    self.lt_phase3_lr_center_stage.rank(),
+                    self.lt_phase3_eo_outer_orbit.rank(),
+                    self.lt_phase3_eo_inner_orbit.rank(),
                 )
             )
 
         self.state = original_state[:]
         self.solution = original_solution[:]
+        return wing_strs, pt_state_indexes
 
-        # When solve_via_c is passed pt_state_indexes (2048 lines of states in this case), it will try all 2048 of them
-        # to find the state that has the shortest solution.
-        self.lt_phase3.solve_via_c(pt_states=pt_state_indexes)
+    def _phase3_solutions(self):
+        """Every shortest phase-3 solution, without applying one."""
+        wing_strs, pt_state_indexes = self._phase3_eo_roots()
+        solutions = self.lt_phase3.solutions_via_c(pt_states=pt_state_indexes, solution_count=0)
+        if not solutions:
+            raise SolveError("phase 3 found no EO solution")
+        return wing_strs, [solution for solution, _states in solutions]
 
-        self.print_cube_add_comment("edges EOed into high/low groups", tmp_solution_len)
+    def _apply_phase3_solution(self, solution, wing_strs, pre_state, pre_solution, comment=False):
+        """Apply one phase-3 solution and recolor edges for pairing."""
+        self.state = list(pre_state)
+        self.solution = list(pre_solution)
+        for step in solution:
+            self.rotate(step)
+        if comment:
+            self.print_cube_add_comment("Phase 3: edges EOed into high/low groups", len(pre_solution))
         self.post_eo_state = self.state[:]
         self.post_eo_solution = self.solution[:]
-
-        # re-color the cube so that the edges are oriented correctly so we can
-        # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
-        # the cube and re-apply the solution.
         self.edges_flip_orientation(wing_strs, [])
-        self.highlow_edges_print()
 
-    def high_edge_midge_pair_count(self, target_wing_str=[]):
-        count = 0
-        it = iter(high_wings_and_midges_555)
-
-        for index1 in it:
-            index2 = next(it)
-            index1_value = self.state[index1]
-            index2_value = self.state[index2]
-            index1_partner = edges_partner_555[index1]
-            index2_partner = edges_partner_555[index2]
-            index1_partner_value = self.state[index1_partner]
-            index2_partner_value = self.state[index2_partner]
-
-            if index1_value == index2_value and index1_partner_value == index2_partner_value:
-                if target_wing_str:
-                    index1_wing_str = wing_str_map[index1_value + index1_partner_value]
-                    # index2_wing_str = wing_str_map[index2_value + index2_partner_value]
-
-                    if index1_wing_str in target_wing_str:
-                        count += 1
-                else:
-                    count += 1
-
-        return count
-
-    def low_edge_midge_pair_count(self, target_wing_str=[]):
-        count = 0
-        it = iter(low_wings_and_midges_555)
-
-        for index1 in it:
-            index2 = next(it)
-            index1_value = self.state[index1]
-            index2_value = self.state[index2]
-            index1_partner = edges_partner_555[index1]
-            index2_partner = edges_partner_555[index2]
-            index1_partner_value = self.state[index1_partner]
-            index2_partner_value = self.state[index2_partner]
-
-            if index1_value == index2_value and index1_partner_value == index2_partner_value:
-                if target_wing_str:
-                    index1_wing_str = wing_str_map[index1_value + index1_partner_value]
-                    # index2_wing_str = wing_str_map[index2_value + index2_partner_value]
-
-                    if index1_wing_str in target_wing_str:
-                        count += 1
-                else:
-                    count += 1
-
-        return count
-
-    def find_first_four_edges_to_pair(self):
+    def _phase45_prefixes(self):
         """
-        phase-5 requires a 4-edge combo where none of the edges are in the z-plane.
-        phase-4 will put a 4-edge combo into that state. There are 12!/(4!*8!) or 495
-        different 4-edge combinations.  Try them all and see which one has the lowest
-        phase-4 cost.
+        Phase-4 and phase-5 solutions for the current recolored cube.
+
+        The result maps each phase-6 rank to the cheapest phase-4 and phase-5
+        moves that reach it. An empty dict means no four-edge choice under three
+        moves produced a paired x-plane.
         """
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(self.solution)
-        results = []
-
-        for wing_str_index, wing_str_combo in enumerate(itertools.combinations(wing_strs_all, 4)):
-            wing_str_combo = sorted(wing_str_combo)
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            self.lt_phase4.wing_strs = wing_str_combo
-
-            if self.lt_phase4.solve():
-                phase4_solution = self.solution[original_solution_len:]
-                phase4_solution_len = len(phase4_solution)
-                results.append((phase4_solution_len, wing_str_combo))
-                logger.debug(
-                    f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is {phase4_solution_len}"
-                )
-            else:
-                logger.debug(f"{wing_str_index+1}/495 {wing_str_combo} phase-4 solution length is >= 4 ")
-
-        self.lt_phase4.fh_txt_cache = {}
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        results.sort()
-        return results
-
-    def pair_first_four_edges(self, phase4_wing_str_combo: List[str]):
-        tmp_solution_len = len(self.solution)
-        self.lt_phase4.wing_strs = phase4_wing_str_combo
-        self.lt_phase4.solve()
-        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-
-        self.edges_flip_orientation(phase4_wing_str_combo, [])
-        self.lt_phase5_high_edge_midge.wing_strs = phase4_wing_str_combo
-        self.lt_phase5_low_edge_midge.wing_strs = phase4_wing_str_combo
-        self.lt_phase5.solve_via_c()
-
-        pair_four_edge_solution = self.solution[tmp_solution_len:]
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in pair_four_edge_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
-
-    def pair_last_eight_edges(self, call_print_cube: bool = True):
         original_state = self.state[:]
         original_solution = self.solution[:]
         original_solution_len = len(original_solution)
-        tmp_solution_len = len(self.solution)
+        phase5_roots = []
+        phase5_root_to_wing_str_combo = {}
 
-        # We need the edge swaps to be even for our edges lookup table to work.
-        if self.edge_swaps_odd(False, 0, False):
-            raise SolveError("edge swaps are odd, cannot pair last 8-edges")
+        for phase4_solution_len, wing_str_combo in self.find_first_four_edges_to_pair():
+            if phase4_solution_len >= 3:
+                break
+            self.state = original_state[:]
+            self.solution = original_solution[:]
 
-        self.edges_flip_orientation(wing_strs_all, [])
+            self.lt_phase4.wing_strs = wing_str_combo
+            self.lt_phase4.solve()
+            self.edges_flip_orientation(wing_str_combo, [])
 
-        yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
-        self.lt_phase6_high_edge_midge.ida_graph_node = None
-        self.lt_phase6_low_edge_midge.ida_graph_node = None
-        self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
-        self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
-        self.lt_phase6.solve_via_c()
+            phase5_root = self.lt_phase5.ranks(wing_str_combo)
+            phase5_root_to_wing_str_combo[phase5_root] = wing_str_combo
+            phase5_roots.append(phase5_root)
 
-        pair_eight_edge_solution = self.solution[original_solution_len:]
         self.state = original_state[:]
         self.solution = original_solution[:]
+        if not phase5_roots:
+            return {}
 
-        for step in pair_eight_edge_solution:
+        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=phase5_roots, solution_count=10, find_extra=True)
+        prefixes = {}
+        for phase5_solution, phase5_root in phase5_solutions:
+            wing_str_combo = phase5_root_to_wing_str_combo[phase5_root]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            self.lt_phase4.wing_strs = wing_str_combo
+            self.lt_phase4.solve()
+            phase4_solution = tuple(self.solution[original_solution_len:])
+
+            self.edges_flip_orientation(wing_strs_all, [])
+            for step in phase5_solution:
+                self.rotate(step)
+
+            if not self.x_plane_edges_paired():
+                continue
+
+            phase6_ranks = self.lt_phase6.ranks()
+            prefix_len = len(phase4_solution) + len(phase5_solution)
+            previous = prefixes.get(phase6_ranks)
+            if previous is None or prefix_len < len(previous[0]) + len(previous[1]):
+                prefixes[phase6_ranks] = (phase4_solution, phase5_solution)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        return prefixes
+
+    def _best_phase6(self, prefixes):
+        """
+        Search phase 6 once per prefix length.
+
+        ``prefixes`` maps a phase-6 rank to ``(prefix_len, phase4_solution, phase5_solution)``.
+        After an incumbent total is known, a later group is searched with
+        ``--max-ida-threshold`` set to one less than that total minus its prefix
+        length. A solution must shorten the total. A prefix that can only tie
+        with a 0-move phase 6 is not searched.
+        """
+        roots_by_prefix_len = {}
+        for rank, (prefix_len, _phase4_solution, _phase5_solution) in prefixes.items():
+            roots_by_prefix_len.setdefault(prefix_len, []).append(rank)
+
+        best = None
+        for prefix_len, roots in sorted(roots_by_prefix_len.items()):
+            if best is not None and prefix_len >= best[0]:
+                logger.info(
+                    "skip phase-6 prefix length %d, incumbent total is %d",
+                    prefix_len,
+                    best[0],
+                )
+                break
+
+            phase6_limit = None if best is None else best[0] - prefix_len - 1
+            try:
+                phase6_solution, phase6_states = self.lt_phase6.solutions_via_c(
+                    pt_states=roots,
+                    max_ida_threshold=phase6_limit,
+                )[0]
+            except NoIDASolution:
+                if best is None:
+                    raise
+                logger.info(
+                    "phase-6 prefix length %d has no solution within %d moves",
+                    prefix_len,
+                    phase6_limit,
+                )
+                continue
+            root = tuple(phase6_states[:2])
+            _prefix_len, phase4_solution, phase5_solution = prefixes[root]
+            candidate = (
+                prefix_len + len(phase6_solution),
+                len(phase6_solution),
+                phase4_solution,
+                phase5_solution,
+                phase6_solution,
+                root,
+            )
+            if best is None or candidate < best:
+                best = candidate
+
+        if best is None:
+            raise SolveError("could not solve phase 6 from any phase-4/5 portfolio endpoint")
+
+        _optimal_total, _, phase4_solution, phase5_solution, phase6_solution, root = best
+        logger.info(
+            "phases 4, 5, and 6 lengths %d + %d + %d (%d total) from %d prefix-length groups",
+            len(phase4_solution),
+            len(phase5_solution),
+            len(phase6_solution),
+            len(phase4_solution) + len(phase5_solution) + len(phase6_solution),
+            len(roots_by_prefix_len),
+        )
+        return root, phase4_solution, phase5_solution, phase6_solution
+
+    def _apply_phase456(self, phase4_solution, phase5_solution, phase6_solution):
+        """Apply phases 4, 5, and 6 to the unrecolored post-EO cube."""
+        tmp_solution_len = len(self.solution)
+        for step in phase4_solution:
             self.rotate(step)
+        self.print_cube_add_comment("Phase 4: four edges prepped for pairing", tmp_solution_len)
 
-        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
+        tmp_solution_len = len(self.solution)
+        for step in phase5_solution:
+            self.rotate(step)
+        if not self.x_plane_edges_paired():
+            raise SolveError("phase 5 did not pair the x-plane edges")
+        self.print_cube_add_comment("Phase 5: x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
+
+        tmp_solution_len = len(self.solution)
+        for step in phase6_solution:
+            self.rotate(step)
+        if not self.edges_paired() or not self.centers_solved():
+            raise SolveError("phase 6 did not pair all edges and solve all centers")
+        self.print_cube_add_comment("Phase 6: last eight edges paired, centers solved", tmp_solution_len)
+
+    def _min_phase4_distance(self):
+        """Shortest table cost among the 495 four-edge choices."""
+        download_file_if_needed(self.lt_phase4.filename)
+        best = None
+        with open(self.lt_phase4.filename, "rb") as handle:
+            for combo in itertools.combinations(wing_strs_all, 4):
+                handle.seek(self.lt_phase4.rank(combo))
+                encoded = handle.read(1)
+                if not encoded or not encoded[0]:
+                    continue
+                distance = encoded[0] - 1
+                if best is None or distance < best:
+                    best = distance
+                    if best == 0:
+                        break
+        if best is None:
+            raise SolveError("phase 4 cost table has no reachable four-edge choice")
+        return best
+
+    def _pair_edges_from_phase3_portfolio(self):
+        """
+        Rank every shortest phase-3 endpoint by its phase-4 lower bound.
+
+        The best two endpoints continue into phases 4 and 5. Their phase-6
+        states are merged, and phase 6 runs once for each distinct phase
+        3+4+5 prefix length. The shortest of those totals is kept.
+        """
+        pre_state = self.state[:]
+        pre_solution = self.solution[:]
+        wing_strs, solutions = self._phase3_solutions()
+
+        endpoints = []
+        seen_states = set()
+        for solution in solutions:
+            self._apply_phase3_solution(solution, wing_strs, pre_state, pre_solution)
+            state_key = tuple(self.post_eo_state)
+            if state_key in seen_states:
+                continue
+            seen_states.add(state_key)
+            if self.edge_swaps_odd(False, 0, False):
+                logger.info("phase-3 endpoint %s has odd edge swaps", " ".join(solution))
+                continue
+            endpoints.append((self._min_phase4_distance(), solution))
+
+        endpoints.sort(key=lambda item: (item[0], item[1]))
+        endpoints = endpoints[:PHASE3_ENDPOINT_CAP]
+        logger.info(
+            "phase 3: keeping %d of %d distinct even endpoints before phases 4+5",
+            len(endpoints),
+            len(seen_states),
+        )
+
+        best_by_rank = {}
+        paired_endpoints = 0
+        for _phase4_lower_bound, solution in endpoints:
+            self._apply_phase3_solution(solution, wing_strs, pre_state, pre_solution)
+            try:
+                prefixes = self._phase45_prefixes()
+            except (SolveError, NoIDASolution) as exc:
+                logger.info("phase-3 endpoint %s did not pair: %s", " ".join(solution), exc)
+                continue
+            if not prefixes:
+                logger.info("phase-3 endpoint %s produced no paired x-plane prefix", " ".join(solution))
+                continue
+            paired_endpoints += 1
+            for rank, (phase4_solution, phase5_solution) in prefixes.items():
+                prefix_len = len(solution) + len(phase4_solution) + len(phase5_solution)
+                previous = best_by_rank.get(rank)
+                if previous is not None and prefix_len >= previous[0]:
+                    continue
+                best_by_rank[rank] = (
+                    prefix_len,
+                    solution,
+                    self.post_eo_state[:],
+                    self.post_eo_solution[:],
+                    phase4_solution,
+                    phase5_solution,
+                )
+
+        if not best_by_rank:
+            raise SolveError("phase 3 portfolio produced no paired reduction")
+
+        search_prefixes = {rank: (candidate[0], candidate[4], candidate[5]) for rank, candidate in best_by_rank.items()}
+        logger.info(
+            "phase 3: %d shortest solutions, %d paired endpoints, %d phase-6 roots",
+            len(solutions),
+            paired_endpoints,
+            len(best_by_rank),
+        )
+        root, phase4_solution, phase5_solution, phase6_solution = self._best_phase6(search_prefixes)
+        (
+            _prefix_len,
+            phase3_solution,
+            post_eo_state,
+            post_eo_solution,
+            phase4_solution,
+            phase5_solution,
+        ) = best_by_rank[root]
+        self.state = list(post_eo_state)
+        self.solution = list(post_eo_solution)
+        self.print_cube_add_comment("Phase 3: edges EOed into high/low groups", len(pre_solution))
+        self._apply_phase456(phase4_solution, phase5_solution, phase6_solution)
+        logger.info(
+            "kept phase-3 %s with phases 4-6 length %d",
+            " ".join(phase3_solution),
+            len(phase4_solution) + len(phase5_solution) + len(phase6_solution),
+        )
+
+    def eo_edges(self):
+        """
+        Apply one shortest high/low EO.
+
+        ``reduce_333`` does not use this. It ranks every shortest phase-3
+        endpoint by phase-4 cost and carries the best two into phases 4+5+6.
+        """
+        logger.info("eo_edges called")
+        tmp_solution_len = len(self.solution)
+        wing_strs, pt_state_indexes = self._phase3_eo_roots()
+        self.lt_phase3.solve_via_c(pt_states=pt_state_indexes)
+        self.print_cube_add_comment("Phase 3: edges EOed into high/low groups", tmp_solution_len)
+        self.post_eo_state = self.state[:]
+        self.post_eo_solution = self.solution[:]
+        self.edges_flip_orientation(wing_strs, [])
+
+    def find_first_four_edges_to_pair(self):
+        """
+        Rank all 12!/(4!*8!) = 495 four-edge combinations by phase-4 cost.
+        Phase 4 parks the chosen four on the x-plane so phase 5 can pair them.
+        """
+        combos = itertools.combinations(wing_strs_all, 4)
+        solutions = self.lt_phase4.solutions_via_c(combos, max_ida_threshold=2)
+        return [(length, combo) for length, combo, _solution in solutions]
 
     def group_centers_phase1_and_2(self) -> None:
         """
@@ -3153,7 +2926,7 @@ class RubiksCube555(RubiksCube):
             for step in phase1_solution:
                 self.rotate(step)
 
-            phase2_root = tuple(pt.state_index() for pt in self.lt_FB_centers_stage.prune_tables)
+            phase2_root = tuple(pt.rank() for pt in self.lt_FB_centers_stage.prune_tables)
             orbit0_has_oll = 0 in self.center_solution_leads_to_oll_parity()
             root_key = (orbit0_has_oll, phase2_root)
 
@@ -3177,10 +2950,7 @@ class RubiksCube555(RubiksCube):
             self.state = representative_state[:]
             self.solution = representative_solution[:]
 
-            phase2_solution, phase2_states = self.lt_FB_centers_stage.solutions_via_c(
-                pt_states=phase2_roots,
-                solution_count=1,
-            )[0]
+            phase2_solution, phase2_states = self.lt_FB_centers_stage.solutions_via_c(pt_states=phase2_roots)[0]
             phase2_root = tuple(phase2_states[: len(self.lt_FB_centers_stage.prune_tables)])
             phase1_solution = phase1_solution_by_root[orbit0_has_oll, phase2_root]
             candidate = (
@@ -3203,7 +2973,7 @@ class RubiksCube555(RubiksCube):
         for step in best_phase1_solution:
             self.rotate(step)
 
-        self.print_cube_add_comment("LR centers staged", phase1_comment_start)
+        self.print_cube_add_comment("Phase 1: LR centers staged", phase1_comment_start)
 
         phase2_comment_start = len(self.solution)
         for step in best_phase2_solution:
@@ -3218,153 +2988,29 @@ class RubiksCube555(RubiksCube):
             len(best_phase2_solution),
             len(best_phase1_solution) + len(best_phase2_solution),
         )
-        self.print_cube_add_comment("UD FB centers staged", phase2_comment_start)
+        self.print_cube_add_comment("Phase 2: UD FB centers staged", phase2_comment_start)
 
     def pair_edges(self):
-        # We need the edge swaps to be even for our phase6 lookup tables to work.
+        """
+        Phases 4+5+6 on the current EO endpoint. Keep the shortest combined path.
+        """
         if self.edge_swaps_odd(False, 0, False):
             raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
 
-        # phase 4
-        # phase 5
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
-        pt_state_indexes = []
-        phase5_pt_state_indexes_to_wing_str_combo = {}
-
-        for phase4_solution_len, wing_str_combo in self.find_first_four_edges_to_pair():
-            if phase4_solution_len >= 3:
-                break
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            self.lt_phase4.wing_strs = wing_str_combo
-            self.lt_phase4.solve()
-            self.edges_flip_orientation(wing_str_combo, [])
-
-            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase5.prune_tables])
-            phase5_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
-            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        phase5_solutions = self.lt_phase5.solutions_via_c(
-            pt_states=pt_state_indexes, solution_count=500, find_extra=True
-        )
-
-        # phase 6
-        phase6_pt_state_indexes_to_prefix = {}
-
-        for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
-            wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state, pt3_state)]
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            self.lt_phase4.wing_strs = wing_str_combo
-            self.lt_phase4.solve()
-            phase4_solution = self.solution[original_solution_len:]
-
-            self.edges_flip_orientation(wing_strs_all, [])
-            self.lt_phase5_high_edge_midge.wing_strs = wing_str_combo
-            self.lt_phase5_low_edge_midge.wing_strs = wing_str_combo
-
-            for step in phase5_solution:
-                self.rotate(step)
-
-            yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
-            self.lt_phase6_high_edge_midge.ida_graph_node = None
-            self.lt_phase6_low_edge_midge.ida_graph_node = None
-            self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
-            self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
-            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase6.prune_tables])
-
-            # Several phase-4/phase-5 pairs can lead to the same phase-6 state. Since
-            # they all share the same phase-6 cost from here on, keep the cheapest one.
-            prefix_len = len(phase4_solution) + len(phase5_solution)
-            previous_prefix = phase6_pt_state_indexes_to_prefix.get(wing_str_combo_pt_state_indexes)
-
-            if previous_prefix is None:
-                phase6_pt_state_indexes_to_prefix[wing_str_combo_pt_state_indexes] = (
-                    phase4_solution,
-                    phase5_solution,
-                )
-            elif prefix_len < len(previous_prefix[0]) + len(previous_prefix[1]):
-                phase6_pt_state_indexes_to_prefix[wing_str_combo_pt_state_indexes] = (
-                    phase4_solution,
-                    phase5_solution,
-                )
-
-        # Phase 6's C search returns the first root that solves at the minimum
-        # threshold, which ignores how expensive the phase-4/phase-5 prefix was.
-        # Search each prefix-length group separately and keep the cheapest total.
-        roots_by_prefix_len = {}
-        for root, (phase4_solution, phase5_solution) in phase6_pt_state_indexes_to_prefix.items():
-            prefix_len = len(phase4_solution) + len(phase5_solution)
-            roots_by_prefix_len.setdefault(prefix_len, []).append(root)
-
-        best = None
-        for prefix_len, roots in sorted(roots_by_prefix_len.items()):
-            if best is not None and prefix_len >= best[0]:
-                break
-
-            phase6_solution, phase6_states = self.lt_phase6.solutions_via_c(pt_states=roots)[0]
-            root = tuple(phase6_states[: len(self.lt_phase6.prune_tables)])
-            phase4_solution, phase5_solution = phase6_pt_state_indexes_to_prefix[root]
-            candidate = (
-                prefix_len + len(phase6_solution),
-                len(phase6_solution),
-                phase4_solution,
-                phase5_solution,
-                phase6_solution,
-            )
-
-            if best is None or candidate < best:
-                best = candidate
-
-        if best is None:
-            raise SolveError("could not solve phase 6 from any phase-4/5 portfolio endpoint")
-
-        _, _, phase4_solution, phase5_solution, phase6_solution = best
-        logger.info(
-            "phases 4, 5, and 6 lengths %d + %d + %d (%d total) from %d prefix-length groups",
-            len(phase4_solution),
-            len(phase5_solution),
-            len(phase6_solution),
-            len(phase4_solution) + len(phase5_solution) + len(phase6_solution),
-            len(roots_by_prefix_len),
-        )
-
-        # apply the solution
+        prefixes = self._phase45_prefixes()
+        if not prefixes:
+            raise SolveError("no ranked phase-5 solution paired the x-plane edges")
+        search_prefixes = {
+            rank: (len(phase4_solution) + len(phase5_solution), phase4_solution, phase5_solution)
+            for rank, (phase4_solution, phase5_solution) in prefixes.items()
+        }
+        _root, phase4_solution, phase5_solution, phase6_solution = self._best_phase6(search_prefixes)
         self.state = self.post_eo_state
         self.solution = self.post_eo_solution[:]
-
-        # phase 4
-        tmp_solution_len = len(self.solution)
-        for step in phase4_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
-
-        # phase 5
-        tmp_solution_len = len(self.solution)
-
-        for step in phase5_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
-
-        # phase 6
-        tmp_solution_len = len(self.solution)
-
-        for step in phase6_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
+        self._apply_phase456(phase4_solution, phase5_solution, phase6_solution)
 
     def reduce_333(self):
+        """Stage centers, EO, pair edges, and solve centers so the cube is a 3x3x3."""
         self.lt_init()
 
         if self.centers_solved() and self.edges_paired():
@@ -3373,17 +3019,8 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        if False:
-            self.group_centers_phase1_and_2()
-
-        else:
-            self.group_centers_phase1_and_2()
-
-        # phase 3
-        self.eo_edges()
-
-        # phases 4 5 and 6
-        self.pair_edges()
+        self.group_centers_phase1_and_2()
+        self._pair_edges_from_phase3_portfolio()
 
 
 def rotate_555(cube, step):

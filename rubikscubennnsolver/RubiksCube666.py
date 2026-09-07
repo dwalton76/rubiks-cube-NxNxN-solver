@@ -1,13 +1,71 @@
+"""
+6x6x6 solver: reduce the cube to a 5x5x5, then finish with the 5x5x5 solver.
+
+A 6x6x6 has 96 centers (16 per face: four inner x-centers, four outer x-centers,
+and eight oblique edges), two orbits of wings, and 8 corners. Reduction solves
+the inner x-centers, pairs every oblique pair, and pairs the inside orbit of
+wings so the remaining puzzle is a 5x5x5. ``RubiksCube666.reduce_555`` does
+that reduction; ``group_edges`` (via the 5x5x5 solver) then pairs the outer
+wings and ``solve_333`` finishes the cube.
+
+Each IDA phase is guided by prune tables. Phases 3 and 4 are searched as a
+portfolio: many solutions of the earlier phase are collected, later phases
+are solved from those endpoints, and the shortest combined path is kept.
+
+Phase 1 - stage LR inner x-centers
+    One fixed-axis C(24,8) table stages the eight LR inner x-centers. No
+    oblique occupancy restriction is needed because phase 2 can still use
+    3Lw/3Rw quarter turns. Every shortest solution is kept.
+
+Phase 2 - pair LR obliques and stage UD inner x-centers
+    Distinct phase-1 endings are ranked by the phase-2 heuristic and the best
+    eight become roots of one search. A second C(24,8) table stages UD inner
+    x-centers while that search pairs all eight LR obliques anywhere. Cost is
+    the max of that table, the orbit-1 parity distance, and a symmetry-reduced
+    depth-3 LR bar table keyed on which oblique stickers hold L or R. A miss
+    checks all legal moves: a depth-3 neighbor costs 4, while no such neighbor
+    proves a cost of 5. The first root that solves at the shortest depth is
+    kept. Equal heuristic costs try the ending with more LR oblique pairs
+    first. It preserves phase 1 by forbidding 3Uw/3Dw/3Fw/3Bw quarter turns,
+    while 3Lw/3Rw quarters remain available to rebalance the oblique orbits.
+    This phase owns orbit-1 OLL.
+
+Phase 3 - stage the remaining LR centers
+    Map the outer 5x5 of each face onto a fake 5x5x5 and stage its LR
+    centers. ``stage_LR_and_UD_centers`` takes a portfolio of those solutions
+    (default 64) and searches phase 4 from all distinct endpoints in one C
+    process.
+
+Phase 4 - stage UD left/right obliques and outer x-centers
+    Ranked pairwise tables move the UD left/right obliques and outer x-centers
+    onto UD. This phase owns orbit-0 OLL. The search keeps the shortest
+    phase-3 plus phase-4 pair.
+
+Phase 5 - daisy-solve all centers
+    Three 70^5 inner-x-spine tables guide a dedicated C IDA. Every table sees
+    all three inner x-center orbits plus both obliques from one axis. That
+    pairs every oblique and solves every inner x-center. Outer x-centers are
+    left for the 5x5x5.
+
+Phase 6 - EO the inside wings
+    The inside wings are then paired by ``pair_inside_edges_via_444``, which maps
+    the 6x6x6 slices a 4x4x4 can see onto a fake 4x4x4 and runs the whole 4x4x4
+    reduction on it. That is where the inside wings get EOed, so the 6x6x6 needs
+    no EO phase of its own. Those moves leave the daisy intact because the fake
+    4x4x4 ends with its own centers solved.
+"""
+
 # standard libraries
 import logging
+import os
+import subprocess
 import sys
+import tempfile
 
 # rubiks cube libraries
-from rubikscubennnsolver import reverse_steps
-from rubikscubennnsolver.LookupTable import LookupTable
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver import SolveError
+from rubikscubennnsolver.LookupTable import download_file_if_needed
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinations
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.swaps import swaps_666
@@ -243,11 +301,71 @@ edges_partner_666 = {
 # fmt: on
 
 
+# fmt: off
+PHASE5_ILLEGAL_MOVES = (
+    "3Rw", "3Rw'",
+    "3Lw", "3Lw'",
+    "3Fw", "3Fw'",
+    "3Bw", "3Bw'",
+    "3Uw", "3Uw'",
+    "3Dw", "3Dw'",
+    "Rw", "Rw'",
+    "Lw", "Lw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+)
+
+# fmt: on
+
+
+# ==================================================
 # phase 1
-class LookupTable666LRInnerXCentersStage(LookupTable):
+# stage LR inner x-centers
+# ==================================================
+UD_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-binary.cost-only.bin"
+UD_INNER_X_ORBIT1_EVEN_TABLE_666 = (
+    "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-orbit1-even.cost-only.bin"
+)
+UD_INNER_X_ORBIT1_ODD_TABLE_666 = (
+    "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-orbit1-odd.cost-only.bin"
+)
+# Built with the other 6x6 tables by `make 666-tables`.
+LR_BAR_TABLE_666 = "lookup-tables/lookup-table-6x6x6-phase2-LR-oblique-bars.sym-depth3.hash.bin"
+LR_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step12-LR-inner-x-centers-stage-binary.cost-only.bin"
+PHASE2_ROOT_CAP_666 = 8
+
+
+class LookupTableIDA666LRInnerXCentersStage:
     """
-    lookup-table-6x6x6-step00-inner-x-centers-stage.txt
-    ===================================================
+    Stage the eight LR inner x-centers on a fixed axis.
+
+    C(24, 8) = 735,471 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step12-LR-inner-x-centers-stage-binary.cost-only.bin
+    =======================================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 4 entries (0 percent, 4.00x previous step)
     2 steps has 82 entries (0 percent, 20.50x previous step)
@@ -260,1149 +378,750 @@ class LookupTable666LRInnerXCentersStage(LookupTable):
 
     Total: 735,471 entries
     Average: 6.03 moves
-    """
 
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step00-inner-x-centers-stage.txt",
-            "xxxxLLLLxxxxLLLLxxxxxxxx",
-            linecount=735471,
-            max_depth=8,
-            all_moves=moves_666,
-            illegal_moves=(),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        return "".join(["L" if self.parent.state[x] in ("L", "R") else "x" for x in inner_x_centers_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(inner_x_centers_666, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666LRObliquEdgeStage(LookupTableIDAViaGraph):
-    """
-    Use an "unpaired oblique edges" heuristic to get the LR oblique edges paired anywhere.
-    We do not need these obliques to be placed on sides LR at this point.
+    The table alone is the heuristic. ``--solution-count 0`` collects every
+    solution at the shortest length. Phase 2 searches every distinct ending.
+    A direct ``solve_via_c`` call still applies the ending with the most LR
+    oblique pairs.
     """
 
     def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Lw", "3Lw'",
-                "3Rw", "3Rw'",
-            ),
-            centers_only=True,
-            prune_tables=[],
-            C_ida_type="6x6x6-LR-oblique-edges-stage",
+        self.parent = parent
+        download_file_if_needed(LR_INNER_X_STAGE_TABLE_666)
+
+    def solutions_via_c(self):
+        """Return every shortest phase-1 solution as a tuple of moves."""
+        cmd = [
+            "./ida_search_666_centers_stage",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--stage-lr-inner-x",
+            "--lr-inner-x-cost",
+            LR_INNER_X_STAGE_TABLE_666,
+            "--solution-count",
+            "0",
+        ]
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+        self.parent.solve_via_c_output = output
+        solutions = []
+        for line in output.splitlines():
+            logger.info("%s", line)
+            if line.startswith("SOLUTION"):
+                solutions.append(tuple(line.split(":", 1)[1].strip().split()))
+        if not solutions:
+            raise SolveError(f"ida_search_666_centers_stage returned no phase-1 solution\n{output}")
+        return solutions
+
+    def solve_via_c(self) -> None:
+        solutions = self.solutions_via_c()
+        original_state = self.parent.state[:]
+        original_solution = self.parent.solution[:]
+        best_steps = None
+        best_paired = -1
+        for steps in solutions:
+            self.parent.state = original_state[:]
+            self.parent.solution = original_solution[:]
+            for step in steps:
+                self.parent.rotate(step)
+            paired = self.parent.LR_oblique_pair_count()
+            if paired > best_paired:
+                best_paired = paired
+                best_steps = steps
+
+        self.parent.state = original_state[:]
+        self.parent.solution = original_solution[:]
+        for step in best_steps:
+            self.parent.rotate(step)
+        logger.info(
+            "%s: chose 1 of %d shortest solutions with %d/8 LR oblique pairs",
+            self.__class__.__name__,
+            len(solutions),
+            best_paired,
         )
-        # fmt: on
-
-    def recolor(self):
-        logger.info(f"{self}: recolor (custom)")
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
-
-        for x in centers_666:
-            if x in oblique_edges_666:
-                if self.parent.state[x] == "L" or self.parent.state[x] == "R":
-                    self.parent.state[x] = "L"
-                else:
-                    self.parent.state[x] = "x"
-            else:
-                self.parent.state[x] = "."
 
 
-class LookupTable666LRObliquEdgeStageInnerXStage(LookupTableIDAViaGraph):
+# ==================================================
+# phase 2
+# stage UD inner x-centers and pair LR obliques while preserving LR inner x
+# ==================================================
+
+
+class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
     """
-    Use the inner-x-centers table to pair the LR inner-x-centers while using an "unpaired oblique edges" heuristic
-    to get the LR oblique edges paired anywhere.  We do not need these obliques to be placed on sides
-    LR at this point.
+    Stage the eight UD inner x-centers while pairing all eight LR obliques.
+
+    C(24, 8) = 735,471 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . x x . .  . . x x . .  . . x x . .  . . x x . .
+    . . x x . .  . . x x . .  . . x x . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step11-UD-inner-x-centers-stage-binary.cost-only.bin
+    =======================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+
+    The obliques use the LR bar table. Its key is 48 bits, one per oblique
+    sticker, set when that sticker is L or R. Keys are canonicalized under the
+    16 rotations and mirrors that preserve the LR axis. rubiks-cube-lookup-tables
+    builds it (`make 666-tables`) breadth first from all C(24, 8)
+    placements of eight paired LR bars through depth 3.
+    On a miss the search checks all legal one-move children: a depth-3 child
+    gives cost 4, and no child gives a lower bound of 5. Two more C(24, 8) files
+    give the phase-2 distance to the staged centers with even or odd orbit-1
+    parity. The search keeps both loaded and switches on each 3Lw or 3Rw
+    quarter.     The cost is the max of the UD inner-x table, the bar table, and
+    that parity cost, with no multiplier. ``solution_via_c(roots)`` searches
+    the eight phase-1 endings with the lowest phase-2 heuristic in one process.
+    Each root carries its own orbit-1 requirement. Equal heuristic costs try
+    the ending with more LR oblique pairs first. The first root that solves at
+    the shortest depth is kept. This phase owns orbit-1 OLL.
+
+    Symmetry-reduced LR bar table:
+
+    0 steps has 46,935 entries
+    1 step  has 216,908 entries
+    2 steps has 3,462,009 entries
+    3 steps has 49,169,518 entries
+    Total: 52,895,370 entries
     """
 
     def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(),
-            centers_only=True,
-            prune_tables=[
-                parent.lt_LR_inner_x_centers_stage,
-            ],
-            C_ida_type="6x6x6-LR-oblique-edges-inner-x-centers-stage",
-        )
-        # fmt: on
+        self.parent = parent
+        download_file_if_needed(UD_INNER_X_STAGE_TABLE_666)
+        download_file_if_needed(UD_INNER_X_ORBIT1_EVEN_TABLE_666)
+        download_file_if_needed(UD_INNER_X_ORBIT1_ODD_TABLE_666)
+        download_file_if_needed(LR_BAR_TABLE_666)
 
-    def recolor(self):
-        logger.info(f"{self}: recolor (custom)")
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
+    def _command(self, roots_filename=None, root_cap=None):
+        cmd = [
+            "./ida_search_666_centers_stage",
+            "--stage-ud-inner-x-pair-lr-obliques",
+            "--ud-inner-x-cost",
+            UD_INNER_X_STAGE_TABLE_666,
+            "--ud-inner-x-even-cost",
+            UD_INNER_X_ORBIT1_EVEN_TABLE_666,
+            "--ud-inner-x-odd-cost",
+            UD_INNER_X_ORBIT1_ODD_TABLE_666,
+            "--lr-bar-cost",
+            LR_BAR_TABLE_666,
+        ]
+        if roots_filename:
+            cmd.extend(("--kociemba-file", roots_filename))
+        else:
+            cmd.extend(("--kociemba", self.parent.get_kociemba_string(True)))
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+            cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
+        if root_cap is not None:
+            cmd.extend(("--root-cap", str(root_cap)))
+        return cmd
 
-        for x in centers_666:
-            if x in oblique_edges_666 or x in inner_x_centers_666:
-                if self.parent.state[x] == "L" or self.parent.state[x] == "R":
-                    self.parent.state[x] = "L"
-                else:
-                    self.parent.state[x] = "x"
-            else:
-                self.parent.state[x] = "."
+    def solution_via_c(self, roots=None, root_cap=None):
+        """
+        Return ``(root_index, steps)`` for one cube, or for every phase-1 root.
+
+        ``roots`` is ``(index, kociemba, orbits_with_oll, paired_count)``. The C
+        search prints ``ROOT_INDEX`` for the first root that solves at the
+        shortest depth.
+        """
+        roots_filename = None
+        if roots:
+            with tempfile.NamedTemporaryFile(mode="w", prefix="666-phase2-roots-", suffix=".txt", delete=False) as fh:
+                roots_filename = fh.name
+                for root_index, kociemba, orbits_with_oll, _paired in roots:
+                    orbit1_requirement = 1 if 1 in orbits_with_oll else 2
+                    fh.write(f"{root_index},0,{orbit1_requirement},{kociemba}\n")
+
+        try:
+            cmd = self._command(roots_filename, root_cap)
+            logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+            lines = []
+            with subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            ) as proc:
+                for line in proc.stdout:
+                    lines.append(line)
+                    logger.info("%s", line.rstrip("\n"))
+                returncode = proc.wait()
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        root_index = roots[0][0] if roots else 0
+        for line in output.splitlines():
+            if line.startswith("ROOT_INDEX "):
+                root_index = int(line.split()[1])
+            if line.startswith("SOLUTION"):
+                return root_index, tuple(line.split(":", 1)[1].strip().split())
+
+        raise SolveError(f"ida_search_666_centers_stage failed with exit {returncode}\n{output}")
+
+    def solve_via_c(self) -> None:
+        _root_index, steps = self.solution_via_c()
+        for step in steps:
+            self.parent.rotate(step)
 
 
+# ==================================================
 # phase 3
-class LookupTable666UDInnerXCentersStage(LookupTable):
-    """
-    lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt
-    ======================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 234 entries (1 percent, 8.07x previous step)
-    4 steps has 1,246 entries (9 percent, 5.32x previous step)
-    5 steps has 4,466 entries (34 percent, 3.58x previous step)
-    6 steps has 6,236 entries (48 percent, 1.40x previous step)
-    7 steps has 656 entries (5 percent, 0.11x previous step)
-
-    Total: 12,870 entries
-    Average: 5.45 moves
-    """
-
-    # fmt: off
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt",
-            "UUUUxxxxxxxxUUUU",
-            linecount=12870,
-            max_depth=7,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2"
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-    # fmt: on
-
-    def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_inner_x_centers_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UFBD_inner_x_centers_666, state):
-            cube[pos] = pos_state
+# stage the remaining LR centers via a fake 5x5x5
+# ==================================================
 
 
-class LookupTable666UDLeftObliqueCentersStage(LookupTable):
-    """
-    lookup-table-6x6x6-step13-UD-left-oblique-centers.txt
-    =====================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 70 entries (0 percent, 17.50x previous step)
-    3 steps has 804 entries (6 percent, 11.49x previous step)
-    4 steps has 4,615 entries (35 percent, 5.74x previous step)
-    5 steps has 7,048 entries (54 percent, 1.53x previous step)
-    6 steps has 328 entries (2 percent, 0.05x previous step)
-
-    Total: 12,870 entries
-    Average: 4.52 moves
-    """
-
-    # fmt: off
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step13-UD-left-oblique-centers.txt",
-            "UUUUxxxxxxxxUUUU",
-            linecount=12870,
-            max_depth=6,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-    # fmt: on
-
-    def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_edges_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UFBD_left_oblique_edges_666, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666UDRightObliqueCentersStage(LookupTable):
-    """
-    lookup-table-6x6x6-step14-UD-right-oblique-centers.txt
-    ======================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 4 entries (0 percent, 4.00x previous step)
-    2 steps has 70 entries (0 percent, 17.50x previous step)
-    3 steps has 804 entries (6 percent, 11.49x previous step)
-    4 steps has 4,615 entries (35 percent, 5.74x previous step)
-    5 steps has 7,048 entries (54 percent, 1.53x previous step)
-    6 steps has 328 entries (2 percent, 0.05x previous step)
-
-    Total: 12,870 entries
-    Average: 4.52 moves
-    """
-
-    # fmt: off
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step14-UD-right-oblique-centers.txt",
-            "UUUUxxxxxxxxUUUU",
-            linecount=12870,
-            max_depth=6,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-    # fmt: on
-
-    def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_edges_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UFBD_right_oblique_edges_666, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
-    """
-    Use the inner-x-centers table to pair the UFBD inner-x-centers while using an "unpaired oblique edges" heuristic
-    to get the UD oblique edges paired anywhere on sides UFDB.  We do not need these obliques to be placed on sides
-    UD at this point.
-    """
-
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            centers_only=True,
-            prune_tables=[
-                parent.lt_UD_inner_x_centers_stage,
-            ],
-            C_ida_type="6x6x6-UD-oblique-edges-inner-x-centers-stage",
-        )
-        # fmt: on
-
-    def recolor(self):
-        logger.info(f"{self}: recolor (custom)")
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
-
-        for x in centers_666:
-            if x in oblique_edges_666 or x in inner_x_centers_666:
-                if self.parent.state[x] == "U" or self.parent.state[x] == "D":
-                    self.parent.state[x] = "U"
-                elif self.parent.state[x] == "L" or self.parent.state[x] == "R":
-                    self.parent.state[x] = "."
-                else:
-                    self.parent.state[x] = "x"
-            else:
-                self.parent.state[x] = "."
-
-
-class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
-    """
-    Stage the UD inner x-centers and oblique edges
-    """
-
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            prune_tables=(
-                parent.lt_UD_inner_x_centers_stage,
-                parent.lt_UD_left_oblique_edges_stage,
-                parent.lt_UD_right_oblique_edges_stage,
-            ),
-            centers_only=True,
-            perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
-            perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
-            perfect_hash12_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
-            pt1_state_max=12870,
-            pt2_state_max=12870,
-        )
-        # fmt: on
-
-
+# ==================================================
 # phase 4
-class LookupTable666UDLeftObliqueStage(LookupTable):
+# stage UD left/right obliques and outer x-centers
+# ==================================================
+class LookupTable666RankedPhase4:
     """
-    lookup-table-6x6x6-step11-UD-left-oblique-stage.txt
-    ===================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1,836 entries (14 percent, 2.47x previous step)
-    6 steps has 4,405 entries (34 percent, 2.40x previous step)
-    7 steps has 3,774 entries (29 percent, 0.86x previous step)
-    8 steps has 1,721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
-    Total: 12,870 entries
-    Average: 6.27 moves
-    """
+    One dense pairwise ranked-cost table used by the phase-4 IDA.
 
-    state_targets = ("UUUUxxxxxxxxUUUU",)
+    Each subclass names a single table holding the exact joint distance for one
+    pair of the three phase-4 UD orbits, so its diagram and histogram below are
+    the whole story for that table. ``LookupTableIDA666UDCentersStage`` takes the
+    max over all three.
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
 
-    def __init__(self, parent, build_state_index=False):
-        # fmt: off
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step11-UD-left-oblique-stage.txt",
-            self.state_targets,
-            linecount=12870,
-            max_depth=9,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Rw", "3Rw'",
-                "3Bw", "3Bw'",
-                "3Dw", "3Dw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                # we are not manipulating anything on sides L or R
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        # fmt: on
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
 
-    def state(self):
-        parent_state = self.parent.state
-        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_edges_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UFBD_left_oblique_edges_666, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666UDRightObliqueStage(LookupTable):
-    """
-    lookup-table-6x6x6-step12-UD-right-oblique-stage.txt
-    ====================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 238 entries (1 percent, 8.21x previous step)
-    4 steps has 742 entries (5 percent, 3.12x previous step)
-    5 steps has 1,836 entries (14 percent, 2.47x previous step)
-    6 steps has 4,405 entries (34 percent, 2.40x previous step)
-    7 steps has 3,774 entries (29 percent, 0.86x previous step)
-    8 steps has 1,721 entries (13 percent, 0.46x previous step)
-    9 steps has 122 entries (0 percent, 0.07x previous step)
-    Total: 12,870 entries
-    Average: 6.27 moves
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
     """
 
-    state_targets = ("UUUUxxxxxxxxUUUU",)
-
-    def __init__(self, parent, build_state_index=False):
-        # fmt: off
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step12-UD-right-oblique-stage.txt",
-            self.state_targets,
-            linecount=12870,
-            max_depth=9,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Rw", "3Rw'",
-                "3Bw", "3Bw'",
-                "3Dw", "3Dw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                # we are not manipulating anything on sides L or R
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        # fmt: on
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_edges_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UFBD_right_oblique_edges_666, state):
-            cube[pos] = pos_state
+    def __init__(self, parent, filename):
+        self.parent = parent
+        self.filename = "lookup-tables/" + filename
+        download_file_if_needed(self.filename)
 
 
-class LookupTable666UDOuterXCenterStage(LookupTable):
+class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase4):
     """
-    lookup-table-6x6x6-step13-UD-outer-x-centers-stage.txt
-    ======================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 234 entries (1 percent, 8.07x previous step)
-    4 steps has 1,246 entries (9 percent, 5.32x previous step)
-    5 steps has 4,466 entries (34 percent, 3.58x previous step)
-    6 steps has 6,236 entries (48 percent, 1.40x previous step)
-    7 steps has 656 entries (5 percent, 0.11x previous step)
-    Total: 12,870 entries
-    Average: 5.45 moves
-    """
+    Rank the UD left and right oblique coordinates.
 
-    def __init__(self, parent, build_state_index=False):
-        # fmt: off
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step13-UD-outer-x-centers-stage.txt",
-            "UUUUxxxxxxxxUUUU",
-            linecount=12870,
-            max_depth=7,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Rw", "3Rw'",
-                "3Bw", "3Bw'",
-                "3Dw", "3Dw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                # we are not manipulating anything on sides L or R
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        # fmt: on
+    (16! / (8! * 8!))^2 = 165,636,900 states
 
-    def state(self):
-        parent_state = self.parent.state
-        return "".join(["U" if parent_state[x] in ("U", "D") else "x" for x in UFBD_outer_x_centers_666])
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
 
-        for pos, pos_state in zip(UFBD_outer_x_centers_666, state):
-            cube[pos] = pos_state
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
 
-
-'''
-class LookupTableIDA666UDObliqueEdgesStage(LookupTableIDAViaGraph):
-    """
-    This was only used to build the lookup-table-6x6x6-step14-UD-oblique-stage.pt_state
-    file which was then converted to lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash
-    lookup-table-6x6x6-step14-UD-oblique-stage.txt
-    ==============================================
+    lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage.cost-only.bin
+    ===========================================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
     2 steps has 29 entries (0 percent, 14.50x previous step)
     3 steps has 286 entries (0 percent, 9.86x previous step)
-    4 steps has 2,020 entries (0 percent, 7.06x previous step)
-    5 steps has 15,992 entries (0 percent, 7.92x previous step)
-    6 steps has 123,071 entries (0 percent, 7.70x previous step)
-    7 steps has 805,821 entries (0 percent, 6.55x previous step)
-    8 steps has 4,379,750 entries (2 percent, 5.44x previous step)
-    9 steps has 18,300,990 entries (11 percent, 4.18x previous step)
-    10 steps has 46,881,308 entries (28 percent, 2.56x previous step)
-    11 steps has 62,357,957 entries (37 percent, 1.33x previous step)
-    12 steps has 29,875,621 entries (18 percent, 0.48x previous step)
-    13 steps has 2,852,222 entries (1 percent, 0.10x previous step)
-    14 steps has 41,682 entries (0 percent, 0.01x previous step)
+    4 steps has 2,052 entries (0 percent, 7.17x previous step)
+    5 steps has 16,348 entries (0 percent, 7.97x previous step)
+    6 steps has 127,859 entries (0 percent, 7.82x previous step)
+    7 steps has 844,248 entries (0 percent, 6.60x previous step)
+    8 steps has 4,623,585 entries (2 percent, 5.48x previous step)
+    9 steps has 19,019,322 entries (11 percent, 4.11x previous step)
+    10 steps has 47,544,426 entries (28 percent, 2.50x previous step)
+    11 steps has 61,805,656 entries (37 percent, 1.30x previous step)
+    12 steps has 28,890,234 entries (17 percent, 0.47x previous step)
+    13 steps has 2,722,462 entries (1 percent, 0.09x previous step)
+    14 steps has 40,242 entries (0 percent, 0.01x previous step)
     15 steps has 148 entries (0 percent, 0.00x previous step)
+
     Total: 165,636,900 entries
-    Average: 10.61 moves
+    Average: 10.58 moves
     """
-    state_targets = (
-        "UUUUUUUUxxxxxxxxxxxxxxxxUUUUUUUU",
-    )
+
     def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
+        LookupTable666RankedPhase4.__init__(
             self,
             parent,
-            filename="lookup-table-6x6x6-step14-UD-oblique-stage.txt",
-            state_target=self.state_targets,
-            linecount=165636900,
-            max_depth=15,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Rw", "3Rw'",
-                "3Bw", "3Bw'",
-                "3Dw", "3Dw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                # we are not manipulating anything on sides L or R
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            prune_tables=(
-                parent.lt_UD_left_oblique_edges_stage,
-                parent.lt_UD_right_oblique_edges_stage,
-            ),
+            "lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage.cost-only.bin",
         )
-        # fmt: on
-'''
 
 
-class LookupTableIDA666UDCentersStage(LookupTableIDAViaGraph):
+class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase4):
+    """
+    Rank the UD left oblique and outer-x coordinates.
+
+    (16! / (8! * 8!))^2 = 165,636,900 states
+
+                 . . . . . .
+                 . U U . U .
+                 . . . . U .
+                 . U . . . .
+                 . U . U U .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . x x . x .  . . . . . .  . x x . x .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . x . x x .  . . . . . .  . x . x x .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . U U . U .
+                 . . . . U .
+                 . U . . . .
+                 . U . U U .
+                 . . . . . .
+
+    lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage.cost-only.bin
+    =============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
+    """
+
     def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
+        LookupTable666RankedPhase4.__init__(
             self,
             parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Rw", "3Rw'",
-                "3Bw", "3Bw'",
-                "3Dw", "3Dw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                # we are not manipulating anything on sides L or R
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
-            prune_tables=(
-                parent.lt_UD_left_oblique_edges_stage,
-                parent.lt_UD_right_oblique_edges_stage,
-                parent.lt_UD_outer_x_centers_stage,
-            ),
-            perfect_hash01_filename="lookup-table-6x6x6-step14-UD-oblique-stage.pt-state-perfect-hash",
-            pt1_state_max=12870,
-            centers_only=True,
+            "lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage.cost-only.bin",
         )
-        # fmt: on
 
 
-# phase 5
-class LookupTable666Step50LRCenters(LookupTable):
+class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase4):
     """
-    lookup-table-6x6x6-step50-LR-solve-inner-x-center-and-oblique-edges.txt
-    =======================================================================
-    0 steps has 9 entries (0 percent, 0.00x previous step)
-    1 steps has 189 entries (0 percent, 21.00x previous step)
-    2 steps has 748 entries (0 percent, 3.96x previous step)
-    3 steps has 2,914 entries (0 percent, 3.90x previous step)
-    4 steps has 12,388 entries (3 percent, 4.25x previous step)
-    5 steps has 44,604 entries (13 percent, 3.60x previous step)
-    6 steps has 109,148 entries (31 percent, 2.45x previous step)
-    7 steps has 132,424 entries (38 percent, 1.21x previous step)
-    8 steps has 37,920 entries (11 percent, 0.29x previous step)
-    9 steps has 2,624 entries (0 percent, 0.07x previous step)
-    10 steps has 32 entries (0 percent, 0.01x previous step)
+    Rank the UD right oblique and outer-x coordinates.
 
-    Total: 343,000 entries
-    Average: 6.39 moves
+    (16! / (8! * 8!))^2 = 165,636,900 states
+
+                 . . . . . .
+                 . U . U U .
+                 . U . . . .
+                 . . . . U .
+                 . U U . U .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . x . x x .  . . . . . .  . x . x x .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . x x . x .  . . . . . .  . x x . x .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . U . U U .
+                 . U . . . .
+                 . . . . U .
+                 . U U . U .
+                 . . . . . .
+
+    lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage.cost-only.bin
+    ==============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
     """
 
-    # fmt: off
-    state_targets = (
-        "LLLLLLLLLLLLxxxxxxxxxxxx",
-        "LLLLLLLLLLxxLLxxxxxxxxxx",
-        "LLLLLLLLLLxxxxxxxxxxxxLL",
-        "LLLLLxLLLxLLxxLxxxLxxxxx",
-        "LLLLLxLLLxLLxxxxxLxxxLxx",
-        "LLLLLxLLLxxxLLLxxxLxxxxx",
-        "LLLLLxLLLxxxLLxxxLxxxLxx",
-        "LLLLLxLLLxxxxxLxxxLxxxLL",
-        "LLLLLxLLLxxxxxxxxLxxxLLL",
-        "LLxLLLxLLLLLxxLxxxLxxxxx",
-        "LLxLLLxLLLLLxxxxxLxxxLxx",
-        "LLxLLLxLLLxxLLLxxxLxxxxx",
-        "LLxLLLxLLLxxLLxxxLxxxLxx",
-        "LLxLLLxLLLxxxxLxxxLxxxLL",
-        "LLxLLLxLLLxxxxxxxLxxxLLL",
-        "LLxLLxxLLxLLxxLxxLLxxLxx",
-        "LLxLLxxLLxxxLLLxxLLxxLxx",
-        "LLxLLxxLLxxxxxLxxLLxxLLL",
-        "xxLLLLLLLLLLLLxxxxxxxxxx",
-        "xxLLLLLLLLLLxxxxxxxxxxLL",
-        "xxLLLLLLLLxxLLxxxxxxxxLL",
-        "xxLLLxLLLxLLLLLxxxLxxxxx",
-        "xxLLLxLLLxLLLLxxxLxxxLxx",
-        "xxLLLxLLLxLLxxLxxxLxxxLL",
-        "xxLLLxLLLxLLxxxxxLxxxLLL",
-        "xxLLLxLLLxxxLLLxxxLxxxLL",
-        "xxLLLxLLLxxxLLxxxLxxxLLL",
-        "xxxLLLxLLLLLLLLxxxLxxxxx",
-        "xxxLLLxLLLLLLLxxxLxxxLxx",
-        "xxxLLLxLLLLLxxLxxxLxxxLL",
-        "xxxLLLxLLLLLxxxxxLxxxLLL",
-        "xxxLLLxLLLxxLLLxxxLxxxLL",
-        "xxxLLLxLLLxxLLxxxLxxxLLL",
-        "xxxLLxxLLxLLLLLxxLLxxLxx",
-        "xxxLLxxLLxLLxxLxxLLxxLLL",
-        "xxxLLxxLLxxxLLLxxLLxxLLL"
-    )
-
-    LR_inner_x_centers_oblique_edges_666 = (
-        45, 46, 50, 51, 52, 53, 56, 57, 58, 59, 63, 64,  # Left
-        117, 118, 122, 123, 124, 125, 128, 129, 130, 131, 135, 136,  # Right
-    )
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
+    def __init__(self, parent):
+        LookupTable666RankedPhase4.__init__(
             self,
             parent,
-            "lookup-table-6x6x6-step50-LR-solve-inner-x-center-and-oblique-edges.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=8,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
+            "lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage.cost-only.bin",
         )
-    # fmt: on
-
-    def state(self):
-        return "".join(["L" if self.parent.state[x] == "L" else "x" for x in self.LR_inner_x_centers_oblique_edges_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.LR_inner_x_centers_oblique_edges_666, state):
-            cube[pos] = pos_state
 
 
-class LookupTable666Step50HighLowEdges(LookupTable):
+class LookupTableIDA666UDCentersStage:
     """
-    lookup-table-6x6x6-step51-highlow-edges.txt
-    ===========================================
+    Phase-4 IDA: stage the UD left/right obliques and outer x-centers.
+
+    Component tables, each documented on its own class above:
+
+    | Flag                          | Class                                  |
+    | ----------------------------- | -------------------------------------- |
+    | --left-right-oblique-cost     | LookupTable666UDLeftRightObliqueStage  |
+    | --left-oblique-outer-x-cost   | LookupTable666UDLeftObliqueOuterXStage |
+    | --right-oblique-outer-x-cost  | LookupTable666UDRightObliqueOuterXStage|
+
+    Each table is the exact joint distance for one pair of the three orbits, so
+    ``ida_search_666_centers_stage`` uses the max of the three as an admissible
+    heuristic. Cost 0 means all three UD center orbits are staged.
+
+    ``solution_via_c`` accepts a portfolio of phase-3 roots via ``--kociemba-file``
+    and returns the root index that produced the shortest phase-4 solution, which
+    is how ``stage_LR_and_UD_centers`` picks the best phase-3/phase-4 pair. This
+    phase owns orbit-0 OLL; ``avoid_oll`` becomes the per-root parity requirement.
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage.cost-only.bin
+    ===========================================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 2 entries (0 percent, 2.00x previous step)
     2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 278 entries (0 percent, 9.59x previous step)
-    4 steps has 1,934 entries (0 percent, 6.96x previous step)
-    5 steps has 15,640 entries (0 percent, 8.09x previous step)
-    6 steps has 124,249 entries (4 percent, 7.94x previous step)
-    7 steps has 609,241 entries (22 percent, 4.90x previous step)
-    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
-    9 steps has 688,124 entries (25 percent, 0.56x previous step)
-    10 steps has 40,560 entries (1 percent, 0.06x previous step)
+    3 steps has 286 entries (0 percent, 9.86x previous step)
+    4 steps has 2,052 entries (0 percent, 7.17x previous step)
+    5 steps has 16,348 entries (0 percent, 7.97x previous step)
+    6 steps has 127,859 entries (0 percent, 7.82x previous step)
+    7 steps has 844,248 entries (0 percent, 6.60x previous step)
+    8 steps has 4,623,585 entries (2 percent, 5.48x previous step)
+    9 steps has 19,019,322 entries (11 percent, 4.11x previous step)
+    10 steps has 47,544,426 entries (28 percent, 2.50x previous step)
+    11 steps has 61,805,656 entries (37 percent, 1.30x previous step)
+    12 steps has 28,890,234 entries (17 percent, 0.47x previous step)
+    13 steps has 2,722,462 entries (1 percent, 0.09x previous step)
+    14 steps has 40,242 entries (0 percent, 0.01x previous step)
+    15 steps has 148 entries (0 percent, 0.00x previous step)
 
-    Total: 2,704,156 entries
-    Average: 7.95 moves
+    Total: 165,636,900 entries
+    Average: 10.58 moves
+
+    lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage.cost-only.bin
+    =============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
+
+    lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage.cost-only.bin
+    ==============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
     """
 
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step51-highlow-edges.txt",
-            "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-            linecount=2704156,
-            max_depth=8,
-            all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
+    def __init__(self, parent):
+        self.parent = parent
+        self.avoid_oll = None
+
+    def solution_via_c(self, roots=None):
+        cmd = [
+            "./ida_search_666_centers_stage",
+            "--left-right-oblique-cost",
+            self.parent.lt_UD_left_right_oblique_stage.filename,
+            "--left-oblique-outer-x-cost",
+            self.parent.lt_UD_left_oblique_outer_x_stage.filename,
+            "--right-oblique-outer-x-cost",
+            self.parent.lt_UD_right_oblique_outer_x_stage.filename,
+        ]
+        orbit0_pairs = (
+            (
+                "--left-right-oblique-even-cost",
+                "--left-right-oblique-odd-cost",
+                "lookup-tables/lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage-orbit0-even.cost-only.bin",
+                "lookup-tables/lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage-orbit0-odd.cost-only.bin",
             ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
+            (
+                "--left-oblique-outer-x-even-cost",
+                "--left-oblique-outer-x-odd-cost",
+                "lookup-tables/lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage-orbit0-even.cost-only.bin",
+                "lookup-tables/lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage-orbit0-odd.cost-only.bin",
+            ),
+            (
+                "--right-oblique-outer-x-even-cost",
+                "--right-oblique-outer-x-odd-cost",
+                "lookup-tables/lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage-orbit0-even.cost-only.bin",
+                "lookup-tables/lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage-orbit0-odd.cost-only.bin",
+            ),
         )
+        if all(os.path.exists(path) for pair in orbit0_pairs for path in pair[2:]):
+            for even_flag, odd_flag, even_path, odd_path in orbit0_pairs:
+                cmd.extend((even_flag, even_path, odd_flag, odd_path))
 
-    def state(self) -> str:
-        """
-        Returns:
-            the state of the cube per this lookup table
-        """
-        self.parent.populate_fake_444_for_inner_x_centers_stage()
-        self.parent.fake_444.edge_mapping = self.parent.edge_mapping
-        return self.parent.fake_444.lt_phase2_edges.state()
+        roots_filename = None
+        if roots:
+            with tempfile.NamedTemporaryFile(mode="w", prefix="666-centers-roots-", suffix=".txt", delete=False) as fh:
+                roots_filename = fh.name
+                for root_index, kociemba, orbits_with_oll in roots:
+                    orbit0_requirement = 0
+                    orbit1_requirement = 0
+                    if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
+                        orbit0_requirement = 1 if 0 in orbits_with_oll else 2
+                    if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
+                        orbit1_requirement = 1 if 1 in orbits_with_oll else 2
+                    fh.write(f"{root_index},{orbit0_requirement},{orbit1_requirement},{kociemba}\n")
+            cmd.extend(("--kociemba-file", roots_filename))
+        else:
+            cmd.extend(("--kociemba", self.parent.get_kociemba_string(True)))
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
+        if not roots and self.avoid_oll is not None:
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+            if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
+                cmd.append("--orbit0-need-odd-w" if 0 in orbits_with_oll else "--orbit0-need-even-w")
+            if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
+                cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
 
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
-            )
-        )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
+        try:
+            logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+            lines = []
+            with subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            ) as proc:
+                for line in proc.stdout:
+                    lines.append(line)
+                    logger.info("%s", line.rstrip("\n"))
+                returncode = proc.wait()
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
 
-        for step in steps_to_scramble:
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        root_index = 0
+        for line in output.splitlines():
+            if line.startswith("ROOT_INDEX "):
+                root_index = int(line.split()[1])
+            if line.startswith("SOLUTION"):
+                return root_index, tuple(line.split(":", 1)[1].strip().split())
+
+        raise SolveError(f"ida_search_666_centers_stage failed with exit {returncode}\n{output}")
+
+    def solve_via_c(self) -> None:
+        _, solution = self.solution_via_c()
+        for step in solution:
             self.parent.rotate(step)
 
 
-class LookupTableIDA666Step50(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
-            ),
-            prune_tables=(
-                parent.lt_LR_centers,
-                parent.lt_LR_highlow_edges,
-            ),
-        )
-        # fmt: on
+# ==================================================
+# phase 5
+# daisy-solve all centers with three 70^5 inner-x-spine tables
+# ==================================================
+DAISY_INNER_X_SPINE_TABLES_666 = tuple(
+    (
+        f"--all-inner-x-plus-{axis.lower()}-obliques-cost",
+        f"lookup-tables/lookup-table-6x6x6-daisy-all-inner-x-plus-{axis}-obliques-centers.cost-only.bin",
+    )
+    for axis in ("UD", "LR", "FB")
+)
 
 
-class LookupTableIDA666Step50WithoutEdges(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
-            ),
-            prune_tables=(
-                parent.lt_LR_centers,
-            ),
-            centers_only=True,
-        )
-        # fmt: on
-
-
-# phase 6
-class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
+class LookupTableIDA666DaisyCenters:
     """
-    lookup-table-6x6x6-step61-UD-solve-inner-x-center-and-oblique-edges.txt
-    =======================================================================
+    Phase-5 IDA: daisy-solve every remaining center.
+
+    Three component tables, one per axis, named by
+    ``DAISY_INNER_X_SPINE_TABLES_666`` and passed as
+    ``--all-inner-x-plus-{ud,lr,fb}-obliques-cost``.
+
+    Each table spans five C(8,4) orbits: all three inner-x orbits plus both
+    oblique orbits from its own axis, so 70^5 = 1,680,700,000 entries. The three
+    are the same cost function under a relabelling of axes and therefore share
+    one histogram, recorded here once rather than three times. Each is built to
+    both the native and the obliques-swapped goal, so a cost of 0 means the
+    daisy is reached in either orientation.
+
+    lookup-table-6x6x6-daisy-all-inner-x-plus-{UD,LR,FB}-obliques-centers.cost-only.bin
+    ===================================================================================
     0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 12 entries (0 percent, 6.00x previous step)
-    2 steps has 68 entries (0 percent, 5.67x previous step)
-    3 steps has 282 entries (0 percent, 4.15x previous step)
-    4 steps has 1,218 entries (0 percent, 4.32x previous step)
-    5 steps has 5,382 entries (1 percent, 4.42x previous step)
-    6 steps has 20,484 entries (5 percent, 3.81x previous step)
-    7 steps has 62,640 entries (18 percent, 3.06x previous step)
-    8 steps has 118,196 entries (34 percent, 1.89x previous step)
-    9 steps has 104,328 entries (30 percent, 0.88x previous step)
-    10 steps has 29,872 entries (8 percent, 0.29x previous step)
-    11 steps has 516 entries (0 percent, 0.02x previous step)
+    1 steps has 20 entries (0 percent, 10.00x previous step)
+    2 steps has 292 entries (0 percent, 14.60x previous step)
+    3 steps has 3,614 entries (0 percent, 12.38x previous step)
+    4 steps has 35,016 entries (0 percent, 9.69x previous step)
+    5 steps has 262,910 entries (0 percent, 7.51x previous step)
+    6 steps has 1,678,254 entries (0 percent, 6.38x previous step)
+    7 steps has 9,314,920 entries (0 percent, 5.55x previous step)
+    8 steps has 42,467,206 entries (2 percent, 4.56x previous step)
+    9 steps has 142,043,698 entries (8 percent, 3.34x previous step)
+    10 steps has 310,836,418 entries (18 percent, 2.19x previous step)
+    11 steps has 436,034,242 entries (25 percent, 1.40x previous step)
+    12 steps has 404,658,064 entries (24 percent, 0.93x previous step)
+    13 steps has 242,558,432 entries (14 percent, 0.60x previous step)
+    14 steps has 83,622,720 entries (4 percent, 0.34x previous step)
+    15 steps has 7,153,472 entries (0 percent, 0.09x previous step)
+    16 steps has 30,720 entries (0 percent, 0.00x previous step)
 
-    Total: 343,000 entries
-    Average: 8.11 moves
+    Total: 1,680,700,000 entries
+    Average: 11.24 moves
+
+    max(UD, LR, FB) is too weak on its own, so ``ida_search_666_daisy_centers``
+    feeds the three per-axis costs into the sampled ``daisy_spine_costs_666``
+    matrix. Passing ``multiplier`` scales max(UD, LR, FB) instead; that is not
+    admissible and exists to collect the samples that rebuild the matrix, see
+    ``utils/build-666-daisy-cost-matrix.py``.
+                 . . . . . .
+                 . . U U . .
+                 . U U U U .
+                 . U U U U .
+                 . . U U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . F F . .  . . R R . .  . . B B . .
+    . . L L . .  . . F F . .  . . R R . .  . . B B . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . D D . .
+                 . D D D D .
+                 . D D D D .
+                 . . D D . .
+                 . . . . . .
     """
 
-    # fmt: off
-    state_targets = (
-        "DDDUUDDUUDDDUUUDDUUDDUUU",
-        "UUUUUUUUUUUUDDDDDDDDDDDD",
-    )
+    def __init__(self, parent, multiplier=None):
+        self.parent = parent
+        self.avoid_oll = None
+        self.multiplier = multiplier
 
-    UD_inner_x_centers_oblique_edges = (
-        9, 10, 14, 15, 16, 17, 20, 21, 22, 23, 27, 28,  # Upper
-        189, 190, 194, 195, 196, 197, 200, 201, 202, 203, 207, 208,  # Down
-    )
-    # fmt: on
+    def solve_via_c(self, **_kwargs):
+        cmd = ["./ida_search_666_daisy_centers", "--kociemba", self.parent.get_kociemba_string(True)]
+        for flag, filename in DAISY_INNER_X_SPINE_TABLES_666:
+            download_file_if_needed(filename)
+            cmd.extend((flag, filename))
+        if self.multiplier:
+            cmd.extend(("--multiplier", str(self.multiplier)))
 
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step61-UD-solve-inner-x-center-and-oblique-edges.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=11,
-            all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
 
-    def state(self):
-        return "".join([self.parent.state[x] for x in self.UD_inner_x_centers_oblique_edges])
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.UD_inner_x_centers_oblique_edges, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
-    """
-    lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
-    =======================================================================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 12 entries (0 percent, 6.00x previous step)
-    2 steps has 68 entries (0 percent, 5.67x previous step)
-    3 steps has 282 entries (0 percent, 4.15x previous step)
-    4 steps has 1,218 entries (0 percent, 4.32x previous step)
-    5 steps has 5,382 entries (1 percent, 4.42x previous step)
-    6 steps has 20,484 entries (5 percent, 3.81x previous step)
-    7 steps has 62,640 entries (18 percent, 3.06x previous step)
-    8 steps has 118,196 entries (34 percent, 1.89x previous step)
-    9 steps has 104,328 entries (30 percent, 0.88x previous step)
-    10 steps has 29,872 entries (8 percent, 0.29x previous step)
-    11 steps has 516 entries (0 percent, 0.02x previous step)
-
-    Total: 343,000 entries
-    Average: 8.11 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "BBBFFBBFFBBBFFFBBFFBBFFF",
-        "FFFFFFFFFFFFBBBBBBBBBBBB",
-    )
-
-    FB_inner_x_centers_oblique_edges = (
-        81, 82, 86, 87, 88, 89, 92, 93, 94, 95, 99, 100,  # Front
-        153, 154, 158, 159, 160, 161, 164, 165, 166, 167, 171, 172,  # Back
-    )
-    # fmt: on
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=11,
-            all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_inner_x_centers_oblique_edges])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.FB_inner_x_centers_oblique_edges, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666LRObliqueEdges(LookupTable):
-    """
-    lookup-table-6x6x6-step63-LR-oblique-edges.txt
-    ==============================================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 12 entries (0 percent, 6.00x previous step)
-    2 steps has 96 entries (0 percent, 8.00x previous step)
-    3 steps has 728 entries (0 percent, 7.58x previous step)
-    4 steps has 3,446 entries (1 percent, 4.73x previous step)
-    5 steps has 10,036 entries (5 percent, 2.91x previous step)
-    6 steps has 26,472 entries (15 percent, 2.64x previous step)
-    7 steps has 44,832 entries (25 percent, 1.69x previous step)
-    8 steps has 41,312 entries (23 percent, 0.92x previous step)
-    9 steps has 32,560 entries (18 percent, 0.79x previous step)
-    10 steps has 15,176 entries (8 percent, 0.47x previous step)
-    11 steps has 1,728 entries (0 percent, 0.11x previous step)
-
-    Total: 176,400 entries
-    Average: 7.56 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "UUUULLLLLLLLFFFFRRRRRRRRBBBBDDDD",
-        "UUUURRRRRRRRFFFFLLLLLLLLBBBBDDDD",
-    )
-
-    LR_oblique_edges_UFBD_inner_x_centers = (
-        15, 16, 21, 22,  # Upper
-        45, 46, 50, 53, 56, 59, 63, 64,  # Left
-        87, 88, 93, 94,  # Front
-        117, 118, 122, 125, 128, 131, 135, 136,  # Right
-        159, 160, 165, 166,  # Back
-        195, 196, 201, 202,  # Down
-    )
-    # fmt: on
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step63-LR-oblique-edges.txt",
-            self.state_targets,
-            linecount=176400,
-            max_depth=11,
-            all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_oblique_edges_UFBD_inner_x_centers])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.LR_oblique_edges_UFBD_inner_x_centers, state):
-            cube[pos] = pos_state
-
-
-class LookupTableIDA666UFBDInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
-            prune_tables=(
-                parent.lt_UD_solve_inner_x_centers_and_oblique_edges,
-                parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
-                parent.lt_LR_oblique_edges,
-            ),
-            centers_only=True,
-        )
-        # fmt: on
+        raise SolveError(f"ida_search_666_daisy_centers failed with exit {returncode}\n{output}")
 
 
 class RubiksCube666(RubiksCubeNNNEvenEdges):
@@ -1531,6 +1250,127 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.fake_444.re_init()
         return self.fake_444
 
+    def inner_x_centers_staged(self) -> bool:
+        """Return whether each inner-x center is on its color axis."""
+        expected_axes = ("UD", "LR", "FB", "LR", "FB", "UD")
+        for face, expected in enumerate(expected_axes):
+            for square in inner_x_centers_666[face * 4 : (face + 1) * 4]:
+                if self.state[square] not in expected:
+                    return False
+        return True
+
+    def LR_inner_x_centers_staged(self) -> bool:
+        """Return whether all eight LR inner x-centers are on LR."""
+        return all(
+            self.state[square] in ("L", "R")
+            for face in (1, 3)
+            for square in inner_x_centers_666[face * 4 : (face + 1) * 4]
+        )
+
+    def LR_oblique_pair_count(self) -> int:
+        """Return how many of the eight LR oblique pairs occupy matching slots."""
+        return sum(
+            self.state[left] in ("L", "R") and self.state[right] in ("L", "R")
+            for left, right in zip(left_oblique_edges_666, right_oblique_edges_666)
+        )
+
+    def LR_obliques_paired(self) -> bool:
+        """Return whether the eight LR oblique pairs occupy matching slots."""
+        return self.LR_oblique_pair_count() == 8
+
+    def stage_LR_inner_x_centers(self) -> None:
+        """Stage only the LR inner x-centers."""
+        if self.LR_inner_x_centers_staged():
+            return
+        self.lt_LR_inner_x_centers_stage.solve_via_c()
+        if not self.LR_inner_x_centers_staged():
+            raise SolveError("phase 1 did not stage the LR inner x-centers")
+
+    def stage_UD_inner_x_centers_and_pair_LR_obliques(self) -> None:
+        """Finish inner-x staging while pairing the LR obliques from the current state."""
+        if self.inner_x_centers_staged() and self.LR_obliques_paired():
+            return
+        self.lt_UD_inner_x_centers_stage_LR_oblique_pairing.solve_via_c()
+        if not self.inner_x_centers_staged():
+            raise SolveError("phase 2 did not finish staging the inner x-centers")
+        if not self.LR_obliques_paired():
+            raise SolveError("phase 2 did not pair the LR obliques")
+        if 1 in self.center_solution_leads_to_oll_parity():
+            raise SolveError("phase 2 did not clear orbit-1 OLL parity")
+
+    def stage_inner_x_and_pair_LR_obliques(self) -> None:
+        """Search phase 2 from every distinct shortest phase-1 ending."""
+        if self.inner_x_centers_staged() and self.LR_obliques_paired():
+            return
+
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        phase1_comment_start = len(self.solution)
+        if self.LR_inner_x_centers_staged():
+            phase1_solutions = [()]
+        else:
+            phase1_solutions = self.lt_LR_inner_x_centers_stage.solutions_via_c()
+
+        phase1_by_root = {}
+        seen_states = set()
+        roots = []
+        try:
+            for steps in phase1_solutions:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                for step in steps:
+                    self.rotate(step)
+                state_key = self.get_kociemba_string(True)
+                if state_key in seen_states:
+                    continue
+                seen_states.add(state_key)
+                paired = self.LR_oblique_pair_count()
+                root_index = len(phase1_by_root)
+                phase1_by_root[root_index] = (steps, paired)
+                roots.append(
+                    (
+                        root_index,
+                        state_key,
+                        frozenset(self.center_solution_leads_to_oll_parity()),
+                        paired,
+                    )
+                )
+        finally:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+        roots.sort(key=lambda root: (-root[3], root[0]))
+        logger.info(
+            "phase-1 portfolio has %d solutions and %d distinct phase-2 roots",
+            len(phase1_solutions),
+            len(roots),
+        )
+        root_index, phase2_steps = self.lt_UD_inner_x_centers_stage_LR_oblique_pairing.solution_via_c(
+            roots,
+            root_cap=PHASE2_ROOT_CAP_666,
+        )
+        phase1_steps, paired = phase1_by_root[root_index]
+
+        for step in phase1_steps:
+            self.rotate(step)
+        self.print_cube_add_comment("LR inner x-centers staged", phase1_comment_start)
+        phase2_comment_start = len(self.solution)
+        for step in phase2_steps:
+            self.rotate(step)
+        self.print_cube_add_comment("UD inner x-centers staged, LR oblique edges paired", phase2_comment_start)
+        logger.info(
+            "selected phase-1 length %d (%d/8 LR oblique pairs) and phase-2 length %d",
+            len(phase1_steps),
+            paired,
+            len(phase2_steps),
+        )
+        if not self.inner_x_centers_staged():
+            raise SolveError("phase 2 did not finish staging the inner x-centers")
+        if not self.LR_obliques_paired():
+            raise SolveError("phase 2 did not pair the LR obliques")
+        if 1 in self.center_solution_leads_to_oll_parity():
+            raise SolveError("phase 2 did not clear orbit-1 OLL parity")
+
     def get_fake_555(self):
         if self.fake_555 is None:
             self.fake_555 = RubiksCube555(solved_555, "URFDLB")
@@ -1573,66 +1413,25 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_init_called = True
 
-        # phase 1
-        self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
-        self.lt_LR_oblique_edge_stage_inner_x_stage = LookupTable666LRObliquEdgeStageInnerXStage(self)
+        # phase 1 - stage LR inner x-centers
+        self.lt_LR_inner_x_centers_stage = LookupTableIDA666LRInnerXCentersStage(self)
 
-        # phase 2
-        self.lt_LR_oblique_edge_stage = LookupTable666LRObliquEdgeStage(self)
-        self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
-        self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
-        self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
+        # phase 2 - stage UD inner x-centers and pair LR obliques anywhere
+        self.lt_UD_inner_x_centers_stage_LR_oblique_pairing = LookupTableIDA666UDInnerXCentersStageLRObliquePairing(
+            self
+        )
 
-        # phase 3
-        self.lt_UD_oblique_edge_stage = LookupTable666UDObliquEdgeStage(self)
-        self.lt_UD_oblique_edge_stage.avoid_oll = (0, 1)
-        self.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(self)
-        self.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
-
-        # phase 4
-        self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueStage(self)
-        self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueStage(self)
-        self.lt_UD_outer_x_centers_stage = LookupTable666UDOuterXCenterStage(self)
+        # phase 4 - ranked UD oblique + outer-x tables to finish staging UD
+        self.lt_UD_left_right_oblique_stage = LookupTable666UDLeftRightObliqueStage(self)
+        self.lt_UD_left_oblique_outer_x_stage = LookupTable666UDLeftObliqueOuterXStage(self)
+        self.lt_UD_right_oblique_outer_x_stage = LookupTable666UDRightObliqueOuterXStage(self)
         self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
-        self.lt_UD_centers_stage.avoid_oll = (0, 1)
 
-        # phase 5
-        self.lt_LR_centers = LookupTable666Step50LRCenters(self)
-        self.lt_LR_highlow_edges = LookupTable666Step50HighLowEdges(self)
-        self.lt_step50 = LookupTableIDA666Step50(self)
-        self.lt_step50_without_edges = LookupTableIDA666Step50WithoutEdges(self)
+        # Only orbit0 here; phase 2 owns orbit1.
+        self.lt_UD_centers_stage.avoid_oll = 0
 
-        # phase 6
-        self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
-        self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
-        self.lt_LR_oblique_edges = LookupTable666LRObliqueEdges(self)
-        self.lt_UFBD_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666UFBDInnerXCenterAndObliqueEdges(self)
-
-    def populate_fake_444_for_inner_x_centers_stage(self):
-        fake_444 = self.get_fake_444()
-        fake_444.nuke_corners()
-        fake_444.nuke_edges()
-        fake_444.nuke_centers()
-
-        for side_index in range(6):
-            offset_444 = side_index * 16
-            offset_666 = side_index * 36
-
-            # Centers
-            fake_444.state[6 + offset_444] = self.state[15 + offset_666]
-            fake_444.state[7 + offset_444] = self.state[16 + offset_666]
-            fake_444.state[10 + offset_444] = self.state[21 + offset_666]
-            fake_444.state[11 + offset_444] = self.state[22 + offset_666]
-
-            # Edges
-            fake_444.state[2 + offset_444] = self.state[3 + offset_666]
-            fake_444.state[3 + offset_444] = self.state[4 + offset_666]
-            fake_444.state[5 + offset_444] = self.state[13 + offset_666]
-            fake_444.state[9 + offset_444] = self.state[19 + offset_666]
-            fake_444.state[8 + offset_444] = self.state[18 + offset_666]
-            fake_444.state[12 + offset_444] = self.state[24 + offset_666]
-            fake_444.state[14 + offset_444] = self.state[33 + offset_666]
-            fake_444.state[15 + offset_444] = self.state[34 + offset_666]
+        # phase 5 - daisy-solve all centers with three overlapping 70^5 tables
+        self.lt_daisy_centers = LookupTableIDA666DaisyCenters(self)
 
     def populate_fake_555_for_ULFRBD_solve(self):
         fake_555 = self.get_fake_555()
@@ -1728,219 +1527,87 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         return True
 
-    def daisy_solve_centers_eo_edges(self):
-        """
-        The inner x-centers and oblique edges are staged. Daisy solve the centers so that our
-        centers are reduced to 555 while also EOing the inside orbit of edges.
+    def daisy_solve_centers(self) -> None:
+        """Daisy-solve the staged centers with the ranked C search."""
+        comment_start = len(self.solution)
+        self.lt_daisy_centers.solve_via_c()
+        self.print_cube_add_comment("centers reduced to 555", comment_start)
 
-        Thoughts on other ways to tackle this problem:
-        - There are 70^3 per side so to do this in one phase would be a 70^9 search space which is unrealistic.
-        """
-
-        # phase 5
-        # - put LR centers such that they can be solved with L L' R R'
-        # - EO the inside oribit of edges to prep for the 444 solver to pair those edges
+    def stage_LR_and_UD_centers(self, phase3_solution_count: int = 64) -> None:
+        """Select the phase-3 endpoint that gives the shortest ranked phase 4."""
         original_state = self.state[:]
         original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-        pt_state_indexes_to_edge_mapping = {}
+        phase3_comment_start = len(self.solution)
 
-        # try all 2048 edge mappings
-        for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
-            for edge_mapping in edges_to_flip_sets:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-                self.edge_mapping = edge_mapping
-                pt_state_indexes_to_edge_mapping[tuple([pt.state_index() for pt in self.lt_step50.prune_tables])] = (
-                    edge_mapping
-                )
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+        phase3_solutions = fake_555.lt_LR_centers_stage.solutions_via_c(solution_count=phase3_solution_count)
+
+        phase3_solution_by_root = {}
+        root_keys = set()
+        roots = []
+        phase4_squares = (
+            tuple(UFBD_outer_x_centers_666) + tuple(UFBD_left_oblique_edges_666) + tuple(UFBD_right_oblique_edges_666)
+        )
+
+        for phase3_solution, _ in phase3_solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            for step in phase3_solution:
+                self.rotate(step)
+
+            orbits_with_oll = frozenset(self.center_solution_leads_to_oll_parity())
+            root_key = (
+                tuple(self.state[square] for square in phase4_squares),
+                0 in orbits_with_oll,
+            )
+            if root_key in root_keys:
+                continue
+
+            root_index = len(roots)
+            root_keys.add(root_key)
+            phase3_solution_by_root[root_index] = phase3_solution
+            roots.append((root_index, self.get_kociemba_string(True), orbits_with_oll))
+
+        logger.info(
+            "phase-3 portfolio has %d solutions and %d distinct phase-4 roots",
+            len(phase3_solutions),
+            len(roots),
+        )
+        root_index, phase4_solution = self.lt_UD_centers_stage.solution_via_c(roots)
+        phase3_solution = phase3_solution_by_root[root_index]
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        phase5_solutions = self.lt_step50.solutions_via_c(
-            pt_states=pt_state_indexes_to_edge_mapping.keys(), solution_count=1
-        )
-
-        phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase5_solutions[0]
-        self.edge_mapping = pt_state_indexes_to_edge_mapping[(pt0_state, pt1_state)]
-
-        for step in phase5_solution:
+        for step in phase3_solution:
             self.rotate(step)
+        self.print_cube_add_comment("LR centers staged", phase3_comment_start)
 
-        self.print_cube_add_comment("LR centers reduced to 555, EOed inside edges", tmp_solution_len)
-
-        # phase 6
-        # solve the UD inner x-centers, pair the UD oblique edges and daisy solve UD
-        # solve the FB inner x-centers, pair the FB oblique edges and daisy solve FB
-        # daisy solve LR
-        # this takes ~14 steps
-        tmp_solution_len = len(self.solution)
-        self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solve_via_c()
-        self.print_cube_add_comment("UD FB centers reduced to 555", tmp_solution_len)
-
-    def daisy_solve_centers(self):
-        """
-        The inner x-centers and oblique edges are staged. Daisy solve the centers so that our
-        centers are reduced to 555.
-        """
-
-        # phase 5
-        # - put LR centers such that they can be solved with L L' R R'
-        tmp_solution_len = len(self.solution)
-        self.lt_step50_without_edges.solve_via_c()
-        self.print_cube_add_comment("LR centers reduced to 5x5x5", tmp_solution_len)
-
-        # phase 6
-        # solve the UD inner x-centers, pair the UD oblique edges and daisy solve UD
-        # solve the FB inner x-centers, pair the FB oblique edges and daisy solve FB
-        # daisy solve LR
-        # this takes ~14 steps
-        tmp_solution_len = len(self.solution)
-        self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solve_via_c()
-        self.print_cube_add_comment("UD FB centers reduced to 5x5x5", tmp_solution_len)
-
-    def stage_t_centers(self):
-        """
-        Used by RubiksCubeNNNEven.make_plus_sign
-
-        - pair LR inner x-centers and pair oblique edges (9 moves)
-        - stage LR t-centers (6 moves)
-        - stage the UD oblique edges and inner x-centers
-        """
-        # phase 1 - stage the LR inner-x centers and pair the LR oblique edges
-        tmp_solution_len = len(self.solution)
-        self.lt_LR_oblique_edge_stage_inner_x_stage.solve_via_c(use_kociemba_string=True)
-        self.print_cube_add_comment("LR inner x-centers staged, oblique edges paired", tmp_solution_len)
-
-        # phase 2 - Stage LR t-centers via 555
-        fake_555 = self.get_fake_555()
-        self.populate_fake_555_for_ULFRBD_solve()
-        tmp_solution_len = len(self.solution)
-        fake_555.lt_LR_t_centers_stage_ida.solve_via_c()
-
-        for step in fake_555.solution:
-            if not step.startswith("COMMENT"):
-                self.rotate(step)
-
-        self.print_cube_add_comment("LR t-centers staged", tmp_solution_len)
-
-        # phase 3 - stage the UD oblique edges and inner x-centers
-        tmp_solution_len = len(self.solution)
-        self.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
-        self.print_cube_add_comment("UD t-centers staged", tmp_solution_len)
+        phase4_comment_start = len(self.solution)
+        for step in phase4_solution:
+            self.rotate(step)
+        self.print_cube_add_comment("UD centers staged", phase4_comment_start)
+        logger.info(
+            "selected phase-3 length %d and phase-4 length %d (%d total)",
+            len(phase3_solution),
+            len(phase4_solution),
+            len(phase3_solution) + len(phase4_solution),
+        )
 
     def stage_centers(self):
         """
-        option A (original strategy)
-        - pair all inner x-centers via 444 (9 moves)
-        - pair LR oblique edges (9 moves)
-        - stage LR (10 moves)
-        - stage UD (14 moves)
-        - 42 total
-
-        option B (what we use today)
-        - pair LR inner x-centers and oblique edges (9 moves)
-        - stage LR (10 moves)
-        - pair UD inner x-centers and oblique edges (9 moves)
-        - stage UD (10 moves)
-        - 38 total
-        The downside here is the "pair LR inner x-centers and pair oblique edges" phase is pretty slow
-        because it is using an unpaired count heuristic.
-
-        Things I have tried here that did not work
-
-        3 phases
-        - pair LR inner x-centers and pair oblique edges (9 moves)
-        - stage LR (10 moves)
-        - stage all of UD in a single phase. This is a 12870^4 search space though and even with
-            six (yes six) 12870^2 (165 million entry) perfect-hash tables the IDA ran overnight
-            before I killed it.
-
-        Things to try:
-        - pair LR inner x-centers and oblique edges (9 moves)
-        - stage LR while staging the UDFB inner x-centers? (at least 10 moves)
-            - similar to 555 stage LR phase
-            - would also stage UDFB inner x-centers which is a 16!/(8! * 8!) or 12870 space
-            - would have to avoid any 3w move that would break up an LR obilque edge
-            - this would be super slow...735741/(735741*735741*12870) = 0.000 000 000 105
-            - not feasible
-        - stage UD (14 moves)
-        - 33 plus the rest of the moves for the 2nd phase
+        Search every distinct phase-1 ending in phase 2, then stage LR and UD
+        via a phase-3/4 portfolio. If LR is already staged, only run phase 4.
         """
-        use_option_A = False
+        if not self.LR_centers_staged():
+            self.stage_inner_x_and_pair_LR_obliques()
+            self.stage_LR_and_UD_centers()
+            return
 
-        if use_option_A:
-            # phase 1 - stage the inner-x centers via 444 solver
-            fake_444 = self.get_fake_444()
-            self.populate_fake_444_for_inner_x_centers_stage()
-            tmp_solution_len = len(self.solution)
-            fake_444.lt_ULFRBD_centers_stage.solve_via_c()
-
-            for step in fake_444.solution:
-                if not step.startswith("COMMENT"):
-                    if "w" in step:
-                        step = "3" + step
-                    self.rotate(step)
-
-            self.print_cube_add_comment("inner x-centers staged", tmp_solution_len)
-
-            # phase 2 - pair LR oblique edges (5 or 6 moves)
-            self.lt_LR_oblique_edge_stage.solve_via_c(use_kociemba_string=True)
-            self.print_cube_add_comment("LR oblique edges paired", tmp_solution_len)
-
-            # phase 3 - Stage LR centers via 555
-            fake_555 = self.get_fake_555()
-            self.populate_fake_555_for_ULFRBD_solve()
-            tmp_solution_len = len(self.solution)
-            fake_555.group_centers_stage_LR()
-
-            for step in fake_555.solution:
-                if not step.startswith("COMMENT"):
-                    self.rotate(step)
-
-            self.print_cube_add_comment("LR centers staged", tmp_solution_len)
-
-            # phase 4 - pair the UD oblique edges and outer x-centers to finish staging centers
+        if not self.UD_centers_staged():
             tmp_solution_len = len(self.solution)
             self.lt_UD_centers_stage.solve_via_c()
             self.print_cube_add_comment("UD centers staged", tmp_solution_len)
-
-        else:
-            if not self.LR_centers_staged():
-                # phase 1 - stage the LR inner-x centers and pair the LR oblique edges
-                tmp_solution_len = len(self.solution)
-                self.lt_LR_oblique_edge_stage_inner_x_stage.solve_via_c(use_kociemba_string=True)
-                self.print_cube_add_comment("LR inner x-centers staged, oblique edges paired", tmp_solution_len)
-
-                # phase 2 - Stage LR centers via 555
-                fake_555 = self.get_fake_555()
-                self.populate_fake_555_for_ULFRBD_solve()
-                tmp_solution_len = len(self.solution)
-                fake_555.group_centers_stage_LR()
-
-                for step in fake_555.solution:
-                    if not step.startswith("COMMENT"):
-                        self.rotate(step)
-
-                self.print_cube_add_comment("LR centers staged", tmp_solution_len)
-
-            if not self.UD_centers_staged():
-                # phase 3 - stage the UD inner-x centers and pair the UD oblique edges
-                tmp_solution_len = len(self.solution)
-                self.lt_UD_oblique_edge_stage.solve_via_c(use_kociemba_string=True)
-                self.print_cube_add_comment("UD inner x-centers staged, oblique edges paired", tmp_solution_len)
-
-                # phase 4 - Stage UD centers via 555
-                fake_555 = self.get_fake_555()
-                self.populate_fake_555_for_ULFRBD_solve()
-                tmp_solution_len = len(self.solution)
-                fake_555.group_centers_stage_UD()
-
-                for step in fake_555.solution:
-                    if not step.startswith("COMMENT"):
-                        self.rotate(step)
-
-                self.print_cube_add_comment("UD centers staged", tmp_solution_len)
 
     def reduce_555(self):
         if self.reduced_to_555():
@@ -1948,7 +1615,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_init()
         self.stage_centers()
-        self.daisy_solve_centers_eo_edges()
+        self.daisy_solve_centers()
         self.pair_inside_edges_via_444()
 
 

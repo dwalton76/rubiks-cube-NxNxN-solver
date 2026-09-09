@@ -365,9 +365,9 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
     """
     lookup-table-4x4x4-step22-highlow-edges-centers.txt
     ===================================================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 44 entries (0 percent, 22.00x previous step)
-    2 steps has 384 entries (0 percent, 8.73x previous step)
+    0 steps has 12 entries (0 percent, 0.00x previous step)
+    1 steps has 34 entries (0 percent, 2.83x previous step)
+    2 steps has 384 entries (0 percent, 11.29x previous step)
     3 steps has 3,354 entries (0 percent, 8.73x previous step)
     4 steps has 22,324 entries (2 percent, 6.66x previous step)
     5 steps has 113,276 entries (12 percent, 5.07x previous step)
@@ -463,15 +463,15 @@ class LookupTable444Reduce333FirstTwoCenters(LookupTable):
     """
     lookup-tables/lookup-table-4x4x4-step31-centers.txt
     ===================================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 115 entries (13 percent, 115.00x previous step)
-    2 steps has 212 entries (25 percent, 1.84x previous step)
+    0 steps has 36 entries (4 percent, 0.00x previous step)
+    1 steps has 80 entries (9 percent, 2.22x previous step)
+    2 steps has 212 entries (25 percent, 2.65x previous step)
     3 steps has 288 entries (34 percent, 1.36x previous step)
     4 steps has 192 entries (22 percent, 0.67x previous step)
     5 steps has 32 entries (3 percent, 0.17x previous step)
 
     Total: 840 entries
-    Average: 2.77 moves
+    Average: 2.73 moves
     """
 
     state_targets = (

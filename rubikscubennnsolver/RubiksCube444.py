@@ -979,14 +979,6 @@ class RubiksCube444(RubiksCube):
         self.lt_phase4_edges = LookupTable444Reduce333LastEightEdges(self)
         self.lt_phase4 = LookupTableIDA444Phase4(self)
 
-    def phase1(self) -> None:
-        if self.LR_centers_staged():
-            return
-
-        tmp_solution_len = len(self.solution)
-        self.lt_phase1.solve_via_c()
-        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
-
     def phase2_pt_state_indexes(self):
         """
         Return a dict of phase-2 prune-table roots for the current cube, keyed
@@ -1023,27 +1015,6 @@ class RubiksCube444(RubiksCube):
         self.solution = original_solution[:]
         self.edge_mapping = original_mapping
         return pt_state_indexes_to_edge_mapping
-
-    def phase2(self) -> None:
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-        pt_state_indexes_to_edge_mapping = self.phase2_pt_state_indexes()
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        phase2_solutions = self.lt_phase2.solutions_via_c(
-            pt_states=pt_state_indexes_to_edge_mapping.keys(), solution_count=1
-        )
-
-        phase2_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase2_solutions[0]
-        self.edge_mapping = pt_state_indexes_to_edge_mapping[(pt0_state, pt1_state)]
-
-        for step in phase2_solution:
-            self.rotate(step)
-
-        self.highlow_edges_print()
-        self.print_cube_add_comment("centers staged, edges EOed into high/low groups", tmp_solution_len)
 
     def phase1_and_2(self, phase1_solution_count: int = 64) -> None:
         """
@@ -1141,58 +1112,6 @@ class RubiksCube444(RubiksCube):
         )
         self.highlow_edges_print()
         self.print_cube_add_comment("centers staged, edges EOed into high/low groups", phase2_comment_start)
-
-    def phase3(self, wing_str_combo: List[str] = None):
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        tmp_solution_len = len(original_solution)
-
-        # phase 3 - search for all wing_strs
-        pt_state_indexes = []
-        phase3_pt_state_indexes_to_wing_str_combo = {}
-
-        for wing_str_combo in itertools.combinations(wing_strs_all, 4):
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            self.lt_phase3_edges.only_colors = wing_str_combo
-            wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase3.prune_tables])
-            phase3_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
-            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        phase3_solutions = self.lt_phase3.solutions_via_c(pt_states=pt_state_indexes)
-
-        phase3_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase3_solutions[0]
-        wing_str_combo = phase3_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state)]
-        self.lt_phase3_edges.only_colors = wing_str_combo
-
-        for step in phase3_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
-
-    def phase4(self, max_ida_threshold: int = None):
-        tmp_solution_len = len(self.solution)
-        phase4_solutions = self.lt_phase4.solutions_via_c(max_ida_threshold=max_ida_threshold, solution_count=500)
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-
-        for phase4_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase4_solutions:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            for step in phase4_solution:
-                self.rotate(step)
-
-            if not self.edge_solution_leads_to_pll_parity():
-                logger.info(f"{self}: {phase4_solution} avoids PLL")
-                break
-        else:
-            logger.info(f"{self}: could not find a phase4 solution that avoids PLL")
-
-        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def phase3_and_4(
         self,
@@ -1406,9 +1325,6 @@ class RubiksCube444(RubiksCube):
             return
 
         self.phase1_and_2()
-
-        # self.phase3()
-        # self.phase4()
         self.phase3_and_4(consider_solve_333=consider_solve_333)
 
 

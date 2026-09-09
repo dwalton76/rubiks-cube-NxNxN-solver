@@ -419,7 +419,6 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
-
 class LookupTable666UDLeftObliqueCentersStage(LookupTable):
     """
     lookup-table-6x6x6-step13-UD-left-oblique-centers.txt

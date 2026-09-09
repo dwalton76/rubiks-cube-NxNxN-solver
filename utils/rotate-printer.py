@@ -14,6 +14,8 @@ import click
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, configure_logging
+from rubikscubennnsolver.RubiksCube444 import moves_444, solved_444
+from rubikscubennnsolver.RubiksCube555 import moves_555, solved_555
 from rubikscubennnsolver.RubiksCube666 import moves_666, solved_666
 from rubikscubennnsolver.RubiksCube777 import moves_777, solved_777
 
@@ -42,8 +44,8 @@ def main(c: bool) -> None:
     for size, solved_state in (
         # (2, solved_222),
         # (3, solved_333),
-        # (4, solved_444),
-        # (5, solved_555),
+        (4, solved_444),
+        (5, solved_555),
         (6, solved_666),
         (7, solved_777),
     ):
@@ -62,15 +64,15 @@ def main(c: bool) -> None:
 
         elif size == 3:
             steps = moves_333
+        """
 
-        elif size == 4:
+        if size == 4:
             steps = moves_444
 
         elif size == 5:
             steps = moves_555
-        """
 
-        if size == 6:
+        elif size == 6:
             steps = moves_666
 
         elif size == 7:
@@ -101,27 +103,34 @@ def main(c: bool) -> None:
         """
 
         if build_rotate_xxx_c:
-            print("void")
-            print("rotate_%d%d%d(char *cube, char *cube_tmp, int array_size, move_type move)" % (size, size, size))
-            print("{")
-            print("    /* This was contructed using utils/rotate-printer.py */")
-            print("    memcpy(cube_tmp, cube, sizeof(char) * array_size);")
-            print("")
-            first_step = True
+            for suffix in (None, "_centers"):
+                function_name = f"rotate_{size}{size}{size}{suffix}" if suffix else f"rotate_{size}{size}{size}"
+                print("void")
+                print(f"{function_name}(char *cube, char *cube_tmp, int array_size, move_type move)")
+                print("{")
+                print("    /* This was contructed using utils/rotate-printer.py */")
+                if suffix == "_centers":
+                    print("    (void)cube_tmp;")
+                    print("    (void)array_size;")
+                else:
+                    print("    memcpy(cube_tmp, cube, sizeof(char) * array_size);")
+                print("")
+                first_step = True
 
-            for step in steps:
-                cube.rotate(step)
-                cube.print_case_statement_C(step, first_step, size)
-                cube.state = copy(original_state)
-                first_step = False
+                for step in steps:
+                    cube.rotate(step)
+                    # dwalton
+                    cube.print_case_statement_C(step, first_step, size, suffix)
+                    cube.state = copy(original_state)
+                    first_step = False
 
-            print(r"""
+                print(r"""
     default:
         printf("ERROR: invalid move %d\n", move);
         exit(1);
     }
 }
-    """)
+            """)
 
         # build python swaps.py
         else:

@@ -929,7 +929,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
             case LR_OBLIQUE_EDGES_STAGE_666:
             case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-                rotate_666(cube, cube_tmp, array_size, solution[i]);
+                rotate_666_centers(cube, cube_tmp, array_size, solution[i]);
                 heuristic = ida_heuristic(cube, type);
                 printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
                 break;
@@ -937,7 +937,7 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
             case LR_OBLIQUE_EDGES_STAGE_777:
             case UD_OBLIQUE_EDGES_STAGE_777:
             case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
-                rotate_777(cube, cube_tmp, array_size, solution[i]);
+                rotate_777_centers(cube, cube_tmp, array_size, solution[i]);
                 heuristic = ida_heuristic(cube, type);
                 printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
                 break;
@@ -1317,9 +1317,9 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                 memcpy(cube_copy, node->cube, array_size_char);
 
                 if (cube_size == 6) {
-                    rotate_666(cube_copy, cube_tmp, array_size, move);
+                    rotate_666_centers(cube_copy, cube_tmp, array_size, move);
                 } else if (cube_size == 7) {
-                    rotate_777(cube_copy, cube_tmp, array_size, move);
+                    rotate_777_centers(cube_copy, cube_tmp, array_size, move);
                 } else {
                     printf("ERROR: ida_search() does not have rotate_xxx() for this cube size\n");
                     exit(1);

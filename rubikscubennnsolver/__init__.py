@@ -1478,7 +1478,7 @@ class RubiksCube(object):
             comment = f"COMMENT_{desc.replace(' ', '_').replace('-', '_')}_({solution_this_phase_len}_steps)"
             self.solution.append(comment)
 
-    def print_case_statement_C(self, case: str, first_step: bool, size: int) -> None:
+    def print_case_statement_C(self, case: str, first_step: bool, size: int, suffix: str = None) -> None:
         """
         This is called via utils/rotate-printer.py. It prints the case statements for lookup-table-builder.c
 
@@ -1487,31 +1487,22 @@ class RubiksCube(object):
             first_step: True if this is the first case in the switch statement
         """
         # fmt: off
-        centers_777 = (
-            9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41,  # Upper
-            58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90,  # Left
-            107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139,  # Front
-            156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188,  # Right
-            205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237,  # Back
-            254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286,  # Down
+        centers_444: Tuple[int] = (
+            6, 7, 10, 11,  # Upper
+            22, 23, 26, 27,  # Left
+            38, 39, 42, 43,  # Front
+            54, 55, 58, 59,  # Right
+            70, 71, 74, 75,  # Back
+            86, 87, 90, 91,  # Down
         )
 
-        outer_x_centers_777 = (
-            9, 13, 37, 41,  # Upper
-            58, 62, 86, 90,  # Left
-            107, 111, 135, 139,  # Front
-            156, 160, 184, 188,  # Right
-            205, 209, 233, 237,  # Back
-            254, 258, 282, 286,  # Down
-        )
-
-        outer_x_centers_666 = (
-            8, 11, 26, 29,
-            44, 47, 62, 65,
-            80, 83, 98, 101,
-            116, 119, 134, 137,
-            152, 155, 170, 173,
-            188, 191, 206, 209,
+        centers_555 = (
+            7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
+            32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+            57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
+            82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+            107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
+            132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
         )
 
         centers_666 = (
@@ -1522,29 +1513,62 @@ class RubiksCube(object):
             152, 153, 154, 155, 158, 159, 160, 161, 164, 165, 166, 167, 170, 171, 172, 173,  # Back
             188, 189, 190, 191, 194, 195, 196, 197, 200, 201, 202, 203, 206, 207, 208, 209,  # Down
         )
+
+        centers_777 = (
+            9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41,  # Upper
+            58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90,  # Left
+            107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139,  # Front
+            156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188,  # Right
+            205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237,  # Back
+            254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286,  # Down
+        )
         # fmt: on
 
         if first_step:
             print("    switch (move) {")
 
         case = case.replace("'", "_PRIME").replace("3", "three").replace("x", "X").replace("y", "Y").replace("z", "Z")
-        print(f"    case {case}:")
+        assignments = []
 
         for key, value in enumerate(self.state[1:]):
             key += 1
 
             # We never do anything with the corners or edges in the 666 and 777 C solvers so do not print the
             # cube adjustments for those positions.  This saves us some CPU cycles.
-            if size == 6:
-                if key not in centers_666 or key in outer_x_centers_666:
+            if size == 4:
+                if suffix == "_centers" and key not in centers_444:
+                    continue
+            elif size == 5:
+                if suffix == "_centers" and key not in centers_555:
+                    continue
+            elif size == 6:
+                if suffix == "_centers" and key not in centers_666:
                     continue
             elif size == 7:
-                if key not in centers_777 or key in outer_x_centers_777:
+                if suffix == "_centers" and key not in centers_777:
                     continue
+            else:
+                raise Exception(f"Add support for size {size}")
 
             if str(key) != str(value):
-                print(f"        cube[{key}] = cube_tmp[{value}];")
+                assignments.append((key, int(value)))
+
+        print(f"    case {case}: {{")
+        if suffix == "_centers" and assignments:
+            sources = sorted({src for _, src in assignments})
+            decls = [f"c{src} = cube[{src}]" for src in sources]
+            for offset in range(0, len(decls), 4):
+                chunk = ", ".join(decls[offset : offset + 4])
+                prefix = "        char " if offset == 0 else "             "
+                terminator = ";" if offset + 4 >= len(decls) else ","
+                print(f"{prefix}{chunk}{terminator}")
+            for dest, src in assignments:
+                print(f"        cube[{dest}] = c{src};")
+        else:
+            for dest, src in assignments:
+                print(f"        cube[{dest}] = cube_tmp[{src}];")
         print("        break;")
+        print("    }")
         print("")
 
     def print_case_statement_python(self) -> Tuple[int]:

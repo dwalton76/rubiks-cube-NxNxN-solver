@@ -23,6 +23,11 @@
 #define GROUP_U_COUNT 8
 #define GROUP_UNIVERSE UINT64_C(12870)
 #define PRODUCT_UNIVERSE UINT64_C(165636900)
+#define ALL_INNER_X_SIZE 24
+#define ALL_INNER_X_UNIVERSE UINT64_C(9465511770)
+#define OBLIQUE_PAIR_COUNT 24
+#define BINOM_MAX ALL_INNER_X_SIZE
+#define DEFAULT_UNPAIRED_MULTIPLIER 0.90f
 #define DEFAULT_MAX_IDA_THRESHOLD 20
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
@@ -47,18 +52,26 @@
 #define PARITY_FLOOR_ONE_ORBIT 7
 #define PARITY_FLOOR_BOTH_ORBITS 8
 
-#define ORBIT_INNER_X 0
-#define ORBIT_OUTER_X 1
-#define ORBIT_LEFT_OBLIQUE 2
-#define ORBIT_RIGHT_OBLIQUE 3
-#define ORBIT_COUNT 4
-#define TABLE_COUNT 6
-#define REQUIRED_TABLE_COUNT 2
+/*
+ * The all-inner-x goal only pins the inner x-centers and the paired L/R
+ * obliques, so its stabilizer is far larger and its floors are much lower.
+ * Measured the same way, by running this binary from a phase-1 goal state
+ * with each --orbitN-need-odd-w combination:
+ *
+ *   orbit0   1   Uw
+ *   orbit1   7   3Lw U 3Fw2 3Lw 3Uw2 F 3Lw
+ */
+#define ALL_INNER_X_PARITY_FLOOR_ORBIT0 1
+#define ALL_INNER_X_PARITY_FLOOR_ORBIT1 7
+
+#define ORBIT_OUTER_X 0
+#define ORBIT_LEFT_OBLIQUE 1
+#define ORBIT_RIGHT_OBLIQUE 2
+#define ORBIT_COUNT 3
+#define TABLE_COUNT 3
+#define REQUIRED_TABLE_COUNT 3
 
 /* These are the exact UFBD tuples in RubiksCube666.py. */
-static const unsigned int inner_x_squares[GROUP_SIZE] = {
-    15, 16, 21, 22, 87, 88, 93, 94, 159, 160, 165, 166, 195, 196, 201, 202,
-};
 static const unsigned int outer_x_squares[GROUP_SIZE] = {
     8, 11, 26, 29, 80, 83, 98, 101, 152, 155, 170, 173, 188, 191, 206, 209,
 };
@@ -69,8 +82,31 @@ static const unsigned int right_oblique_squares[GROUP_SIZE] = {
     10, 14, 23, 27, 82, 86, 95, 99, 154, 158, 167, 171, 190, 194, 203, 207,
 };
 
+/*
+ * All 24 inner x-centers in ascending square order, which is the rank order of
+ * lookup-table-6x6x6-step05-inner-x-centers-stage-one-phase.cost-only.bin.  Its
+ * goal state paints each pair of opposite faces with one of F, L, U, so the
+ * ranked coordinate is the 24!/(8!^3) multiset over those three symbols.
+ */
+static const unsigned int all_inner_x_squares[ALL_INNER_X_SIZE] = {
+    15, 16, 21, 22, 51, 52, 57, 58, 87, 88, 93, 94,
+    123, 124, 129, 130, 159, 160, 165, 166, 195, 196, 201, 202,
+};
+
+/*
+ * The two halves of every oblique edge pair, in matching order, so an oblique
+ * is paired when both of its squares hold an L or an R.
+ */
+static const unsigned int all_left_oblique_squares[OBLIQUE_PAIR_COUNT] = {
+    9, 20, 17, 28, 45, 56, 53, 64, 81, 92, 89, 100,
+    117, 128, 125, 136, 153, 164, 161, 172, 189, 200, 197, 208,
+};
+static const unsigned int all_right_oblique_squares[OBLIQUE_PAIR_COUNT] = {
+    10, 14, 23, 27, 46, 50, 59, 63, 82, 86, 95, 99,
+    118, 122, 131, 135, 154, 158, 167, 171, 190, 194, 203, 207,
+};
+
 static const unsigned int *orbit_squares[ORBIT_COUNT] = {
-    inner_x_squares,
     outer_x_squares,
     left_oblique_squares,
     right_oblique_squares,
@@ -78,9 +114,8 @@ static const unsigned int *orbit_squares[ORBIT_COUNT] = {
 
 /*
  * Each table holds the exact joint distance for one pair of orbits, so the
- * heuristic is the max over whichever tables were passed in.  The first two
- * pairings are required because between them they cover all four orbits, which
- * is what makes a cost of 0 mean "every U/D center is staged".
+ * heuristic is the max over all three pairings of the remaining phase-3
+ * orbits. A cost of 0 therefore means all three U/D center orbits are staged.
  */
 static struct ranked_table {
     const char *flag;
@@ -91,21 +126,23 @@ static struct ranked_table {
     unsigned char *costs;
     int fd;
 } ranked_tables[TABLE_COUNT] = {
-    {"--inner-x-outer-x-cost", "IXOX", ORBIT_INNER_X, ORBIT_OUTER_X, NULL, NULL, -1},
     {"--left-right-oblique-cost", "LROB", ORBIT_LEFT_OBLIQUE, ORBIT_RIGHT_OBLIQUE, NULL, NULL, -1},
-    {"--inner-x-left-oblique-cost", "IXLO", ORBIT_INNER_X, ORBIT_LEFT_OBLIQUE, NULL, NULL, -1},
-    {"--inner-x-right-oblique-cost", "IXRO", ORBIT_INNER_X, ORBIT_RIGHT_OBLIQUE, NULL, NULL, -1},
-    {"--outer-x-left-oblique-cost", "OXLO", ORBIT_OUTER_X, ORBIT_LEFT_OBLIQUE, NULL, NULL, -1},
-    {"--outer-x-right-oblique-cost", "OXRO", ORBIT_OUTER_X, ORBIT_RIGHT_OBLIQUE, NULL, NULL, -1},
+    {"--left-oblique-outer-x-cost", "LOOX", ORBIT_LEFT_OBLIQUE, ORBIT_OUTER_X, NULL, NULL, -1},
+    {"--right-oblique-outer-x-cost", "ROOX", ORBIT_RIGHT_OBLIQUE, ORBIT_OUTER_X, NULL, NULL, -1},
 };
 
-static uint64_t binom[GROUP_SIZE + 1][GROUP_SIZE + 1];
+static uint64_t binom[BINOM_MAX + 1][BINOM_MAX + 1];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_666];
 static move_type inverse_move[MOVE_MAX];
 static unsigned char orbit0_requirement;
 static unsigned char orbit1_requirement;
 static float cost_to_goal_multiplier;
+static const char *all_inner_x_filename;
+static unsigned char *all_inner_x_costs;
+static int all_inner_x_fd = -1;
+static int stage_all_inner_x;
+static float unpaired_multiplier = DEFAULT_UNPAIRED_MULTIPLIER;
 static move_type best_solution[MAX_IDA_THRESHOLD + 1];
 
 static atomic_uint next_task;
@@ -125,7 +162,10 @@ struct ranked_cost_file {
 struct heuristic_result {
     uint64_t orbit_rank[ORBIT_COUNT];
     uint64_t table_rank[TABLE_COUNT];
+    uint64_t all_inner_x_rank;
     unsigned char table_cost[TABLE_COUNT];
+    unsigned char all_inner_x_cost;
+    unsigned char unpaired_count;
     unsigned char cost;
 };
 
@@ -147,10 +187,10 @@ struct child {
 static void usage(const char *program)
 {
     printf(
-        "usage: %s --kociemba STATE --inner-x-outer-x-cost FILE "
-        "--left-right-oblique-cost FILE "
-        "[--inner-x-left-oblique-cost FILE] [--inner-x-right-oblique-cost FILE] "
-        "[--outer-x-left-oblique-cost FILE] [--outer-x-right-oblique-cost FILE] "
+        "usage: %s --kociemba STATE "
+        "{--all-inner-x-cost FILE [--unpaired-multiplier FLOAT] | "
+        "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
+        "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
         "[--multiplier FLOAT] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
@@ -162,7 +202,7 @@ static void usage(const char *program)
 
 static void init_binom(void)
 {
-    for (unsigned int n = 0; n <= GROUP_SIZE; n++) {
+    for (unsigned int n = 0; n <= BINOM_MAX; n++) {
         binom[n][0] = 1;
         binom[n][n] = 1;
         for (unsigned int k = 1; k < n; k++) {
@@ -202,22 +242,127 @@ static unsigned char decoded_cost(unsigned char encoded)
     return encoded ? encoded - 1 : UINT8_MAX;
 }
 
-static unsigned char parity_after_move(unsigned char parity, move_type move)
+/* The builder ranks with the symbols sorted, so F is 0, L is 1 and U is 2. */
+static unsigned int staged_symbol(char sticker)
+{
+    switch (sticker) {
+        case 'F':
+        case 'B':
+            return 0;
+        case 'L':
+        case 'R':
+            return 1;
+        case 'U':
+        case 'D':
+            return 2;
+        default:
+            return UINT_MAX;
+    }
+}
+
+static uint64_t multiset_permutations(const unsigned int counts[3])
+{
+    unsigned int total = counts[0] + counts[1] + counts[2];
+
+    return binom[total][counts[0]] * binom[total - counts[0]][counts[1]];
+}
+
+static uint64_t all_inner_x_rank_cube(const char *cube)
+{
+    unsigned int counts[3] = {8, 8, 8};
+    uint64_t rank = 0;
+
+    for (unsigned int position = 0; position < ALL_INNER_X_SIZE; position++) {
+        unsigned int selected = staged_symbol(cube[all_inner_x_squares[position]]);
+
+        if (selected > 2 || !counts[selected]) {
+            return UINT64_MAX;
+        }
+        for (unsigned int smaller = 0; smaller < selected; smaller++) {
+            if (!counts[smaller]) {
+                continue;
+            }
+            counts[smaller]--;
+            rank += multiset_permutations(counts);
+            counts[smaller]++;
+        }
+        counts[selected]--;
+    }
+    return rank;
+}
+
+/* Eight of the 24 oblique pairs hold the L/R obliques once they are all paired. */
+static unsigned char unpaired_oblique_count(const char *cube)
+{
+    unsigned char unpaired = 8;
+
+    for (unsigned int index = 0; index < OBLIQUE_PAIR_COUNT; index++) {
+        char left = cube[all_left_oblique_squares[index]];
+        char right = cube[all_right_oblique_squares[index]];
+
+        if ((left == 'L' || left == 'R') && (right == 'L' || right == 'R')) {
+            unpaired--;
+        }
+    }
+    return unpaired;
+}
+
+/*
+ * One turn can pair at most four obliques, so unpaired/4 is the only admissible
+ * bound, but it is far too optimistic to prune with.  --unpaired-multiplier
+ * scales the count so the estimate can be tuned between that floor (0.25) and
+ * the count itself (1.0), which is what the matrix in ida_search_via_graph.c
+ * uses for the L/R version of this phase.
+ */
+static unsigned char unpaired_cost(unsigned char unpaired)
+{
+    float scaled = unpaired * unpaired_multiplier;
+    unsigned char cost = (unsigned char)ceilf(scaled);
+
+    return unpaired && !cost ? 1 : cost;
+}
+
+/*
+ * Matches get_orbit0/1_wide_quarter_turn_count() in ida_search_core.c: every
+ * wide quarter turn flips its orbit, half turns never do.
+ */
+static unsigned char parity_bit_of_move(move_type move)
 {
     switch (move) {
+        case Uw:
+        case Uw_PRIME:
         case Lw:
         case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
         case Rw:
         case Rw_PRIME:
-            return parity ^ 1;
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            return 1;
+        case threeUw:
+        case threeUw_PRIME:
         case threeLw:
         case threeLw_PRIME:
+        case threeFw:
+        case threeFw_PRIME:
         case threeRw:
         case threeRw_PRIME:
-            return parity ^ 2;
+        case threeBw:
+        case threeBw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+            return 2;
         default:
-            return parity;
+            return 0;
     }
+}
+
+static unsigned char parity_after_move(unsigned char parity, move_type move)
+{
+    return parity ^ parity_bit_of_move(move);
 }
 
 /* Bit 0 is set when orbit0 still needs a parity flip, bit 1 for orbit1. */
@@ -238,22 +383,57 @@ static unsigned char wrong_parity_orbits(unsigned char parity)
     return wrong;
 }
 
+/*
+ * Flipping both orbits cannot be cheaper than flipping whichever one is more
+ * expensive on its own, so the max of the two is an admissible floor.
+ */
 static unsigned char parity_flip_floor(unsigned char parity)
 {
-    switch (wrong_parity_orbits(parity)) {
-        case 0:
-            return 0;
-        case 3:
-            return PARITY_FLOOR_BOTH_ORBITS;
-        default:
-            return PARITY_FLOOR_ONE_ORBIT;
+    unsigned char wrong = wrong_parity_orbits(parity);
+    unsigned char orbit0_floor = stage_all_inner_x ? ALL_INNER_X_PARITY_FLOOR_ORBIT0 : PARITY_FLOOR_ONE_ORBIT;
+    unsigned char orbit1_floor = stage_all_inner_x ? ALL_INNER_X_PARITY_FLOOR_ORBIT1 : PARITY_FLOOR_ONE_ORBIT;
+    unsigned char floor = 0;
+
+    if (wrong & 1) {
+        floor = orbit0_floor;
     }
+    if ((wrong & 2) && orbit1_floor > floor) {
+        floor = orbit1_floor;
+    }
+    if (wrong == 3 && !stage_all_inner_x) {
+        floor = PARITY_FLOOR_BOTH_ORBITS;
+    }
+    return floor;
 }
 
 static struct heuristic_result heuristic(const char *cube)
 {
     struct heuristic_result result;
     int ranks_are_valid = 1;
+
+    if (stage_all_inner_x) {
+        unsigned char encoded;
+        unsigned char oblique_cost;
+
+        memset(&result, 0, sizeof(result));
+        result.all_inner_x_rank = all_inner_x_rank_cube(cube);
+
+        if (result.all_inner_x_rank == UINT64_MAX) {
+            result.cost = UINT8_MAX;
+            return result;
+        }
+        encoded = all_inner_x_costs[result.all_inner_x_rank];
+        result.all_inner_x_cost = decoded_cost(encoded);
+        result.unpaired_count = unpaired_oblique_count(cube);
+        oblique_cost = unpaired_cost(result.unpaired_count);
+
+        if (!encoded) {
+            result.cost = UINT8_MAX;
+        } else {
+            result.cost = result.all_inner_x_cost > oblique_cost ? result.all_inner_x_cost : oblique_cost;
+        }
+        return result;
+    }
 
     for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
         result.orbit_rank[orbit] = combination_rank_cube(cube, orbit_squares[orbit]);
@@ -309,6 +489,11 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
 
 static int move_is_allowed(move_type move)
 {
+    /* Staging every inner x-center and pairing the obliques needs the full move set. */
+    if (stage_all_inner_x) {
+        return 1;
+    }
+
     switch (move) {
         case threeUw:
         case threeUw_PRIME:
@@ -316,6 +501,10 @@ static int move_is_allowed(move_type move)
         case threeDw_PRIME:
         case threeFw:
         case threeFw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
         case threeBw:
         case threeBw_PRIME:
         case Uw:
@@ -372,7 +561,7 @@ static void init_move_tables(void)
     }
 }
 
-static struct ranked_cost_file map_ranked_cost_file(const char *filename)
+static struct ranked_cost_file map_ranked_cost_file(const char *filename, uint64_t universe)
 {
     struct ranked_cost_file result = {-1, NULL};
     struct stat file_stat;
@@ -387,22 +576,22 @@ static struct ranked_cost_file map_ranked_cost_file(const char *filename)
         fprintf(stderr, "ERROR: could not stat %s: %s\n", filename, strerror(errno));
         exit(1);
     }
-    if ((uint64_t)file_stat.st_size != PRODUCT_UNIVERSE) {
+    if ((uint64_t)file_stat.st_size != universe) {
         fprintf(
             stderr,
             "ERROR: %s is %" PRIu64 " bytes, expected %" PRIu64 "\n",
             filename,
             (uint64_t)file_stat.st_size,
-            PRODUCT_UNIVERSE
+            universe
         );
         exit(1);
     }
 #ifdef MAP_POPULATE
-    if ((uint64_t)file_stat.st_blocks * 512 >= PRODUCT_UNIVERSE) {
+    if ((uint64_t)file_stat.st_blocks * 512 >= universe) {
         mmap_flags |= MAP_POPULATE;
     }
 #endif
-    result.costs = mmap(NULL, (size_t)PRODUCT_UNIVERSE, PROT_READ, mmap_flags, result.fd, 0);
+    result.costs = mmap(NULL, (size_t)universe, PROT_READ, mmap_flags, result.fd, 0);
     if (result.costs == MAP_FAILED) {
         fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
         exit(1);
@@ -412,6 +601,14 @@ static struct ranked_cost_file map_ranked_cost_file(const char *filename)
 
 static void map_ranked_tables(void)
 {
+    if (stage_all_inner_x) {
+        struct ranked_cost_file file = map_ranked_cost_file(all_inner_x_filename, ALL_INNER_X_UNIVERSE);
+
+        all_inner_x_fd = file.fd;
+        all_inner_x_costs = file.costs;
+        return;
+    }
+
     for (unsigned int index = 0; index < TABLE_COUNT; index++) {
         struct ranked_table *table = &ranked_tables[index];
         struct ranked_cost_file file;
@@ -419,7 +616,7 @@ static void map_ranked_tables(void)
         if (!table->filename) {
             continue;
         }
-        file = map_ranked_cost_file(table->filename);
+        file = map_ranked_cost_file(table->filename, PRODUCT_UNIVERSE);
         table->fd = file.fd;
         table->costs = file.costs;
     }
@@ -427,6 +624,15 @@ static void map_ranked_tables(void)
 
 static void unmap_ranked_tables(void)
 {
+    if (all_inner_x_costs && all_inner_x_costs != MAP_FAILED) {
+        munmap(all_inner_x_costs, (size_t)ALL_INNER_X_UNIVERSE);
+    }
+    if (all_inner_x_fd >= 0) {
+        close(all_inner_x_fd);
+    }
+    all_inner_x_costs = NULL;
+    all_inner_x_fd = -1;
+
     for (unsigned int index = 0; index < TABLE_COUNT; index++) {
         struct ranked_table *table = &ranked_tables[index];
 
@@ -456,6 +662,93 @@ static void init_cube_from_kociemba(char cube[CUBE_ARRAY_SIZE], const char *koci
     memcpy(&cube[1 + face_size * 3], &kociemba[face_size], face_size); /* R */
     memcpy(&cube[1 + face_size * 4], &kociemba[face_size * 5], face_size); /* B */
     memcpy(&cube[1 + face_size * 5], &kociemba[face_size * 3], face_size); /* D */
+}
+
+static int is_edge_or_corner(unsigned int square)
+{
+    unsigned int face_offset = (square - 1) % (CUBE_SIZE * CUBE_SIZE);
+    unsigned int row = face_offset / CUBE_SIZE;
+    unsigned int col = face_offset % CUBE_SIZE;
+
+    return row == 0 || row == CUBE_SIZE - 1 || col == 0 || col == CUBE_SIZE - 1;
+}
+
+/*
+ * Opposite faces are interchangeable for staging, and the search never uses
+ * edges or corners.  Map D/R/B onto U/L/F and blank the unused stickers so
+ * the printed cube matches the state the heuristic sees.
+ */
+static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
+{
+    for (unsigned int square = 1; square < CUBE_ARRAY_SIZE; square++) {
+        if (cube[square] == 'D') {
+            cube[square] = 'U';
+        } else if (cube[square] == 'R') {
+            cube[square] = 'L';
+        } else if (cube[square] == 'B') {
+            cube[square] = 'F';
+        }
+
+        if (is_edge_or_corner(square)) {
+            cube[square] = '.';
+        }
+    }
+}
+
+/*
+ * The all-inner-x ranked table and the unpaired-oblique count only care about
+ * inner x-centers (as U/L/F) and whether an oblique is L/R.  Blank everything
+ * else so the printed cube matches the search state.
+ */
+static void recolor_for_all_inner_x(char cube[CUBE_ARRAY_SIZE])
+{
+    unsigned char is_inner_x[CUBE_ARRAY_SIZE] = {0};
+    unsigned char is_oblique[CUBE_ARRAY_SIZE] = {0};
+
+    for (unsigned int index = 0; index < ALL_INNER_X_SIZE; index++) {
+        is_inner_x[all_inner_x_squares[index]] = 1;
+    }
+    for (unsigned int index = 0; index < OBLIQUE_PAIR_COUNT; index++) {
+        is_oblique[all_left_oblique_squares[index]] = 1;
+        is_oblique[all_right_oblique_squares[index]] = 1;
+    }
+
+    for (unsigned int square = 1; square < CUBE_ARRAY_SIZE; square++) {
+        if (is_inner_x[square]) {
+            continue;
+        }
+        if (is_oblique[square]) {
+            if (cube[square] != 'L') {
+                cube[square] = 'x';
+            }
+            continue;
+        }
+        cube[square] = '.';
+    }
+}
+
+/*
+ * A parity requirement can only be met if some legal move flips that orbit.
+ * Preserving the staged inner x-centers rules out every 3Xw quarter turn, so
+ * orbit1 is frozen for this phase and asking it to flip is unsatisfiable.
+ */
+static int parity_requirements_are_reachable(void)
+{
+    unsigned char flippable = 0;
+
+    for (unsigned int index = 0; index < legal_move_count[MOVE_NONE]; index++) {
+        flippable |= parity_bit_of_move(moves_666[legal_move_index[MOVE_NONE][index]]);
+    }
+
+    if (orbit0_requirement == PARITY_ODD && !(flippable & 1)) {
+        fprintf(stderr, "ERROR: --orbit0-need-odd-w but no legal move is an orbit0 wide quarter turn\n");
+        return 0;
+    }
+    if (orbit1_requirement == PARITY_ODD && !(flippable & 2)) {
+        fprintf(stderr, "ERROR: --orbit1-need-odd-w but no legal move is an orbit1 wide quarter turn\n");
+        return 0;
+    }
+    return 1;
 }
 
 static move_type parse_move(const char *move_string)
@@ -709,15 +1002,23 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
         solution_len++;
     }
     printf("\n      ");
-    for (unsigned int index = 0; index < TABLE_COUNT; index++) {
-        if (ranked_tables[index].costs) {
-            printf(" %4s", ranked_tables[index].label);
+    if (stage_all_inner_x) {
+        printf(" %4s %4s", "IXAL", "UNPR");
+    } else {
+        for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+            if (ranked_tables[index].costs) {
+                printf(" %4s", ranked_tables[index].label);
+            }
         }
     }
     printf("  CTG  TRU  IDX\n      ");
-    for (unsigned int index = 0; index < TABLE_COUNT; index++) {
-        if (ranked_tables[index].costs) {
-            printf(" ====");
+    if (stage_all_inner_x) {
+        printf(" ==== ====");
+    } else {
+        for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+            if (ranked_tables[index].costs) {
+                printf(" ====");
+            }
         }
     }
     printf("  ===  ===  ===\n");
@@ -730,9 +1031,13 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
         } else {
             printf(" INIT ");
         }
-        for (unsigned int index = 0; index < TABLE_COUNT; index++) {
-            if (ranked_tables[index].costs) {
-                printf(" %4u", h.table_cost[index]);
+        if (stage_all_inner_x) {
+            printf(" %4u %4u", h.all_inner_x_cost, h.unpaired_count);
+        } else {
+            for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+                if (ranked_tables[index].costs) {
+                    printf(" %4u", h.table_cost[index]);
+                }
             }
         }
         printf("  %3u  %3u  %3u\n", cube_cost(cube, parity), solution_len - step, step);
@@ -774,7 +1079,12 @@ int main(int argc, char **argv)
             continue;
         }
 
-        if (strmatch(argv[index], "--kociemba") && index + 1 < argc) {
+        if (strmatch(argv[index], "--all-inner-x-cost") && index + 1 < argc) {
+            all_inner_x_filename = argv[++index];
+            stage_all_inner_x = 1;
+        } else if (strmatch(argv[index], "--unpaired-multiplier") && index + 1 < argc) {
+            unpaired_multiplier = atof(argv[++index]);
+        } else if (strmatch(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
         } else if (strmatch(argv[index], "--min-ida-threshold") && index + 1 < argc) {
             min_threshold = (unsigned char)strtoul(argv[++index], NULL, 10);
@@ -808,11 +1118,21 @@ int main(int argc, char **argv)
         usage(argv[0]);
         return 2;
     }
-    for (unsigned int table = 0; table < REQUIRED_TABLE_COUNT; table++) {
-        if (!ranked_tables[table].filename) {
-            usage(argv[0]);
-            return 2;
+    if (!stage_all_inner_x) {
+        for (unsigned int table = 0; table < REQUIRED_TABLE_COUNT; table++) {
+            if (!ranked_tables[table].filename) {
+                usage(argv[0]);
+                return 2;
+            }
         }
+    }
+    /*
+     * A multiplier of 0 would score an unstaged cube as solved, and anything
+     * above 1.0 is a worse estimate than simply counting the unpaired obliques.
+     */
+    if (unpaired_multiplier <= 0.0 || unpaired_multiplier > 1.0) {
+        fprintf(stderr, "ERROR: --unpaired-multiplier must be in (0.0, 1.0]\n");
+        return 2;
     }
     if (!thread_count) {
         long online = sysconf(_SC_NPROCESSORS_ONLN);
@@ -840,6 +1160,9 @@ int main(int argc, char **argv)
     setlocale(LC_NUMERIC, "");
     init_binom();
     init_move_tables();
+    if (!parity_requirements_are_reachable()) {
+        return 2;
+    }
     init_cube_from_kociemba(cube, kociemba);
     if (apply_move_string) {
         move_type move = parse_move(apply_move_string);
@@ -848,6 +1171,10 @@ int main(int argc, char **argv)
             return 2;
         }
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+    }
+    recolor_cube(cube);
+    if (stage_all_inner_x) {
+        recolor_for_all_inner_x(cube);
     }
     map_ranked_tables();
     initial = heuristic(cube);
@@ -860,21 +1187,27 @@ int main(int argc, char **argv)
         printf("\n");
     }
     if (print_ranks) {
-        printf(
-            "INNER_RANK %" PRIu64 " OUTER_RANK %" PRIu64
-            " LEFT_RANK %" PRIu64 " RIGHT_RANK %" PRIu64,
-            initial.orbit_rank[ORBIT_INNER_X], initial.orbit_rank[ORBIT_OUTER_X],
-            initial.orbit_rank[ORBIT_LEFT_OBLIQUE], initial.orbit_rank[ORBIT_RIGHT_OBLIQUE]
-        );
-        for (unsigned int index = 0; index < TABLE_COUNT; index++) {
-            if (!ranked_tables[index].costs) {
-                continue;
-            }
+        if (stage_all_inner_x) {
             printf(
-                " %s_RANK %" PRIu64 " %s_COST %u",
-                ranked_tables[index].label, initial.table_rank[index],
-                ranked_tables[index].label, initial.table_cost[index]
+                "IXAL_RANK %" PRIu64 " IXAL_COST %u UNPAIRED %u",
+                initial.all_inner_x_rank, initial.all_inner_x_cost, initial.unpaired_count
             );
+        } else {
+            printf(
+                "OUTER_RANK %" PRIu64 " LEFT_RANK %" PRIu64 " RIGHT_RANK %" PRIu64,
+                initial.orbit_rank[ORBIT_OUTER_X],
+                initial.orbit_rank[ORBIT_LEFT_OBLIQUE], initial.orbit_rank[ORBIT_RIGHT_OBLIQUE]
+            );
+            for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+                if (!ranked_tables[index].costs) {
+                    continue;
+                }
+                printf(
+                    " %s_RANK %" PRIu64 " %s_COST %u",
+                    ranked_tables[index].label, initial.table_rank[index],
+                    ranked_tables[index].label, initial.table_cost[index]
+                );
+            }
         }
         printf(" COST %u\n", initial.cost);
         unmap_ranked_tables();
@@ -894,7 +1227,13 @@ int main(int argc, char **argv)
             loaded_table_count++;
         }
     }
+    if (stage_all_inner_x) {
+        loaded_table_count = 1;
+    }
     print_cube(cube, CUBE_SIZE);
+    if (stage_all_inner_x) {
+        LOG("staging all inner x-centers with unpaired multiplier %.2f\n", unpaired_multiplier);
+    }
     LOG("searching with %u threads over %u ranked tables\n", thread_count, loaded_table_count);
     memset(best_solution, 0, sizeof(best_solution));
     gettimeofday(&start, NULL);

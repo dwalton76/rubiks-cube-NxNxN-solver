@@ -139,6 +139,18 @@ unsigned int unpaired_count_inner_x_centers_666[9][8] = {
     {8, 8, 8, 8, 8, 8, 10, 10},  // x unpaired obliques (8), y LR centers cost
 };
 
+unsigned int unpaired_count_ud_inner_x_centers_666[9][8] = {
+    {0, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (0), y UD inner-x cost
+    {1, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (1), y UD inner-x cost
+    {2, 1, 2, 3, 4, 6, 7, 7},    // x unpaired obliques (2), y UD inner-x cost
+    {3, 3, 4, 3, 5, 6, 7, 8},    // x unpaired obliques (3), y UD inner-x cost
+    {4, 3, 4, 5, 5, 6, 8, 8},    // x unpaired obliques (4), y UD inner-x cost
+    {5, 4, 5, 5, 6, 8, 8, 9},    // x unpaired obliques (5), y UD inner-x cost
+    {6, 6, 6, 7, 8, 8, 9, 9},    // x unpaired obliques (6), y UD inner-x cost
+    {7, 7, 7, 8, 9, 8, 9, 9},    // x unpaired obliques (7), y UD inner-x cost
+    {8, 8, 8, 8, 8, 8, 10, 10},  // x unpaired obliques (8), y UD inner-x cost
+};
+
 unsigned int unpaired_count_inner_x_centers_777[17][13] = {
     {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, // x unpaired obliques (0), y UD inner x-centers cost
     {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, // x unpaired obliques (1), y UD inner x-centers cost
@@ -432,10 +444,13 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
             */
 
         case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             heuristic_result = ida_heuristic(cube, type);
             cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
-            // cost_to_goal = max(heuristic_result.cost_to_goal, init_cost_to_goal);
+            break;
+
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
+            heuristic_result = ida_heuristic(cube, type);
+            cost_to_goal = unpaired_count_ud_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:
@@ -652,10 +667,13 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             break;
 
         case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             heuristic_result = ida_heuristic(cube, type);
             result.cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
-            // result.cost_to_goal = max(heuristic_result.cost_to_goal, result.cost_to_goal);
+            break;
+
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
+            heuristic_result = ida_heuristic(cube, type);
+            result.cost_to_goal = unpaired_count_ud_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_666:

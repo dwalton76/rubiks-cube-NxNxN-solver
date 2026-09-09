@@ -8,7 +8,6 @@ from pathlib import Path
 # rubiks cube libraries
 from rubikscubennnsolver.RubiksCube666 import (
     RubiksCube666,
-    UFBD_inner_x_centers_666,
     UFBD_left_oblique_edges_666,
     UFBD_outer_x_centers_666,
     UFBD_right_oblique_edges_666,
@@ -22,21 +21,16 @@ GROUP_UNIVERSE = math.comb(16, 8)
 PRODUCT_UNIVERSE = GROUP_UNIVERSE * GROUP_UNIVERSE
 
 ORBIT_SQUARES = {
-    "inner": UFBD_inner_x_centers_666,
     "outer": UFBD_outer_x_centers_666,
     "left": UFBD_left_oblique_edges_666,
     "right": UFBD_right_oblique_edges_666,
 }
 
-# label, CLI flag, the two orbits the table ranks, whether the search demands it.
-# The first two pairings cover all four orbits, so they are the required ones.
+# Label, CLI flag, and the two orbits in ranked-table order.
 TABLES = (
-    ("IXOX", "--inner-x-outer-x-cost", ("inner", "outer"), True),
     ("LROB", "--left-right-oblique-cost", ("left", "right"), True),
-    ("IXLO", "--inner-x-left-oblique-cost", ("inner", "left"), False),
-    ("IXRO", "--inner-x-right-oblique-cost", ("inner", "right"), False),
-    ("OXLO", "--outer-x-left-oblique-cost", ("outer", "left"), False),
-    ("OXRO", "--outer-x-right-oblique-cost", ("outer", "right"), False),
+    ("LOOX", "--left-oblique-outer-x-cost", ("left", "outer"), True),
+    ("ROOX", "--right-oblique-outer-x-cost", ("right", "outer"), True),
 )
 REQUIRED_LABELS = tuple(label for label, _, _, required in TABLES if required)
 
@@ -48,6 +42,10 @@ ILLEGAL_MOVES = frozenset(
         "3Dw'",
         "3Fw",
         "3Fw'",
+        "3Lw",
+        "3Lw'",
+        "3Rw",
+        "3Rw'",
         "3Bw",
         "3Bw'",
         "Uw",
@@ -110,7 +108,7 @@ def make_sparse_table(path, entries):
 def parse_ranks(stdout):
     """Turn the whitespace-delimited KEY VALUE pairs of --print-ranks into a dict."""
     for line in stdout.splitlines():
-        if line.startswith("INNER_RANK "):
+        if line.startswith("OUTER_RANK "):
             tokens = line.split()
             return {tokens[index]: int(tokens[index + 1]) for index in range(0, len(tokens), 2)}
     raise AssertionError(f"no --print-ranks line in:\n{stdout}")
@@ -163,16 +161,14 @@ class RankedCentersStage666Test(unittest.TestCase):
         return legal_moves, cubes
 
     def test_product_rank_and_encoded_cost_contract_for_every_legal_move(self):
-        all_labels = tuple(label for label, _, _, _ in TABLES)
         legal_moves, cubes = self.cubes_for_every_legal_move()
-        self.write_tables(cubes, labels=all_labels)
+        self.write_tables(cubes)
 
         for move, cube in zip((None, *legal_moves), cubes):
             with self.subTest(move=move):
-                actual = self.run_rank(self.solved, *(("--apply-move", move) if move else ()), labels=all_labels)
+                actual = self.run_rank(self.solved, *(("--apply-move", move) if move else ()))
                 ranks = orbit_ranks(cube)
                 expected = {
-                    "INNER_RANK": ranks["inner"],
                     "OUTER_RANK": ranks["outer"],
                     "LEFT_RANK": ranks["left"],
                     "RIGHT_RANK": ranks["right"],
@@ -188,26 +184,20 @@ class RankedCentersStage666Test(unittest.TestCase):
 
                 self.assertEqual(actual, expected)
 
-    def test_heuristic_is_the_max_over_the_loaded_tables(self):
-        """Adding pairings can only raise the heuristic, never lower it."""
-        all_labels = tuple(label for label, _, _, _ in TABLES)
+    def test_heuristic_is_the_max_over_the_three_pairings(self):
         cube = RubiksCube666(solved_666, "URFDLB")
-        cube.rotate("3Rw")
-        self.write_tables([cube], labels=all_labels)
+        cube.rotate("Lw")
+        self.write_tables([cube])
 
-        two_tables = self.run_rank(cube, labels=REQUIRED_LABELS)
-        six_tables = self.run_rank(cube, labels=all_labels)
+        result = self.run_rank(cube)
+        self.assertEqual(result["COST"], max(result[f"{label}_COST"] for label in REQUIRED_LABELS))
 
-        self.assertEqual(two_tables["COST"], max(two_tables[f"{label}_COST"] for label in REQUIRED_LABELS))
-        self.assertEqual(six_tables["COST"], max(six_tables[f"{label}_COST"] for label in all_labels))
-        self.assertGreaterEqual(six_tables["COST"], two_tables["COST"])
-
-    def test_optional_tables_are_omitted_and_required_tables_are_enforced(self):
+    def test_all_three_tables_are_required(self):
         self.write_tables([self.solved], labels=REQUIRED_LABELS)
 
         printed = self.run_rank(self.solved, labels=REQUIRED_LABELS)
-        for label, _, _, required in TABLES:
-            self.assertEqual(f"{label}_COST" in printed, required)
+        for label in REQUIRED_LABELS:
+            self.assertIn(f"{label}_COST", printed)
 
         result = subprocess.run(
             self.command(self.solved, "--print-ranks", labels=REQUIRED_LABELS[:1]),
@@ -222,8 +212,9 @@ class RankedCentersStage666Test(unittest.TestCase):
         result = subprocess.run(self.command(self.solved, "--print-ranks"), capture_output=True, text=True)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         printed = parse_ranks(result.stdout)
-        self.assertEqual(printed["IXOX_COST"], 255)
         self.assertEqual(printed["LROB_COST"], 255)
+        self.assertEqual(printed["LOOX_COST"], 255)
+        self.assertEqual(printed["ROOX_COST"], 255)
         self.assertEqual(printed["COST"], 255)
 
         self.paths["LROB"].write_bytes(b"\1")
@@ -273,7 +264,7 @@ class RankedCentersStage666Test(unittest.TestCase):
             self.assertRegex(solution, r"\bLw'?\b")
             solutions.add(solution)
             # The summary gets one cost column per loaded table.
-            self.assertRegex(result.stdout, r"IXOX\s+LROB\s+CTG\s+TRU\s+IDX")
+            self.assertRegex(result.stdout, r"LROB\s+LOOX\s+ROOX\s+CTG\s+TRU\s+IDX")
         self.assertEqual(len(solutions), 1)
 
     def test_orbit_parity_requirements_are_checked_at_goal(self):
@@ -309,7 +300,29 @@ class RankedCentersStage666Test(unittest.TestCase):
                     text=True,
                 )
                 self.assertNotEqual(odd.returncode, 0)
-                self.assertIn("IDA failed", odd.stdout)
+
+                # Lw/Rw can flip orbit0, but preserving the staged inner
+                # x-centers rules out every orbit1 wide quarter turn, so that
+                # request is rejected before the search starts.
+                if orbit == 0:
+                    self.assertIn("IDA failed", odd.stdout)
+                else:
+                    self.assertIn("no legal move is an orbit1 wide quarter turn", odd.stderr)
+
+    def test_orbit1_parity_cannot_be_flipped_by_any_legal_move(self):
+        self.write_tables([self.solved])
+        result = subprocess.run(
+            self.command(self.solved, "--print-legal-moves", "--print-ranks"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        line = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
+
+        orbit1_quarter_turns = [
+            move for move in line.split()[1:] if move.startswith("3") and not move.endswith("2")
+        ]
+        self.assertEqual(orbit1_quarter_turns, [])
 
 
 if __name__ == "__main__":

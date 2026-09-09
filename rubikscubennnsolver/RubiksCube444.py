@@ -7,6 +7,7 @@ from typing import List, Tuple
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
 from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinations
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_444
 from rubikscubennnsolver.swaps import swaps_444
@@ -986,10 +987,15 @@ class RubiksCube444(RubiksCube):
         self.lt_phase1.solve_via_c()
         self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
-    def phase2(self) -> None:
+    def phase2_pt_state_indexes(self):
+        """
+        Return a dict of phase-2 prune-table roots for the current cube, keyed
+        by (centers, edges) state indexes, with the high/low edge mapping that
+        produced each root. There are 2048 even high/low interpretations.
+        """
         original_state = self.state[:]
         original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
+        original_mapping = getattr(self, "edge_mapping", None)
         pt_state_indexes_to_edge_mapping = {}
 
         # Use state_index_multiple to populate the state_index_cache dict for each pt
@@ -1004,15 +1010,25 @@ class RubiksCube444(RubiksCube):
 
             pt.state_index_multiple(states_to_find)
 
-        # try all 2048 edge mappings
         for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
             for edge_mapping in edges_to_flip_sets:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
                 self.edge_mapping = edge_mapping
-                pt_state_indexes_to_edge_mapping[tuple([pt.state_index() for pt in self.lt_phase2.prune_tables])] = (
+                pt_state_indexes_to_edge_mapping[tuple(pt.state_index() for pt in self.lt_phase2.prune_tables)] = (
                     edge_mapping
                 )
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        self.edge_mapping = original_mapping
+        return pt_state_indexes_to_edge_mapping
+
+    def phase2(self) -> None:
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        tmp_solution_len = len(self.solution)
+        pt_state_indexes_to_edge_mapping = self.phase2_pt_state_indexes()
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -1028,6 +1044,103 @@ class RubiksCube444(RubiksCube):
 
         self.highlow_edges_print()
         self.print_cube_add_comment("centers staged, edges EOed into high/low groups", tmp_solution_len)
+
+    def phase1_and_2(self, phase1_solution_count: int = 64) -> None:
+        """
+        Find up to 64 optimal phase-1 LR-center solutions, then solve phase 2
+        from all distinct endpoints (including all 2048 high/low mappings) and
+        keep the pair with the shortest total solution. Phase-1 endpoints are
+        grouped by orbit-0 parity because phase 2 must use a different
+        wide-turn parity constraint for each group.
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        phase1_comment_start = len(self.solution)
+
+        if self.LR_centers_staged():
+            phase1_solutions = [((), (None, None, None, None, None))]
+        else:
+            phase1_solutions = self.lt_phase1.solutions_via_c(solution_count=phase1_solution_count)
+
+        phase2_roots_by_parity = {}
+        phase1_and_mapping_by_root = {}
+        representative_state_by_parity = {}
+        logger.info("found %d optimal phase-1 solutions", len(phase1_solutions))
+
+        for phase1_solution, _ in phase1_solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in phase1_solution:
+                self.rotate(step)
+
+            orbit0_has_oll = 0 in self.center_solution_leads_to_oll_parity()
+            representative_state_by_parity.setdefault(
+                orbit0_has_oll,
+                (self.state[:], self.solution[:]),
+            )
+
+            for phase2_root, edge_mapping in self.phase2_pt_state_indexes().items():
+                root_key = (orbit0_has_oll, phase2_root)
+
+                if root_key not in phase1_and_mapping_by_root:
+                    phase2_roots_by_parity.setdefault(orbit0_has_oll, []).append(phase2_root)
+                    phase1_and_mapping_by_root[root_key] = (phase1_solution, edge_mapping)
+
+        logger.info(
+            "phase-1 portfolio has %d distinct phase-2 roots in %d parity groups",
+            len(phase1_and_mapping_by_root),
+            len(phase2_roots_by_parity),
+        )
+
+        best = None
+        for orbit0_has_oll, phase2_roots in phase2_roots_by_parity.items():
+            representative_state, representative_solution = representative_state_by_parity[orbit0_has_oll]
+            self.state = representative_state[:]
+            self.solution = representative_solution[:]
+
+            phase2_solution, phase2_states = self.lt_phase2.solutions_via_c(
+                pt_states=phase2_roots,
+                solution_count=1,
+            )[0]
+            phase2_root = tuple(phase2_states[: len(self.lt_phase2.prune_tables)])
+            phase1_solution, edge_mapping = phase1_and_mapping_by_root[orbit0_has_oll, phase2_root]
+            candidate = (
+                len(phase1_solution) + len(phase2_solution),
+                len(phase2_solution),
+                phase1_solution,
+                phase2_solution,
+                edge_mapping,
+            )
+
+            if best is None or candidate < best:
+                best = candidate
+
+        if best is None:
+            raise SolveError("could not solve phase 2 from any phase-1 portfolio endpoint")
+
+        _, _, best_phase1_solution, best_phase2_solution, best_edge_mapping = best
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in best_phase1_solution:
+            self.rotate(step)
+
+        self.print_cube_add_comment("LR centers staged", phase1_comment_start)
+
+        phase2_comment_start = len(self.solution)
+        self.edge_mapping = best_edge_mapping
+        for step in best_phase2_solution:
+            self.rotate(step)
+
+        logger.info(
+            "selected phase-1 length %d and phase-2 length %d (%d total)",
+            len(best_phase1_solution),
+            len(best_phase2_solution),
+            len(best_phase1_solution) + len(best_phase2_solution),
+        )
+        self.highlow_edges_print()
+        self.print_cube_add_comment("centers staged, edges EOed into high/low groups", phase2_comment_start)
 
     def phase3(self, wing_str_combo: List[str] = None):
         original_state = self.state[:]
@@ -1081,7 +1194,12 @@ class RubiksCube444(RubiksCube):
 
         self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
-    def phase3_and_4(self, consider_solve_333: bool):
+    def phase3_and_4(
+        self,
+        consider_solve_333: bool,
+        phase3_solution_count: int = 2000,
+        phase4_solution_count: int = 200,
+    ):
         original_state = self.state[:]
         original_solution = self.solution[:]
 
@@ -1112,7 +1230,7 @@ class RubiksCube444(RubiksCube):
         self.state = original_state[:]
         self.solution = original_solution[:]
         phase3_solutions = self.lt_phase3.solutions_via_c(
-            pt_states=pt_state_indexes, solution_count=5000, find_extra=False
+            pt_states=pt_state_indexes, solution_count=phase3_solution_count, find_extra=True
         )
         logger.info(f"found {len(phase3_solutions)} phase3 solutions")
 
@@ -1131,9 +1249,18 @@ class RubiksCube444(RubiksCube):
 
             self.lt_phase3_edges.only_colors = wing_str_combo
             wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase4.prune_tables])
-            phase4_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
-            phase4_pt_state_indexes_to_phase3_solution[wing_str_combo_pt_state_indexes] = phase3_solution
-            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
+            previous = phase4_pt_state_indexes_to_phase3_solution.get(wing_str_combo_pt_state_indexes)
+
+            # Several phase-3 solutions can land on the same phase-4 state. Keep
+            # the shortest prefix so extra phase-3 solutions cannot make the
+            # total worse.
+            if previous is None:
+                pt_state_indexes.append(wing_str_combo_pt_state_indexes)
+                phase4_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
+                phase4_pt_state_indexes_to_phase3_solution[wing_str_combo_pt_state_indexes] = phase3_solution
+            elif len(phase3_solution) < len(previous):
+                phase4_pt_state_indexes_to_wing_str_combo[wing_str_combo_pt_state_indexes] = wing_str_combo
+                phase4_pt_state_indexes_to_phase3_solution[wing_str_combo_pt_state_indexes] = phase3_solution
 
         # find a phase 4 solution that does NOT lead to PLL
         self.state = original_state[:]
@@ -1141,7 +1268,7 @@ class RubiksCube444(RubiksCube):
         solutions_without_pll = []
         solutions_without_pll_states = set()
         solutions_with_pll = set()
-        solution_count = 50
+        solution_count = phase4_solution_count
 
         # disable INFO messages as we try many phase4 solutions
         logging.getLogger().setLevel(logging.WARNING)
@@ -1278,8 +1405,7 @@ class RubiksCube444(RubiksCube):
         if self.reduced_to_333():
             return
 
-        self.phase1()
-        self.phase2()
+        self.phase1_and_2()
 
         # self.phase3()
         # self.phase4()

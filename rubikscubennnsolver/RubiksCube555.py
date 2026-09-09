@@ -3625,14 +3625,10 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_phase1_and_2(self) -> None:
         """
-        phase1 stages the centers on sides L and R
-        phase2 stages the centers on sides F and B and put the LR centers in one of 495 states that can
-            be solved without L L' R R'...this is prep work for phase 3
-
-        TODO this needs more work
-        BLBFRUFRDDFBUULBRLBRRLDLDLFURFLUBUDRRRDDFDFBBLUFRUFFBBFBLLLDBDFBDBLFDUUFRFBLDUDDURFDRBBDFUUFUBFBDLULDLRRUDFDFULLLUUBUDRLURLBBDURFRBULBRFRBRDRRULDFLFLR
-
-        results in "5x5x5 edge swaps are odd, cannot pair edges"
+        Find up to 64 optimal phase-1 LR-center solutions, then solve phase 2
+        from all distinct endpoints and keep the pair with the shortest total
+        solution. Phase-1 endpoints are grouped by orbit-0 parity because phase
+        2 must use a different wide-turn parity constraint for each group.
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -3642,76 +3638,91 @@ class RubiksCube555(RubiksCube):
 
         original_state = self.state[:]
         original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
+        phase1_comment_start = len(self.solution)
 
-        # find multiple phase1 solutions
-        phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=100)
-        pt_state_indexes = []
-        pt_state_indexes_LR_centers_special = []
-        phase2_pt_state_indexes_to_phase1_solution = {}
-        logger.info(f"found {len(phase1_solutions)} phase1 solutions")
+        if self.LR_centers_staged():
+            phase1_solutions = [((), (None, None, None, None, None))]
+        else:
+            phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=64)
 
-        # find the phase2 solution for each phase1 solution
-        for phase1_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase1_solutions:
+        phase2_roots_by_parity = {}
+        phase1_solution_by_root = {}
+        representative_state_by_parity = {}
+        logger.info("found %d optimal phase-1 solutions", len(phase1_solutions))
+
+        for phase1_solution, _ in phase1_solutions:
             self.state = original_state[:]
             self.solution = original_solution[:]
 
             for step in phase1_solution:
                 self.rotate(step)
 
-            # stage the LR centers
-            phase2_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_FB_centers_stage.prune_tables])
-            pt_state_indexes.append(phase2_pt_state_indexes)
-            phase2_pt_state_indexes_to_phase1_solution[phase2_pt_state_indexes] = phase1_solution
+            phase2_root = tuple(pt.state_index() for pt in self.lt_FB_centers_stage.prune_tables)
+            orbit0_has_oll = 0 in self.center_solution_leads_to_oll_parity()
+            root_key = (orbit0_has_oll, phase2_root)
 
-            # stage the LR centers and put them into one of 495 states solveable with L L' R R'
-            phase2_pt_state_indexes = tuple(
-                [pt.state_index() for pt in self.lt_FB_centers_stage_LR_centers_special.prune_tables]
+            if root_key not in phase1_solution_by_root:
+                phase2_roots_by_parity.setdefault(orbit0_has_oll, []).append(phase2_root)
+                phase1_solution_by_root[root_key] = phase1_solution
+                representative_state_by_parity.setdefault(
+                    orbit0_has_oll,
+                    (self.state[:], self.solution[:]),
+                )
+
+        logger.info(
+            "phase-1 portfolio has %d distinct phase-2 roots in %d parity groups",
+            len(phase1_solution_by_root),
+            len(phase2_roots_by_parity),
+        )
+
+        best = None
+        for orbit0_has_oll, phase2_roots in phase2_roots_by_parity.items():
+            representative_state, representative_solution = representative_state_by_parity[orbit0_has_oll]
+            self.state = representative_state[:]
+            self.solution = representative_solution[:]
+
+            phase2_solution, phase2_states = self.lt_FB_centers_stage.solutions_via_c(
+                pt_states=phase2_roots,
+                solution_count=1,
+            )[0]
+            phase2_root = tuple(phase2_states[: len(self.lt_FB_centers_stage.prune_tables)])
+            phase1_solution = phase1_solution_by_root[orbit0_has_oll, phase2_root]
+            candidate = (
+                len(phase1_solution) + len(phase2_solution),
+                len(phase2_solution),
+                phase1_solution,
+                phase2_solution,
             )
-            pt_state_indexes_LR_centers_special.append(phase2_pt_state_indexes)
-            phase2_pt_state_indexes_to_phase1_solution[phase2_pt_state_indexes] = phase1_solution
 
+            if best is None or candidate < best:
+                best = candidate
+
+        if best is None:
+            raise SolveError("could not solve phase 2 from any phase-1 portfolio endpoint")
+
+        _, _, best_phase1_solution, best_phase2_solution = best
         self.state = original_state[:]
         self.solution = original_solution[:]
 
-        # stage the FB centers
-        phase2_solutions = self.lt_FB_centers_stage.solutions_via_c(pt_states=pt_state_indexes, solution_count=1)
-        phase2_solution = phase2_solutions[0][0]
+        for step in best_phase1_solution:
+            self.rotate(step)
 
-        # stage the FB centers and put LR centers into one of 495 states solveable with L L' R R'
-        phase2_solutions_lr_centers_special = self.lt_FB_centers_stage_LR_centers_special.solutions_via_c(
-            pt_states=pt_state_indexes_LR_centers_special, solution_count=1
-        )
-        phase2_solution_lr_centers_special = phase2_solutions_lr_centers_special[0][0]
+        self.print_cube_add_comment("LR centers staged", phase1_comment_start)
 
-        # if we can put the LR centers into one of 495 states without adding to the move count, make it so
-        if len(phase2_solution_lr_centers_special) <= len(phase2_solution):
-            min_phase2_solution, (
-                pt0_state,
-                pt1_state,
-                pt2_state,
-                pt3_state,
-                pt4_state,
-            ) = phase2_solutions_lr_centers_special[0]
-            min_phase1_solution = phase2_pt_state_indexes_to_phase1_solution[pt0_state, pt1_state, pt2_state]
-        else:
-            min_phase2_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase2_solutions[0]
-            min_phase1_solution = phase2_pt_state_indexes_to_phase1_solution[pt0_state, pt1_state]
+        phase2_comment_start = len(self.solution)
+        for step in best_phase2_solution:
+            self.rotate(step)
+
+        if not self.LR_centers_staged() or not self.FB_centers_staged():
+            raise SolveError("phase-1 portfolio did not stage LR and FB centers")
 
         logger.info(
-            f"phase2 solution length {len(phase2_solution)}, phase2_lr_centers_special solution length {len(phase2_solution_lr_centers_special)}"
+            "selected phase-1 length %d and phase-2 length %d (%d total)",
+            len(best_phase1_solution),
+            len(best_phase2_solution),
+            len(best_phase1_solution) + len(best_phase2_solution),
         )
-
-        for step in min_phase1_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
-
-        tmp_solution_len = len(self.solution)
-        for step in min_phase2_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
+        self.print_cube_add_comment("UD FB centers staged", phase2_comment_start)
 
     def pair_edges(self):
         # We need the edge swaps to be even for our phase6 lookup tables to work.
@@ -3744,12 +3755,12 @@ class RubiksCube555(RubiksCube):
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=pt_state_indexes, solution_count=500)
+        phase5_solutions = self.lt_phase5.solutions_via_c(
+            pt_states=pt_state_indexes, solution_count=500, find_extra=True
+        )
 
         # phase 6
-        pt_state_indexes = []
-        phase6_pt_state_indexes_to_phase4_solution = {}
-        phase6_pt_state_indexes_to_phase5_solution = {}
+        phase6_pt_state_indexes_to_prefix = {}
 
         for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
             wing_str_combo = phase5_pt_state_indexes_to_wing_str_combo[(pt0_state, pt1_state, pt2_state, pt3_state)]
@@ -3773,15 +3784,62 @@ class RubiksCube555(RubiksCube):
             self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
             self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
             wing_str_combo_pt_state_indexes = tuple([pt.state_index() for pt in self.lt_phase6.prune_tables])
-            phase6_pt_state_indexes_to_phase4_solution[wing_str_combo_pt_state_indexes] = phase4_solution
-            phase6_pt_state_indexes_to_phase5_solution[wing_str_combo_pt_state_indexes] = phase5_solution
-            pt_state_indexes.append(wing_str_combo_pt_state_indexes)
 
-        phase6_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = self.lt_phase6.solutions_via_c(
-            pt_states=pt_state_indexes
-        )[0]
-        phase4_solution = phase6_pt_state_indexes_to_phase4_solution[(pt0_state, pt1_state, pt2_state)]
-        phase5_solution = phase6_pt_state_indexes_to_phase5_solution[(pt0_state, pt1_state, pt2_state)]
+            # Several phase-4/phase-5 pairs can lead to the same phase-6 state. Since
+            # they all share the same phase-6 cost from here on, keep the cheapest one.
+            prefix_len = len(phase4_solution) + len(phase5_solution)
+            previous_prefix = phase6_pt_state_indexes_to_prefix.get(wing_str_combo_pt_state_indexes)
+
+            if previous_prefix is None:
+                phase6_pt_state_indexes_to_prefix[wing_str_combo_pt_state_indexes] = (
+                    phase4_solution,
+                    phase5_solution,
+                )
+            elif prefix_len < len(previous_prefix[0]) + len(previous_prefix[1]):
+                phase6_pt_state_indexes_to_prefix[wing_str_combo_pt_state_indexes] = (
+                    phase4_solution,
+                    phase5_solution,
+                )
+
+        # Phase 6's C search returns the first root that solves at the minimum
+        # threshold, which ignores how expensive the phase-4/phase-5 prefix was.
+        # Search each prefix-length group separately and keep the cheapest total.
+        roots_by_prefix_len = {}
+        for root, (phase4_solution, phase5_solution) in phase6_pt_state_indexes_to_prefix.items():
+            prefix_len = len(phase4_solution) + len(phase5_solution)
+            roots_by_prefix_len.setdefault(prefix_len, []).append(root)
+
+        best = None
+        for prefix_len, roots in sorted(roots_by_prefix_len.items()):
+            if best is not None and prefix_len >= best[0]:
+                break
+
+            phase6_solution, phase6_states = self.lt_phase6.solutions_via_c(pt_states=roots)[0]
+            root = tuple(phase6_states[: len(self.lt_phase6.prune_tables)])
+            phase4_solution, phase5_solution = phase6_pt_state_indexes_to_prefix[root]
+            candidate = (
+                prefix_len + len(phase6_solution),
+                len(phase6_solution),
+                phase4_solution,
+                phase5_solution,
+                phase6_solution,
+            )
+
+            if best is None or candidate < best:
+                best = candidate
+
+        if best is None:
+            raise SolveError("could not solve phase 6 from any phase-4/5 portfolio endpoint")
+
+        _, _, phase4_solution, phase5_solution, phase6_solution = best
+        logger.info(
+            "phases 4, 5, and 6 lengths %d + %d + %d (%d total) from %d prefix-length groups",
+            len(phase4_solution),
+            len(phase5_solution),
+            len(phase6_solution),
+            len(phase4_solution) + len(phase5_solution) + len(phase6_solution),
+            len(roots_by_prefix_len),
+        )
 
         # apply the solution
         self.state = self.post_eo_state
@@ -3823,11 +3881,7 @@ class RubiksCube555(RubiksCube):
             self.group_centers_phase1_and_2()
 
         else:
-            # phase 1
-            self.group_centers_stage_LR()
-
-            # phase 2
-            self.group_centers_stage_FB()
+            self.group_centers_phase1_and_2()
 
         # phase 3
         self.eo_edges()

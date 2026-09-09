@@ -2101,6 +2101,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (min_solution_count != 1) {
+        LOG("found %d solutions\n", solution_count);
+    }
+
     if (search_result.found_solution) {
         print_ida_summary(cube, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
                           prune_table_3_state, prune_table_4_state, search_result.solution, search_result.f_cost);

@@ -39,10 +39,10 @@ will add another ~20 moves.
 
 ### Install the rubikscubennnsolver python module
 ```bash
-$ cd ~/
-$ git clone https://github.com/dwalton76/rubiks-cube-NxNxN-solver.git
-$ cd rubiks-cube-NxNxN-solver
-$ make init
+cd ~/
+git clone https://github.com/dwalton76/rubiks-cube-NxNxN-solver.git
+cd rubiks-cube-NxNxN-solver
+make init
 ```
 
 ### Install 3x3x3 solver
@@ -50,10 +50,11 @@ The kociemba solver is required to solve the larger cubes that have been
 reduced to 3x3x3.
 
 ```bash
-$ git clone https://github.com/dwalton76/kociemba.git
-$ cd ~/kociemba/kociemba/ckociemba/
-$ make
-$ sudo make install
+cd ~/
+git clone https://github.com/dwalton76/kociemba.git
+cd ~/kociemba/kociemba/ckociemba/
+make
+sudo make install
 ```
 
 ### Download lookup tables from Amazon S3 bucket

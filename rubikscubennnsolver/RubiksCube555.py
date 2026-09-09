@@ -3010,51 +3010,6 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
         )
 
 
-class LookupTable555TCenterSolve(LookupTable):
-    """
-    This is only used when a cube larger than 7x7x7 is being solved
-
-    lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt
-    ====================================================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 99 entries (0 percent, 14.14x previous step)
-    3 steps has 1,038 entries (0 percent, 10.48x previous step)
-    4 steps has 8,463 entries (2 percent, 8.15x previous step)
-    5 steps has 47,986 entries (13 percent, 5.67x previous step)
-    6 steps has 146,658 entries (42 percent, 3.06x previous step)
-    7 steps has 128,914 entries (37 percent, 0.88x previous step)
-    8 steps has 9,835 entries (2 percent, 0.08x previous step)
-
-    Total: 343,000 entries
-    Average: 6.23 moves
-    """
-
-    # fmt: off
-    t_centers_555 = (
-        8, 12, 14, 18,
-        33, 37, 39, 43,
-        58, 62, 64, 68,
-        83, 87, 89, 93,
-        108, 112, 114, 118,
-        133, 137, 139, 143,
-    )
-    # fmt: on
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step33-ULFRBD-t-centers-solve.txt",
-            "UUUULLLLFFFFRRRRBBBBDDDD",
-            linecount=343000,
-        )
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        result = "".join([parent_state[x] for x in self.t_centers_555])
-        return (result, 0)
-
-
 class RubiksCube555(RubiksCube):
     """
     5x5x5 strategy
@@ -3269,7 +3224,6 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_solve = LookupTable555LRCenterSolve(self)
         self.lt_FB_centers_solve = LookupTable555FBCenterSolve(self)
         self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
-        self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)
 
     def highlow_edges_state(self):
         state = self.state

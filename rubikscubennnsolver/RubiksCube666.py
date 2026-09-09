@@ -419,59 +419,6 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             cube[pos] = pos_state
 
 
-class LookupTable666UDXCentersStage(LookupTable):
-    """
-    lookup-table-6x6x6-step12-UD-x-centers.txt
-    ==========================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 234 entries (1 percent, 8.07x previous step)
-    4 steps has 1,246 entries (9 percent, 5.32x previous step)
-    5 steps has 4,466 entries (34 percent, 3.58x previous step)
-    6 steps has 6,236 entries (48 percent, 1.40x previous step)
-    7 steps has 656 entries (5 percent, 0.11x previous step)
-
-    Total: 12,870 entries
-    Average: 5.45 moves
-    """
-
-    # fmt: off
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step12-UD-x-centers.txt",
-            "UUUUxxxxxxxxUUUU",
-            linecount=12870,
-            max_depth=7,
-            all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2"
-            ),
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-    # fmt: on
-
-    def state(self):
-        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_outer_x_centers_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UFBD_outer_x_centers_666, state):
-            cube[pos] = pos_state
-
 
 class LookupTable666UDLeftObliqueCentersStage(LookupTable):
     """
@@ -1634,7 +1581,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # phase 2
         self.lt_LR_oblique_edge_stage = LookupTable666LRObliquEdgeStage(self)
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
-        self.lt_UD_outer_x_centers_stage = LookupTable666UDXCentersStage(self)
         self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
 

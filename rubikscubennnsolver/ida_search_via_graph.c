@@ -4,6 +4,7 @@
 #include <locale.h>
 #include <math.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -514,13 +515,18 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
     return cost_to_goal;
 }
 
-unsigned int read_state(unsigned char *pt, unsigned int location) {
-    unsigned int result = 0;
-    memcpy(&result, &pt[location], sizeof(unsigned int));
-    return result;
+// Rows are 1-byte cost followed by (4-byte state, 1-byte cost) per move, so the
+// state integers are not 4-byte aligned. aligned(1) makes that load defined.
+static inline unsigned int read_state(const unsigned char *pt, unsigned int location)
+{
+    typedef uint32_t unaligned_u32 __attribute__((aligned(1), may_alias));
+    return *(const unaligned_u32 *)(pt + location);
 }
 
-unsigned char read_cost(unsigned char *pt, unsigned int location) { return pt[location]; }
+static inline unsigned char read_cost(const unsigned char *pt, unsigned int location)
+{
+    return pt[location];
+}
 
 struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type, unsigned int prev_pt0_state,
                                              unsigned int prev_pt1_state, unsigned int prev_pt2_state,

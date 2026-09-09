@@ -124,6 +124,8 @@ static const move_type moves_777[MOVE_COUNT_777] = {
 
 void rotate_666(char *cube, char *cube_tmp, int array_size, move_type move);
 void rotate_777(char *cube, char *cube_tmp, int array_size, move_type move);
+void rotate_666_centers(char *cube, char *cube_tmp, int array_size, move_type move);
+void rotate_777_centers(char *cube, char *cube_tmp, int array_size, move_type move);
 
 void LOG(const char *fmt, ...);
 unsigned long hex_to_int(char value);

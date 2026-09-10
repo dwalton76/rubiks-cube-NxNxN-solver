@@ -55,10 +55,6 @@ struct key_value_pair *ida_explored = NULL;
 typedef enum {
     NONE,
 
-    // 6x6x6
-    LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666,
-    UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666,
-
     // 7x7x7
     LR_OBLIQUE_EDGES_STAGE_777,
     UD_OBLIQUE_EDGES_STAGE_777,
@@ -78,30 +74,6 @@ struct cost_to_goal_result {
     unsigned char perfect_hash02_cost;
     unsigned char perfect_hash12_cost;
     unsigned char perfect_hash34_cost;
-};
-
-unsigned int unpaired_count_inner_x_centers_666[9][8] = {
-    {0, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (0), y LR centers cost
-    {1, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (1), y LR centers cost
-    {2, 1, 2, 3, 4, 5, 7, 7},    // x unpaired obliques (2), y LR centers cost
-    {3, 3, 4, 3, 4, 6, 7, 8},    // x unpaired obliques (3), y LR centers cost
-    {4, 3, 4, 5, 4, 6, 8, 8},    // x unpaired obliques (4), y LR centers cost
-    {5, 4, 5, 5, 6, 7, 8, 9},    // x unpaired obliques (5), y LR centers cost
-    {6, 6, 6, 7, 8, 8, 9, 9},    // x unpaired obliques (6), y LR centers cost
-    {7, 7, 7, 8, 9, 8, 9, 9},    // x unpaired obliques (7), y LR centers cost
-    {8, 8, 8, 8, 8, 8, 10, 10},  // x unpaired obliques (8), y LR centers cost
-};
-
-unsigned int unpaired_count_ud_inner_x_centers_666[9][8] = {
-    {0, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (0), y UD inner-x cost
-    {1, 1, 2, 3, 4, 5, 6, 7},    // x unpaired obliques (1), y UD inner-x cost
-    {2, 1, 2, 3, 4, 6, 7, 7},    // x unpaired obliques (2), y UD inner-x cost
-    {3, 3, 4, 3, 5, 6, 7, 8},    // x unpaired obliques (3), y UD inner-x cost
-    {4, 3, 4, 5, 5, 6, 8, 8},    // x unpaired obliques (4), y UD inner-x cost
-    {5, 4, 5, 5, 6, 8, 8, 9},    // x unpaired obliques (5), y UD inner-x cost
-    {6, 6, 6, 7, 8, 8, 9, 9},    // x unpaired obliques (6), y UD inner-x cost
-    {7, 7, 7, 8, 9, 8, 9, 9},    // x unpaired obliques (7), y UD inner-x cost
-    {8, 8, 8, 8, 8, 8, 10, 10},  // x unpaired obliques (8), y UD inner-x cost
 };
 
 unsigned int unpaired_count_inner_x_centers_777[17][13] = {
@@ -124,22 +96,8 @@ unsigned int unpaired_count_inner_x_centers_777[17][13] = {
     {12, 12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 15}, // x unpaired obliques (16), y UD inner x-centers cost
 };
 
-// The 2D heuristic tables above are indexed by [unpaired oblique count][prune table cost]. Confirm that
-// no entry sits below its prune table cost, which is what makes that cost a safe lower bound to prune on.
-unsigned char table_is_bounded_below_by_cost(unsigned int table[9][8]) {
-    for (unsigned char unpaired_count = 0; unpaired_count < 9; unpaired_count++) {
-        for (unsigned char pt_cost = 0; pt_cost < 8; pt_cost++) {
-            if (table[unpaired_count][pt_cost] < pt_cost) {
-                return 0;
-            }
-        }
-    }
-
-    return 1;
-}
-
 // Most searches only ever refine the prune table cost upwards: pt_states_to_cost_simple() maxes it against
-// a heuristic or looks it up in one of the tables above, and the perfect-hash tables are applied with a max.
+// a heuristic, and the perfect-hash tables are applied with a max.
 // That makes the prune table cost a lower bound on the final cost_to_goal, so ida_search() can reject a
 // child before it pays for a cube rotation and an unpaired-oblique count.
 //
@@ -156,14 +114,6 @@ unsigned char pt_cost_only_grows(lookup_table_type type) {
         case LR_OBLIQUE_EDGES_STAGE_777:
         case UD_OBLIQUE_EDGES_STAGE_777:
             return 1;
-
-        // These index their heuristic table with pt0_cost, so the bound only holds when pt0 is the only
-        // prune table in play.
-        case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            return pt_max == 0 && table_is_bounded_below_by_cost(unpaired_count_inner_x_centers_666);
-
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            return pt_max == 0 && table_is_bounded_below_by_cost(unpaired_count_ud_inner_x_centers_666);
 
         default:
             return 0;
@@ -296,14 +246,12 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
     // LOG("cube:\n%s\n\n", cube);
 
     switch (type) {
-        case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
         case LR_OBLIQUE_EDGES_STAGE_777:
             // Convert to 1s and 0s
             str_replace_for_binary(cube, ones_LR);
             print_cube(cube, size);
             break;
 
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
         case UD_OBLIQUE_EDGES_STAGE_777:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
@@ -320,11 +268,6 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
 
 struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type) {
     switch (type) {
-        // 6x6x6
-        case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            return ida_heuristic_oblique_edges_stage_666(cube);
-
         // 7x7x7
         case LR_OBLIQUE_EDGES_STAGE_777:
             return ida_heuristic_LR_oblique_edges_stage_777(cube);
@@ -409,16 +352,6 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
 
     switch (type) {
         case NONE:
-            break;
-
-        case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            heuristic_result = ida_heuristic(cube, type);
-            cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
-            break;
-
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            heuristic_result = ida_heuristic(cube, type);
-            cost_to_goal = unpaired_count_ud_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_777:
@@ -599,16 +532,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
 
     switch (type) {
         case NONE:
-            break;
-
-        case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            heuristic_result = ida_heuristic(cube, type);
-            result.cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
-            break;
-
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            heuristic_result = ida_heuristic(cube, type);
-            result.cost_to_goal = unpaired_count_ud_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
             break;
 
         case LR_OBLIQUE_EDGES_STAGE_777:
@@ -878,13 +801,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
             case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
                 break;
 
-            case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-                rotate_666_centers(cube, cube_tmp, array_size, solution[i]);
-                heuristic = ida_heuristic(cube, type);
-                printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
-                break;
-
             case LR_OBLIQUE_EDGES_STAGE_777:
             case UD_OBLIQUE_EDGES_STAGE_777:
             case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_777:
@@ -984,11 +900,6 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
         case NONE:
         case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
             break;
-
-        // 6x6x6
-        case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
-            return ida_search_complete_oblique_edges_stage_666(cube);
 
         // 7x7x7
         case LR_OBLIQUE_EDGES_STAGE_777:
@@ -1444,15 +1355,7 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
-            if (strmatch(argv[i], "6x6x6-LR-oblique-edges-inner-x-centers-stage")) {
-                type = LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666;
-                cube_size_type = 6;
-
-            } else if (strmatch(argv[i], "6x6x6-UD-oblique-edges-inner-x-centers-stage")) {
-                type = UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666;
-                cube_size_type = 6;
-
-            } else if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {
+            if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_777;
                 cube_size_type = 7;
 

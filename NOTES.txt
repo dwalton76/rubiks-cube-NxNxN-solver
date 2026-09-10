@@ -56,29 +56,6 @@ putting the "sorted(set(pt_states))" back in brought this down to 93m...wow!!
 
 
 
-666
-===
-# This takes 41s
-./ida_search_via_graph \
-  --prune-table-0-filename lookup-tables/lookup-table-6x6x6-step00-inner-x-centers-stage.bin --prune-table-0-state 14592 \
-  --kociemba ........Lx...xLLL..LLxx...xx................xx...Lxxx..LxxL...xL................xx...xLxL..xxxL...Lx................xx...xLxL..xxLL...xx................xx...xxxx..xxLL...LL................xx...xxLx..xxxx...Lx........ \
-  --centers-only \
-  --type 6x6x6-LR-oblique-edges-inner-x-centers-stage \
-  --legal-moves "U,U',U2,Uw,Uw',Uw2,3Uw,3Uw',3Uw2,L,L',L2,Lw,Lw',Lw2,3Lw,3Lw',3Lw2,F,F',F2,Fw,Fw',Fw2,3Fw,3Fw',3Fw2,R,R',R2,Rw,Rw',Rw2,3Rw,3Rw',3Rw2,B,B',B2,Bw,Bw',Bw2,3Bw,3Bw',3Bw2,D,D',D2,Dw,Dw',Dw2,3Dw,3Dw',3Dw2"
-
-# This takes 55s
-./ida_search_via_graph \
-  --prune-table-0-filename lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage.bin --prune-table-0-state 11594 \
-  --orbit0-need-odd-w --orbit1-need-odd-w \
-  --kociemba ........UU...Uxxx..xxUx...xU....................................................Ux...xUUU..xUUU...xx................UU...xUxU..xxxU...Ux....................................................xx...xUxx..UxUU...UU........ \
-  --centers-only \
-  --type 6x6x6-UD-oblique-edges-inner-x-centers-stage \
-  --legal-moves "U,U',U2,Uw2,3Uw2,Lw,Lw',Lw2,3Lw,3Lw',3Lw2,F,F',F2,Fw2,3Fw2,Rw,Rw',Rw2,3Rw,3Rw',3Rw2,B,B',B2,Bw2,3Bw2,D,D',D2,Dw2,3Dw2"
-
-We need a heuristic that is more accurate than unpaired count (much easier said than done) or use
-multiple threads.
-
-
 # baseline
 ./ida_search_via_graph \
   --prune-table-0-filename lookup-tables/lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.bin --prune-table-0-state 218536 \

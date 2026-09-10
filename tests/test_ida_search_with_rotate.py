@@ -1,11 +1,11 @@
+# standard libraries
 import unittest
+from unittest.mock import patch
 
+# rubiks cube libraries
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
-from rubikscubennnsolver.RubiksCube666 import (
-    RubiksCube666,
-    UFBD_outer_x_centers_666,
-    solved_666,
-)
+from rubikscubennnsolver.RubiksCube666 import RubiksCube666, UFBD_outer_x_centers_666, solved_666
+from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_888
 
 
 class CenterStagingTablesTest(unittest.TestCase):
@@ -24,6 +24,32 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(cube.lt_all_inner_x_centers_stage.avoid_oll, 1)
         self.assertEqual(cube.lt_UD_centers_stage.avoid_oll, 0)
         self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_stage_inner_x_stage"))
+
+    def test_even_plus_sign_uses_ranked_staging_and_keeps_outer_eo(self):
+        events = []
+
+        class Fake666:
+            def __init__(self):
+                self.state = ["x"] * 217
+                self.solution = []
+
+            def stage_centers(self):
+                events.append("stage")
+
+            def daisy_solve_centers_eo_edges(self):
+                events.append("outer-eo")
+
+        cube = RubiksCubeNNNEven(solved_888, "URFDLB")
+        fake_666 = Fake666()
+        cube.get_fake_666 = lambda: fake_666
+
+        with patch(
+            "rubikscubennnsolver.RubiksCubeNNNEven.daisy_solve_centers",
+            side_effect=lambda unused: events.append("inner-no-eo"),
+        ):
+            cube.make_plus_sign()
+
+        self.assertEqual(events, ["stage", "inner-no-eo", "stage", "outer-eo"])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):
@@ -191,6 +217,7 @@ class PhaseOneTwoPortfolio444Test(unittest.TestCase):
             pass
 
     def test_portfolio_deduplicates_roots_groups_parity_and_picks_shortest_phase_two(self):
+        # rubiks cube libraries
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
         cube = self.FakeCube()

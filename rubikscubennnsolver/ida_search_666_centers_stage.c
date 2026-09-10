@@ -48,6 +48,8 @@
  * Each occupied cell is the minimum remaining-move count seen for that
  * (unpaired, inner-x) pair, still never below max(inner-x, ceil(unpaired/4)).
  * Empty cells keep that admissible floor.
+ *
+ * utils/build-666-all-inner-x-oblique-matrix.py was used to build this table
  */
 static const unsigned char unpaired_count_all_inner_x_centers_666[9][ALL_INNER_X_MATRIX_COST_MAX + 1] = {
     {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 0

@@ -319,9 +319,7 @@ class RankedCentersStage666Test(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         line = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
 
-        orbit1_quarter_turns = [
-            move for move in line.split()[1:] if move.startswith("3") and not move.endswith("2")
-        ]
+        orbit1_quarter_turns = [move for move in line.split()[1:] if move.startswith("3") and not move.endswith("2")]
         self.assertEqual(orbit1_quarter_turns, [])
 
 

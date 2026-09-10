@@ -28,6 +28,7 @@
 #define OBLIQUE_PAIR_COUNT 24
 #define BINOM_MAX ALL_INNER_X_SIZE
 #define DEFAULT_UNPAIRED_MULTIPLIER 0.90f
+#define ALL_INNER_X_MATRIX_COST_MAX 10
 #define DEFAULT_MAX_IDA_THRESHOLD 20
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
@@ -36,6 +37,29 @@
 #define PARITY_ANY 0
 #define PARITY_ODD 1
 #define PARITY_EVEN 2
+
+/*
+ * Empirical combined heuristic for staging all inner x-centers and pairing the
+ * L/R obliques.  The rows are the number of unpaired obliques (0..8), and the
+ * columns are the exact all-inner-x table cost (0..10).  It was built from
+ * 1,265 remaining-cost samples along solutions for 100 random cubes, found
+ * with the admissible unpaired/4 bound.
+ *
+ * Each occupied cell is the minimum remaining-move count seen for that
+ * (unpaired, inner-x) pair, still never below max(inner-x, ceil(unpaired/4)).
+ * Empty cells keep that admissible floor.
+ */
+static const unsigned char unpaired_count_all_inner_x_centers_666[9][ALL_INNER_X_MATRIX_COST_MAX + 1] = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 0
+    {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 1
+    {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 2
+    {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 3
+    {1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 4
+    {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 5
+    {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 6
+    {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 11},  // 7
+    {2, 2, 2, 3, 4, 5, 7, 8, 9, 9, 11},  // 8
+};
 
 /*
  * The staged U/D centers are a single point in the ranked coordinate, so any
@@ -143,6 +167,7 @@ static unsigned char *all_inner_x_costs;
 static int all_inner_x_fd = -1;
 static int stage_all_inner_x;
 static float unpaired_multiplier = DEFAULT_UNPAIRED_MULTIPLIER;
+static int use_unpaired_multiplier = 1;
 static move_type best_solution[MAX_IDA_THRESHOLD + 1];
 
 static atomic_uint next_task;
@@ -188,7 +213,7 @@ static void usage(const char *program)
 {
     printf(
         "usage: %s --kociemba STATE "
-        "{--all-inner-x-cost FILE [--unpaired-multiplier FLOAT] | "
+        "{--all-inner-x-cost FILE [--use-unpaired-matrix|--unpaired-multiplier FLOAT] | "
         "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
         "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
@@ -307,19 +332,31 @@ static unsigned char unpaired_oblique_count(const char *cube)
     return unpaired;
 }
 
-/*
- * One turn can pair at most four obliques, so unpaired/4 is the only admissible
- * bound, but it is far too optimistic to prune with.  --unpaired-multiplier
- * scales the count so the estimate can be tuned between that floor (0.25) and
- * the count itself (1.0), which is what the matrix in ida_search_via_graph.c
- * uses for the L/R version of this phase.
- */
+/* Explicit --unpaired-multiplier override retained for experiments. */
 static unsigned char unpaired_cost(unsigned char unpaired)
 {
     float scaled = unpaired * unpaired_multiplier;
     unsigned char cost = (unsigned char)ceilf(scaled);
 
     return unpaired && !cost ? 1 : cost;
+}
+
+static unsigned char all_inner_x_combined_cost(unsigned char inner_x_cost, unsigned char unpaired)
+{
+    if (use_unpaired_multiplier) {
+        unsigned char oblique_cost = unpaired_cost(unpaired);
+
+        return inner_x_cost > oblique_cost ? inner_x_cost : oblique_cost;
+    }
+    if (inner_x_cost <= ALL_INNER_X_MATRIX_COST_MAX) {
+        return unpaired_count_all_inner_x_centers_666[unpaired][inner_x_cost];
+    }
+
+    /*
+     * The 100-cube sample did not cover table costs above 10.  The exact
+     * inner-x cost remains a safe and useful fallback for those rare states.
+     */
+    return inner_x_cost;
 }
 
 /*
@@ -413,7 +450,6 @@ static struct heuristic_result heuristic(const char *cube)
 
     if (stage_all_inner_x) {
         unsigned char encoded;
-        unsigned char oblique_cost;
 
         memset(&result, 0, sizeof(result));
         result.all_inner_x_rank = all_inner_x_rank_cube(cube);
@@ -425,12 +461,11 @@ static struct heuristic_result heuristic(const char *cube)
         encoded = all_inner_x_costs[result.all_inner_x_rank];
         result.all_inner_x_cost = decoded_cost(encoded);
         result.unpaired_count = unpaired_oblique_count(cube);
-        oblique_cost = unpaired_cost(result.unpaired_count);
 
         if (!encoded) {
             result.cost = UINT8_MAX;
         } else {
-            result.cost = result.all_inner_x_cost > oblique_cost ? result.all_inner_x_cost : oblique_cost;
+            result.cost = all_inner_x_combined_cost(result.all_inner_x_cost, result.unpaired_count);
         }
         return result;
     }
@@ -1082,8 +1117,11 @@ int main(int argc, char **argv)
         if (strmatch(argv[index], "--all-inner-x-cost") && index + 1 < argc) {
             all_inner_x_filename = argv[++index];
             stage_all_inner_x = 1;
+        } else if (strmatch(argv[index], "--use-unpaired-matrix")) {
+            use_unpaired_multiplier = 0;
         } else if (strmatch(argv[index], "--unpaired-multiplier") && index + 1 < argc) {
             unpaired_multiplier = atof(argv[++index]);
+            use_unpaired_multiplier = 1;
         } else if (strmatch(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
         } else if (strmatch(argv[index], "--min-ida-threshold") && index + 1 < argc) {
@@ -1126,11 +1164,8 @@ int main(int argc, char **argv)
             }
         }
     }
-    /*
-     * A multiplier of 0 would score an unstaged cube as solved, and anything
-     * above 1.0 is a worse estimate than simply counting the unpaired obliques.
-     */
-    if (unpaired_multiplier <= 0.0 || unpaired_multiplier > 1.0) {
+    /* Validate the formula, which is the default and can also be overridden. */
+    if (use_unpaired_multiplier && (unpaired_multiplier <= 0.0 || unpaired_multiplier > 1.0)) {
         fprintf(stderr, "ERROR: --unpaired-multiplier must be in (0.0, 1.0]\n");
         return 2;
     }
@@ -1232,7 +1267,11 @@ int main(int argc, char **argv)
     }
     print_cube(cube, CUBE_SIZE);
     if (stage_all_inner_x) {
-        LOG("staging all inner x-centers with unpaired multiplier %.2f\n", unpaired_multiplier);
+        if (use_unpaired_multiplier) {
+            LOG("staging all inner x-centers with unpaired multiplier %.2f\n", unpaired_multiplier);
+        } else {
+            LOG("staging all inner x-centers with empirical unpaired-count matrix\n");
+        }
     }
     LOG("searching with %u threads over %u ranked tables\n", thread_count, loaded_table_count);
     memset(best_solution, 0, sizeof(best_solution));

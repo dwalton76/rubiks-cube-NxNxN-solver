@@ -278,16 +278,18 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
         self.avoid_oll = None
         download_file_if_needed(self.filename)
 
-    def solve_via_c(self, unpaired_multiplier: float = 0.90) -> None:
+    def solve_via_c(self, unpaired_multiplier=None, use_unpaired_matrix=False) -> None:
         cmd = [
             "./ida_search_666_centers_stage",
             "--kociemba",
             self.parent.get_kociemba_string(True),
             "--all-inner-x-cost",
             self.filename,
-            "--unpaired-multiplier",
-            str(unpaired_multiplier),
         ]
+        if use_unpaired_matrix:
+            cmd.append("--use-unpaired-matrix")
+        elif unpaired_multiplier is not None:
+            cmd.extend(("--unpaired-multiplier", str(unpaired_multiplier)))
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()

@@ -1,3 +1,24 @@
+"""
+phase 1
+    stage the inner-x centers via 444 solver
+
+phase 2
+    pair the LR oblique edges
+    This happens via C via a heuristic formula based on unpaired LR oblique count so there is no table to build
+
+phase 3
+    stage LR centers via 555
+
+phase 4
+    pair the UD oblique edges and outer x-centers to finish staging centers
+
+phase 5
+    solve the UD inner x-centers and pair the UD oblique edges
+
+phase 6
+    solve the LR inner x-centers and pair the LR oblique edges
+    solve the FB inner x-centers and pair the FB oblique edges
+"""
 # standard libraries
 import logging
 import os

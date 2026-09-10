@@ -1,3 +1,58 @@
+"""
+phase 1
+    stage LR centers
+    10 moves
+
+phase 2
+    stage FB centers
+    10 moves
+
+phase 3 -
+    EO the wings, 2,704,156 states
+    EO the midges, 2048 states
+    LR centers to 1/432, 4900 states
+
+    (4900 * 2048) / (4900 * 2048 * 2,704,156) = 0.000 000 369
+    10.8 moves
+
+phase 4
+    Move a group of 4-edges to x-plane and y-plane
+    ~1 move
+
+phase 5
+    LR and FB centers to vertical bars
+    pair x-plane edges
+
+    432 LR center states
+    4,900 FB center states
+
+    x-plane high wings
+        (8!/4!) = 1,680 is how many states the high wings can be in
+
+    x-plane low wings
+        (8!/4!) = 1,680 is how many states the low wings can be in
+
+    x-plane midges
+        8!/(4!*4!) = 70 is how many states the midges can be in
+
+    A high-edge-midge prune table is 70 * 1680 = 117,600
+    A low-edge-midge prune table is 70 * 1680 = 117,600
+    A centers prune table is 432 * 4900 = 2,116,800
+    A FB-centers-high-edge-midge prune table is 4900 * 117,600 = 576,240,000
+        we can use this via a perfect-hash table
+
+    576,240,000 / (432 * 4900 * 1680 * 1680 * 70) = 0.000 001 377
+
+phase 6
+    pair last 8 edges
+    solve all centers
+
+    8!^2/2 = 812,851,200 edge states
+    6 * 6 * 4900 = 176,400 center states
+
+    -16 moves
+"""
+
 # standard libraries
 import itertools
 import logging

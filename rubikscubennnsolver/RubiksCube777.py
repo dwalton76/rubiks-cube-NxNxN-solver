@@ -1,3 +1,33 @@
+"""
+phase 1
+    use 555 solver to stage the LR inner centers
+
+phase 2
+    pair LR oblique edges
+    uses heuristic formula so no table to build
+
+phase 3
+    use 5x5x5 solver to stage the LR inner centers
+
+phase 4
+    use 5x5x5 solver to stage the UD inner centers
+
+phase 5
+    pair the oblique UD edges
+    uses heuristic formula so no table to build
+
+phase 6
+    use 5x5x5 to stage the UD centers
+
+phase 7
+    LR centers to vertical bars
+
+phase 8
+    UD centers to vertical bars
+
+phase 9
+    centers daisy solve
+"""
 # standard libraries
 import logging
 

@@ -1663,7 +1663,6 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
     def get_fake_555(self):
         if self.fake_555 is None:
             self.fake_555 = RubiksCube555(solved_555, "URFDLB")
-            self.fake_555.high_memory = self.high_memory
             self.fake_555.lt_init()
             self.fake_555.enable_print_cube = False
 
@@ -2207,7 +2206,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                     tmp_solution_len = len(self.solution)
                     self.lt_UD_centers_stage.solve_via_c()
                     self.print_cube_add_comment(
-                        "UD outer x-centers and obliques staged",
+                        "UD centers staged",
                         tmp_solution_len,
                     )
                 else:

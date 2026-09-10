@@ -474,13 +474,12 @@ class RubiksCube(object):
     A base class for rubiks cubes of all sizes
     """
 
-    def __init__(self, state_string: str, order: str, colormap: dict = None, high_memory: bool = False):
+    def __init__(self, state_string: str, order: str, colormap: dict = None):
         """
         Args:
             state_string: the state of the cube
             order: the side order of ``state_string``
             colormap: a dict to control what colors are used for each side
-            high_memory: load large tables such as the 5x5x5 one-phase center tables
         """
         init_state = ["dummy"]
         init_state.extend(list(state_string))
@@ -491,7 +490,6 @@ class RubiksCube(object):
             raise ValueError(f"Cube has {self.squares_per_side} squares per side which is not possible")
 
         self.size = int(self.size)
-        self.high_memory = high_memory
         self.solution = []
         self.ida_count = 0
         self._phase = None

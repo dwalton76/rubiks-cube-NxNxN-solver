@@ -1,12 +1,11 @@
 # standard libraries
 import itertools
 import logging
-import subprocess
 from typing import List
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
-from rubikscubennnsolver.LookupTable import LookupTable, download_file_if_needed
+from rubikscubennnsolver.LookupTable import LookupTable
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
@@ -693,98 +692,6 @@ class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
             prune_tables=(parent.lt_LR_t_centers_stage,),
             centers_only=True,
         )
-
-
-class LookupTable555RankedCenterStage:
-    """Describe a dense ranked-cost table consumed by ida_search_with_rotate."""
-
-    def __init__(self, parent, filename: str):
-        self.parent = parent
-        self.filename = "lookup-tables/" + filename
-        download_file_if_needed(self.filename)
-
-
-class LookupTable555XCenterStageOnePhase(LookupTable555RankedCenterStage):
-    def __init__(self, parent):
-        LookupTable555RankedCenterStage.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step15-x-centers-stage-one-phase.cost-only.bin",
-        )
-
-
-class LookupTable555TCenterStageOnePhase(LookupTable555RankedCenterStage):
-    def __init__(self, parent):
-        LookupTable555RankedCenterStage.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step16-t-centers-stage-one-phase.cost-only.bin",
-        )
-
-
-class LookupTableIDA555CentersStageOnePhase:
-    def __init__(self, parent):
-        self.parent = parent
-
-    def center_only_kociemba_string(self) -> str:
-        state = self.parent.get_kociemba_string(True)
-        center_indexes = {6, 7, 8, 11, 12, 13, 16, 17, 18}
-        return "".join(value if index % 25 in center_indexes else "." for index, value in enumerate(state))
-
-    def solve_via_c(
-        self,
-        min_ida_threshold: int = None,
-        max_ida_threshold: int = None,
-        perimeter_depth: int = 0,
-        perimeter_max_states: int = 2_000_000,
-    ) -> None:
-        cmd = [
-            "./ida_search_with_rotate",
-            "--kociemba",
-            self.center_only_kociemba_string(),
-            "--x-cost",
-            self.parent.lt_x_centers_stage_one_phase.filename,
-            "--t-cost",
-            self.parent.lt_t_centers_stage_one_phase.filename,
-        ]
-        if min_ida_threshold is not None:
-            cmd.extend(("--min-ida-threshold", str(min_ida_threshold)))
-        if max_ida_threshold is not None:
-            cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
-        if perimeter_depth:
-            cmd.extend(
-                (
-                    "--perimeter-depth",
-                    str(perimeter_depth),
-                    "--perimeter-max-states",
-                    str(perimeter_max_states),
-                )
-            )
-
-        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
-        lines = []
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        ) as proc:
-            for line in proc.stdout:
-                lines.append(line)
-                logger.info("%s", line.rstrip("\n"))
-            returncode = proc.wait()
-
-        output = "".join(lines)
-        self.parent.solve_via_c_output = output
-
-        for line in output.splitlines():
-            if line.startswith("SOLUTION"):
-                for step in line.split(":", 1)[1].strip().split():
-                    self.parent.rotate(step)
-                return
-
-        raise SolveError(f"ida_search_with_rotate failed with exit {returncode}\n{output}")
 
 
 # phase 2
@@ -2778,12 +2685,6 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
         self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
 
-        if self.high_memory:
-            logger.info("high-memory: loading 5x5x5 one-phase X and T center staging tables")
-            self.lt_x_centers_stage_one_phase = LookupTable555XCenterStageOnePhase(self)
-            self.lt_t_centers_stage_one_phase = LookupTable555TCenterStageOnePhase(self)
-            self.lt_centers_stage_one_phase = LookupTableIDA555CentersStageOnePhase(self)
-
         # phase 2
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
@@ -2963,22 +2864,6 @@ class RubiksCube555(RubiksCube):
             result.append(wing_str)
 
         return set(result)
-
-    def group_centers_stage_one_phase(self):
-        """
-        Stage all X-centers and T-centers in one IDA search using the dense
-        ranked-cost tables. Each table is ~8.8 GB.
-        """
-        if self.centers_staged():
-            if self.edge_swaps_odd(False, 0, False):
-                self.prevent_OLL()
-            return
-
-        tmp_solution_len = len(self.solution)
-        self.lt_centers_stage_one_phase.solve_via_c()
-        if self.edge_swaps_odd(False, 0, False):
-            self.prevent_OLL()
-        self.print_cube_add_comment("ULFRBD centers staged", tmp_solution_len)
 
     def group_centers_stage_LR(self):
         """
@@ -3488,11 +3373,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        if self.high_memory:
-            self.group_centers_stage_one_phase()
-
-        else:
-            self.group_centers_phase1_and_2()
+        self.group_centers_phase1_and_2()
 
         # phase 3
         self.eo_edges()

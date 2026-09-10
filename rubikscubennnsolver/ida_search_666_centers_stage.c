@@ -167,7 +167,8 @@ static unsigned char *all_inner_x_costs;
 static int all_inner_x_fd = -1;
 static int stage_all_inner_x;
 static float unpaired_multiplier = DEFAULT_UNPAIRED_MULTIPLIER;
-static int use_unpaired_multiplier = 1;
+static int use_unpaired_multiplier = 0;
+static int specified_unpaired_matrix = 0;
 static move_type best_solution[MAX_IDA_THRESHOLD + 1];
 
 static atomic_uint next_task;
@@ -194,6 +195,14 @@ struct heuristic_result {
     unsigned char cost;
 };
 
+struct search_root {
+    unsigned int index;
+    unsigned char orbit0_requirement;
+    unsigned char orbit1_requirement;
+    unsigned char initial_cost;
+    char cube[CUBE_ARRAY_SIZE];
+};
+
 struct worker {
     const char *root_cube;
     unsigned char threshold;
@@ -212,8 +221,8 @@ struct child {
 static void usage(const char *program)
 {
     printf(
-        "usage: %s --kociemba STATE "
-        "{--all-inner-x-cost FILE [--use-unpaired-matrix|--unpaired-multiplier FLOAT] | "
+        "usage: %s {--kociemba STATE | --kociemba-file FILE} "
+        "{--all-inner-x-cost FILE [--unpaired-multiplier FLOAT] | "
         "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
         "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
@@ -222,6 +231,10 @@ static void usage(const char *program)
         "[--orbit1-need-odd-w|--orbit1-need-even-w] "
         "[--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
         program
+    );
+    printf(
+        "  --kociemba-file lines: ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,STATE\n"
+        "  parity requirements are 0=any, 1=odd, 2=even\n"
     );
 }
 
@@ -798,6 +811,87 @@ static move_type parse_move(const char *move_string)
     return MOVE_NONE;
 }
 
+static void prepare_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
+{
+    init_cube_from_kociemba(cube, kociemba);
+    recolor_cube(cube);
+    if (stage_all_inner_x) {
+        recolor_for_all_inner_x(cube);
+    }
+}
+
+static struct search_root *read_search_roots(const char *filename, unsigned int *root_count)
+{
+    FILE *stream;
+    char *line = NULL;
+    size_t capacity = 0;
+    ssize_t length;
+    unsigned int allocated = 0;
+    unsigned int line_number = 0;
+    struct search_root *roots = NULL;
+
+    stream = fopen(filename, "r");
+    if (!stream) {
+        fprintf(stderr, "ERROR: could not open --kociemba-file %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+
+    while ((length = getline(&line, &capacity, stream)) != -1) {
+        unsigned int index;
+        unsigned int orbit0;
+        unsigned int orbit1;
+        char kociemba[CUBE_ARRAY_SIZE];
+
+        line_number++;
+        if (length == 0 || line[0] == '\n' || line[0] == '\r') {
+            continue;
+        }
+        if (sscanf(line, "%u,%u,%u,%216[^\r\n]", &index, &orbit0, &orbit1, kociemba) != 4 ||
+            strlen(kociemba) != CUBE_ARRAY_SIZE - 1 || orbit0 > PARITY_EVEN || orbit1 > PARITY_EVEN) {
+            fprintf(
+                stderr,
+                "ERROR: invalid --kociemba-file line %u; expected "
+                "ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,216-STICKER-STATE\n",
+                line_number
+            );
+            free(line);
+            free(roots);
+            fclose(stream);
+            exit(1);
+        }
+
+        if (*root_count == allocated) {
+            struct search_root *grown;
+            allocated = allocated ? allocated * 2 : 16;
+            grown = realloc(roots, allocated * sizeof(*roots));
+            if (!grown) {
+                fprintf(stderr, "ERROR: could not allocate search roots\n");
+                free(line);
+                free(roots);
+                fclose(stream);
+                exit(1);
+            }
+            roots = grown;
+        }
+
+        roots[*root_count].index = index;
+        roots[*root_count].orbit0_requirement = (unsigned char)orbit0;
+        roots[*root_count].orbit1_requirement = (unsigned char)orbit1;
+        roots[*root_count].initial_cost = UINT8_MAX;
+        prepare_cube(roots[*root_count].cube, kociemba);
+        (*root_count)++;
+    }
+
+    free(line);
+    fclose(stream);
+    if (!*root_count) {
+        fprintf(stderr, "ERROR: --kociemba-file %s contains no roots\n", filename);
+        free(roots);
+        exit(1);
+    }
+    return roots;
+}
+
 static int ida_search(
     struct worker *worker,
     char cube[CUBE_ARRAY_SIZE],
@@ -1087,6 +1181,7 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
 int main(int argc, char **argv)
 {
     const char *kociemba = NULL;
+    const char *kociemba_filename = NULL;
     const char *apply_move_string = NULL;
     unsigned char min_threshold = UINT8_MAX;
     unsigned char max_threshold = DEFAULT_MAX_IDA_THRESHOLD;
@@ -1097,6 +1192,8 @@ int main(int argc, char **argv)
     char cube[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
     struct heuristic_result initial;
+    struct search_root *roots = NULL;
+    unsigned int root_count = 0;
     struct timeval start;
     uint64_t total_nodes = 0;
 
@@ -1118,12 +1215,14 @@ int main(int argc, char **argv)
             all_inner_x_filename = argv[++index];
             stage_all_inner_x = 1;
         } else if (strmatch(argv[index], "--use-unpaired-matrix")) {
-            use_unpaired_multiplier = 0;
+            specified_unpaired_matrix = 1;
         } else if (strmatch(argv[index], "--unpaired-multiplier") && index + 1 < argc) {
             unpaired_multiplier = atof(argv[++index]);
             use_unpaired_multiplier = 1;
         } else if (strmatch(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
+        } else if (strmatch(argv[index], "--kociemba-file") && index + 1 < argc) {
+            kociemba_filename = argv[++index];
         } else if (strmatch(argv[index], "--min-ida-threshold") && index + 1 < argc) {
             min_threshold = (unsigned char)strtoul(argv[++index], NULL, 10);
         } else if (strmatch(argv[index], "--max-ida-threshold") && index + 1 < argc) {
@@ -1152,8 +1251,18 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!kociemba) {
+    if ((!kociemba && !kociemba_filename) || (kociemba && kociemba_filename)) {
         usage(argv[0]);
+        return 2;
+    }
+    if (kociemba_filename &&
+        (apply_move_string || print_ranks || orbit0_requirement != PARITY_ANY ||
+         orbit1_requirement != PARITY_ANY)) {
+        fprintf(
+            stderr,
+            "ERROR: --kociemba-file supplies per-root parity and cannot be combined with "
+            "--apply-move, --print-ranks, or global parity flags\n"
+        );
         return 2;
     }
     if (!stage_all_inner_x) {
@@ -1164,7 +1273,11 @@ int main(int argc, char **argv)
             }
         }
     }
-    /* Validate the formula, which is the default and can also be overridden. */
+    /* The unpaired-count matrix is the default; --unpaired-multiplier opts into the formula. */
+    if (specified_unpaired_matrix && use_unpaired_multiplier) {
+        fprintf(stderr, "ERROR: --use-unpaired-matrix cannot be combined with --unpaired-multiplier\n");
+        return 2;
+    }
     if (use_unpaired_multiplier && (unpaired_multiplier <= 0.0 || unpaired_multiplier > 1.0)) {
         fprintf(stderr, "ERROR: --unpaired-multiplier must be in (0.0, 1.0]\n");
         return 2;
@@ -1195,24 +1308,49 @@ int main(int argc, char **argv)
     setlocale(LC_NUMERIC, "");
     init_binom();
     init_move_tables();
-    if (!parity_requirements_are_reachable()) {
-        return 2;
+
+    if (kociemba_filename) {
+        roots = read_search_roots(kociemba_filename, &root_count);
+    } else {
+        roots = calloc(1, sizeof(*roots));
+        if (!roots) {
+            fprintf(stderr, "ERROR: could not allocate search root\n");
+            return 1;
+        }
+        root_count = 1;
+        roots[0].index = 0;
+        roots[0].orbit0_requirement = orbit0_requirement;
+        roots[0].orbit1_requirement = orbit1_requirement;
+        init_cube_from_kociemba(roots[0].cube, kociemba);
+        if (apply_move_string) {
+            move_type move = parse_move(apply_move_string);
+            if (move == MOVE_NONE) {
+                fprintf(stderr, "ERROR: invalid --apply-move %s\n", apply_move_string);
+                free(roots);
+                return 2;
+            }
+            rotate_666_centers(roots[0].cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        }
+        recolor_cube(roots[0].cube);
+        if (stage_all_inner_x) {
+            recolor_for_all_inner_x(roots[0].cube);
+        }
     }
-    init_cube_from_kociemba(cube, kociemba);
-    if (apply_move_string) {
-        move_type move = parse_move(apply_move_string);
-        if (move == MOVE_NONE) {
-            fprintf(stderr, "ERROR: invalid --apply-move %s\n", apply_move_string);
+
+    for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+        orbit0_requirement = roots[root_index].orbit0_requirement;
+        orbit1_requirement = roots[root_index].orbit1_requirement;
+        if (!parity_requirements_are_reachable()) {
+            free(roots);
             return 2;
         }
-        rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
     }
-    recolor_cube(cube);
-    if (stage_all_inner_x) {
-        recolor_for_all_inner_x(cube);
-    }
+
     map_ranked_tables();
-    initial = heuristic(cube);
+    memcpy(cube, roots[0].cube, sizeof(cube));
+    orbit0_requirement = roots[0].orbit0_requirement;
+    orbit1_requirement = roots[0].orbit1_requirement;
+    initial = heuristic(roots[0].cube);
 
     if (print_legal_moves) {
         printf("LEGAL_MOVES");
@@ -1246,15 +1384,33 @@ int main(int argc, char **argv)
         }
         printf(" COST %u\n", initial.cost);
         unmap_ranked_tables();
+        free(roots);
         return initial.cost == UINT8_MAX;
     }
-    if (initial.cost == UINT8_MAX) {
-        fprintf(stderr, "ERROR: initial center state is absent from a ranked cost table\n");
-        unmap_ranked_tables();
-        return 1;
+
+    for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+        orbit0_requirement = roots[root_index].orbit0_requirement;
+        orbit1_requirement = roots[root_index].orbit1_requirement;
+        if (heuristic(roots[root_index].cube).cost == UINT8_MAX) {
+            fprintf(
+                stderr,
+                "ERROR: root %u center state is absent from a ranked cost table\n",
+                roots[root_index].index
+            );
+            unmap_ranked_tables();
+            free(roots);
+            return 1;
+        }
+        roots[root_index].initial_cost = cube_cost(roots[root_index].cube, 0);
     }
+
     if (min_threshold == UINT8_MAX) {
-        min_threshold = cube_cost(cube, 0);
+        min_threshold = roots[0].initial_cost;
+        for (unsigned int root_index = 1; root_index < root_count; root_index++) {
+            if (roots[root_index].initial_cost < min_threshold) {
+                min_threshold = roots[root_index].initial_cost;
+            }
+        }
     }
 
     for (unsigned int index = 0; index < TABLE_COUNT; index++) {
@@ -1265,7 +1421,11 @@ int main(int argc, char **argv)
     if (stage_all_inner_x) {
         loaded_table_count = 1;
     }
-    print_cube(cube, CUBE_SIZE);
+    if (root_count == 1) {
+        print_cube(cube, CUBE_SIZE);
+    } else {
+        LOG("loaded %u starting states from %s\n", root_count, kociemba_filename);
+    }
     if (stage_all_inner_x) {
         if (use_unpaired_multiplier) {
             LOG("staging all inner x-centers with unpaired multiplier %.2f\n", unpaired_multiplier);
@@ -1279,39 +1439,59 @@ int main(int argc, char **argv)
     for (unsigned char threshold = min_threshold; threshold <= max_threshold; threshold++) {
         struct timeval threshold_start;
         struct timeval stop;
-        uint64_t nodes;
+        uint64_t threshold_nodes = 0;
         float us;
         float nodes_per_us;
         unsigned int nodes_per_sec;
-        int found_solution;
+        struct search_root *selected_root = NULL;
 
         gettimeofday(&threshold_start, NULL);
-        found_solution = search_threshold(cube, threshold, thread_count, &nodes);
+        for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+            uint64_t root_nodes;
+
+            if (roots[root_index].initial_cost > threshold) {
+                continue;
+            }
+            orbit0_requirement = roots[root_index].orbit0_requirement;
+            orbit1_requirement = roots[root_index].orbit1_requirement;
+            memset(best_solution, 0, sizeof(best_solution));
+            if (search_threshold(roots[root_index].cube, threshold, thread_count, &root_nodes)) {
+                threshold_nodes += root_nodes;
+                selected_root = &roots[root_index];
+                break;
+            }
+            threshold_nodes += root_nodes;
+        }
         gettimeofday(&stop, NULL);
-        total_nodes += nodes;
+        total_nodes += threshold_nodes;
 
         us = ((stop.tv_sec - threshold_start.tv_sec) * 1000000) +
              ((stop.tv_usec - threshold_start.tv_usec));
-        nodes_per_us = us ? nodes / us : 0;
+        nodes_per_us = us ? threshold_nodes / us : 0;
         nodes_per_sec = nodes_per_us * 1000000;
         LOG("IDA threshold %u, explored %'llu nodes, took %.3fs, %'llu nodes-per-sec\n",
-            threshold, (unsigned long long)nodes, us / 1000000, (unsigned long long)nodes_per_sec);
+            threshold, (unsigned long long)threshold_nodes, us / 1000000, (unsigned long long)nodes_per_sec);
 
-        if (found_solution) {
+        if (selected_root) {
             us = ((stop.tv_sec - start.tv_sec) * 1000000) + ((stop.tv_usec - start.tv_usec));
             nodes_per_us = us ? total_nodes / us : 0;
             nodes_per_sec = nodes_per_us * 1000000;
             LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n",
                 (unsigned long long)total_nodes, us / 1000000, (unsigned long long)nodes_per_sec);
+            if (root_count > 1) {
+                printf("ROOT_INDEX %u\n", selected_root->index);
+            }
             print_moves(best_solution, threshold);
-            print_ida_summary(cube, best_solution);
-            print_cube(cube, CUBE_SIZE);
+            print_ida_summary(selected_root->cube, best_solution);
+            print_cube(selected_root->cube, CUBE_SIZE);
             unmap_ranked_tables();
+            free(roots);
             return 0;
         }
     }
 
     LOG("IDA failed with range %u->%u\n", min_threshold, max_threshold);
     unmap_ranked_tables();
+    free(roots);
     return 1;
 }

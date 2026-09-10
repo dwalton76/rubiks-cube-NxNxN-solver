@@ -3,6 +3,7 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 
 # rubiks cube libraries
 from rubikscubennnsolver import SolveError, reverse_steps
@@ -278,7 +279,7 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
         self.avoid_oll = None
         download_file_if_needed(self.filename)
 
-    def solve_via_c(self, unpaired_multiplier=None, use_unpaired_matrix=False) -> None:
+    def solve_via_c(self, unpaired_multiplier=None) -> None:
         cmd = [
             "./ida_search_666_centers_stage",
             "--kociemba",
@@ -286,9 +287,7 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
             "--all-inner-x-cost",
             self.filename,
         ]
-        if use_unpaired_matrix:
-            cmd.append("--use-unpaired-matrix")
-        elif unpaired_multiplier is not None:
+        if unpaired_multiplier is not None:
             cmd.extend(("--unpaired-multiplier", str(unpaired_multiplier)))
 
         if self.avoid_oll is not None:
@@ -976,11 +975,9 @@ class LookupTableIDA666UDCentersStage:
         self.parent = parent
         self.avoid_oll = None
 
-    def solve_via_c(self) -> None:
+    def solution_via_c(self, roots=None):
         cmd = [
             "./ida_search_666_centers_stage",
-            "--kociemba",
-            self.parent.get_kociemba_string(True),
             "--left-right-oblique-cost",
             self.parent.lt_UD_left_right_oblique_stage.filename,
             "--left-oblique-outer-x-cost",
@@ -989,36 +986,62 @@ class LookupTableIDA666UDCentersStage:
             self.parent.lt_UD_right_oblique_outer_x_stage.filename,
         ]
 
-        if self.avoid_oll is not None:
+        roots_filename = None
+        if roots:
+            with tempfile.NamedTemporaryFile(mode="w", prefix="666-centers-roots-", suffix=".txt", delete=False) as fh:
+                roots_filename = fh.name
+                for root_index, kociemba, orbits_with_oll in roots:
+                    orbit0_requirement = 0
+                    orbit1_requirement = 0
+                    if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
+                        orbit0_requirement = 1 if 0 in orbits_with_oll else 2
+                    if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
+                        orbit1_requirement = 1 if 1 in orbits_with_oll else 2
+                    fh.write(f"{root_index},{orbit0_requirement},{orbit1_requirement},{kociemba}\n")
+            cmd.extend(("--kociemba-file", roots_filename))
+        else:
+            cmd.extend(("--kociemba", self.parent.get_kociemba_string(True)))
+
+        if not roots and self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
             if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
                 cmd.append("--orbit0-need-odd-w" if 0 in orbits_with_oll else "--orbit0-need-even-w")
             if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
                 cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
 
-        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
-        lines = []
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        ) as proc:
-            for line in proc.stdout:
-                lines.append(line)
-                logger.info("%s", line.rstrip("\n"))
-            returncode = proc.wait()
+        try:
+            logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+            lines = []
+            with subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            ) as proc:
+                for line in proc.stdout:
+                    lines.append(line)
+                    logger.info("%s", line.rstrip("\n"))
+                returncode = proc.wait()
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
 
         output = "".join(lines)
         self.parent.solve_via_c_output = output
+        root_index = 0
         for line in output.splitlines():
+            if line.startswith("ROOT_INDEX "):
+                root_index = int(line.split()[1])
             if line.startswith("SOLUTION"):
-                for step in line.split(":", 1)[1].strip().split():
-                    self.parent.rotate(step)
-                return
+                return root_index, tuple(line.split(":", 1)[1].strip().split())
 
         raise SolveError(f"ida_search_666_centers_stage failed with exit {returncode}\n{output}")
+
+    def solve_via_c(self) -> None:
+        _, solution = self.solution_via_c()
+        for step in solution:
+            self.parent.rotate(step)
 
 
 # phase 5
@@ -1904,7 +1927,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         return True
 
-    def daisy_solve_centers_eo_edges(self):
+    def daisy_solve_centers_eo_edges(self, phase5_solution_count: int = 64) -> None:
         """
         The inner x-centers and oblique edges are staged. Daisy solve the centers so that our
         centers are reduced to 555 while also EOing the inside orbit of edges.
@@ -1918,7 +1941,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # - EO the inside oribit of edges to prep for the 444 solver to pair those edges
         original_state = self.state[:]
         original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
+        phase5_comment_start = len(self.solution)
         pt_state_indexes_to_edge_mapping = {}
 
         # try all 2048 edge mappings
@@ -1934,25 +1957,90 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.state = original_state[:]
         self.solution = original_solution[:]
         phase5_solutions = self.lt_step50.solutions_via_c(
-            pt_states=pt_state_indexes_to_edge_mapping.keys(), solution_count=1
+            pt_states=pt_state_indexes_to_edge_mapping.keys(),
+            solution_count=phase5_solution_count,
+            find_extra=True,
         )
 
-        phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) = phase5_solutions[0]
-        self.edge_mapping = pt_state_indexes_to_edge_mapping[(pt0_state, pt1_state)]
+        phase5_by_phase6_root = {}
+        for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            self.edge_mapping = pt_state_indexes_to_edge_mapping[(pt0_state, pt1_state)]
+            for step in phase5_solution:
+                self.rotate(step)
+
+            phase6_root = tuple(
+                pt.state_index() for pt in self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.prune_tables
+            )
+            previous = phase5_by_phase6_root.get(phase6_root)
+            if previous is None or len(phase5_solution) < len(previous[0]):
+                phase5_by_phase6_root[phase6_root] = (
+                    phase5_solution,
+                    self.edge_mapping,
+                )
+
+        roots_by_phase5_len = {}
+        for phase6_root, (phase5_solution, _edge_mapping) in phase5_by_phase6_root.items():
+            roots_by_phase5_len.setdefault(len(phase5_solution), []).append(phase6_root)
+
+        logger.info(
+            "phase-5 portfolio has %d solutions and %d distinct phase-6 roots in %d length groups",
+            len(phase5_solutions),
+            len(phase5_by_phase6_root),
+            len(roots_by_phase5_len),
+        )
+
+        best = None
+        prune_table_count = len(self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.prune_tables)
+        for phase5_len, phase6_roots in sorted(roots_by_phase5_len.items()):
+            if best is not None and phase5_len >= best[0]:
+                break
+
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            phase6_solution, phase6_states = self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solutions_via_c(
+                pt_states=phase6_roots,
+                solution_count=1,
+            )[0]
+            phase6_root = tuple(phase6_states[:prune_table_count])
+            phase5_solution, edge_mapping = phase5_by_phase6_root[phase6_root]
+            candidate = (
+                len(phase5_solution) + len(phase6_solution),
+                len(phase6_solution),
+                phase5_solution,
+                phase6_solution,
+                edge_mapping,
+            )
+            if best is None or candidate < best:
+                best = candidate
+
+        if best is None:
+            raise SolveError("could not reduce UD/FB centers from any phase-5 portfolio endpoint")
+
+        _, _, phase5_solution, phase6_solution, self.edge_mapping = best
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
         for step in phase5_solution:
             self.rotate(step)
-
-        self.print_cube_add_comment("LR centers reduced to 555, EOed inside edges", tmp_solution_len)
+        self.print_cube_add_comment("LR centers reduced to 555, EOed inside edges", phase5_comment_start)
 
         # phase 6
         # solve the UD inner x-centers, pair the UD oblique edges and daisy solve UD
         # solve the FB inner x-centers, pair the FB oblique edges and daisy solve FB
         # daisy solve LR
         # this takes ~14 steps
-        tmp_solution_len = len(self.solution)
-        self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solve_via_c()
-        self.print_cube_add_comment("UD FB centers reduced to 555", tmp_solution_len)
+        phase6_comment_start = len(self.solution)
+        for step in phase6_solution:
+            self.rotate(step)
+        self.print_cube_add_comment("UD FB centers reduced to 555", phase6_comment_start)
+        logger.info(
+            "selected phase-5 length %d and phase-6 length %d (%d total)",
+            len(phase5_solution),
+            len(phase6_solution),
+            len(phase5_solution) + len(phase6_solution),
+        )
 
     def daisy_solve_centers(self):
         """
@@ -2095,6 +2183,67 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         )
         self.print_cube_add_comment("UD centers staged", phase4_comment_start)
 
+    def stage_LR_and_UD_centers(self, phase2_solution_count: int = 64) -> None:
+        """Select the phase-2 endpoint that gives the shortest ranked phase 3."""
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        phase2_comment_start = len(self.solution)
+
+        fake_555 = self.get_fake_555()
+        self.populate_fake_555_for_ULFRBD_solve()
+        phase2_solutions = fake_555.lt_LR_centers_stage.solutions_via_c(solution_count=phase2_solution_count)
+
+        phase2_solution_by_root = {}
+        root_keys = set()
+        roots = []
+        phase3_squares = (
+            tuple(UFBD_outer_x_centers_666) + tuple(UFBD_left_oblique_edges_666) + tuple(UFBD_right_oblique_edges_666)
+        )
+
+        for phase2_solution, _ in phase2_solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            for step in phase2_solution:
+                self.rotate(step)
+
+            orbits_with_oll = frozenset(self.center_solution_leads_to_oll_parity())
+            root_key = (
+                tuple(self.state[square] for square in phase3_squares),
+                0 in orbits_with_oll,
+            )
+            if root_key in root_keys:
+                continue
+
+            root_index = len(roots)
+            root_keys.add(root_key)
+            phase2_solution_by_root[root_index] = phase2_solution
+            roots.append((root_index, self.get_kociemba_string(True), orbits_with_oll))
+
+        logger.info(
+            "phase-2 portfolio has %d solutions and %d distinct phase-3 roots",
+            len(phase2_solutions),
+            len(roots),
+        )
+        root_index, phase3_solution = self.lt_UD_centers_stage.solution_via_c(roots)
+        phase2_solution = phase2_solution_by_root[root_index]
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        for step in phase2_solution:
+            self.rotate(step)
+        self.print_cube_add_comment("LR centers staged", phase2_comment_start)
+
+        phase3_comment_start = len(self.solution)
+        for step in phase3_solution:
+            self.rotate(step)
+        self.print_cube_add_comment("UD centers staged", phase3_comment_start)
+        logger.info(
+            "selected phase-2 length %d and phase-3 length %d (%d total)",
+            len(phase2_solution),
+            len(phase3_solution),
+            len(phase2_solution) + len(phase3_solution),
+        )
+
     def stage_centers(self):
         """
         option A (original strategy)
@@ -2191,17 +2340,22 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
                         tmp_solution_len,
                     )
 
-                # phase 2 - Stage LR centers via 555
-                fake_555 = self.get_fake_555()
-                self.populate_fake_555_for_ULFRBD_solve()
-                tmp_solution_len = len(self.solution)
-                fake_555.group_centers_stage_LR()
+                if self.lt_UD_centers_stage is not None and not self.UD_centers_staged():
+                    # Phase 2 is cheap enough to produce a portfolio. Search
+                    # phase 3 from all distinct endpoints in one C process.
+                    self.stage_LR_and_UD_centers()
+                else:
+                    # Low-memory path, or the U/D centers are already staged.
+                    fake_555 = self.get_fake_555()
+                    self.populate_fake_555_for_ULFRBD_solve()
+                    tmp_solution_len = len(self.solution)
+                    fake_555.group_centers_stage_LR()
 
-                for step in fake_555.solution:
-                    if not step.startswith("COMMENT"):
-                        self.rotate(step)
+                    for step in fake_555.solution:
+                        if not step.startswith("COMMENT"):
+                            self.rotate(step)
 
-                self.print_cube_add_comment("LR centers staged", tmp_solution_len)
+                    self.print_cube_add_comment("LR centers staged", tmp_solution_len)
 
             if not self.UD_centers_staged():
                 if self.lt_UD_centers_stage is not None:

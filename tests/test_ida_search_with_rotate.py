@@ -6,6 +6,7 @@ from rubikscubennnsolver.RubiksCube666 import (
     ALL_INNER_X_CENTERS_STAGE_MEMORY_MARGIN,
     ALL_INNER_X_CENTERS_STAGE_TABLE_BYTES,
     RubiksCube666,
+    UFBD_outer_x_centers_666,
     solved_666,
 )
 
@@ -318,6 +319,150 @@ class PhaseThreeFourPortfolio666Test(unittest.TestCase):
                 (True, ((10, 20),)),
                 (False, ((11, 21),)),
             },
+        )
+
+
+class PhaseTwoPortfolioTest(unittest.TestCase):
+    class FakePhaseTwo:
+        def solutions_via_c(self, solution_count):
+            assert solution_count == 64
+            return [(("A",), ()), (("B",), ()), (("C",), ())]
+
+    class Fake555:
+        def __init__(self):
+            self.lt_LR_centers_stage = PhaseTwoPortfolioTest.FakePhaseTwo()
+
+    class FakePhaseThree:
+        def __init__(self):
+            self.roots = None
+
+        def solution_via_c(self, roots):
+            self.roots = roots
+            return 1, ("P1", "P2")
+
+    class FakeCube:
+        def __init__(self):
+            self.state = ["x"] * 217
+            self.solution = []
+            self.fake_555 = PhaseTwoPortfolioTest.Fake555()
+            self.lt_UD_centers_stage = PhaseTwoPortfolioTest.FakePhaseThree()
+
+        def get_fake_555(self):
+            return self.fake_555
+
+        def populate_fake_555_for_ULFRBD_solve(self):
+            pass
+
+        def rotate(self, move):
+            self.solution.append(move)
+            if move == "A":
+                self.state[UFBD_outer_x_centers_666[0]] = "A"
+            elif move in ("B", "C"):
+                self.state[UFBD_outer_x_centers_666[0]] = "B"
+
+        def center_solution_leads_to_oll_parity(self):
+            return {0} if self.state[UFBD_outer_x_centers_666[0]] == "A" else set()
+
+        def get_kociemba_string(self, _all_squares):
+            return self.state[UFBD_outer_x_centers_666[0]] * 216
+
+        def print_cube_add_comment(self, _comment, _start):
+            pass
+
+    def test_phase_two_portfolio_deduplicates_roots_and_applies_selected_prefix(self):
+        cube = self.FakeCube()
+
+        RubiksCube666.stage_LR_and_UD_centers(cube)
+
+        self.assertEqual(cube.solution, ["B", "P1", "P2"])
+        self.assertEqual(
+            cube.lt_UD_centers_stage.roots,
+            [
+                (0, "A" * 216, frozenset({0})),
+                (1, "B" * 216, frozenset()),
+            ],
+        )
+
+
+class PhaseFiveSixPortfolioTest(unittest.TestCase):
+    class FakeStep50PruneTable:
+        def state_index(self):
+            return 0
+
+    class FakePhaseFive:
+        def __init__(self):
+            self.prune_tables = [
+                PhaseFiveSixPortfolioTest.FakeStep50PruneTable(),
+                PhaseFiveSixPortfolioTest.FakeStep50PruneTable(),
+            ]
+
+        def solutions_via_c(self, pt_states, solution_count, find_extra):
+            assert solution_count == 64
+            assert find_extra
+            assert list(pt_states) == [(0, 0)]
+            return [
+                (("A",), (0, 0, 0, 0, 0)),
+                (("B", "C", "D"), (0, 0, 0, 0, 0)),
+            ]
+
+    class FakePhaseSixPruneTable:
+        def __init__(self, parent, coordinate):
+            self.parent = parent
+            self.coordinate = coordinate
+
+        def state_index(self):
+            roots = {
+                "A": (10, 20, 30),
+                "B": (11, 21, 31),
+                "D": (11, 21, 31),
+            }
+            return roots[self.parent.state[0]][self.coordinate]
+
+    class FakePhaseSix:
+        def __init__(self, parent):
+            self.parent = parent
+            self.calls = []
+            self.prune_tables = [
+                PhaseFiveSixPortfolioTest.FakePhaseSixPruneTable(parent, 0),
+                PhaseFiveSixPortfolioTest.FakePhaseSixPruneTable(parent, 1),
+                PhaseFiveSixPortfolioTest.FakePhaseSixPruneTable(parent, 2),
+            ]
+
+        def solutions_via_c(self, pt_states, solution_count):
+            assert solution_count == 1
+            self.calls.append(tuple(pt_states))
+            roots = set(pt_states)
+            if roots == {(10, 20, 30)}:
+                return [(("PA1", "PA2", "PA3"), (10, 20, 30, 0, 0))]
+            if roots == {(11, 21, 31)}:
+                return [(("PB1", "PB2"), (11, 21, 31, 0, 0))]
+            raise AssertionError(f"phase 6 searched mixed length groups: {pt_states}")
+
+    class FakeCube:
+        def __init__(self):
+            self.state = ["root"]
+            self.solution = []
+            self.edge_mapping = None
+            self.lt_step50 = PhaseFiveSixPortfolioTest.FakePhaseFive()
+            self.lt_UFBD_solve_inner_x_centers_and_oblique_edges = PhaseFiveSixPortfolioTest.FakePhaseSix(self)
+
+        def rotate(self, move):
+            self.solution.append(move)
+            if move in {"A", "B", "C", "D"}:
+                self.state[0] = move
+
+        def print_cube_add_comment(self, _comment, _start):
+            pass
+
+    def test_phase_five_portfolio_deduplicates_phase_six_roots_and_picks_shortest_total(self):
+        cube = self.FakeCube()
+
+        RubiksCube666.daisy_solve_centers_eo_edges(cube)
+
+        self.assertEqual(cube.solution, ["A", "PA1", "PA2", "PA3"])
+        self.assertEqual(
+            cube.lt_UFBD_solve_inner_x_centers_and_oblique_edges.calls,
+            [((10, 20, 30),), ((11, 21, 31),)],
         )
 
 

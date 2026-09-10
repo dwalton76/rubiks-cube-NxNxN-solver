@@ -267,6 +267,43 @@ class RankedCentersStage666Test(unittest.TestCase):
             self.assertRegex(result.stdout, r"LROB\s+LOOX\s+ROOX\s+CTG\s+TRU\s+IDX")
         self.assertEqual(len(solutions), 1)
 
+    def test_multiple_starting_states_select_the_shortest_root(self):
+        scrambled = RubiksCube666(solved_666, "URFDLB")
+        scrambled.rotate("Lw")
+        for label, _, orbits, required in TABLES:
+            if not required:
+                continue
+            make_sparse_table(
+                self.paths[label],
+                {
+                    table_rank(orbit_ranks(self.solved), orbits): 1,
+                    table_rank(orbit_ranks(scrambled), orbits): 2,
+                },
+            )
+
+        roots_path = Path(self.tempdir.name) / "roots.txt"
+        roots_path.write_text(
+            "\n".join(
+                (
+                    f"11,1,0,{scrambled.get_kociemba_string(True)}",
+                    f"22,2,0,{self.solved.get_kociemba_string(True)}",
+                )
+            )
+            + "\n"
+        )
+        cmd = [str(BINARY), "--kociemba-file", str(roots_path)]
+        for label, flag, _, required in TABLES:
+            if required:
+                cmd.extend((flag, str(self.paths[label])))
+        cmd.extend(("--threads", "1", "--max-ida-threshold", "1"))
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("loaded 2 starting states", result.stdout)
+        self.assertIn("ROOT_INDEX 22", result.stdout)
+        self.assertIn("SOLUTION (0 steps)", result.stdout)
+
     def test_orbit_parity_requirements_are_checked_at_goal(self):
         self.write_tables([])
         for label, _, orbits, required in TABLES:

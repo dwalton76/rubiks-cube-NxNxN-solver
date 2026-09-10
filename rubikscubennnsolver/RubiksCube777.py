@@ -38,10 +38,10 @@ Phase 8 - UD centers to vertical bars
 Phase 9 - daisy-solve the centers
     Step-60 IDA (prune tables step61/62/65/66). The centers are now a 5x5x5.
 
-Cubes larger than 7x7x7 reuse this solver on concentric orbits. They also use
-the t-center solve IDA (step70) and, when finishing an odd cube, the 5x5x5
-all-centers solve table.
+Odd cubes larger than 7x7x7 reuse this solver on concentric orbits. Their
+t-center IDA (step70) lives in ``RubiksCubeNNNOdd``.
 """
+
 # standard libraries
 import logging
 
@@ -92,6 +92,91 @@ outer_x_centers_777 = (
     254, 258, 282, 286,  # Down
 )
 
+inner_x_centers_777 = (
+    17, 19, 31, 33,  # Upper
+    66, 68, 80, 82,  # Left
+    115, 117, 129, 131,  # Front
+    164, 166, 178, 180,  # Right
+    213, 215, 227, 229,  # Back
+    262, 264, 276, 278,  # Down
+)
+
+outer_t_centers_777 = (
+    11, 23, 27, 39,  # Upper
+    60, 72, 76, 88,  # Left
+    109, 121, 125, 137,  # Front
+    158, 170, 174, 186,  # Right
+    207, 219, 223, 235,  # Back
+    256, 268, 272, 284,  # Down
+)
+
+inner_t_centers_777 = (
+    18, 24, 26, 32,  # Upper
+    67, 73, 75, 81,  # Left
+    116, 122, 124, 130,  # Front
+    165, 171, 173, 179,  # Right
+    214, 220, 222, 228,  # Back
+    263, 269, 271, 277,  # Down
+)
+
+middle_centers_777 = (
+    25, 74, 123, 172, 221, 270,
+)
+
+corners_777 = (
+    1, 7, 43, 49,  # Upper
+    50, 56, 92, 98,  # Left
+    99, 105, 141, 147,  # Front
+    148, 154, 190, 196,  # Right
+    197, 203, 239, 245,  # Back
+    246, 252, 288, 294,  # Down
+)
+
+left_oblique_edges_777 = (
+    10, 20, 30, 40,  # Upper
+    59, 69, 79, 89,  # Left
+    108, 118, 128, 138,  # Front
+    157, 167, 177, 187,  # Right
+    206, 216, 226, 236,  # Back
+    255, 265, 275, 285,  # Down
+)
+
+right_oblique_edges_777 = (
+    12, 16, 34, 38,  # Upper
+    61, 65, 83, 87,  # Left
+    110, 114, 132, 136,  # Front
+    159, 163, 181, 185,  # Right
+    208, 212, 230, 234,  # Back
+    257, 261, 279, 283,  # Down
+)
+
+edge_orbit_0_777 = (
+    2, 6, 14, 42, 48, 44, 36, 8,  # Upper
+    51, 55, 63, 91, 97, 93, 85, 57,  # Left
+    100, 104, 112, 140, 146, 142, 134, 106,  # Front
+    149, 153, 161, 189, 195, 191, 183, 155,  # Right
+    198, 202, 210, 238, 244, 240, 232, 204,  # Back
+    247, 251, 259, 287, 293, 289, 281, 253,  # Down
+)
+
+edge_orbit_1_777 = (
+    3, 5, 21, 35, 47, 45, 29, 15,  # Upper
+    52, 54, 70, 84, 96, 94, 78, 64,  # Left
+    101, 103, 119, 133, 145, 143, 127, 113,  # Front
+    150, 152, 168, 182, 194, 192, 176, 162,  # Right
+    199, 201, 217, 231, 243, 241, 225, 211,  # Back
+    248, 250, 266, 280, 292, 290, 274, 260,  # Down
+)
+
+edge_orbit_2_777 = (
+    4, 28, 46, 22,  # Upper
+    53, 77, 95, 71,  # Left
+    102, 126, 144, 120,  # Front
+    151, 175, 193, 169,  # Right
+    200, 224, 242, 218,  # Back
+    249, 273, 291, 267,  # Down
+)
+
 LR_centers_777 = (
     58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90,  # Left
     156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188,  # Right
@@ -138,6 +223,83 @@ UFBD_middle_oblique_777 = (
     207, 219, 223, 235,  # Back
     256, 268, 272, 284,  # Down
 )
+
+oblique_edges_777 = (
+    10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
+    59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
+    108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
+    157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
+    206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
+    255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
+)
+
+UFBD_oblique_edges_777 = (
+    10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
+    108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
+    206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
+    255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
+)
+
+LR_oblique_edges_and_outer_t_center = (
+    59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
+    157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
+)
+
+LR_inside_centers_and_left_oblique_edges = (
+    59, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 89,  # Left
+    157, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 187,  # Right
+)
+
+LR_inside_centers_and_outer_t_centers = (
+    60, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 88,  # Left
+    158, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 186,  # Right
+)
+
+LR_inside_centers_and_right_oblique_edges = (
+    61, 65, 66, 67, 68, 73, 74, 75, 80, 81, 82, 83, 87,  # Left
+    159, 163, 164, 165, 166, 171, 172, 173, 178, 179, 180, 181, 185,  # Right
+)
+
+UD_oblique_edges_and_outer_t_center = (
+    10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
+    255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
+)
+
+UD_inside_centers_and_left_oblique_edges = (
+    10, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 40,  # Upper
+    255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285,  # Down
+)
+
+UD_inside_centers_and_outer_t_centers = (
+    11, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 39,  # Upper
+    256, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 284,  # Down
+)
+
+UD_inside_centers_and_right_oblique_edges = (
+    12, 16, 17, 18, 19, 24, 25, 26, 31, 32, 33, 34, 38,  # Upper
+    257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283,  # Down
+)
+
+LR_centers_minus_outside_x_centers_777 = (
+    59, 60, 61, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 87, 88, 89,  # Left
+    157, 158, 159, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 185, 186, 187,  # Right
+)
+
+UD_centers_minus_outside_x_centers_777 = (
+    10, 11, 12, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 38, 39, 40,  # Upper
+    255, 256, 257, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 283, 284, 285,  # Down
+)
+
+FB_inside_centers_and_outer_t_centers = (
+    109, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 137,  # Front
+    207, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 235,  # Back
+)
+
+FB_oblique_edges_and_outer_t_center = (
+    108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
+    206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
+)
+
 
 # fmt: on
 
@@ -238,17 +400,6 @@ PHASE9_ILLEGAL_MOVES = (
 
 
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
-    # fmt: off
-    oblique_edges_777 = (
-        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
-        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
-        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
-        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
-        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
-        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent):
         # fmt: off
         LookupTableIDAViaGraph.__init__(
@@ -267,7 +418,7 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
         self.parent.nuke_edges()
 
         for x in centers_777:
-            if x in self.oblique_edges_777:
+            if x in oblique_edges_777:
                 if self.parent.state[x] == "L" or self.parent.state[x] == "R":
                     self.parent.state[x] = "L"
                 else:
@@ -987,14 +1138,6 @@ class LookupTableIDA777UDObliqueEdgePairingNew(LookupTableIDAViaGraph):
 # pair the UD oblique edges via an unpaired-count heuristic
 # ==================================================
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
-    # fmt: off
-    UFBD_oblique_edges_777 = (
-        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
-        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
-        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
-        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
-    )
-    # fmt: on
 
     def __init__(self, parent):
         # fmt: off
@@ -1014,7 +1157,7 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
         self.parent.nuke_edges()
 
         for x in centers_777:
-            if x in self.UFBD_oblique_edges_777:
+            if x in UFBD_oblique_edges_777:
                 if self.parent.state[x] == "U" or self.parent.state[x] == "D":
                     self.parent.state[x] = "U"
                 else:
@@ -1146,13 +1289,6 @@ class LookupTable777Step41(LookupTable):
         "RRRRRRRRRRRRLLLLLLLLLLLL",
     )
 
-    # fmt: off
-    LR_oblique_edges_and_outer_t_center = (
-        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
-        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         # fmt: off
         LookupTable.__init__(
@@ -1171,12 +1307,12 @@ class LookupTable777Step41(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_oblique_edges_and_outer_t_center])
+        return "".join([parent_state[x] for x in LR_oblique_edges_and_outer_t_center])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_oblique_edges_and_outer_t_center, state):
+        for pos, pos_state in zip(LR_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -1264,13 +1400,6 @@ class LookupTable777Step42(LookupTable):
         "RRLRRRLRRRLRRLLRLLLRLLLRLL",
     )
 
-    # fmt: off
-    LR_inside_centers_and_left_oblique_edges = (
-        59, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 89,  # Left
-        157, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 187,  # Right
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         # fmt: off
         LookupTable.__init__(
@@ -1289,12 +1418,12 @@ class LookupTable777Step42(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_inside_centers_and_left_oblique_edges])
+        return "".join([parent_state[x] for x in LR_inside_centers_and_left_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_inside_centers_and_left_oblique_edges, state):
+        for pos, pos_state in zip(LR_inside_centers_and_left_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1342,13 +1471,6 @@ class LookupTable777Step43(LookupTable):
     Total: 343,000 entries
     Average: 5.87 moves
     """
-
-    # fmt: off
-    LR_inside_centers_and_outer_t_centers = (
-        60, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 88,  # Left
-        158, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 186,  # Right
-    )
-    # fmt: on
 
     state_targets = (
         "LLLLLLLLLLLLLRRRRRRRRRRRRR",
@@ -1407,12 +1529,12 @@ class LookupTable777Step43(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_inside_centers_and_outer_t_centers])
+        return "".join([parent_state[x] for x in LR_inside_centers_and_outer_t_centers])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_inside_centers_and_outer_t_centers, state):
+        for pos, pos_state in zip(LR_inside_centers_and_outer_t_centers, state):
             cube[pos] = pos_state
 
 
@@ -1500,13 +1622,6 @@ class LookupTable777Step44(LookupTable):
         "RRRLRRLRRLRRRLLLRLLRLLRLLL",
     )
 
-    # fmt: off
-    LR_inside_centers_and_right_oblique_edges = [
-        61, 65, 66, 67, 68, 73, 74, 75, 80, 81, 82, 83, 87,  # Left
-        159, 163, 164, 165, 166, 171, 172, 173, 178, 179, 180, 181, 185,  # Right
-    ]
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         # fmt: off
         LookupTable.__init__(
@@ -1525,12 +1640,12 @@ class LookupTable777Step44(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_inside_centers_and_right_oblique_edges])
+        return "".join([parent_state[x] for x in LR_inside_centers_and_right_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_inside_centers_and_right_oblique_edges, state):
+        for pos, pos_state in zip(LR_inside_centers_and_right_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1672,13 +1787,6 @@ class LookupTable777Step51(LookupTable):
         "UUUUUUUUUUUUDDDDDDDDDDDD",
     )
 
-    # fmt: off
-    UD_oblique_edges_and_outer_t_center = (
-        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
-        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         # fmt: off
         LookupTable.__init__(
@@ -1697,12 +1805,12 @@ class LookupTable777Step51(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_oblique_edges_and_outer_t_center])
+        return "".join([parent_state[x] for x in UD_oblique_edges_and_outer_t_center])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.UD_oblique_edges_and_outer_t_center, state):
+        for pos, pos_state in zip(UD_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -1791,13 +1899,6 @@ class LookupTable777Step52(LookupTable):
         "UUUUUUUUUUUUUDDDDDDDDDDDDD",
     )
 
-    # fmt: off
-    UD_inside_centers_and_left_oblique_edges = (
-        10, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 40,  # Upper
-        255, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 285,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         # fmt: off
         LookupTable.__init__(
@@ -1816,12 +1917,12 @@ class LookupTable777Step52(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_inside_centers_and_left_oblique_edges])
+        return "".join([parent_state[x] for x in UD_inside_centers_and_left_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.UD_inside_centers_and_left_oblique_edges, state):
+        for pos, pos_state in zip(UD_inside_centers_and_left_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -1908,13 +2009,6 @@ class LookupTable777Step53(LookupTable):
         "UUUUUUUUUUUUUDDDDDDDDDDDDD",
     )
 
-    # fmt: off
-    UD_inside_centers_and_outer_t_centers = (
-        11, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 39,  # Upper
-        256, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 284,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         # fmt: off
         LookupTable.__init__(
@@ -1933,12 +2027,12 @@ class LookupTable777Step53(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_inside_centers_and_outer_t_centers])
+        return "".join([parent_state[x] for x in UD_inside_centers_and_outer_t_centers])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.UD_inside_centers_and_outer_t_centers, state):
+        for pos, pos_state in zip(UD_inside_centers_and_outer_t_centers, state):
             cube[pos] = pos_state
 
 
@@ -2027,13 +2121,6 @@ class LookupTable777Step54(LookupTable):
         "UUUUUUUUUUUUUDDDDDDDDDDDDD",
     )
 
-    # fmt: off
-    UD_inside_centers_and_right_oblique_edges = [
-        12, 16, 17, 18, 19, 24, 25, 26, 31, 32, 33, 34, 38,  # Upper
-        257, 261, 262, 263, 264, 269, 270, 271, 276, 277, 278, 279, 283,  # Down
-    ]
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         # fmt: off
         LookupTable.__init__(
@@ -2052,12 +2139,12 @@ class LookupTable777Step54(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_inside_centers_and_right_oblique_edges])
+        return "".join([parent_state[x] for x in UD_inside_centers_and_right_oblique_edges])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.UD_inside_centers_and_right_oblique_edges, state):
+        for pos, pos_state in zip(UD_inside_centers_and_right_oblique_edges, state):
             cube[pos] = pos_state
 
 
@@ -2099,13 +2186,6 @@ class LookupTable777Step55(LookupTable):
     Average: 2.67 moves
     """
 
-    # fmt: off
-    LR_centers_minus_outside_x_centers_777 = (
-        59, 60, 61, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 87, 88, 89,  # Left
-        157, 158, 159, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 185, 186, 187,  # Right
-    )
-    # fmt: on
-
     state_targets = ("LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR", "RRRRLLLRRLLLRRLLLRRRRLLLLRRRLLRRRLLRRRLLLL")
 
     def __init__(self, parent, build_state_index=False):
@@ -2126,12 +2206,12 @@ class LookupTable777Step55(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_minus_outside_x_centers_777])
+        return "".join([parent_state[x] for x in LR_centers_minus_outside_x_centers_777])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(LR_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -2191,13 +2271,6 @@ class LookupTable777Step61(LookupTable):
     Average: 2.67 moves
     """
 
-    # fmt: off
-    UD_centers_minus_outside_x_centers_777 = (
-        10, 11, 12, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 38, 39, 40,  # Upper
-        255, 256, 257, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 283, 284, 285,  # Down
-    )
-    # fmt: on
-
     state_targets = ("UUUUUUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDDDDDD", "DDDDUUUDDUUUDDUUUDDDDUUUUDDDUUDDDUUDDDUUUU")
 
     def __init__(self, parent, build_state_index=False):
@@ -2218,12 +2291,12 @@ class LookupTable777Step61(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_centers_minus_outside_x_centers_777])
+        return "".join([parent_state[x] for x in UD_centers_minus_outside_x_centers_777])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.UD_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(UD_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -2265,13 +2338,6 @@ class LookupTable777Step62(LookupTable):
     Average: 2.67 moves
     """
 
-    # fmt: off
-    LR_centers_minus_outside_x_centers_777 = (
-        59, 60, 61, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 87, 88, 89,  # Left
-        157, 158, 159, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 185, 186, 187,  # Right
-    )
-    # fmt: on
-
     state_targets = ("LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR", "RRRRLLLRRLLLRRLLLRRRRLLLLRRRLLRRRLLRRRLLLL")
 
     def __init__(self, parent, build_state_index=False):
@@ -2292,12 +2358,12 @@ class LookupTable777Step62(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_minus_outside_x_centers_777])
+        return "".join([parent_state[x] for x in LR_centers_minus_outside_x_centers_777])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_centers_minus_outside_x_centers_777, state):
+        for pos, pos_state in zip(LR_centers_minus_outside_x_centers_777, state):
             cube[pos] = pos_state
 
 
@@ -2347,13 +2413,6 @@ class LookupTable777Step65(LookupTable):
     Average: 7.73 moves
     """
 
-    # fmt: off
-    FB_inside_centers_and_outer_t_centers = (
-        109, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 137,  # Front
-        207, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 235,  # Back
-    )
-    # fmt: on
-
     state_targets = ("FFFFFFFFFFFFFBBBBBBBBBBBBB", "BFFFBFFFBFFFBFBBBFBBBFBBBF")
 
     def __init__(self, parent, build_state_index=False):
@@ -2374,12 +2433,12 @@ class LookupTable777Step65(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_inside_centers_and_outer_t_centers])
+        return "".join([parent_state[x] for x in FB_inside_centers_and_outer_t_centers])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.FB_inside_centers_and_outer_t_centers, state):
+        for pos, pos_state in zip(FB_inside_centers_and_outer_t_centers, state):
             cube[pos] = pos_state
 
 
@@ -2429,13 +2488,6 @@ class LookupTable777Step66(LookupTable):
     Average: 7.42 moves
     """
 
-    # fmt: off
-    FB_oblique_edges_and_outer_t_center = (
-        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138,  # Front
-        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236,  # Back
-    )
-    # fmt: on
-
     state_targets = ("BBBBBBBBBBBBFFFFFFFFFFFF", "FFFFFFFFFFFFBBBBBBBBBBBB")
 
     def __init__(self, parent, build_state_index=False):
@@ -2456,12 +2508,12 @@ class LookupTable777Step66(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_oblique_edges_and_outer_t_center])
+        return "".join([parent_state[x] for x in FB_oblique_edges_and_outer_t_center])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.FB_oblique_edges_and_outer_t_center, state):
+        for pos, pos_state in zip(FB_oblique_edges_and_outer_t_center, state):
             cube[pos] = pos_state
 
 
@@ -2474,466 +2526,6 @@ class LookupTableIDA777Step60(LookupTableIDAViaGraph):
             all_moves=moves_777,
             illegal_moves=PHASE9_ILLEGAL_MOVES,
             prune_tables=(parent.lt_step61, parent.lt_step62, parent.lt_step65, parent.lt_step66),
-            centers_only=True,
-        )
-        # fmt: on
-
-
-# ==================================================
-# solve t-centers
-# used by cubes larger than 7x7
-# ==================================================
-class LookupTable777Step71(LookupTable):
-    """
-                   . . . . . . .
-                   . . U U U . .
-                   . U U U U U .
-                   . U U U U U .
-                   . U U U U U .
-                   . . U U U . .
-                   . . . . . . .
-
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-
-                   . . . . . . .
-                   . . D D D . .
-                   . D D D D D .
-                   . D D D D D .
-                   . D D D D D .
-                   . . D D D . .
-                   . . . . . . .
-
-    lookup-table-7x7x7-step71.txt
-    =============================
-    0 steps has 1 entries (2 percent, 0.00x previous step)
-    1 steps has 4 entries (11 percent, 4.00x previous step)
-    2 steps has 10 entries (27 percent, 2.50x previous step)
-    3 steps has 12 entries (33 percent, 1.20x previous step)
-    4 steps has 9 entries (25 percent, 0.75x previous step)
-
-    Total: 36 entries
-    Average: 2.67 moves
-    """
-
-    UD_centers_minus_outside_x_centers_777 = (
-        10,
-        11,
-        12,
-        16,
-        17,
-        18,
-        19,
-        20,
-        23,
-        24,
-        25,
-        26,
-        27,
-        30,
-        31,
-        32,
-        33,
-        34,
-        38,
-        39,
-        40,  # Upper
-        255,
-        256,
-        257,
-        261,
-        262,
-        263,
-        264,
-        265,
-        268,
-        269,
-        270,
-        271,
-        272,
-        275,
-        276,
-        277,
-        278,
-        279,
-        283,
-        284,
-        285,  # Down
-    )
-
-    state_targets = ("UUUUUUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDDDDDD",)
-
-    def __init__(self, parent, build_state_index=False):
-        # fmt: off
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-7x7x7-step71.txt",
-            self.state_targets,
-            linecount=36,
-            max_depth=4,
-            all_moves=moves_777,
-            illegal_moves=PHASE9_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        # fmt: on
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_centers_minus_outside_x_centers_777])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.UD_centers_minus_outside_x_centers_777, state):
-            cube[pos] = pos_state
-
-
-class LookupTable777Step72(LookupTable):
-    """
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . L L L . .  . . . . . . .  . . R R R . .  . . . . . . .
-    . L L L L L .  . . . . . . .  . R R R R R .  . . . . . . .
-    . L L L L L .  . . . . . . .  . R R R R R .  . . . . . . .
-    . L L L L L .  . . . . . . .  . R R R R R .  . . . . . . .
-    . . L L L . .  . . . . . . .  . . R R R . .  . . . . . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-
-    lookup-table-7x7x7-step72.txt
-    =============================
-    0 steps has 1 entries (2 percent, 0.00x previous step)
-    1 steps has 4 entries (11 percent, 4.00x previous step)
-    2 steps has 10 entries (27 percent, 2.50x previous step)
-    3 steps has 12 entries (33 percent, 1.20x previous step)
-    4 steps has 9 entries (25 percent, 0.75x previous step)
-
-    Total: 36 entries
-    Average: 2.67 moves
-    """
-
-    LR_centers_minus_outside_x_centers_777 = (
-        59,
-        60,
-        61,
-        65,
-        66,
-        67,
-        68,
-        69,
-        72,
-        73,
-        74,
-        75,
-        76,
-        79,
-        80,
-        81,
-        82,
-        83,
-        87,
-        88,
-        89,  # Left
-        157,
-        158,
-        159,
-        163,
-        164,
-        165,
-        166,
-        167,
-        170,
-        171,
-        172,
-        173,
-        174,
-        177,
-        178,
-        179,
-        180,
-        181,
-        185,
-        186,
-        187,  # Right
-    )
-
-    state_targets = ("LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR",)
-
-    def __init__(self, parent, build_state_index=False):
-        # fmt: off
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-7x7x7-step72.txt",
-            self.state_targets,
-            linecount=36,
-            max_depth=4,
-            all_moves=moves_777,
-            illegal_moves=PHASE9_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        # fmt: on
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_minus_outside_x_centers_777])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.LR_centers_minus_outside_x_centers_777, state):
-            cube[pos] = pos_state
-
-
-class LookupTable777Step75(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . . F . . .  . . . . . . .  . . . B . . .
-    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
-    . . . . . . .  . F F F F F .  . . . . . . .  . B B B B B .
-    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
-    . . . . . . .  . . . F . . .  . . . . . . .  . . . B . . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-
-    lookup-table-7x7x7-step75.txt
-    =============================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 8 entries (0 percent, 8.00x previous step)
-    2 steps has 56 entries (0 percent, 7.00x previous step)
-    3 steps has 300 entries (0 percent, 5.36x previous step)
-    4 steps has 1,317 entries (0 percent, 4.39x previous step)
-    5 steps has 5,382 entries (1 percent, 4.09x previous step)
-    6 steps has 19,083 entries (5 percent, 3.55x previous step)
-    7 steps has 55,022 entries (16 percent, 2.88x previous step)
-    8 steps has 104,894 entries (30 percent, 1.91x previous step)
-    9 steps has 106,324 entries (30 percent, 1.01x previous step)
-    10 steps has 44,533 entries (12 percent, 0.42x previous step)
-    11 steps has 5,880 entries (1 percent, 0.13x previous step)
-    12 steps has 200 entries (0 percent, 0.03x previous step)
-
-    Total: 343,000 entries
-    Average: 8.28 moves
-    """
-
-    FB_inside_centers_and_outer_t_centers = (
-        # 11, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 39,  # Upper
-        # 60, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 88,  # Left
-        109,
-        115,
-        116,
-        117,
-        121,
-        122,
-        123,
-        124,
-        125,
-        129,
-        130,
-        131,
-        137,  # Front
-        # 158, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 186,  # Right
-        207,
-        213,
-        214,
-        215,
-        219,
-        220,
-        221,
-        222,
-        223,
-        227,
-        228,
-        229,
-        235,  # Back
-        # 256, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 284,  # Down
-    )
-
-    state_targets = ("FFFFFFFFFFFFFBBBBBBBBBBBBB",)
-
-    def __init__(self, parent, build_state_index=False):
-        # fmt: off
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-7x7x7-step75.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=12,
-            all_moves=moves_777,
-            illegal_moves=PHASE9_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        # fmt: on
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_inside_centers_and_outer_t_centers])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.FB_inside_centers_and_outer_t_centers, state):
-            cube[pos] = pos_state
-
-
-class LookupTable777Step76(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
-    . . . . . . .  . F . . . F .  . . . . . . .  . B . . . B .
-    . . . . . . .  . F . . . F .  . . . . . . .  . B . . . B .
-    . . . . . . .  . F . . . F .  . . . . . . .  . B . . . B .
-    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
-    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
-
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-                   . . . . . . .
-
-    lookup-table-7x7x7-step76.txt
-    =============================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 8 entries (0 percent, 8.00x previous step)
-    2 steps has 48 entries (0 percent, 6.00x previous step)
-    3 steps has 276 entries (0 percent, 5.75x previous step)
-    4 steps has 1,572 entries (0 percent, 5.70x previous step)
-    5 steps has 8,134 entries (2 percent, 5.17x previous step)
-    6 steps has 33,187 entries (9 percent, 4.08x previous step)
-    7 steps has 94,826 entries (27 percent, 2.86x previous step)
-    8 steps has 141,440 entries (41 percent, 1.49x previous step)
-    9 steps has 59,620 entries (17 percent, 0.42x previous step)
-    10 steps has 3,808 entries (1 percent, 0.06x previous step)
-    11 steps has 80 entries (0 percent, 0.02x previous step)
-
-    Total: 343,000 entries
-    Average: 7.63 moves
-    """
-
-    FB_oblique_edges_and_outer_t_center = (
-        # 10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40,  # Upper
-        # 59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89,  # Left
-        108,
-        109,
-        110,
-        114,
-        118,
-        121,
-        125,
-        128,
-        132,
-        136,
-        137,
-        138,  # Front
-        # 157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187,  # Right
-        206,
-        207,
-        208,
-        212,
-        216,
-        219,
-        223,
-        226,
-        230,
-        234,
-        235,
-        236,  # Back
-        # 255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285,  # Down
-    )
-
-    state_targets = ("FFFFFFFFFFFFBBBBBBBBBBBB",)
-
-    def __init__(self, parent, build_state_index=False):
-        # fmt: off
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-7x7x7-step76.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=11,
-            all_moves=moves_777,
-            illegal_moves=PHASE9_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-        # fmt: on
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_oblique_edges_and_outer_t_center])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(self.FB_oblique_edges_and_outer_t_center, state):
-            cube[pos] = pos_state
-
-
-class LookupTableIDA777Step70(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_777,
-            illegal_moves=PHASE9_ILLEGAL_MOVES,
-            prune_tables=(parent.lt_step71, parent.lt_step72, parent.lt_step75, parent.lt_step76),
-            multiplier=1.08,
             centers_only=True,
         )
         # fmt: on
@@ -2975,337 +2567,17 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     """
 
     def sanity_check(self):
-        edge_orbit_0 = (
-            2,
-            6,
-            14,
-            42,
-            48,
-            44,
-            36,
-            8,
-            51,
-            55,
-            63,
-            91,
-            97,
-            93,
-            85,
-            57,
-            100,
-            104,
-            112,
-            140,
-            146,
-            142,
-            134,
-            106,
-            149,
-            153,
-            161,
-            189,
-            195,
-            191,
-            183,
-            155,
-            198,
-            202,
-            210,
-            238,
-            244,
-            240,
-            232,
-            204,
-            247,
-            251,
-            259,
-            287,
-            293,
-            289,
-            281,
-            253,
-        )
-
-        edge_orbit_1 = (
-            3,
-            5,
-            21,
-            35,
-            47,
-            45,
-            29,
-            15,
-            52,
-            54,
-            70,
-            84,
-            96,
-            94,
-            78,
-            64,
-            101,
-            103,
-            119,
-            133,
-            145,
-            143,
-            127,
-            113,
-            150,
-            152,
-            168,
-            182,
-            194,
-            192,
-            176,
-            162,
-            199,
-            201,
-            217,
-            231,
-            243,
-            241,
-            225,
-            211,
-            248,
-            250,
-            266,
-            280,
-            292,
-            290,
-            274,
-            260,
-        )
-
-        edge_orbit_2 = (
-            4,
-            28,
-            46,
-            22,
-            53,
-            77,
-            95,
-            71,
-            102,
-            126,
-            144,
-            120,
-            151,
-            175,
-            193,
-            169,
-            200,
-            224,
-            242,
-            218,
-            249,
-            273,
-            291,
-            267,
-        )
-
-        corners = (
-            1,
-            7,
-            43,
-            49,
-            50,
-            56,
-            92,
-            98,
-            99,
-            105,
-            141,
-            147,
-            148,
-            154,
-            190,
-            196,
-            197,
-            203,
-            239,
-            245,
-            246,
-            252,
-            288,
-            294,
-        )
-
-        left_oblique_edge = (
-            10,
-            20,
-            40,
-            30,
-            59,
-            69,
-            89,
-            79,
-            108,
-            118,
-            138,
-            128,
-            157,
-            167,
-            187,
-            177,
-            206,
-            216,
-            236,
-            226,
-            255,
-            265,
-            285,
-            275,
-        )
-
-        right_oblique_edge = (
-            12,
-            34,
-            38,
-            16,
-            61,
-            83,
-            87,
-            65,
-            110,
-            132,
-            136,
-            114,
-            159,
-            181,
-            185,
-            163,
-            208,
-            230,
-            234,
-            212,
-            257,
-            279,
-            283,
-            261,
-        )
-
-        outside_x_centers = (
-            9,
-            13,
-            37,
-            41,
-            58,
-            62,
-            86,
-            90,
-            107,
-            111,
-            135,
-            139,
-            156,
-            160,
-            184,
-            188,
-            205,
-            209,
-            233,
-            237,
-            254,
-            258,
-            282,
-            286,
-        )
-
-        inside_x_centers = (
-            17,
-            19,
-            31,
-            33,
-            66,
-            68,
-            80,
-            82,
-            115,
-            117,
-            129,
-            131,
-            164,
-            166,
-            178,
-            180,
-            213,
-            215,
-            227,
-            229,
-            262,
-            264,
-            276,
-            278,
-        )
-
-        outside_t_centers = (
-            11,
-            23,
-            27,
-            39,
-            60,
-            72,
-            76,
-            88,
-            109,
-            121,
-            125,
-            137,
-            158,
-            170,
-            174,
-            186,
-            207,
-            219,
-            223,
-            235,
-            256,
-            268,
-            272,
-            284,
-        )
-
-        inside_t_centers = (
-            18,
-            24,
-            26,
-            32,
-            67,
-            73,
-            75,
-            81,
-            116,
-            122,
-            124,
-            130,
-            165,
-            171,
-            173,
-            179,
-            214,
-            220,
-            222,
-            228,
-            263,
-            269,
-            271,
-            277,
-        )
-
-        centers = (25, 74, 123, 172, 221, 270)
-
-        self._sanity_check("edge-orbit-0", edge_orbit_0, 8)
-        self._sanity_check("edge-orbit-1", edge_orbit_1, 8)
-        self._sanity_check("edge-orbit-2", edge_orbit_2, 4)
-        self._sanity_check("corners", corners, 4)
-        self._sanity_check("left-oblique", left_oblique_edge, 4)
-        self._sanity_check("right-oblique", right_oblique_edge, 4)
-        self._sanity_check("outside x-centers", outside_x_centers, 4)
-        self._sanity_check("inside x-centers", inside_x_centers, 4)
-        self._sanity_check("outside t-centers", outside_t_centers, 4)
-        self._sanity_check("inside t-centers", inside_t_centers, 4)
-        self._sanity_check("centers", centers, 1)
+        self._sanity_check("edge-orbit-0", edge_orbit_0_777, 8)
+        self._sanity_check("edge-orbit-1", edge_orbit_1_777, 8)
+        self._sanity_check("edge-orbit-2", edge_orbit_2_777, 4)
+        self._sanity_check("corners", corners_777, 4)
+        self._sanity_check("left-oblique", left_oblique_edges_777, 4)
+        self._sanity_check("right-oblique", right_oblique_edges_777, 4)
+        self._sanity_check("outside x-centers", outer_x_centers_777, 4)
+        self._sanity_check("inside x-centers", inner_x_centers_777, 4)
+        self._sanity_check("outside t-centers", outer_t_centers_777, 4)
+        self._sanity_check("inside t-centers", inner_t_centers_777, 4)
+        self._sanity_check("centers", middle_centers_777, 1)
 
     def lt_init(self):
         if self.lt_init_called:
@@ -3339,13 +2611,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_step65 = LookupTable777Step65(self)
         self.lt_step66 = LookupTable777Step66(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
-
-        # t-center solve for odd cubes larger than 7x7x7
-        self.lt_step71 = LookupTable777Step71(self)
-        self.lt_step72 = LookupTable777Step72(self)
-        self.lt_step75 = LookupTable777Step75(self)
-        self.lt_step76 = LookupTable777Step76(self)
-        self.lt_step70 = LookupTableIDA777Step70(self)
 
     def create_fake_555_from_inside_centers(self):
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
@@ -3614,18 +2879,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         tmp_solution_len = len(self.solution)
         self.lt_step60.solve_via_c()
         self.print_cube_add_comment("centers daisy solved", tmp_solution_len)
-
-    def solve_t_centers(self):
-        # This is only used when solving a cube larger than 777
-        assert self.LR_centers_staged()
-        assert self.UD_centers_staged()
-        self.LR_centers_vertical_bars()
-        self.UD_centers_vertical_bars()
-
-        # phase solve t-centers (for cubes larger than 777)
-        tmp_solution_len = len(self.solution)
-        self.lt_step70.solve_via_c()
-        self.print_cube_add_comment("t-centers solved", tmp_solution_len)
 
     def solve_centers(self):
         # This is only used when solving a cube larger than 777

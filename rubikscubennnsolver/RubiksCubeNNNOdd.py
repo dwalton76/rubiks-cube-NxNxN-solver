@@ -3,7 +3,8 @@ Odd NxNxN solver (9x9x9 and up): reduce the cube to a 7x7x7 orbit by orbit,
 then pair wings with the 5x5x5 solver.
 
 ``RubiksCubeNNNOdd`` inherits ``RubiksCubeNNNOddEdges`` and is a sibling of
-``RubiksCube777``. It has no lookup tables of its own. Each concentric ring of
+``RubiksCube777``. T-center solving uses 7x7x7 lookup tables that the 7x7x7
+solver itself does not use; those tables live here. Each concentric ring of
 centers (and the matching wing orbit) is copied onto a fake 7x7x7; 7x7x7
 moves are rewritten as the matching wide turns on this cube.
 
@@ -18,12 +19,24 @@ After the centers are a 5x5x5, ``group_edges`` (on ``RubiksCubeNNNOddEdges``)
 pairs each wing orbit via a fake 5x5x5, inside to outside. ``solve_333`` then
 finishes the cube.
 """
+
 # standard libraries
 import logging
 from math import ceil
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
+from rubikscubennnsolver.LookupTable import LookupTable
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver.RubiksCube777 import (
+    PHASE9_ILLEGAL_MOVES,
+    FB_inside_centers_and_outer_t_centers,
+    FB_oblique_edges_and_outer_t_center,
+    LR_centers_minus_outside_x_centers_777,
+    RubiksCube777,
+    UD_centers_minus_outside_x_centers_777,
+    moves_777,
+    solved_777,
+)
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 
 logger = logging.getLogger(__name__)
@@ -33,6 +46,337 @@ solved_111111 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
 solved_131313 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 solved_151515 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 solved_171717 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+
+
+# ==================================================
+# solve t-centers
+# used by cubes larger than 7x7
+# ==================================================
+class LookupTable777Step71(LookupTable):
+    """
+                   . . . . . . .
+                   . . U U U . .
+                   . U U U U U .
+                   . U U U U U .
+                   . U U U U U .
+                   . . U U U . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . D D D . .
+                   . D D D D D .
+                   . D D D D D .
+                   . D D D D D .
+                   . . D D D . .
+                   . . . . . . .
+
+    lookup-table-7x7x7-step71.txt
+    =============================
+    0 steps has 1 entries (2 percent, 0.00x previous step)
+    1 steps has 4 entries (11 percent, 4.00x previous step)
+    2 steps has 10 entries (27 percent, 2.50x previous step)
+    3 steps has 12 entries (33 percent, 1.20x previous step)
+    4 steps has 9 entries (25 percent, 0.75x previous step)
+
+    Total: 36 entries
+    Average: 2.67 moves
+    """
+
+    state_targets = ("UUUUUUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDDDDDD",)
+
+    def __init__(self, parent, build_state_index=False):
+        # fmt: off
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-step71.txt",
+            self.state_targets,
+            linecount=36,
+            max_depth=4,
+            all_moves=moves_777,
+            illegal_moves=PHASE9_ILLEGAL_MOVES,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+        # fmt: on
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in UD_centers_minus_outside_x_centers_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(UD_centers_minus_outside_x_centers_777, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Step72(LookupTable):
+    """
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . L L L . .  . . . . . . .  . . R R R . .  . . . . . . .
+    . L L L L L .  . . . . . . .  . R R R R R .  . . . . . . .
+    . L L L L L .  . . . . . . .  . R R R R R .  . . . . . . .
+    . L L L L L .  . . . . . . .  . R R R R R .  . . . . . . .
+    . . L L L . .  . . . . . . .  . . R R R . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    lookup-table-7x7x7-step72.txt
+    =============================
+    0 steps has 1 entries (2 percent, 0.00x previous step)
+    1 steps has 4 entries (11 percent, 4.00x previous step)
+    2 steps has 10 entries (27 percent, 2.50x previous step)
+    3 steps has 12 entries (33 percent, 1.20x previous step)
+    4 steps has 9 entries (25 percent, 0.75x previous step)
+
+    Total: 36 entries
+    Average: 2.67 moves
+    """
+
+    state_targets = ("LLLLLLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRRRRRR",)
+
+    def __init__(self, parent, build_state_index=False):
+        # fmt: off
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-step72.txt",
+            self.state_targets,
+            linecount=36,
+            max_depth=4,
+            all_moves=moves_777,
+            illegal_moves=PHASE9_ILLEGAL_MOVES,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+        # fmt: on
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in LR_centers_minus_outside_x_centers_777])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(LR_centers_minus_outside_x_centers_777, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Step75(LookupTable):
+    """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . F . . .  . . . . . . .  . . . B . . .
+    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
+    . . . . . . .  . F F F F F .  . . . . . . .  . B B B B B .
+    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
+    . . . . . . .  . . . F . . .  . . . . . . .  . . . B . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    lookup-table-7x7x7-step75.txt
+    =============================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 8 entries (0 percent, 8.00x previous step)
+    2 steps has 56 entries (0 percent, 7.00x previous step)
+    3 steps has 300 entries (0 percent, 5.36x previous step)
+    4 steps has 1,317 entries (0 percent, 4.39x previous step)
+    5 steps has 5,382 entries (1 percent, 4.09x previous step)
+    6 steps has 19,083 entries (5 percent, 3.55x previous step)
+    7 steps has 55,022 entries (16 percent, 2.88x previous step)
+    8 steps has 104,894 entries (30 percent, 1.91x previous step)
+    9 steps has 106,324 entries (30 percent, 1.01x previous step)
+    10 steps has 44,533 entries (12 percent, 0.42x previous step)
+    11 steps has 5,880 entries (1 percent, 0.13x previous step)
+    12 steps has 200 entries (0 percent, 0.03x previous step)
+
+    Total: 343,000 entries
+    Average: 8.28 moves
+    """
+
+    state_targets = ("FFFFFFFFFFFFFBBBBBBBBBBBBB",)
+
+    def __init__(self, parent, build_state_index=False):
+        # fmt: off
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-step75.txt",
+            self.state_targets,
+            linecount=343000,
+            max_depth=12,
+            all_moves=moves_777,
+            illegal_moves=PHASE9_ILLEGAL_MOVES,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+        # fmt: on
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in FB_inside_centers_and_outer_t_centers])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(FB_inside_centers_and_outer_t_centers, state):
+            cube[pos] = pos_state
+
+
+class LookupTable777Step76(LookupTable):
+    """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
+    . . . . . . .  . F . . . F .  . . . . . . .  . B . . . B .
+    . . . . . . .  . F . . . F .  . . . . . . .  . B . . . B .
+    . . . . . . .  . F . . . F .  . . . . . . .  . B . . . B .
+    . . . . . . .  . . F F F . .  . . . . . . .  . . B B B . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    lookup-table-7x7x7-step76.txt
+    =============================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 8 entries (0 percent, 8.00x previous step)
+    2 steps has 48 entries (0 percent, 6.00x previous step)
+    3 steps has 276 entries (0 percent, 5.75x previous step)
+    4 steps has 1,572 entries (0 percent, 5.70x previous step)
+    5 steps has 8,134 entries (2 percent, 5.17x previous step)
+    6 steps has 33,187 entries (9 percent, 4.08x previous step)
+    7 steps has 94,826 entries (27 percent, 2.86x previous step)
+    8 steps has 141,440 entries (41 percent, 1.49x previous step)
+    9 steps has 59,620 entries (17 percent, 0.42x previous step)
+    10 steps has 3,808 entries (1 percent, 0.06x previous step)
+    11 steps has 80 entries (0 percent, 0.02x previous step)
+
+    Total: 343,000 entries
+    Average: 7.63 moves
+    """
+
+    state_targets = ("FFFFFFFFFFFFBBBBBBBBBBBB",)
+
+    def __init__(self, parent, build_state_index=False):
+        # fmt: off
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-7x7x7-step76.txt",
+            self.state_targets,
+            linecount=343000,
+            max_depth=11,
+            all_moves=moves_777,
+            illegal_moves=PHASE9_ILLEGAL_MOVES,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+        # fmt: on
+
+    def state(self):
+        parent_state = self.parent.state
+        return "".join([parent_state[x] for x in FB_oblique_edges_and_outer_t_center])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(FB_oblique_edges_and_outer_t_center, state):
+            cube[pos] = pos_state
+
+
+class LookupTableIDA777Step70(LookupTableIDAViaGraph):
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_777,
+            illegal_moves=PHASE9_ILLEGAL_MOVES,
+            prune_tables=(parent.lt_step71, parent.lt_step72, parent.lt_step75, parent.lt_step76),
+            multiplier=1.08,
+            centers_only=True,
+        )
+        # fmt: on
+
+
+def lt_init_t_centers(cube: RubiksCube777) -> None:
+    """Load t-center-solve tables onto a fake 7x7x7 used by odd cubes larger than 7x7."""
+    if getattr(cube, "lt_step70", None) is not None:
+        return
+
+    cube.lt_step71 = LookupTable777Step71(cube)
+    cube.lt_step72 = LookupTable777Step72(cube)
+    cube.lt_step75 = LookupTable777Step75(cube)
+    cube.lt_step76 = LookupTable777Step76(cube)
+    cube.lt_step70 = LookupTableIDA777Step70(cube)
+
+
+def solve_t_centers(cube: RubiksCube777) -> None:
+    """Used by RubiksCubeNNNOdd after each orbit is staged."""
+    lt_init_t_centers(cube)
+    assert cube.LR_centers_staged()
+    assert cube.UD_centers_staged()
+    cube.LR_centers_vertical_bars()
+    cube.UD_centers_vertical_bars()
+
+    tmp_solution_len = len(cube.solution)
+    cube.lt_step70.solve_via_c()
+    cube.print_cube_add_comment("t-centers solved", tmp_solution_len)
 
 
 class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
@@ -306,7 +650,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                     self.fake_777.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
 
         elif action == "solve_t_centers":
-            self.fake_777.solve_t_centers()
+            solve_t_centers(self.fake_777)
 
         else:
             raise Exception(f"Invalid action {action}")

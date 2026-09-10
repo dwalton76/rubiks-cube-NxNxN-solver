@@ -39,12 +39,6 @@ parser.add_argument(
     action="store_true",
     help="Load smaller tables to use less memory...takes longer to run",
 )
-parser.add_argument(
-    "--low-memory",
-    default=False,
-    action="store_true",
-    help="Force the 6x6x6 legacy centers path used on machines that cannot mmap the ranked all-inner-x table",
-)
 parser.add_argument("--openwith", default=None, type=str, help="Colors for sides U, L, etc")
 parser.add_argument("--colormap", default=None, type=str, help="Colors for sides U, L, etc")
 parser.add_argument("--order", type=str, default="URFDLB", help="order of sides in --state, default kociemba URFDLB")
@@ -110,7 +104,6 @@ else:
 
     cube = RubiksCubeNNNOdd(args.state, args.order, args.colormap)
 
-cube.low_memory = args.low_memory
 cube.sanity_check()
 cube.print_cube("Initial Cube")
 cube.www_header()

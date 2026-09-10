@@ -1,17 +1,14 @@
-import sys
 import unittest
 
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import (
-    ALL_INNER_X_CENTERS_STAGE_MEMORY_MARGIN,
-    ALL_INNER_X_CENTERS_STAGE_TABLE_BYTES,
     RubiksCube666,
     UFBD_outer_x_centers_666,
     solved_666,
 )
 
 
-class LowMemoryPathTest(unittest.TestCase):
+class CenterStagingTablesTest(unittest.TestCase):
     def test_default_cube_keeps_graph_based_center_staging(self):
         cube = RubiksCube555(solved_555, "URFDLB")
         cube.lt_init()
@@ -19,54 +16,14 @@ class LowMemoryPathTest(unittest.TestCase):
         self.assertFalse(hasattr(cube, "lt_centers_stage_one_phase"))
         self.assertEqual(cube.lt_LR_centers_stage.__class__.__name__, "LookupTableIDA555LRCenterStage")
 
-    def test_666_ranked_phase_one_requires_table_plus_margin(self):
-        cube = RubiksCube666.__new__(RubiksCube666)
-        required = ALL_INNER_X_CENTERS_STAGE_TABLE_BYTES + ALL_INNER_X_CENTERS_STAGE_MEMORY_MARGIN
-        original = __import__(
-            "rubikscubennnsolver.RubiksCube666",
-            fromlist=["available_memory_bytes"],
-        ).available_memory_bytes
-        module = sys.modules["rubikscubennnsolver.RubiksCube666"]
-
-        try:
-            module.available_memory_bytes = lambda: required
-            self.assertTrue(cube.can_use_all_inner_x_centers_stage_table())
-
-            module.available_memory_bytes = lambda: required - 1
-            self.assertFalse(cube.can_use_all_inner_x_centers_stage_table())
-
-            module.available_memory_bytes = lambda: None
-            self.assertFalse(cube.can_use_all_inner_x_centers_stage_table())
-
-            cube.low_memory = True
-            module.available_memory_bytes = lambda: required
-            self.assertFalse(cube.can_use_all_inner_x_centers_stage_table())
-        finally:
-            module.available_memory_bytes = original
-
-    def test_666_low_memory_flag_loads_legacy_center_tables(self):
-        cube = RubiksCube666(solved_666, "URFDLB")
-        cube.low_memory = True
-        cube.lt_init()
-
-        self.assertFalse(cube.use_all_inner_x_centers_stage_table)
-        self.assertIsNone(cube.lt_all_inner_x_centers_stage)
-        self.assertIsNone(cube.lt_UD_centers_stage)
-        self.assertEqual(
-            cube.lt_LR_oblique_edge_stage_inner_x_stage.__class__.__name__,
-            "LookupTable666LRObliquEdgeStageInnerXStage",
-        )
-
     def test_666_ranked_path_splits_oll_parity_between_phase_one_and_three(self):
         """Phases 2 and 3 have no 3Xw quarter turn, so only phase 1 can flip orbit1."""
         cube = RubiksCube666(solved_666, "URFDLB")
         cube.lt_init()
 
-        if not cube.use_all_inner_x_centers_stage_table:
-            self.skipTest("ranked phase 1 is unavailable on this machine")
-
         self.assertEqual(cube.lt_all_inner_x_centers_stage.avoid_oll, 1)
         self.assertEqual(cube.lt_UD_centers_stage.avoid_oll, 0)
+        self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_stage_inner_x_stage"))
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):
@@ -243,95 +200,6 @@ class PhaseOneTwoPortfolio444Test(unittest.TestCase):
         self.assertEqual(cube.edge_mapping, "map-B")
         self.assertEqual(
             set(cube.lt_phase2.calls),
-            {
-                (True, ((10, 20),)),
-                (False, ((11, 21),)),
-            },
-        )
-
-
-class PhaseThreeFourPortfolio666Test(unittest.TestCase):
-    class FakePruneTable:
-        def __init__(self, parent, coordinate):
-            self.parent = parent
-            self.coordinate = coordinate
-
-        def state_index(self):
-            roots = {
-                "A": (10, 20),
-                "B": (11, 21),
-                "C": (11, 21),
-            }
-            return roots[self.parent.state[0]][self.coordinate]
-
-    class FakePhaseThree:
-        def solutions_via_c(self, solution_count, use_kociemba_string):
-            assert solution_count == 64
-            assert use_kociemba_string
-            return [
-                (("A",), (0, 0, 0, 0, 0)),
-                (("B",), (0, 0, 0, 0, 0)),
-                (("C",), (0, 0, 0, 0, 0)),
-            ]
-
-    class FakePhaseFour:
-        def __init__(self, parent):
-            self.parent = parent
-            self.prune_tables = [
-                PhaseThreeFourPortfolio666Test.FakePruneTable(parent, 0),
-                PhaseThreeFourPortfolio666Test.FakePruneTable(parent, 1),
-            ]
-            self.calls = []
-
-        def solutions_via_c(self, pt_states, solution_count):
-            assert solution_count == 1
-            parity = 0 in self.parent.center_solution_leads_to_oll_parity()
-            self.calls.append((parity, tuple(pt_states)))
-
-            if parity:
-                return [(("PA1", "PA2", "PA3"), (10, 20, 0, 0, 0))]
-            return [(("PB1", "PB2"), (11, 21, 0, 0, 0))]
-
-    class Fake555:
-        def __init__(self):
-            self.state = ["root"]
-            self.solution = []
-            self.lt_FB_centers_stage = PhaseThreeFourPortfolio666Test.FakePhaseFour(self)
-
-        def center_solution_leads_to_oll_parity(self):
-            return [0] if self.state[0] == "A" else []
-
-    class FakeCube:
-        def __init__(self):
-            self.state = ["root"]
-            self.solution = []
-            self.fake_555 = PhaseThreeFourPortfolio666Test.Fake555()
-            self.lt_UD_oblique_edge_stage = PhaseThreeFourPortfolio666Test.FakePhaseThree()
-
-        def get_fake_555(self):
-            return self.fake_555
-
-        def populate_fake_555_for_ULFRBD_solve(self):
-            self.fake_555.state = self.state[:]
-            self.fake_555.solution = []
-
-        def rotate(self, move):
-            self.solution.append(move)
-            if move in {"A", "B", "C"}:
-                self.state[0] = move
-
-        def print_cube_add_comment(self, comment, start):
-            pass
-
-    def test_portfolio_deduplicates_roots_groups_parity_and_picks_shortest_phase_four(self):
-        from rubikscubennnsolver.RubiksCube666 import RubiksCube666
-
-        cube = self.FakeCube()
-        RubiksCube666.stage_centers_phase3_and_4(cube)
-
-        self.assertEqual(cube.solution, ["B", "PB1", "PB2"])
-        self.assertEqual(
-            set(cube.fake_555.lt_FB_centers_stage.calls),
             {
                 (True, ((10, 20),)),
                 (False, ((11, 21),)),

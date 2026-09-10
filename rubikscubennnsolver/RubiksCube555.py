@@ -176,6 +176,55 @@ LFRB_t_centers_555 = (
     108, 112, 113, 114, 118,  # Back
 )
 
+t_centers_without_middles_555 = (
+    8, 12, 14, 18,  # Upper
+    33, 37, 39, 43,  # Left
+    58, 62, 64, 68,  # Front
+    83, 87, 89, 93,  # Right
+    108, 112, 114, 118,  # Back
+    133, 137, 139, 143,  # Down
+)
+
+x_centers_without_middles_555 = (
+    7, 9, 17, 19,  # Upper
+    32, 34, 42, 44,  # Left
+    57, 59, 67, 69,  # Front
+    82, 84, 92, 94,  # Right
+    107, 109, 117, 119,  # Back
+    132, 134, 142, 144,  # Down
+)
+
+outer_orbit_indexes = (
+    0, 2, 3, 4, 7, 8, 9,
+    11, 12, 14, 15, 16, 19, 20,
+    21, 23, 24, 26, 27, 28, 31,
+    32, 33, 35, 36, 38, 39, 40,
+    43, 44, 45, 47, 48, 50, 51,
+    52, 55, 56, 57, 59, 60, 62,
+    63, 64, 67, 68, 69, 71,
+)
+
+UD_centers_LR_t_centers_555 = sorted([
+    7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
+    33, 37, 39, 43,  # Left
+    83, 87, 89, 93,  # Right
+    132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
+])
+
+LR_centers_FB_x_centers_555 = sorted([
+    32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
+    57, 59, 67, 69,  # Front
+    107, 109, 117, 119,  # Back
+    82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
+])
+
+FB_centers_UD_t_centers_555 = sorted([
+    8, 12, 14, 18,  # Upper
+    57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
+    107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
+    133, 137, 139, 143,  # Down
+])
+
 
 """
 000 000 000 011 111 111 112 222 222 222 333 333
@@ -688,17 +737,6 @@ class LookupTable555LRTCenterStage(LookupTable):
     Average: 6.31 moves
     """
 
-    # fmt: off
-    t_centers_555 = (
-        8, 12, 14, 18,  # Upper
-        33, 37, 39, 43,  # Left
-        58, 62, 64, 68,  # Front
-        83, 87, 89, 93,  # Right
-        108, 112, 114, 118,  # Back
-        133, 137, 139, 143,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
@@ -719,13 +757,13 @@ class LookupTable555LRTCenterStage(LookupTable):
         if LR_colors == (".", "."):
             LR_colors = ("L", "R")
 
-        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.t_centers_555])
+        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in t_centers_without_middles_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
-        for pos, pos_state in zip(self.t_centers_555, binary_state):
+        for pos, pos_state in zip(t_centers_without_middles_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -770,17 +808,6 @@ class LookupTable555LRXCenterStage(LookupTable):
     Average: 6.03 moves
     """
 
-    # fmt: off
-    x_centers_555 = (
-        7, 9, 17, 19,  # Upper
-        32, 34, 42, 44,  # Left
-        57, 59, 67, 69,  # Front
-        82, 84, 92, 94,  # Right
-        107, 109, 117, 119,  # Back
-        132, 134, 142, 144,  # Down
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
@@ -801,13 +828,13 @@ class LookupTable555LRXCenterStage(LookupTable):
         if LR_colors == (".", "."):
             LR_colors = ("L", "R")
 
-        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in self.x_centers_555])
+        state = "".join(["1" if parent_state[x] in LR_colors else "0" for x in x_centers_without_middles_555])
         return self.hex_format % int(state, 2)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         binary_state = bin(int(state, 16))[2:].zfill(24)
 
-        for pos, pos_state in zip(self.x_centers_555, binary_state):
+        for pos, pos_state in zip(x_centers_without_middles_555, binary_state):
             if pos_state == "0":
                 cube[pos] = "x"
             else:
@@ -1471,13 +1498,6 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
         "RRRRLRRRRLLLLRLLLL",
     )
 
-    # fmt: off
-    LR_centers_555 = (
-        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
-        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
@@ -1494,12 +1514,12 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_555])
+        return "".join([parent_state[x] for x in LR_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_centers_555, state):
+        for pos, pos_state in zip(LR_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -1543,18 +1563,6 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
     Average: 7.95 moves
     """
 
-    # fmt: off
-    outer_orbit_indexes = (
-        0, 2, 3, 4, 7, 8, 9,
-        11, 12, 14, 15, 16, 19, 20,
-        21, 23, 24, 26, 27, 28, 31,
-        32, 33, 35, 36, 38, 39, 40,
-        43, 44, 45, 47, 48, 50, 51,
-        52, 55, 56, 57, 59, 60, 62,
-        63, 64, 67, 68, 69, 71,
-    )
-    # fmt: on
-
     def __init__(self, parent, build_state_index=False):
         LookupTable.__init__(
             self,
@@ -1571,7 +1579,7 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
 
     def state(self):
         eo_state_both_orbits = self.parent.highlow_edges_state()
-        return "".join([eo_state_both_orbits[x] for x in self.outer_orbit_indexes])
+        return "".join([eo_state_both_orbits[x] for x in outer_orbit_indexes])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         steps_to_solve = steps_to_solve.split()
@@ -2504,15 +2512,6 @@ class LookupTable555UDCenterSolve(LookupTable):
     Average: 7.18 moves
     """
 
-    # fmt: off
-    UD_centers_LR_t_centers_555 = sorted([
-        7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
-        33, 37, 39, 43,  # Left
-        83, 87, 89, 93,  # Right
-        132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
-    ])
-    # fmt: on
-
     state_targets = ("UUUUUUUUULLLLRRRRDDDDDDDDD",)
 
     def __init__(self, parent, build_state_index=False):
@@ -2531,12 +2530,12 @@ class LookupTable555UDCenterSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.UD_centers_LR_t_centers_555])
+        return "".join([parent_state[x] for x in UD_centers_LR_t_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.UD_centers_LR_t_centers_555, state):
+        for pos, pos_state in zip(UD_centers_LR_t_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2581,15 +2580,6 @@ class LookupTable555LRCenterSolve(LookupTable):
     Average: 7.58 moves
     """
 
-    # fmt: off
-    LR_centers_FB_x_centers_555 = sorted([
-        32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
-        57, 59, 67, 69,  # Front
-        107, 109, 117, 119,  # Back
-        82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
-    ])
-    # fmt: on
-
     state_targets = ("LLLLLLLLLFFFFRRRRRRRRRBBBB",)
 
     def __init__(self, parent, build_state_index=False):
@@ -2608,12 +2598,12 @@ class LookupTable555LRCenterSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.LR_centers_FB_x_centers_555])
+        return "".join([parent_state[x] for x in LR_centers_FB_x_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.LR_centers_FB_x_centers_555, state):
+        for pos, pos_state in zip(LR_centers_FB_x_centers_555, state):
             cube[pos] = pos_state
 
 
@@ -2657,15 +2647,6 @@ class LookupTable555FBCenterSolve(LookupTable):
     Average: 7.18 moves
     """
 
-    # fmt: off
-    FB_centers_UD_t_centers_555 = sorted([
-        8, 12, 14, 18,  # Upper
-        57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
-        107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
-        133, 137, 139, 143,  # Down
-    ])
-    # fmt: on
-
     state_targets = ("UUUUFFFFFFFFFBBBBBBBBBDDDD",)
 
     def __init__(self, parent, build_state_index=False):
@@ -2684,12 +2665,12 @@ class LookupTable555FBCenterSolve(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in self.FB_centers_UD_t_centers_555])
+        return "".join([parent_state[x] for x in FB_centers_UD_t_centers_555])
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(self.FB_centers_UD_t_centers_555, state):
+        for pos, pos_state in zip(FB_centers_UD_t_centers_555, state):
             cube[pos] = pos_state
 
 

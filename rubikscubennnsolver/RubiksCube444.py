@@ -41,6 +41,7 @@ Phase 4 - pair the last eight edges and solve the centers
     plus phase-4 pairs are run through the 3x3x3 solver so the total length
     (not just the reduction) can be minimized.
 """
+
 # standard libraries
 import itertools
 import logging

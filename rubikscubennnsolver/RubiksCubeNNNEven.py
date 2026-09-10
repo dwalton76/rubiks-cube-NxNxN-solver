@@ -3,7 +3,8 @@ Even NxNxN solver (8x8x8 and up): turn the cube into an odd cube, then reuse
 the odd NxNxN solver.
 
 ``RubiksCubeNNNEven`` inherits ``RubiksCubeNNNEvenEdges`` and is a sibling of
-``RubiksCube666``. It has no lookup tables of its own.
+``RubiksCube666``. Plus-sign staging uses 6x6x6 lookup tables that the 6x6x6
+solver itself does not use; those tables live here.
 
 ``reduce_555``:
     1. ``make_plus_sign`` maps each inner center orbit onto a fake 6x6x6 and
@@ -19,22 +20,32 @@ the odd NxNxN solver.
 orbits that the odd reduction did not already pair, again via a fake 5x5x5,
 inside to outside. ``solve_333`` finishes the cube.
 """
+
 # standard libraries
 import logging
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
+from rubikscubennnsolver.LookupTable import LookupTable
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver.RubiksCube666 import (
+    RubiksCube666,
+    UFBD_inner_x_centers_666,
+    UFBD_left_oblique_edges_666,
+    UFBD_right_oblique_edges_666,
+    centers_666,
+    inner_x_centers_666,
+    moves_666,
+    oblique_edges_666,
+    solved_666,
+)
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd
 
 logger = logging.getLogger(__name__)
 
 solved_888 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_101010 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_121212 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-
 solved_141414 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
 # fmt: off
@@ -110,6 +121,411 @@ moves_10x10x10 = (
 # fmt: on
 
 
+# fmt: off
+UD_STAGE_ILLEGAL_MOVES = (
+    # keep LR staged; do not turn L or R
+    "3Uw", "3Uw'",
+    "3Dw", "3Dw'",
+    "3Fw", "3Fw'",
+    "3Bw", "3Bw'",
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "L", "L'", "L2",
+    "R", "R'", "R2",
+)
+# fmt: on
+
+
+# ==================================================
+# plus-sign staging (even cubes larger than 6x6)
+# stage LR inner x-centers and pair the LR obliques
+# ==================================================
+class LookupTable666LRInnerXCentersStage(LookupTable):
+    """
+    24! / (8! * 16!) = 735,471 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step00-inner-x-centers-stage.txt
+    ===================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+    """
+
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step00-inner-x-centers-stage.txt",
+            "xxxxLLLLxxxxLLLLxxxxxxxx",
+            linecount=735471,
+            max_depth=8,
+            all_moves=moves_666,
+            illegal_moves=(),
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+
+    def state(self):
+        return "".join(["L" if self.parent.state[x] in ("L", "R") else "x" for x in inner_x_centers_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(inner_x_centers_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666LRObliquEdgeStageInnerXStage(LookupTableIDAViaGraph):
+    """
+    Use the inner-x-centers table to pair the LR inner-x-centers while using an "unpaired oblique edges" heuristic
+    to get the LR oblique edges paired anywhere.  We do not need these obliques to be placed on sides
+    LR at this point.
+    """
+
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_666,
+            illegal_moves=(),
+            centers_only=True,
+            prune_tables=[
+                parent.lt_LR_inner_x_centers_stage,
+            ],
+            C_ida_type="6x6x6-LR-oblique-edges-inner-x-centers-stage",
+        )
+        # fmt: on
+
+    def recolor(self):
+        logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_666:
+            if x in oblique_edges_666 or x in inner_x_centers_666:
+                if self.parent.state[x] == "L" or self.parent.state[x] == "R":
+                    self.parent.state[x] = "L"
+                else:
+                    self.parent.state[x] = "x"
+            else:
+                self.parent.state[x] = "."
+
+
+# ==================================================
+# plus-sign staging (even cubes larger than 6x6)
+# stage UD inner x-centers and pair the UD obliques
+# ==================================================
+class LookupTable666UDInnerXCentersStage(LookupTable):
+    """
+    16! / (8! * 8!) = 12,870 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+
+    Total: 12,870 entries
+    Average: 5.45 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=7,
+            all_moves=moves_666,
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_inner_x_centers_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(UFBD_inner_x_centers_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDLeftObliqueCentersStage(LookupTable):
+    """
+    16! / (8! * 8!) = 12,870 states
+
+                 . . . . . .
+                 . . U . . .
+                 . . . . U .
+                 . U . . . .
+                 . . . U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x . . .  . . . . . .  . . x . . .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . . . x . .  . . . . . .  . . . x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . U . . .
+                 . . . . U .
+                 . U . . . .
+                 . . . U . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step13-UD-left-oblique-centers.txt
+    =====================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step13-UD-left-oblique-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_666,
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_left_oblique_edges_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(UFBD_left_oblique_edges_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDRightObliqueCentersStage(LookupTable):
+    """
+    16! / (8! * 8!) = 12,870 states
+
+                 . . . . . .
+                 . . . U . .
+                 . U . . . .
+                 . . . . U .
+                 . . U . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . x . .  . . . . . .  . . . x . .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . . x . . .  . . . . . .  . . x . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . U . .
+                 . U . . . .
+                 . . . . U .
+                 . . U . . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step14-UD-right-oblique-centers.txt
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 70 entries (0 percent, 17.50x previous step)
+    3 steps has 804 entries (6 percent, 11.49x previous step)
+    4 steps has 4,615 entries (35 percent, 5.74x previous step)
+    5 steps has 7,048 entries (54 percent, 1.53x previous step)
+    6 steps has 328 entries (2 percent, 0.05x previous step)
+
+    Total: 12,870 entries
+    Average: 4.52 moves
+    """
+
+    # fmt: off
+    def __init__(self, parent, build_state_index: bool = False):
+        LookupTable.__init__(
+            self,
+            parent,
+            "lookup-table-6x6x6-step14-UD-right-oblique-centers.txt",
+            "UUUUxxxxxxxxUUUU",
+            linecount=12870,
+            max_depth=6,
+            all_moves=moves_666,
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
+            use_state_index=True,
+            build_state_index=build_state_index,
+        )
+    # fmt: on
+
+    def state(self):
+        return "".join(["U" if self.parent.state[x] in ("U", "D") else "x" for x in UFBD_right_oblique_edges_666])
+
+    def populate_cube_from_state(self, state, cube, steps_to_solve):
+        state = list(state)
+
+        for pos, pos_state in zip(UFBD_right_oblique_edges_666, state):
+            cube[pos] = pos_state
+
+
+class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
+    """
+    Stage the UD inner x-centers and oblique edges
+    """
+
+    def __init__(self, parent):
+        # fmt: off
+        LookupTableIDAViaGraph.__init__(
+            self,
+            parent,
+            all_moves=moves_666,
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
+            prune_tables=(
+                parent.lt_UD_inner_x_centers_stage,
+                parent.lt_UD_left_oblique_edges_stage,
+                parent.lt_UD_right_oblique_edges_stage,
+            ),
+            centers_only=True,
+            perfect_hash01_filename="lookup-table-6x6x6-step16-UD-left-oblique-inner-x-centers.perfect-hash",
+            perfect_hash02_filename="lookup-table-6x6x6-step17-UD-right-oblique-inner-x-centers.perfect-hash",
+            perfect_hash12_filename="lookup-table-6x6x6-step15-UD-oblique-centers.perfect-hash",
+            pt1_state_max=12870,
+            pt2_state_max=12870,
+        )
+        # fmt: on
+
+
+def lt_init_plus_sign(cube: RubiksCube666) -> None:
+    """Load plus-sign tables onto a fake 6x6x6 used by even cubes larger than 6x6."""
+    if getattr(cube, "lt_LR_oblique_edge_stage_inner_x_stage", None) is not None:
+        return
+
+    cube.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(cube)
+    cube.lt_LR_oblique_edge_stage_inner_x_stage = LookupTable666LRObliquEdgeStageInnerXStage(cube)
+    cube.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(cube)
+    cube.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(cube)
+    cube.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(cube)
+    cube.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(cube)
+    cube.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
+
+
+def stage_t_centers(cube: RubiksCube666) -> None:
+    """
+    Used by RubiksCubeNNNEven.make_plus_sign
+
+    - pair LR inner x-centers and pair oblique edges (9 moves)
+    - stage LR t-centers (6 moves)
+    - stage the UD oblique edges and inner x-centers
+    """
+    lt_init_plus_sign(cube)
+
+    tmp_solution_len = len(cube.solution)
+    cube.lt_LR_oblique_edge_stage_inner_x_stage.solve_via_c(use_kociemba_string=True)
+    cube.print_cube_add_comment("LR inner x-centers staged, oblique edges paired", tmp_solution_len)
+
+    fake_555 = cube.get_fake_555()
+    cube.populate_fake_555_for_ULFRBD_solve()
+    tmp_solution_len = len(cube.solution)
+    fake_555.lt_LR_t_centers_stage_ida.solve_via_c()
+
+    for step in fake_555.solution:
+        if not step.startswith("COMMENT"):
+            cube.rotate(step)
+
+    cube.print_cube_add_comment("LR t-centers staged", tmp_solution_len)
+
+    tmp_solution_len = len(cube.solution)
+    cube.lt_UD_oblique_edge_inner_x_center_stage.solve_via_c()
+    cube.print_cube_add_comment("UD t-centers staged", tmp_solution_len)
+
+
+def daisy_solve_centers(cube: RubiksCube666) -> None:
+    """Daisy-solve staged 6x6x6 centers without EO'ing the inside wings."""
+    tmp_solution_len = len(cube.solution)
+    cube.lt_step50_without_edges.solve_via_c()
+    cube.print_cube_add_comment("LR centers reduced to 5x5x5", tmp_solution_len)
+
+    tmp_solution_len = len(cube.solution)
+    cube.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solve_via_c()
+    cube.print_cube_add_comment("UD FB centers reduced to 5x5x5", tmp_solution_len)
+
+
 class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     """
     Even cubes 8x8x8 and larger. A fake 6x6x6 builds a plus sign so the cube can
@@ -129,7 +545,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     def get_fake_666(self):
         if self.fake_666 is None:
             self.fake_666 = RubiksCube666(solved_666, "URFDLB")
-            self.fake_666.low_memory = getattr(self, "low_memory", False)
             self.fake_666.lt_init()
             self.fake_666.enable_print_cube = False
         else:
@@ -244,12 +659,12 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 start_NNN += self.size * self.size
 
             # reduce the centers to 5x5x5 centers
-            fake_666.stage_t_centers()
+            stage_t_centers(fake_666)
 
             if center_orbit_id == max_center_orbit_id:
                 fake_666.daisy_solve_centers_eo_edges()
             else:
-                fake_666.daisy_solve_centers()
+                daisy_solve_centers(fake_666)
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))

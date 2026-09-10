@@ -541,6 +541,53 @@ def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=Fals
     return "".join(state)
 
 
+# fmt: off
+PHASE2_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Dw", "Dw'",
+)
+
+PHASE3_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Lw", "Lw'",
+    "Rw", "Rw'",
+)
+CENTERS_SOLVE_ILLEGAL_MOVES = PHASE3_ILLEGAL_MOVES
+
+PHASE5_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Lw", "Lw'",
+    "Rw", "Rw'",
+    "L", "L'",
+    "R", "R'",
+    "U", "U'",
+    "D", "D'",
+)
+
+PHASE6_ILLEGAL_MOVES = (
+    "Uw", "Uw'", "Uw2",
+    "Dw", "Dw'", "Dw2",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Lw", "Lw'",
+    "Rw", "Rw'",
+    "L", "L'",
+    "R", "R'",
+    "F", "F'",
+    "B", "B'",
+)
+
+# fmt: on
+
+
 class NoEdgeSolution(Exception):
     pass
 
@@ -722,7 +769,7 @@ class LookupTable555FBTCenterStage(LookupTable):
             linecount=12870,
             max_depth=9,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            illegal_moves=PHASE2_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -773,7 +820,7 @@ class LookupTable555FBXCenterStage(LookupTable):
             linecount=12870,
             max_depth=7,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            illegal_moves=PHASE2_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -805,7 +852,7 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            illegal_moves=PHASE2_ILLEGAL_MOVES,
             prune_tables=[
                 parent.lt_FB_t_centers_stage,
                 parent.lt_FB_x_centers_stage,
@@ -821,7 +868,7 @@ class LookupTableIDA555UDTCenterStage(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"),
+            illegal_moves=PHASE2_ILLEGAL_MOVES,
             prune_tables=(parent.lt_FB_t_centers_stage,),
             centers_only=True,
         )
@@ -1294,7 +1341,7 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
             linecount=4900,
             max_depth=5,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=PHASE3_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1351,7 +1398,7 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
             linecount=2704156,
             max_depth=10,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=PHASE3_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1427,7 +1474,7 @@ class LookupTable555EdgeOrientInnerOrbit(LookupTable):
             linecount=2048,
             max_depth=7,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=PHASE3_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1477,7 +1524,7 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=PHASE3_ILLEGAL_MOVES,
             prune_tables=(
                 parent.lt_phase3_lr_center_stage,
                 parent.lt_phase3_eo_outer_orbit,
@@ -1631,15 +1678,7 @@ class LookupTable555Phase5Centers(LookupTable):
             linecount=2116800,
             max_depth=10,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1683,15 +1722,7 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
             linecount=117600,
             max_depth=10,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1765,15 +1796,7 @@ class LookupTable555Phase5FBCenters(LookupTable):
             linecount=4900,
             max_depth=7,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1817,15 +1840,7 @@ class LookupTable555Phase5LowEdgeMidge(LookupTable):
             linecount=117600,
             max_depth=10,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1875,15 +1890,7 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Dw", "Dw'",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "U", "U'", "D", "D'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             prune_tables=(
                 parent.lt_phase5_fb_centers,
                 parent.lt_phase5_high_edge_midge,
@@ -1931,15 +1938,7 @@ class LookupTable555Phase6Centers(LookupTable):
             linecount=176400,
             max_depth=9,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1983,15 +1982,7 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
             linecount=40320,
             max_depth=10,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2057,15 +2048,7 @@ class LookupTable555Phase6LowEdgeMidge(LookupTable):
             linecount=40320,
             max_depth=10,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2113,15 +2096,7 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'", "Uw2", "Dw", "Dw'", "Dw2",
-                "Fw", "Fw'", "Bw", "Bw'",
-                "Lw", "Lw'", "Rw", "Rw'",
-                "L", "L'", "R", "R'",
-                "F", "F'", "B", "B'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             prune_tables=(parent.lt_phase6_high_edge_midge, parent.lt_phase6_low_edge_midge, parent.lt_phase6_centers),
             # parent.lt_phase6_high_edge_midge and parent.lt_phase6_low_edge_midge are used to
             # compute the lookup index in the perfect hash file
@@ -2170,7 +2145,7 @@ class LookupTable555UDCenterSolve(LookupTable):
             linecount=343000,
             max_depth=10,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2227,7 +2202,7 @@ class LookupTable555LRCenterSolve(LookupTable):
             linecount=343000,
             max_depth=10,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2283,7 +2258,7 @@ class LookupTable555FBCenterSolve(LookupTable):
             linecount=343000,
             max_depth=10,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -2305,7 +2280,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_555,
-            illegal_moves=("Uw", "Uw'", "Dw", "Dw'", "Fw", "Fw'", "Bw", "Bw'", "Lw", "Lw'", "Rw", "Rw'"),
+            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
             prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
         )
 

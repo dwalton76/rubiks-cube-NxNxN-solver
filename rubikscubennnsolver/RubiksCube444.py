@@ -172,6 +172,43 @@ def edges_recolor_pattern_444(state: List[int], only_colors: List[str] = None) -
     return "".join(state)
 
 
+# fmt: off
+PHASE2_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+)
+
+PHASE3_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Lw", "Lw'",
+    "Fw", "Fw'",
+    "Rw", "Rw'",
+    "Bw", "Bw'",
+    "Dw", "Dw'",
+    "L", "L'",
+    "R", "R'",
+)
+
+PHASE4_ILLEGAL_MOVES = (
+    "Uw", "Uw'",
+    "Lw", "Lw'",
+    "Fw", "Fw'",
+    "Rw", "Rw'",
+    "Bw", "Bw'",
+    "Dw", "Dw'",
+    "L", "L'",
+    "R", "R'",
+    "Uw2",
+    "Dw2",
+    "F", "F'",
+    "B", "B'",
+)
+
+# fmt: on
+
+
 class LookupTable444UDCentersStage(LookupTable):
     """
     lookup-table-4x4x4-step11-UD-centers-stage.txt
@@ -327,14 +364,7 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
             linecount=2704156,
             max_depth=8,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE2_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -404,14 +434,7 @@ class LookupTable444HighLowEdgesCenters(LookupTable):
             linecount=900900,
             max_depth=9,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE2_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -446,14 +469,7 @@ class LookupTableIDA444Phase2(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE2_ILLEGAL_MOVES,
             prune_tables=[parent.lt_phase2_centers, parent.lt_phase2_edges],
         )
 
@@ -522,18 +538,7 @@ class LookupTable444Reduce333FirstTwoCenters(LookupTable):
             linecount=840,
             max_depth=5,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Rw", "Rw'",
-                "Bw", "Bw'",
-                "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE3_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -580,18 +585,7 @@ class LookupTable444Reduce333FirstFourEdges(LookupTable):
             linecount=5880600,
             max_depth=11,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Rw", "Rw'",
-                "Bw", "Bw'",
-                "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE3_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -642,18 +636,7 @@ class LookupTableIDA444Phase3(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Rw", "Rw'",
-                "Bw", "Bw'",
-                "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE3_ILLEGAL_MOVES,
             prune_tables=[parent.lt_phase3_centers, parent.lt_phase3_edges],
         )
 
@@ -687,22 +670,7 @@ class LookupTable444Reduce333Centers(LookupTable):
             linecount=2520,
             max_depth=7,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Rw", "Rw'",
-                "Bw", "Bw'",
-                "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-                "Uw2",
-                "Dw2",
-                "F", "F'",
-                "B", "B'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE4_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -749,22 +717,7 @@ class LookupTable444Reduce333LastEightEdges(LookupTable):
             linecount=20160,
             max_depth=10,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Rw", "Rw'",
-                "Bw", "Bw'",
-                "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-                "Uw2",
-                "Dw2",
-                "F", "F'",
-                "B", "B'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE4_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -816,22 +769,7 @@ class LookupTableIDA444Phase4(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_444,
-            # fmt: off
-            illegal_moves=(
-                "Uw", "Uw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Rw", "Rw'",
-                "Bw", "Bw'",
-                "Dw", "Dw'",
-                "L", "L'",
-                "R", "R'",
-                "Uw2",
-                "Dw2",
-                "F", "F'",
-                "B", "B'",
-            ),
-            # fmt: on
+            illegal_moves=PHASE4_ILLEGAL_MOVES,
             prune_tables=[parent.lt_phase4_centers, parent.lt_phase4_edges],
         )
 

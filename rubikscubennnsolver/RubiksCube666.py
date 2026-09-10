@@ -262,6 +262,60 @@ def available_memory_bytes():
         return None
 
 
+# fmt: off
+UD_STAGE_ILLEGAL_MOVES = (
+    # keep LR staged; do not turn L or R
+    "3Uw", "3Uw'",
+    "3Dw", "3Dw'",
+    "3Fw", "3Fw'",
+    "3Bw", "3Bw'",
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "L", "L'", "L2",
+    "R", "R'", "R2",
+)
+
+PHASE5_ILLEGAL_MOVES = (
+    "3Rw", "3Rw'",
+    "3Lw", "3Lw'",
+    "3Fw", "3Fw'",
+    "3Bw", "3Bw'",
+    "3Uw", "3Uw'",
+    "3Dw", "3Dw'",
+    "Rw", "Rw'",
+    "Lw", "Lw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+)
+
+PHASE6_ILLEGAL_MOVES = (
+    "3Rw", "3Rw'",
+    "3Lw", "3Lw'",
+    "3Fw", "3Fw'",
+    "3Bw", "3Bw'",
+    "3Uw", "3Uw'",
+    "3Dw", "3Dw'",
+    "Rw", "Rw'",
+    "Lw", "Lw'",
+    "Fw", "Fw'",
+    "Bw", "Bw'",
+    "Uw", "Uw'",
+    "Dw", "Dw'",
+    "3Uw2",
+    "3Dw2",
+    "3Fw2",
+    "3Bw2",
+    "L", "L'",
+    "R", "R'",
+)
+
+# fmt: on
+
+
 # ==================================================
 # phase 1
 # stage all inner x-centers and pair the LR obliques
@@ -438,18 +492,7 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
             linecount=12870,
             max_depth=7,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2"
-            ),
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -491,18 +534,7 @@ class LookupTable666UDLeftObliqueCentersStage(LookupTable):
             linecount=12870,
             max_depth=6,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -544,18 +576,7 @@ class LookupTable666UDRightObliqueCentersStage(LookupTable):
             linecount=12870,
             max_depth=6,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -584,18 +605,7 @@ class LookupTable666UDObliquEdgeStage(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
             centers_only=True,
             prune_tables=[
                 parent.lt_UD_inner_x_centers_stage,
@@ -632,18 +642,7 @@ class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "L", "L'", "L2",
-                "R", "R'", "R2",
-            ),
+            illegal_moves=UD_STAGE_ILLEGAL_MOVES,
             prune_tables=(
                 parent.lt_UD_inner_x_centers_stage,
                 parent.lt_UD_left_oblique_edges_stage,
@@ -845,20 +844,7 @@ class LookupTable666Step50LRCenters(LookupTable):
             linecount=343000,
             max_depth=8,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
-            ),
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -903,22 +889,7 @@ class LookupTable666Step50HighLowEdges(LookupTable):
             linecount=2704156,
             max_depth=8,
             all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
-            ),
-            # fmt: on
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -956,20 +927,7 @@ class LookupTableIDA666Step50(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
-            ),
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             prune_tables=(
                 parent.lt_LR_centers,
                 parent.lt_LR_highlow_edges,
@@ -985,20 +943,7 @@ class LookupTableIDA666Step50WithoutEdges(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'"
-            ),
+            illegal_moves=PHASE5_ILLEGAL_MOVES,
             prune_tables=(
                 parent.lt_LR_centers,
             ),
@@ -1050,28 +995,7 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
             linecount=343000,
             max_depth=11,
             all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1128,28 +1052,7 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
             linecount=343000,
             max_depth=11,
             all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1211,28 +1114,7 @@ class LookupTable666LRObliqueEdges(LookupTable):
             linecount=176400,
             max_depth=11,
             all_moves=moves_666,
-            # fmt: off
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
-            # fmt: on
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             use_state_index=True,
             build_state_index=build_state_index,
         )
@@ -1255,26 +1137,7 @@ class LookupTableIDA666UFBDInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
             self,
             parent,
             all_moves=moves_666,
-            illegal_moves=(
-                "3Rw", "3Rw'",
-                "3Lw", "3Lw'",
-                "3Fw", "3Fw'",
-                "3Bw", "3Bw'",
-                "3Uw", "3Uw'",
-                "3Dw", "3Dw'",
-                "Rw", "Rw'",
-                "Lw", "Lw'",
-                "Fw", "Fw'",
-                "Bw", "Bw'",
-                "Uw", "Uw'",
-                "Dw", "Dw'",
-                "3Uw2",
-                "3Dw2",
-                "3Fw2",
-                "3Bw2",
-                "L", "L'",
-                "R", "R'"
-            ),
+            illegal_moves=PHASE6_ILLEGAL_MOVES,
             prune_tables=(
                 parent.lt_UD_solve_inner_x_centers_and_oblique_edges,
                 parent.lt_FB_solve_inner_x_centers_and_oblique_edges,

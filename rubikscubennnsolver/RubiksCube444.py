@@ -1,3 +1,46 @@
+"""
+4x4x4 solver: reduce the cube to a 3x3x3, then finish with the 3x3x3 solver.
+
+A 4x4x4 has 24 centers (four per face), 24 wings (two per 3x3x3 edge), and 8
+corners. Reduction pairs each wing with its partner and solves the centers so
+the remaining puzzle is a 3x3x3. ``RubiksCube444.reduce_333`` runs four IDA
+phases; ``solve_333`` then solves the paired cube.
+
+Each phase is an IDA search over a restricted move set, guided by prune tables.
+Phases 1+2 and 3+4 are searched as portfolios: many solutions of the first
+phase are collected, the second phase is solved from those endpoints, and the
+shortest combined path is kept.
+
+Phase 1 - stage LR centers
+    Put all eight L/R center stickers onto the L and R faces (they need not be
+    solved). ``phase1_and_2`` takes a portfolio of optimal LR-staging solutions
+    (default 64). Endpoints are grouped by whether orbit-0 wide turns would
+    cause OLL parity, because phase 2 must use a matching even/odd constraint.
+
+Phase 2 - stage the remaining centers and EO the wings
+    Stage the UD centers onto U/D (LR is already staged) and split the 24 wings
+    into high/low groups. Quarter-turn wide moves on U/D/F/B are illegal.
+    There are 2048 even high/low interpretations of the wings; each phase-1
+    endpoint is expanded across those mappings. The search keeps the shortest
+    phase-1 plus phase-2 pair and records the winning ``edge_mapping``. Orbit-0
+    OLL is avoided so the later 3x3x3 solve is not left with that parity.
+
+Phase 3 - pair four x-plane edges; LFRB centers to vertical bars
+    Pair four wings around the equator (x-plane) and arrange the L/F/R/B
+    centers into vertical bars. Outer L/R turns and most wide quarter-turns are
+    illegal. Which four edges to pair is not fixed: all C(12, 4) wing-string
+    combinations are searched, and a large portfolio of phase-3 solutions
+    (default 2000) is passed to phase 4.
+
+Phase 4 - pair the last eight edges and solve the centers
+    Pair the remaining wings and fully solve all 24 centers. The move set is
+    tighter still (no Uw2/Dw2, no outer F/B quarter-turns). Solutions that
+    would cause PLL parity are rejected; if none of the first batch is PLL-free
+    the search asks for more phase-4 solutions until one is. When
+    ``consider_solve_333`` is set, a handful of the shortest PLL-free phase-3
+    plus phase-4 pairs are run through the 3x3x3 solver so the total length
+    (not just the reduction) can be minimized.
+"""
 # standard libraries
 import itertools
 import logging
@@ -205,10 +248,13 @@ PHASE4_ILLEGAL_MOVES = (
     "F", "F'",
     "B", "B'",
 )
-
 # fmt: on
 
 
+# ==================================================
+# phase 1
+# stage LR centers
+# ==================================================
 class LookupTable444UDCentersStage(LookupTable):
     """
              . . . .
@@ -366,7 +412,10 @@ class LookupTableIDA444LRCentersStage(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
 # phase 2
+# stage the remaining centers and EO the wings
+# ==================================================
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
              . U D .
@@ -534,7 +583,10 @@ class LookupTableIDA444Phase2(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
 # phase 3
+# pair four x-plane edges; LFRB centers to vertical bars
+# ==================================================
 class LookupTable444Reduce333FirstTwoCenters(LookupTable):
     """
              . . . .
@@ -731,7 +783,10 @@ class LookupTableIDA444Phase3(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
 # phase 4
+# pair the last eight edges and solve the centers
+# ==================================================
 class LookupTable444Reduce333Centers(LookupTable):
     """
              . . . .
@@ -791,7 +846,6 @@ class LookupTable444Reduce333Centers(LookupTable):
             cube[pos] = pos_state
 
 
-# phase 4
 class LookupTable444Reduce333LastEightEdges(LookupTable):
     """
              . U U .
@@ -1018,21 +1072,27 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
+        # phase 1 - stage LR centers
+        # UD/LR prune tables, plus an IDA that can stage all six faces (OLL-aware).
+        # reduce_333 searches lt_phase1 (LR staging only).
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = 0  # avoid OLL on orbit 0
         self.lt_phase1 = LookupTableIDA444LRCentersStage(self)
 
+        # phase 2 - stage remaining centers and EO wings into high/low groups
         self.lt_phase2_centers = LookupTable444HighLowEdgesCenters(self)
         self.lt_phase2_edges = LookupTable444HighLowEdgesEdges(self)
         self.lt_phase2 = LookupTableIDA444Phase2(self)
         self.lt_phase2.avoid_oll = 0
 
+        # phase 3 - pair four x-plane edges; LFRB centers to vertical bars
         self.lt_phase3_centers = LookupTable444Reduce333FirstTwoCenters(self)
         self.lt_phase3_edges = LookupTable444Reduce333FirstFourEdges(self)
         self.lt_phase3 = LookupTableIDA444Phase3(self)
 
+        # phase 4 - pair the last eight edges and solve the centers
         self.lt_phase4_centers = LookupTable444Reduce333Centers(self)
         self.lt_phase4_edges = LookupTable444Reduce333LastEightEdges(self)
         self.lt_phase4 = LookupTableIDA444Phase4(self)

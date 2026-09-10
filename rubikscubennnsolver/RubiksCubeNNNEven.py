@@ -1,3 +1,24 @@
+"""
+Even NxNxN solver (8x8x8 and up): turn the cube into an odd cube, then reuse
+the odd NxNxN solver.
+
+``RubiksCubeNNNEven`` inherits ``RubiksCubeNNNEvenEdges`` and is a sibling of
+``RubiksCube666``. It has no lookup tables of its own.
+
+``reduce_555``:
+    1. ``make_plus_sign`` maps each inner center orbit onto a fake 6x6x6 and
+       stages/daisy-solves it. That pairs the middle two rows and columns of
+       every face, leaving a plus sign of already-reduced stickers.
+    2. ``pair_inside_edges_via_444`` pairs the innermost wing orbit (and avoids
+       PLL) by copying those wings onto a fake 4x4x4.
+    3. Drop the middle row and column of each face to build a ``RubiksCubeNNNOdd``
+       of size N-1 and ``solve()`` it. That odd cube stages its remaining
+       centers via 7x7x7 orbits and pairs the rest of the wings via 5x5x5.
+
+``group_edges`` (on ``RubiksCubeNNNEvenEdges``) then pairs any outer wing
+orbits that the odd reduction did not already pair, again via a fake 5x5x5,
+inside to outside. ``solve_333`` finishes the cube.
+"""
 # standard libraries
 import logging
 
@@ -91,6 +112,10 @@ moves_10x10x10 = (
 
 class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     """
+    Even cubes 8x8x8 and larger. A fake 6x6x6 builds a plus sign so the cube can
+    be treated as odd; a fake 4x4x4 pairs the inside wings; then
+    ``RubiksCubeNNNOdd`` finishes the reduction. See the module docstring.
+
     Inheritance model
     -----------------
 

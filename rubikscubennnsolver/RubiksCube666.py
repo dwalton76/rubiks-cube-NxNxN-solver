@@ -1,23 +1,35 @@
 """
-phase 1
-    stage the inner-x centers via 444 solver
+6x6x6 solver: reduce the cube to a 5x5x5, then finish with the 5x5x5 solver.
 
-phase 2
-    pair the LR oblique edges
-    This happens via C via a heuristic formula based on unpaired LR oblique count so there is no table to build
+A 6x6x6 has 16 centers per face (four inner x-centers, four outer x-centers,
+and eight oblique edges), plus two orbits of wings. Reduction solves the inner
+x-centers, pairs every oblique pair, and pairs the inside orbit of wings so
+the remaining puzzle is a 5x5x5. ``RubiksCube666.reduce_555`` does that
+reduction; ``group_edges`` (via the 5x5x5 solver) then pairs the outer wings
+and ``solve_333`` finishes the cube.
 
-phase 3
-    stage LR centers via 555
+There are two staging strategies. With enough RAM the default path uses a
+ranked cost-only table that treats all 24 inner x-centers at once. With
+``--low-memory`` the inner x-centers are staged one axis at a time.
 
-phase 4
-    pair the UD oblique edges and outer x-centers to finish staging centers
+Default staging
+    Phase 1 stages every inner x-center and pairs the LR obliques, and owns
+    orbit-1 OLL (later phases cannot flip that orbit). Phase 2 stages the
+    remaining LR centers via a fake 5x5x5. Phase 3 uses ranked pairwise tables
+    to move the UD left/right obliques and outer x-centers onto U/D, and owns
+    orbit-0 OLL. Phases 2 and 3 are searched as a portfolio.
 
-phase 5
-    solve the UD inner x-centers and pair the UD oblique edges
+--low-memory staging
+    Phase 1 stages only the LR inner x-centers and pairs the LR obliques.
+    Phase 2 stages LR via a fake 5x5x5. Phase 3 pairs the UD obliques (anywhere
+    on U/F/D/B) using an unpaired-count heuristic. Phase 4 finishes staging UD
+    via the 5x5x5 FB-center stager. Phases 3 and 4 are searched as a portfolio.
 
-phase 6
-    solve the LR inner x-centers and pair the LR oblique edges
-    solve the FB inner x-centers and pair the FB oblique edges
+Daisy solve (after centers are staged)
+    Phase 5 puts the LR centers into a daisy (solvable by L/R turns) and EO's
+    the inside wings, trying all 2048 even high/low mappings. Phase 6 solves
+    the UD/FB inner x-centers and pairs the remaining obliques. The inside
+    wings are then paired with the 4x4x4 solver.
 """
 # standard libraries
 import logging
@@ -425,10 +437,10 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
         raise SolveError(f"ida_search_666_centers_stage failed with exit {returncode}\n{output}")
 
 
-# =================================================
+# ==================================================
 # phase 1 --low-memory
 # stage LR inner x-centers and pair the LR obliques
-# =================================================
+# ==================================================
 class LookupTable666LRInnerXCentersStage(LookupTable):
     """
     24! / (8! * 16!) = 735,471 states
@@ -531,10 +543,16 @@ class LookupTable666LRObliquEdgeStageInnerXStage(LookupTableIDAViaGraph):
                 self.parent.state[x] = "."
 
 
-# phase 2 is to stage the LR centers, this is done via a fake_555
+# ==================================================
+# phase 2
+# stage the remaining LR centers via a fake 5x5x5
+# ==================================================
 
 
-# phase 3
+# ==================================================
+# phase 3 --low-memory
+# pair the UD obliques
+# ==================================================
 class LookupTable666UDInnerXCentersStage(LookupTable):
     """
     16! / (8! * 8!) = 12,870 states
@@ -797,7 +815,10 @@ class LookupTable666UDObliquEdgeInnerXCentersStage(LookupTableIDAViaGraph):
         # fmt: on
 
 
-# phase 3, ranked path
+# ==================================================
+# phase 3
+# stage UD left/right obliques and outer x-centers
+# ==================================================
 class LookupTable666RankedPhase3:
     """Describe a dense pairwise ranked-cost table used by the phase-3 IDA."""
 
@@ -983,7 +1004,10 @@ class LookupTableIDA666UDCentersStage:
             self.parent.rotate(step)
 
 
+# ==================================================
 # phase 5
+# LR centers to daisy and EO the inside wings
+# ==================================================
 class LookupTable666Step50LRCenters(LookupTable):
     """
     (8! / (4! * 4!))^3 = 343,000 states
@@ -1212,7 +1236,10 @@ class LookupTableIDA666Step50WithoutEdges(LookupTableIDAViaGraph):
         # fmt: on
 
 
+# ==================================================
 # phase 6
+# solve UD/FB inner x-centers and pair remaining obliques
+# ==================================================
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     """
     (8! / (4! * 4!))^3 = 343,000 states
@@ -1675,7 +1702,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_init_called = True
 
-        # phase 1
+        # phase 1 - stage inner x-centers and pair LR obliques
+        # Ranked one-phase table when RAM allows; otherwise LR-only tables for --low-memory.
         self.use_all_inner_x_centers_stage_table = self.can_use_all_inner_x_centers_stage_table()
         if self.use_all_inner_x_centers_stage_table:
             self.lt_all_inner_x_centers_stage = LookupTableIDA666InnerXCentersStageOnePhase(self)
@@ -1688,6 +1716,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.lt_all_inner_x_centers_stage = None
         self.lt_LR_inner_x_centers_stage = LookupTable666LRInnerXCentersStage(self)
         self.lt_LR_oblique_edge_stage_inner_x_stage = LookupTable666LRObliquEdgeStageInnerXStage(self)
+
+        # --low-memory phases 3 and 4 - pair UD obliques (heuristic) then stage UD via 555
         self.lt_UD_inner_x_centers_stage = LookupTable666UDInnerXCentersStage(self)
         self.lt_UD_left_oblique_edges_stage = LookupTable666UDLeftObliqueCentersStage(self)
         self.lt_UD_right_oblique_edges_stage = LookupTable666UDRightObliqueCentersStage(self)
@@ -1696,6 +1726,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_UD_oblique_edge_inner_x_center_stage = LookupTable666UDObliquEdgeInnerXCentersStage(self)
         self.lt_UD_oblique_edge_inner_x_center_stage.avoid_oll = (0, 1)
 
+        # default phase 3 - ranked UD oblique + outer-x tables to finish staging UD
         # Combined phase 3 is only valid after the ranked phase 1 has staged
         # every inner x-center. The low-memory path keeps the legacy phases.
         if self.use_all_inner_x_centers_stage_table:
@@ -1712,6 +1743,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.lt_UD_right_oblique_outer_x_stage = None
             self.lt_UD_centers_stage = None
 
+        # phases 5 and 6 - daisy-solve centers and EO the inside wings
         self.lt_LR_centers = LookupTable666Step50LRCenters(self)
         self.lt_LR_highlow_edges = LookupTable666Step50HighLowEdges(self)
         self.lt_step50 = LookupTableIDA666Step50(self)

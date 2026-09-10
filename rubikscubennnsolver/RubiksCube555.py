@@ -1,56 +1,56 @@
 """
-phase 1
-    stage LR centers
-    10 moves
+5x5x5 solver: reduce the cube to a 3x3x3, then finish with the 3x3x3 solver.
 
-phase 2
-    stage FB centers
-    10 moves
+A 5x5x5 has 54 centers (nine per face: four t-centers, four x-centers, and a
+fixed middle), 24 wings (the outer edge orbit), 12 midges (the inner edge
+orbit), and 8 corners. Reduction pairs each wing with its midge and solves the
+centers so the remaining puzzle is a 3x3x3. ``RubiksCube555.reduce_333`` runs
+six phases; ``solve_333`` then solves the paired cube.
 
-phase 3 -
-    EO the wings, 2,704,156 states
-    EO the midges, 2048 states
-    LR centers to 1/432, 4900 states
+Each IDA phase is guided by prune tables. Phases 1+2 and 4+5+6 are searched as
+portfolios: many solutions of the earlier phase are collected, later phases
+are solved from those endpoints, and the shortest combined path is kept.
 
-    (4900 * 2048) / (4900 * 2048 * 2,704,156) = 0.000 000 369
-    10.8 moves
+Phase 1 - stage LR centers
+    Put all eight L/R t-centers and eight L/R x-centers onto the L and R faces
+    (they need not be solved). ``group_centers_phase1_and_2`` takes a portfolio
+    of optimal LR-staging solutions (default 64). Endpoints are grouped by
+    whether orbit-0 wide turns would cause OLL parity, because phase 2 must use
+    a matching even/odd constraint.
 
-phase 4
-    Move a group of 4-edges to x-plane and y-plane
-    ~1 move
+Phase 2 - stage FB (and UD) centers
+    Stage the F/B t-centers and x-centers onto F/B, which also puts the
+    remaining centers onto U/D. Quarter-turn wide moves that would unstage LR
+    are illegal. Orbit-0 OLL is avoided so the later 3x3x3 solve is not left
+    with that parity. The search keeps the shortest phase-1 plus phase-2 pair.
 
-phase 5
-    LR and FB centers to vertical bars
-    pair x-plane edges
+Phase 3 - EO the wings and midges; LR centers to 1-of-432
+    Split the 24 wings and 12 midges into high/low groups. Each of the 12
+    edges can be in its final orientation or not, but only an even number may
+    be flipped, so there are 2048 legal EO permutations. All of them are
+    searched and the shortest is kept. LR centers are reduced to one of 432
+    shapes along the way.
 
-    432 LR center states
-    4,900 FB center states
+Phase 4 - park four edges on the x-plane
+    Choose four edges and move them onto the equator (x-plane). This is a
+    short lookup; ``pair_edges`` only keeps wing-string combinations that
+    finish in fewer than three moves.
 
-    x-plane high wings
-        (8!/4!) = 1,680 is how many states the high wings can be in
+Phase 5 - pair those four edges; LR/FB centers to vertical bars
+    Pair the x-plane high wings, low wings, and midges, and put the L/R and
+    F/B centers into vertical bars. A perfect-hash table covers FB-centers
+    combined with high-edge-and-midge (and the same for low). A large
+    portfolio of phase-5 solutions (default 500) is passed to phase 6.
 
-    x-plane low wings
-        (8!/4!) = 1,680 is how many states the low wings can be in
+Phase 6 - pair the last eight edges and solve the centers
+    Pair the remaining wings with their midges and fully solve all 54 centers.
+    Another perfect-hash table covers the last-eight-edges pairing. Prefixes
+    (phase 4 plus 5) are grouped by length so the search can minimize the
+    total, not just the phase-6 suffix.
 
-    x-plane midges
-        8!/(4!*4!) = 70 is how many states the midges can be in
-
-    A high-edge-midge prune table is 70 * 1680 = 117,600
-    A low-edge-midge prune table is 70 * 1680 = 117,600
-    A centers prune table is 432 * 4900 = 2,116,800
-    A FB-centers-high-edge-midge prune table is 4900 * 117,600 = 576,240,000
-        we can use this via a perfect-hash table
-
-    576,240,000 / (432 * 4900 * 1680 * 1680 * 70) = 0.000 001 377
-
-phase 6
-    pair last 8 edges
-    solve all centers
-
-    8!^2/2 = 812,851,200 edge states
-    6 * 6 * 4900 = 176,400 center states
-
-    -16 moves
+Larger even/odd cubes that have already reduced to a 5x5x5 also use the
+center-solve tables at the end of ``lt_init``, and the extra LR/UD t-center
+IDA objects, without going through this six-phase reduction.
 """
 
 # standard libraries
@@ -647,7 +647,10 @@ class NoEdgeSolution(Exception):
     pass
 
 
+# ==================================================
 # phase 1
+# stage LR centers
+# ==================================================
 class LookupTable555LRTCenterStage(LookupTable):
     """
     24! / (8! * 16!) = 735,471 states
@@ -836,7 +839,10 @@ class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
 # phase 2
+# stage FB (and UD) centers
+# ==================================================
 class LookupTable555FBTCenterStage(LookupTable):
     """
     16! / (8! * 8!) = 12,870 states
@@ -1009,7 +1015,10 @@ class LookupTableIDA555UDTCenterStage(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
 # phase 3
+# EO the wings and midges; LR centers to 1-of-432
+# ==================================================
 class LookupTable555Phase3LRCenterStage(LookupTable):
     """
     (8! / (4! * 4!))^2 = 4,900 states
@@ -1710,7 +1719,10 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
 # phase 4
+# park four edges on the x-plane
+# ==================================================
 class LookupTable555Phase4(LookupTable):
     """
                . x x x .
@@ -1804,7 +1816,10 @@ class LookupTable555Phase4(LookupTable):
             return False
 
 
+# ==================================================
 # phase 5
+# pair those four edges; LR/FB centers to vertical bars
+# ==================================================
 class LookupTable555Phase5Centers(LookupTable):
     """
     432 * 4900 = 2,116,800 states
@@ -2186,7 +2201,10 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
 # phase 6
+# pair the last eight edges and solve the centers
+# ==================================================
 class LookupTable555Phase6Centers(LookupTable):
     """
     6 * 6 * 4,900 = 176,400 states
@@ -2442,6 +2460,10 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
         )
 
 
+# ==================================================
+# solve remaining centers
+# used by cubes larger than 5x5
+# ==================================================
 class LookupTable555UDCenterSolve(LookupTable):
     """
     (8! / (4! * 4!))^3 = 343,000 states
@@ -2851,37 +2873,40 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        # phase 1
+        # phase 1 - stage LR centers
+        # t-center and x-center prune tables plus the IDA that reduce_333 searches.
+        # lt_LR_t_centers_stage_ida is for larger cubes that have reduced to 555.
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
         self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
 
-        # phase 2
+        # phase 2 - stage FB (and UD) centers
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
         self.lt_FB_x_centers_stage = LookupTable555FBXCenterStage(self)
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
 
+        # used by 6x6x6 / 7x7x7 after they have reduced to a 5x5x5
         self.lt_UD_t_centers_stage_ida = LookupTableIDA555UDTCenterStage(self)
 
-        # phase 3
+        # phase 3 - EO the wings and midges; LR centers to 1-of-432
         self.lt_phase3_lr_center_stage = LookupTable555Phase3LRCenterStage(self)
         self.lt_phase3_eo_outer_orbit = LookupTable555EdgeOrientOuterOrbit(self)
         self.lt_phase3_eo_inner_orbit = LookupTable555EdgeOrientInnerOrbit(self)
         self.lt_phase3 = LookupTableIDA555LRCenterStageEOBothOrbits(self)
 
-        # phase 4
+        # phase 4 - park four edges on the x-plane
         self.lt_phase4 = LookupTable555Phase4(self)
 
-        # phase 5
+        # phase 5 - pair those four edges; LR/FB centers to vertical bars
         self.lt_phase5_centers = LookupTable555Phase5Centers(self)
         self.lt_phase5_high_edge_midge = LookupTable555Phase5HighEdgeMidge(self)
         self.lt_phase5_low_edge_midge = LookupTable555Phase5LowEdgeMidge(self)
         self.lt_phase5_fb_centers = LookupTable555Phase5FBCenters(self)
         self.lt_phase5 = LookupTableIDA555Phase5(self)
 
-        # phase 6
+        # phase 6 - pair the last eight edges and solve the centers
         self.lt_phase6_centers = LookupTable555Phase6Centers(self)
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)

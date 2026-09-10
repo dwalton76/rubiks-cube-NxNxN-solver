@@ -1,32 +1,46 @@
 """
-phase 1
-    use 555 solver to stage the LR inner centers
+7x7x7 solver: reduce the cube to a 5x5x5, then finish with the 5x5x5 solver.
 
-phase 2
-    pair LR oblique edges
-    uses heuristic formula so no table to build
+A 7x7x7 has 25 centers per face (t-centers, x-centers, and three orbits of
+oblique edges) plus three orbits of wings. Reduction stages and daisy-solves
+the centers so the remaining puzzle is a 5x5x5. ``RubiksCube777.reduce_555``
+does that reduction; ``group_edges`` (via the 5x5x5 solver) then pairs the
+wings and ``solve_333`` finishes the cube.
 
-phase 3
-    use 5x5x5 solver to stage the LR inner centers
+Most of the early work is delegated to a fake 5x5x5 whose inner 3x3 of centers
+is filled from this cube. Oblique pairing has no lookup table: a C search uses
+an unpaired-count heuristic.
 
-phase 4
-    use 5x5x5 solver to stage the UD inner centers
+Phase 1 - stage LR inner centers
+    Map the inner 3x3 of each face onto a fake 5x5x5 and stage its LR centers.
 
-phase 5
-    pair the oblique UD edges
-    uses heuristic formula so no table to build
+Phase 2 - pair LR oblique edges
+    Pair every L/R oblique orbit, anywhere on L/R. Heuristic only.
 
-phase 6
-    use 5x5x5 to stage the UD centers
+Phase 3 - stage the remaining LR centers
+    Map the outer 5x5 of each face onto a fake 5x5x5 and stage its LR centers.
 
-phase 7
-    LR centers to vertical bars
+Phase 4 - stage UD inner centers
+    Same as phase 1, but for U/D via the 5x5x5 FB stager.
 
-phase 8
-    UD centers to vertical bars
+Phase 5 - pair UD oblique edges
+    Pair every U/D oblique orbit, anywhere on U/F/D/B. Heuristic only.
 
-phase 9
-    centers daisy solve
+Phase 6 - stage the remaining UD centers
+    Same as phase 3, but for U/D.
+
+Phase 7 - LR centers to vertical bars
+    Step-40 IDA (prune tables step41-44).
+
+Phase 8 - UD centers to vertical bars
+    Step-50 IDA (prune tables step51-55). LR is already in bars.
+
+Phase 9 - daisy-solve the centers
+    Step-60 IDA (prune tables step61/62/65/66). The centers are now a 5x5x5.
+
+Cubes larger than 7x7x7 reuse this solver on concentric orbits. They also use
+the t-center solve IDA (step70) and, when finishing an odd cube, the 5x5x5
+all-centers solve table.
 """
 # standard libraries
 import logging
@@ -128,9 +142,10 @@ UFBD_middle_oblique_777 = (
 # fmt: on
 
 
-# ===============================
-# phase 2 - pair LR oblique edges
-# ===============================
+# ==================================================
+# phase 2
+# pair LR oblique edges
+# ==================================================
 
 
 # fmt: off
@@ -261,9 +276,10 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
                 self.parent.state[x] = "."
 
 
-# =======================================================
-# phase 4 - stage UD inner centers, pair UD oblique edges
-# =======================================================
+# ==================================================
+# phase 4
+# stage UD inner centers, pair UD oblique edges
+# ==================================================
 class LookupTable777Phase4TCenters(LookupTable):
     """
     16! / (8! * 8!) = 12,870 states
@@ -726,10 +742,10 @@ SOLUTION (13 steps): D' Rw' 3Bw2 3Uw2 3Rw2 B' Rw' D' 3Bw2 Dw2 Lw D' 3Fw2
  3Fw2         0    0    0    0   13
 """
 
-# ===================================
-# phase 5 - pair the oblique UD edges
-# via perfect-hash lookup tables
-# ===================================
+# ==================================================
+# phase 5
+# pair the UD oblique edges via perfect-hash tables
+# ==================================================
 
 
 class LookupTable777Phase5LeftOblique(LookupTable):
@@ -966,10 +982,10 @@ class LookupTableIDA777UDObliqueEdgePairingNew(LookupTableIDAViaGraph):
         # fmt: on
 
 
-# ===================================
-# phase 5 - pair the oblique UD edges
-# via an unpaired-count heuristic
-# ===================================
+# ==================================================
+# phase 5
+# pair the UD oblique edges via an unpaired-count heuristic
+# ==================================================
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
     # fmt: off
     UFBD_oblique_edges_777 = (
@@ -1007,9 +1023,10 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
                 self.parent.state[x] = "."
 
 
-# =====================================
-# phase 7 - LR centers to vertical bars
-# =====================================
+# ==================================================
+# phase 7
+# LR centers to vertical bars
+# ==================================================
 class LookupTable777Step41(LookupTable):
     """
     (8! / (4! * 4!))^3 = 343,000 states
@@ -1531,9 +1548,10 @@ class LookupTableIDA777Step40(LookupTableIDAViaGraph):
         # fmt: on
 
 
-# =====================================
-# phase 8 - UD centers to vertical bars
-# =====================================
+# ==================================================
+# phase 8
+# UD centers to vertical bars
+# ==================================================
 class LookupTable777Step51(LookupTable):
     """
     (8! / (4! * 4!))^3 = 343,000 states
@@ -2131,9 +2149,10 @@ class LookupTableIDA777Step50(LookupTableIDAViaGraph):
         # fmt: on
 
 
-# =============================
-# phase 9 - centers daisy solve
-# =============================
+# ==================================================
+# phase 9
+# daisy-solve the centers
+# ==================================================
 class LookupTable777Step61(LookupTable):
     """
                    . . . . . . .
@@ -2460,9 +2479,10 @@ class LookupTableIDA777Step60(LookupTableIDAViaGraph):
         # fmt: on
 
 
-# =================================================
-# phase solve t-centers (for cubes larger than 777)
-# =================================================
+# ==================================================
+# solve t-centers
+# used by cubes larger than 7x7
+# ==================================================
 class LookupTable777Step71(LookupTable):
     """
                    . . . . . . .
@@ -3292,26 +3312,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
-        # phase 2 - pair LR oblique edges
+        # phase 2 - pair LR oblique edges (unpaired-count heuristic; no table)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
-
-        # phase 4 - stage UD inner centers, pair UD oblique edges
-        # self.lt_phase4_t_centers = LookupTable777Phase4TCenters(self)
-        # self.lt_phase4_x_centers = LookupTable777Phase4XCenters(self)
-        # self.lt_phase4_left_oblique = LookupTable777Phase4LeftOblique(self)
-        # self.lt_phase4_right_oblique = LookupTable777Phase4RightOblique(self)
-        # self.lt_phase4_middle_oblique = LookupTable777Phase4MiddleOblique(self)
-        # self.lt_phase4 = LookupTableIDA777Phase4(self)
-
-        # Need to add avoid_oll support for orbit 2 and then enable this.  Currently it will work but the edges
-        # are in a state that cannot be solved by the 555 solver.
-        # self.lt_phase4.avoid_oll = (1, 2)
-
-        # phase 5 - pair the oblique UD edges (perfect-hash tables)
-        # self.lt_phase5_left_oblique = LookupTable777Phase5LeftOblique(self)
-        # self.lt_phase5_right_oblique = LookupTable777Phase5RightOblique(self)
-        # self.lt_phase5_middle_oblique = LookupTable777Phase5MiddleOblique(self)
-        # self.lt_UD_oblique_edge_pairing_new = LookupTableIDA777UDObliqueEdgePairingNew(self)
 
         # phase 5 - pair the oblique UD edges (unpaired-count heuristic)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
@@ -3331,14 +3333,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_step55 = LookupTable777Step55(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
 
-        # phase 9 - centers daisy solve
+        # phase 9 - daisy-solve the centers
         self.lt_step61 = LookupTable777Step61(self)
         self.lt_step62 = LookupTable777Step62(self)
         self.lt_step65 = LookupTable777Step65(self)
         self.lt_step66 = LookupTable777Step66(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
 
-        # phase solve t-centers (for cubes larger than 777)
+        # t-center solve for odd cubes larger than 7x7x7
         self.lt_step71 = LookupTable777Step71(self)
         self.lt_step72 = LookupTable777Step72(self)
         self.lt_step75 = LookupTable777Step75(self)

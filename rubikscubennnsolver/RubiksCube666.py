@@ -328,7 +328,32 @@ ALL_INNER_X_CENTERS_STAGE_MEMORY_MARGIN = 2 * 1024**3
 
 
 class LookupTableIDA666InnerXCentersStageOnePhase:
-    """Stage every inner x-center and pair the LR obliques via the ranked table."""
+    """
+    Stage all 24 inner x-centers in one phase (8 UD, 8 LR, 8 FB).
+
+    24! / (8!^3) = 9,465,511,770 states. Built as a ranked cost-only table.
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . F F . .  . . L L . .  . . F F . .
+    . . L L . .  . . F F . .  . . L L . .  . . F F . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+    """
 
     def __init__(self, parent):
         self.parent = parent
@@ -385,6 +410,29 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
 # =================================================
 class LookupTable666LRInnerXCentersStage(LookupTable):
     """
+    24! / (8! * 16!) = 735,471 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
     lookup-table-6x6x6-step00-inner-x-centers-stage.txt
     ===================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -464,9 +512,33 @@ class LookupTable666LRObliquEdgeStageInnerXStage(LookupTableIDAViaGraph):
 
 # phase 2 is to stage the LR centers, this is done via a fake_555
 
+
 # phase 3
 class LookupTable666UDInnerXCentersStage(LookupTable):
     """
+    16! / (8! * 8!) = 12,870 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
     lookup-table-6x6x6-step11-UD-inner-x-centers-stage.txt
     ======================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -510,6 +582,29 @@ class LookupTable666UDInnerXCentersStage(LookupTable):
 
 class LookupTable666UDLeftObliqueCentersStage(LookupTable):
     """
+    16! / (8! * 8!) = 12,870 states
+
+                 . . . . . .
+                 . . U . . .
+                 . . . . U .
+                 . U . . . .
+                 . . . U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x . . .  . . . . . .  . . x . . .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . . . x . .  . . . . . .  . . . x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . U . . .
+                 . . . . U .
+                 . U . . . .
+                 . . . U . .
+                 . . . . . .
+
     lookup-table-6x6x6-step13-UD-left-oblique-centers.txt
     =====================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -552,6 +647,29 @@ class LookupTable666UDLeftObliqueCentersStage(LookupTable):
 
 class LookupTable666UDRightObliqueCentersStage(LookupTable):
     """
+    16! / (8! * 8!) = 12,870 states
+
+                 . . . . . .
+                 . . . U . .
+                 . U . . . .
+                 . . . . U .
+                 . . U . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . x . .  . . . . . .  . . . x . .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . . x . . .  . . . . . .  . . x . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . U . .
+                 . U . . . .
+                 . . . . U .
+                 . . U . . .
+                 . . . . . .
+
     lookup-table-6x6x6-step14-UD-right-oblique-centers.txt
     ======================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -669,6 +787,31 @@ class LookupTable666RankedPhase3:
 
 
 class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase3):
+    """
+    (16! / (8! * 8!))^2 = 165,636,900 states
+
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
+    """
+
     def __init__(self, parent):
         LookupTable666RankedPhase3.__init__(
             self,
@@ -678,6 +821,31 @@ class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase3):
 
 
 class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase3):
+    """
+    (16! / (8! * 8!))^2 = 165,636,900 states
+
+                 . . . . . .
+                 . U U . U .
+                 . . . . U .
+                 . U . . . .
+                 . U . U U .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . x x . x .  . . . . . .  . x x . x .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . x . x x .  . . . . . .  . x . x x .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . U U . U .
+                 . . . . U .
+                 . U . . . .
+                 . U . U U .
+                 . . . . . .
+    """
+
     def __init__(self, parent):
         LookupTable666RankedPhase3.__init__(
             self,
@@ -687,6 +855,31 @@ class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase3):
 
 
 class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase3):
+    """
+    (16! / (8! * 8!))^2 = 165,636,900 states
+
+                 . . . . . .
+                 . U . U U .
+                 . U . . . .
+                 . . . . U .
+                 . U U . U .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . x . x x .  . . . . . .  . x . x x .
+    . . . . . .  . x . . . .  . . . . . .  . x . . . .
+    . . . . . .  . . . . x .  . . . . . .  . . . . x .
+    . . . . . .  . x x . x .  . . . . . .  . x x . x .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . U . U U .
+                 . U . . . .
+                 . . . . U .
+                 . U U . U .
+                 . . . . . .
+    """
+
     def __init__(self, parent):
         LookupTable666RankedPhase3.__init__(
             self,
@@ -772,6 +965,29 @@ class LookupTableIDA666UDCentersStage:
 # phase 5
 class LookupTable666Step50LRCenters(LookupTable):
     """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . . . . .  . . x x . .  . . . . . .
+    . L L L L .  . . . . . .  . x x x x .  . . . . . .
+    . L L L L .  . . . . . .  . x x x x .  . . . . . .
+    . . L L . .  . . . . . .  . . x x . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+
     lookup-table-6x6x6-step50-LR-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
     0 steps has 9 entries (0 percent, 0.00x previous step)
@@ -862,6 +1078,29 @@ class LookupTable666Step50LRCenters(LookupTable):
 
 class LookupTable666Step50HighLowEdges(LookupTable):
     """
+    24! / (12! * 12!) = 2,704,156 states
+
+                 . . U D . .
+                 . . . . . .
+                 D . . . . U
+                 U . . . . D
+                 . . . . . .
+                 . . D U . .
+
+    . . D U . .  . . D U . .  . . D U . .  . . D U . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    D . . . . U  U . . . . D  D . . . . U  U . . . . D
+    U . . . . D  D . . . . U  U . . . . D  D . . . . U
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . U D . .  . . U D . .  . . U D . .  . . U D . .
+
+                 . . U D . .
+                 . . . . . .
+                 D . . . . U
+                 U . . . . D
+                 . . . . . .
+                 . . D U . .
+
     lookup-table-6x6x6-step51-highlow-edges.txt
     ===========================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -955,6 +1194,29 @@ class LookupTableIDA666Step50WithoutEdges(LookupTableIDAViaGraph):
 # phase 6
 class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
     """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+                 . . . . . .
+                 . . U U . .
+                 . U U U U .
+                 . U U U U .
+                 . . U U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . D D . .
+                 . D D D D .
+                 . D D D D .
+                 . . D D . .
+                 . . . . . .
+
     lookup-table-6x6x6-step61-UD-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
     0 steps has 2 entries (0 percent, 0.00x previous step)
@@ -1012,6 +1274,29 @@ class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
 
 class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
     """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . B B . .  . . . . . .  . . F F . .
+    . . . . . .  . B F F B .  . . . . . .  . F B B F .
+    . . . . . .  . B F F B .  . . . . . .  . F B B F .
+    . . . . . .  . . B B . .  . . . . . .  . . F F . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+                 . . . . . .
+
     lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
     =======================================================================
     0 steps has 2 entries (0 percent, 0.00x previous step)
@@ -1070,6 +1355,29 @@ class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
 
 class LookupTable666LRObliqueEdges(LookupTable):
     """
+    6 * 6 * 4,900 = 176,400 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . . . . .  . . R R . .  . . . . . .
+    . L . . L .  . . F F . .  . R . . R .  . . B B . .
+    . L . . L .  . . F F . .  . R . . R .  . . B B . .
+    . . L L . .  . . . . . .  . . R R . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . D D . .
+                 . . D D . .
+                 . . . . . .
+                 . . . . . .
+
     lookup-table-6x6x6-step63-LR-oblique-edges.txt
     ==============================================
     0 steps has 2 entries (0 percent, 0.00x previous step)

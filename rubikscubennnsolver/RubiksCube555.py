@@ -595,6 +595,26 @@ class NoEdgeSolution(Exception):
 # phase 1
 class LookupTable555LRTCenterStage(LookupTable):
     """
+    24! / (8! * 16!) = 735,471 states
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
     lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.txt
     ============================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -656,6 +676,26 @@ class LookupTable555LRTCenterStage(LookupTable):
 
 class LookupTable555LRXCenterStage(LookupTable):
     """
+    24! / (8! * 16!) = 735,471 states
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
     lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.txt
     ============================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -744,6 +784,26 @@ class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
 # phase 2
 class LookupTable555FBTCenterStage(LookupTable):
     """
+    16! / (8! * 8!) = 12,870 states
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
     lookup-table-5x5x5-step21-FB-t-centers-stage.txt
     ================================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
@@ -796,6 +856,26 @@ class LookupTable555FBTCenterStage(LookupTable):
 
 class LookupTable555FBXCenterStage(LookupTable):
     """
+    16! / (8! * 8!) = 12,870 states
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . x . x .
+               . . . . .
+               . x . x .
+               . . . . .
+
     lookup-table-5x5x5-step22-FB-x-centers-stage.txt
     ================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -877,6 +957,8 @@ class LookupTableIDA555UDTCenterStage(LookupTableIDAViaGraph):
 # phase 3
 class LookupTable555Phase3LRCenterStage(LookupTable):
     """
+    (8! / (4! * 4!))^2 = 4,900 states
+
     lookup-table-5x5x5-step901-LR-center-stage.txt
     ==============================================
     0 steps has 27 entries (0 percent, 0.00x previous step)
@@ -1359,6 +1441,26 @@ class LookupTable555Phase3LRCenterStage(LookupTable):
 
 class LookupTable555EdgeOrientOuterOrbit(LookupTable):
     """
+    24! / (12! * 12!) = 2,704,156 states
+
+               . U . D .
+               D . . . U
+               . . . . .
+               U . . . D
+               . D . U .
+
+    . D . U .  . D . U .  . D . U .  . D . U .
+    D . . . U  U . . . D  D . . . U  U . . . D
+    . . . . .  . . . . .  . . . . .  . . . . .
+    U . . . D  D . . . U  U . . . D  D . . . U
+    . U . D .  . U . D .  . U . D .  . U . D .
+
+               . U . D .
+               D . . . U
+               . . . . .
+               U . . . D
+               . D . U .
+
     lookup-table-5x5x5-step902-EO-outer-orbit.txt
     =============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -1435,6 +1537,26 @@ class LookupTable555EdgeOrientOuterOrbit(LookupTable):
 
 class LookupTable555EdgeOrientInnerOrbit(LookupTable):
     """
+    2^12 / 2 = 2,048 states
+
+               . . U . .
+               . . . . .
+               U . . . U
+               . . . . .
+               . . U . .
+
+    . . U . .  . . U . .  . . U . .  . . U . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    U . . . U  U . . . U  U . . . U  U . . . U
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . U . .  . . U . .  . . U . .  . . U . .
+
+               . . U . .
+               . . . . .
+               U . . . U
+               . . . . .
+               . . U . .
+
     lookup-table-5x5x5-step903-EO-inner-orbit.txt
     =============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -1536,6 +1658,24 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDAViaGraph):
 # phase 4
 class LookupTable555Phase4(LookupTable):
     """
+               . x x x .
+               x . . . x
+               x . . . x
+               x . . . x
+               . x x x .
+
+    . x x x .  . x x x .  . x x x .  . x x x .
+    L . . . L  L . . . L  L . . . L  L . . . L
+    L . . . L  L . . . L  L . . . L  L . . . L
+    L . . . L  L . . . L  L . . . L  L . . . L
+    . x x x .  . x x x .  . x x x .  . x x x .
+
+               . x x x .
+               x . . . x
+               x . . . x
+               x . . . x
+               . x x x .
+
     lookup-table-5x5x5-step40-phase4.txt
     ====================================
     0 steps has 4,239 entries (0 percent, 0.00x previous step)
@@ -1612,6 +1752,26 @@ class LookupTable555Phase4(LookupTable):
 # phase 5
 class LookupTable555Phase5Centers(LookupTable):
     """
+    432 * 4900 = 2,116,800 states
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
     lookup-table-5x5x5-step51-phase5-centers.txt
     ============================================
     0 steps has 7 entries (0 percent, 0.00x previous step)
@@ -1696,6 +1856,26 @@ class LookupTable555Phase5Centers(LookupTable):
 
 class LookupTable555Phase5HighEdgeMidge(LookupTable):
     """
+    (8*7*6*5)*70 = 117,600 states
+
+               . - - - .
+               - . . . -
+               - . . . -
+               - . . . -
+               . - - - .
+
+    . - - - .  . - - - .  . - - - .  . - - - .
+    - . . . L  F . . . -  - . . . R  B . . . -
+    L . . . L  F . . . F  R . . . R  B . . . B
+    L . . . -  - . . . F  R . . . -  - . . . B
+    . - - - .  . - - - .  . - - - .  . - - - .
+
+               . - - - .
+               - . . . -
+               - . . . -
+               - . . . -
+               . - - - .
+
     lookup-table-5x5x5-step53-phase5-high-edge-and-midge.txt
     ========================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -1763,6 +1943,28 @@ class LookupTable555Phase5HighEdgeMidge(LookupTable):
 
 class LookupTable555Phase5FBCenters(LookupTable):
     """
+    (8! / (4! * 4!))^2 = 4,900 states
+
+    4,900 FB centers
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . B F B .  . . . . .  . F B F .
+    . . . . .  . B F B .  . . . . .  . F B F .
+    . . . . .  . B F B .  . . . . .  . F B F .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
     lookup-table-5x5x5-step56-phase5-fb-centers.txt
     ===============================================
     0 steps has 4 entries (0 percent, 0.00x previous step)
@@ -1814,6 +2016,26 @@ class LookupTable555Phase5FBCenters(LookupTable):
 
 class LookupTable555Phase5LowEdgeMidge(LookupTable):
     """
+    (8*7*6*5)*70 = 117,600 states
+
+               . - - - .
+               - . . . -
+               - . . . -
+               - . . . -
+               . - - - .
+
+    . - - - .  . - - - .  . - - - .  . - - - .
+    L . . . -  - . . . F  R . . . -  - . . . B
+    L . . . L  F . . . F  R . . . R  B . . . B
+    - . . . L  F . . . -  - . . . R  B . . . -
+    . - - - .  . - - - .  . - - - .  . - - - .
+
+               . - - - .
+               - . . . -
+               - . . . -
+               - . . . -
+               . - - - .
+
     lookup-table-5x5x5-step54-phase5-low-edge-and-midge.txt
     =======================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -1912,6 +2134,26 @@ class LookupTableIDA555Phase5(LookupTableIDAViaGraph):
 # phase 6
 class LookupTable555Phase6Centers(LookupTable):
     """
+    6 * 6 * 4,900 = 176,400 states
+
+               . . . . .
+               . U U U .
+               . U U U .
+               . U U U .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . D D D .
+               . D D D .
+               . D D D .
+               . . . . .
+
     lookup-table-5x5x5-step61-phase6-centers.txt
     ============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -1956,6 +2198,26 @@ class LookupTable555Phase6Centers(LookupTable):
 
 class LookupTable555Phase6HighEdgeMidge(LookupTable):
     """
+    8! = 40,320 states
+
+               . U U - .
+               - . . . U
+               U . . . U
+               U . . . -
+               . - U U .
+
+    . - L L .  . - F F .  . - R R .  . - B B .
+    - . . . -  - . . . -  - . . . -  - . . . -
+    - . . . -  - . . . -  - . . . -  - . . . -
+    - . . . -  - . . . -  - . . . -  - . . . -
+    . L L - .  . F F - .  . R R - .  . B B - .
+
+               . D D - .
+               - . . . D
+               D . . . D
+               D . . . -
+               . - D D .
+
     lookup-table-5x5x5-step62-phase6-high-edge-midge.txt
     ====================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -2022,6 +2284,26 @@ class LookupTable555Phase6HighEdgeMidge(LookupTable):
 
 class LookupTable555Phase6LowEdgeMidge(LookupTable):
     """
+    8! = 40,320 states
+
+               . - U U .
+               U . . . -
+               U . . . U
+               - . . . U
+               . U U - .
+
+    . L L - .  . F F - .  . R R - .  . B B - .
+    - . . . -  - . . . -  - . . . -  - . . . -
+    - . . . -  - . . . -  - . . . -  - . . . -
+    - . . . -  - . . . -  - . . . -  - . . . -
+    . - L L .  . - F F .  . - R R .  . - B B .
+
+               . - D D .
+               D . . . -
+               D . . . D
+               - . . . D
+               . D D - .
+
     lookup-table-5x5x5-step63-phase6-low-edge-midge.txt
     ===================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
@@ -2107,6 +2389,26 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
 
 class LookupTable555UDCenterSolve(LookupTable):
     """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+               . . . . .
+               . U U U .
+               . U U U .
+               . U U U .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . . . .  . . R . .  . . . . .
+    . L . L .  . . . . .  . R . R .  . . . . .
+    . . L . .  . . . . .  . . R . .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . D D D .
+               . D D D .
+               . D D D .
+               . . . . .
+
     lookup-table-5x5x5-step34-UD-centers-solve.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -2163,6 +2465,26 @@ class LookupTable555UDCenterSolve(LookupTable):
 
 class LookupTable555LRCenterSolve(LookupTable):
     """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . F . F .  . R R R .  . B . B .
+    . L L L .  . . . . .  . R R R .  . . . . .
+    . L L L .  . F . F .  . R R R .  . B . B .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
     lookup-table-5x5x5-step35-LR-centers-solve.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -2220,6 +2542,26 @@ class LookupTable555LRCenterSolve(LookupTable):
 
 class LookupTable555FBCenterSolve(LookupTable):
     """
+    (8! / (4! * 4!))^3 = 343,000 states
+
+               . . . . .
+               . . U . .
+               . U . U .
+               . . U . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . F F F .  . . . . .  . B B B .
+    . . . . .  . F F F .  . . . . .  . B B B .
+    . . . . .  . F F F .  . . . . .  . B B B .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . D . .
+               . D . D .
+               . . D . .
+               . . . . .
+
     lookup-table-5x5x5-step36-FB-centers-solve.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)

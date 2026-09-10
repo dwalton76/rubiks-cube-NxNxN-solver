@@ -211,6 +211,21 @@ PHASE4_ILLEGAL_MOVES = (
 
 class LookupTable444UDCentersStage(LookupTable):
     """
+             . . . .
+             . U U .
+             . U U .
+             . . . .
+
+    . . . .  . . . .  . . . .  . . . .
+    . x x .  . x x .  . x x .  . x x .
+    . x x .  . x x .  . x x .  . x x .
+    . . . .  . . . .  . . . .  . . . .
+
+             . . . .
+             . U U .
+             . U U .
+             . . . .
+
     lookup-table-4x4x4-step11-UD-centers-stage.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -266,6 +281,21 @@ class LookupTable444UDCentersStage(LookupTable):
 
 class LookupTable444LRCentersStage(LookupTable):
     """
+             . . . .
+             . x x .
+             . x x .
+             . . . .
+
+    . . . .  . . . .  . . . .  . . . .
+    . L L .  . x x .  . L L .  . x x .
+    . L L .  . x x .  . L L .  . x x .
+    . . . .  . . . .  . . . .  . . . .
+
+             . . . .
+             . x x .
+             . x x .
+             . . . .
+
     lookup-table-4x4x4-step12-LR-centers-stage.txt
     ==============================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -339,6 +369,21 @@ class LookupTableIDA444LRCentersStage(LookupTableIDAViaGraph):
 # phase 2
 class LookupTable444HighLowEdgesEdges(LookupTable):
     """
+             . U D .
+             D . . U
+             U . . D
+             . D U .
+
+    . D U .  . D U .  . D U .  . D U .
+    D . . U  U . . D  D . . U  U . . D
+    U . . D  D . . U  U . . D  D . . U
+    . U D .  . U D .  . U D .  . U D .
+
+             . U D .
+             D . . U
+             U . . D
+             . D U .
+
     lookup-table-4x4x4-step21-highlow-edges-edges.txt
     =================================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
@@ -393,6 +438,21 @@ class LookupTable444HighLowEdgesEdges(LookupTable):
 
 class LookupTable444HighLowEdgesCenters(LookupTable):
     """
+             . . . .
+             . U U .
+             . U U .
+             . . . .
+
+    . . . .  . . . .  . . . .  . . . .
+    . L L .  . x x .  . R R .  . x x .
+    . L L .  . x x .  . R R .  . x x .
+    . . . .  . . . .  . . . .  . . . .
+
+             . . . .
+             . U U .
+             . U U .
+             . . . .
+
     lookup-table-4x4x4-step22-highlow-edges-centers.txt
     ===================================================
     0 steps has 12 entries (0 percent, 0.00x previous step)
@@ -477,8 +537,23 @@ class LookupTableIDA444Phase2(LookupTableIDAViaGraph):
 # phase 3
 class LookupTable444Reduce333FirstTwoCenters(LookupTable):
     """
-    lookup-tables/lookup-table-4x4x4-step31-centers.txt
-    ===================================================
+             . . . .
+             . . . .
+             . . . .
+             . . . .
+
+    . . . .  . . . .  . . . .  . . . .
+    . L L .  . F F .  . R R .  . B B .
+    . L L .  . F F .  . R R .  . B B .
+    . . . .  . . . .  . . . .  . . . .
+
+             . . . .
+             . . . .
+             . . . .
+             . . . .
+
+    lookup-table-4x4x4-step31-centers.txt
+    =====================================
     0 steps has 36 entries (4 percent, 0.00x previous step)
     1 steps has 80 entries (9 percent, 2.22x previous step)
     2 steps has 212 entries (25 percent, 2.65x previous step)
@@ -556,8 +631,23 @@ class LookupTable444Reduce333FirstTwoCenters(LookupTable):
 
 class LookupTable444Reduce333FirstFourEdges(LookupTable):
     """
-    lookup-tables/lookup-table-4x4x4-step32-first-four-edges.txt
-    ============================================================
+             . - - .
+             - . . -
+             - . . -
+             . - - .
+
+    . - - .  . - - .  . - - .  . - - .
+    L . . L  F . . F  R . . R  B . . B
+    L . . L  F . . F  R . . R  B . . B
+    . - - .  . - - .  . - - .  . - - .
+
+             . - - .
+             - . . -
+             - . . -
+             . - - .
+
+    lookup-table-4x4x4-step32-first-four-edges.txt
+    ==============================================
     1 steps has 4 entries (0 percent, 0.00x previous step)
     2 steps has 27 entries (0 percent, 6.75x previous step)
     3 steps has 216 entries (0 percent, 8.00x previous step)
@@ -644,8 +734,23 @@ class LookupTableIDA444Phase3(LookupTableIDAViaGraph):
 # phase 4
 class LookupTable444Reduce333Centers(LookupTable):
     """
-    lookup-tables/lookup-table-4x4x4-step41-centers.txt
-    ===================================================
+             . . . .
+             . U U .
+             . U U .
+             . . . .
+
+    . . . .  . . . .  . . . .  . . . .
+    . L L .  . F F .  . R R .  . B B .
+    . L L .  . F F .  . R R .  . B B .
+    . . . .  . . . .  . . . .  . . . .
+
+             . . . .
+             . D D .
+             . D D .
+             . . . .
+
+    lookup-table-4x4x4-step41-centers.txt
+    =====================================
     0 steps has 1 entries (0 percent, 0.00x previous step)
     1 steps has 4 entries (0 percent, 4.00x previous step)
     2 steps has 42 entries (1 percent, 10.50x previous step)
@@ -689,8 +794,23 @@ class LookupTable444Reduce333Centers(LookupTable):
 # phase 4
 class LookupTable444Reduce333LastEightEdges(LookupTable):
     """
-    lookup-tables/lookup-table-4x4x4-step42-last-eight-edges.txt
-    ============================================================
+             . U U .
+             U . . U
+             U . . U
+             . U U .
+
+    . L L .  . F F .  . R R .  . B B .
+    - . . -  - . . -  - . . -  - . . -
+    - . . -  - . . -  - . . -  - . . -
+    . L L .  . F F .  . R R .  . B B .
+
+             . D D .
+             D . . D
+             D . . D
+             . D D .
+
+    lookup-table-4x4x4-step42-last-eight-edges.txt
+    ==============================================
     1 steps has 3 entries (0 percent, 0.00x previous step)
     2 steps has 10 entries (0 percent, 3.33x previous step)
     3 steps has 36 entries (0 percent, 3.60x previous step)

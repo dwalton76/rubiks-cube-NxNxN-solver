@@ -37,8 +37,25 @@ class LowMemoryPathTest(unittest.TestCase):
 
             module.available_memory_bytes = lambda: None
             self.assertFalse(cube.can_use_all_inner_x_centers_stage_table())
+
+            cube.low_memory = True
+            module.available_memory_bytes = lambda: required
+            self.assertFalse(cube.can_use_all_inner_x_centers_stage_table())
         finally:
             module.available_memory_bytes = original
+
+    def test_666_low_memory_flag_loads_legacy_center_tables(self):
+        cube = RubiksCube666(solved_666, "URFDLB")
+        cube.low_memory = True
+        cube.lt_init()
+
+        self.assertFalse(cube.use_all_inner_x_centers_stage_table)
+        self.assertIsNone(cube.lt_all_inner_x_centers_stage)
+        self.assertIsNone(cube.lt_UD_centers_stage)
+        self.assertEqual(
+            cube.lt_LR_oblique_edge_stage_inner_x_stage.__class__.__name__,
+            "LookupTable666LRObliquEdgeStageInnerXStage",
+        )
 
     def test_666_ranked_path_splits_oll_parity_between_phase_one_and_three(self):
         """Phases 2 and 3 have no 3Xw quarter turn, so only phase 1 can flip orbit1."""

@@ -104,6 +104,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     def get_fake_666(self):
         if self.fake_666 is None:
             self.fake_666 = RubiksCube666(solved_666, "URFDLB")
+            self.fake_666.low_memory = getattr(self, "low_memory", False)
             self.fake_666.lt_init()
             self.fake_666.enable_print_cube = False
         else:

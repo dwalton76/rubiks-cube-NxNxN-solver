@@ -31,15 +31,16 @@ unsigned int right_oblique_edges_666[NUM_RIGHT_OBLIQUE_EDGES_666] = {
 };
 
 unsigned char get_unpaired_obliques_count_666(char *cube) {
-    unsigned char unpaired_obliques = 8;
+    unsigned char paired_obliques = 0;
 
+    // Oblique squares only ever hold '.', '0' or '1' and '1' is the only one of those with its low bit
+    // set, so anding the pair together and masking that bit counts a paired oblique without branching.
+    // This runs once per node of the IDA search so the mispredicts it avoids are worth the obscurity.
     for (int i = 0; i < NUM_LEFT_OBLIQUE_EDGES_666; i++) {
-        if (cube[left_oblique_edges_666[i]] == '1' && cube[right_oblique_edges_666[i]] == '1') {
-            unpaired_obliques -= 1;
-        }
+        paired_obliques += cube[left_oblique_edges_666[i]] & cube[right_oblique_edges_666[i]] & 1;
     }
 
-    return unpaired_obliques;
+    return 8 - paired_obliques;
 }
 
 // ============================================================================
@@ -48,37 +49,6 @@ unsigned char get_unpaired_obliques_count_666(char *cube) {
 struct ida_heuristic_result ida_heuristic_oblique_edges_stage_666(char *cube) {
     struct ida_heuristic_result result;
     result.unpaired_count = get_unpaired_obliques_count_666(cube);
-
-    // Get the state of the oblique edges
-    /*
-    unsigned long long state = 0;
-
-    for (int i = 0; i < NUM_OBLIQUE_EDGES_666; i++) {
-        if (cube[oblique_edges_666[i]] == '1') {
-            state |= 0x1;
-        }
-        state <<= 1;
-    }
-
-    // 000000033fff is 12 chars
-    state >>= 1;
-    sprintf(result.lt_state, "%012llx", state);
-    */
-
-    // The most oblique edges we can pair in single move is 4 so take the number that are unpaired and divide by 4.
-    //
-    // time ./ida_search --kociemba
-    // ........xL...L..x..L..x...xx................Lx...L..L..x..L...xL................xL...x..x..x..x...xL................Lx...L..x..x..x...xx................xx...x..x..L..L...xL................xx...L..x..x..x...xx........
-    // --type 6x6x6-LR-oblique-edges-stage
-    //
-    // 1.5 took 44s, 9 moves
-    // 1.3 took 14s, 9 moves
-    // 1.2 took 5.7s, 9 moves
-    // 1.1 took 4s, 9 moves
-    // 1 took 3s, 9 moves
-    // 0.9 took 4s, 9 moves
-    //
-    // result.cost_to_goal = (int)ceil((double)unpaired_count / 1.2);
 
     // The math works out that it just basically takes about 1 move per unpaired oblique edge
     // so save some cycles and just use the unpaired_count as the heuristic.

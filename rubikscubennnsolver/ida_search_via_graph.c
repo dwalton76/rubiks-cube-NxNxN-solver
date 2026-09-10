@@ -35,6 +35,7 @@ unsigned int pt1_state_max = 0;
 unsigned int pt2_state_max = 0;
 unsigned int pt4_state_max = 0;
 unsigned int call_pt_simple = 0;
+unsigned char pt_cost_is_lower_bound = 0;
 
 #define MAX_IDA_THRESHOLD 20
 char pt_max = -1;
@@ -55,7 +56,6 @@ typedef enum {
     NONE,
 
     // 6x6x6
-    LR_OBLIQUE_EDGES_STAGE_666,
     LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666,
     UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666,
 
@@ -123,6 +123,52 @@ unsigned int unpaired_count_inner_x_centers_777[17][13] = {
     {12, 12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 15}, // x unpaired obliques (15), y UD inner x-centers cost
     {12, 12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 15}, // x unpaired obliques (16), y UD inner x-centers cost
 };
+
+// The 2D heuristic tables above are indexed by [unpaired oblique count][prune table cost]. Confirm that
+// no entry sits below its prune table cost, which is what makes that cost a safe lower bound to prune on.
+unsigned char table_is_bounded_below_by_cost(unsigned int table[9][8]) {
+    for (unsigned char unpaired_count = 0; unpaired_count < 9; unpaired_count++) {
+        for (unsigned char pt_cost = 0; pt_cost < 8; pt_cost++) {
+            if (table[unpaired_count][pt_cost] < pt_cost) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+// Most searches only ever refine the prune table cost upwards: pt_states_to_cost_simple() maxes it against
+// a heuristic or looks it up in one of the tables above, and the perfect-hash tables are applied with a max.
+// That makes the prune table cost a lower bound on the final cost_to_goal, so ida_search() can reject a
+// child before it pays for a cube rotation and an unpaired-oblique count.
+//
+// Two searches break the invariant and must not prune early: the 7x7x7 phase 4 and phase 5 types discard the
+// prune table cost entirely (they only use the prune tables to track state for the perfect-hash lookups) and
+// --cost-to-goal-multiplier can scale the cost down.
+unsigned char pt_cost_only_grows(lookup_table_type type) {
+    if (cost_to_goal_multiplier) {
+        return 0;
+    }
+
+    switch (type) {
+        case NONE:
+        case LR_OBLIQUE_EDGES_STAGE_777:
+        case UD_OBLIQUE_EDGES_STAGE_777:
+            return 1;
+
+        // These index their heuristic table with pt0_cost, so the bound only holds when pt0 is the only
+        // prune table in play.
+        case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
+            return pt_max == 0 && table_is_bounded_below_by_cost(unpaired_count_inner_x_centers_666);
+
+        case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
+            return pt_max == 0 && table_is_bounded_below_by_cost(unpaired_count_ud_inner_x_centers_666);
+
+        default:
+            return 0;
+    }
+}
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
     switch (perfect_hash_cost) {
@@ -250,7 +296,6 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
     // LOG("cube:\n%s\n\n", cube);
 
     switch (type) {
-        case LR_OBLIQUE_EDGES_STAGE_666:
         case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
         case LR_OBLIQUE_EDGES_STAGE_777:
             // Convert to 1s and 0s
@@ -276,7 +321,6 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
 struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type) {
     switch (type) {
         // 6x6x6
-        case LR_OBLIQUE_EDGES_STAGE_666:
         case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             return ida_heuristic_oblique_edges_stage_666(cube);
@@ -377,7 +421,6 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
             cost_to_goal = unpaired_count_ud_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
             break;
 
-        case LR_OBLIQUE_EDGES_STAGE_666:
         case LR_OBLIQUE_EDGES_STAGE_777:
         case UD_OBLIQUE_EDGES_STAGE_777:
             heuristic_result = ida_heuristic(cube, type);
@@ -568,7 +611,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             result.cost_to_goal = unpaired_count_ud_inner_x_centers_666[heuristic_result.unpaired_count][result.pt0_cost];
             break;
 
-        case LR_OBLIQUE_EDGES_STAGE_666:
         case LR_OBLIQUE_EDGES_STAGE_777:
         case UD_OBLIQUE_EDGES_STAGE_777:
             heuristic_result = ida_heuristic(cube, type);
@@ -836,7 +878,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
             case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
                 break;
 
-            case LR_OBLIQUE_EDGES_STAGE_666:
             case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
                 rotate_666_centers(cube, cube_tmp, array_size, solution[i]);
@@ -945,7 +986,6 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
             break;
 
         // 6x6x6
-        case LR_OBLIQUE_EDGES_STAGE_666:
         case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
         case UD_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             return ida_search_complete_oblique_edges_stage_666(cube);
@@ -1198,6 +1238,13 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                     break;
             }
 
+            // cost_to_goal can only grow from here (see pt_cost_only_grows()), so a child that already
+            // blows the threshold can be dropped without rotating the cube or counting unpaired obliques.
+            if (pt_cost_is_lower_bound && node->cost_to_here + 1 + cost_to_goal > threshold) {
+                ida_count++;
+                continue;
+            }
+
             if (cube_size) {
                 cube_copy = malloc(array_size_char);
                 memcpy(cube_copy, node->cube, array_size_char);
@@ -1397,11 +1444,7 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
-            if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
-                type = LR_OBLIQUE_EDGES_STAGE_666;
-                cube_size_type = 6;
-
-            } else if (strmatch(argv[i], "6x6x6-LR-oblique-edges-inner-x-centers-stage")) {
+            if (strmatch(argv[i], "6x6x6-LR-oblique-edges-inner-x-centers-stage")) {
                 type = LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666;
                 cube_size_type = 6;
 
@@ -1811,6 +1854,8 @@ int main(int argc, char *argv[]) {
     if (type != NONE || pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash12 || pt_perfect_hash34 || cost_to_goal_multiplier) {
         call_pt_simple = 1;
     }
+
+    pt_cost_is_lower_bound = pt_cost_only_grows(type);
 
     // build the move matrix, we do this to avoid tons of
     // steps_on_same_face_and_layer() during the IDA search

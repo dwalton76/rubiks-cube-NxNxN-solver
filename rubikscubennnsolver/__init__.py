@@ -503,6 +503,7 @@ class RubiksCube(object):
         self.use_nuke_corners = False
         self.use_nuke_edges = False
         self.use_nuke_centers = False
+        self.low_memory = False
         self.solution_with_markers = []
         self.color_map = {}
         self.color_map_html = {}

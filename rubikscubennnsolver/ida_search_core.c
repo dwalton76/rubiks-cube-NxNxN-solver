@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -102,58 +103,6 @@ unsigned long hex_to_int(char value) {
 }
 
 unsigned long max(unsigned long a, unsigned long b) { return (a > b ? a : b); }
-
-// uthash references
-// http://troydhanson.github.io/uthash/index.html
-// https://cfsa-pmw.warwick.ac.uk/SDF/SDF_C/blob/3cf5bf49856ef9ee4080cf6722cf9058a1e28b01/src/uthash/tests/example.c
-inline void hash_add(struct key_value_pair **hashtable, char *state_key, unsigned long value) {
-    struct key_value_pair *s;
-
-    s = malloc(sizeof(struct key_value_pair));
-    strcpy(s->state, state_key);
-    s->value = value;
-
-    HASH_ADD_STR(*hashtable, state, s);
-}
-
-inline struct key_value_pair *hash_find(struct key_value_pair **hashtable, char *state_key) {
-    struct key_value_pair *s = NULL;
-    HASH_FIND_STR(*hashtable, state_key, s);
-    return s;
-}
-
-void hash_delete(struct key_value_pair **hashtable, struct key_value_pair *s) {
-    HASH_DEL(*hashtable, s);
-    free(s);
-}
-
-void hash_delete_all(struct key_value_pair **hashtable) {
-    struct key_value_pair *s, *tmp;
-
-    HASH_ITER(hh, *hashtable, s, tmp) {
-        HASH_DEL(*hashtable, s);
-        free(s);
-    }
-}
-
-unsigned long hash_count(struct key_value_pair **hashtable) {
-    struct key_value_pair *s;
-    unsigned long count = 0;
-
-    for (s = *hashtable; s != NULL; s = (struct key_value_pair *)(s->hh.next)) {
-        count++;
-    }
-
-    return count;
-}
-
-void hash_print_all(struct key_value_pair **hashtable) {
-    struct key_value_pair *s;
-
-    for (s = *hashtable; s != NULL; s = (struct key_value_pair *)(s->hh.next)) {
-        printf("key %s  value %u\n", s->state, s->value);
-    }
-}
 
 void print_cube(char *cube, int size) {
     int squares_per_side = size * size;

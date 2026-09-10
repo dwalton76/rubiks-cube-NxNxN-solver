@@ -54,9 +54,6 @@ struct key_value_pair *ida_explored = NULL;
 typedef enum {
     NONE,
 
-    // 5x5x5
-    CENTERS_STAGE_555,
-
     // 6x6x6
     LR_OBLIQUE_EDGES_STAGE_666,
     LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666,
@@ -81,50 +78,6 @@ struct cost_to_goal_result {
     unsigned char perfect_hash02_cost;
     unsigned char perfect_hash12_cost;
     unsigned char perfect_hash34_cost;
-};
-
-unsigned int lr_centers_stage_555[9][9] = {
-    /*
-    The following is a 2D array that estimates the number of moves to stage LR centers based on the t-center cost
-    and x-center. This was created by staging the LR centers for 10k cubes and then crunching some stats (see
-    utils/build-555-LR-centers-stage-stats.py)
-
-    The columns are the x-center costs
-     0  1  2  3  4  5  6  7  8
-     */
-    {0, 1, 2, 3, 4, 5, 6, 7, 8},    // t-center cost 0
-    {1, 1, 2, 3, 4, 5, 6, 7, 8},    // t-center cost 1
-    {2, 2, 2, 3, 4, 5, 7, 7, 8},    // t-center cost 2
-    {3, 3, 3, 3, 4, 5, 6, 7, 8},    // t-center cost 3
-    {4, 4, 4, 4, 4, 5, 7, 8, 8},    // t-center cost 4
-    {5, 5, 5, 5, 5, 5, 7, 8, 8},    // t-center cost 5
-    {6, 6, 6, 6, 7, 7, 8, 9, 10},   // t-center cost 6
-    {7, 7, 7, 8, 8, 9, 9, 10, 10},  // t-center cost 7
-    {8, 8, 8, 8, 8, 9, 10, 10, 8},  // t-center cost 8
-};
-
-unsigned int t_centers_stage_555[9][9] = {
-    {0, 1, 2, 3, 4, 5, 6, 7, 8},    // LR t-centers cost 0
-    {1, 1, 2, 3, 4, 5, 6, 7, 8},    // LR t-centers cost 1
-    {2, 2, 2, 3, 4, 5, 6, 8, 8},    // LR t-centers cost 2
-    {3, 3, 3, 3, 4, 5, 6, 7, 8},    // LR t-centers cost 3
-    {4, 4, 4, 4, 4, 5, 6, 8, 8},    // LR t-centers cost 4
-    {5, 5, 5, 5, 5, 6, 7, 8, 9},    // LR t-centers cost 5
-    {6, 6, 6, 6, 6, 7, 8, 9, 9},    // LR t-centers cost 6
-    {7, 7, 7, 7, 7, 8, 9, 9, 10},   // LR t-centers cost 7
-    {8, 8, 8, 8, 8, 9, 9, 10, 10},  // LR t-centers cost 8
-};
-
-unsigned int x_centers_stage_555[9][9] = {
-    {0, 1, 2, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 0
-    {1, 1, 2, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 1
-    {2, 2, 2, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 2
-    {3, 3, 3, 3, 4, 5, 6, 7, 8},    // LR x-centers cost 3
-    {4, 4, 4, 4, 4, 5, 7, 7, 8},    // LR x-centers cost 4
-    {5, 5, 5, 5, 5, 6, 7, 8, 9},    // LR x-centers cost 5
-    {6, 6, 6, 6, 7, 7, 8, 9, 9},    // LR x-centers cost 6
-    {7, 7, 7, 7, 7, 8, 9, 9, 8},    // LR x-centers cost 7
-    {8, 8, 8, 8, 8, 8, 10, 10, 8},  // LR x-centers cost 8
 };
 
 unsigned int unpaired_count_inner_x_centers_666[9][8] = {
@@ -414,35 +367,6 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
         case NONE:
             break;
 
-        // experimental and not used so commenting out for now
-        /*
-        case CENTERS_STAGE_555:
-            if (lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
-                cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost];
-            }
-
-            if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
-                cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
-            }
-
-            if (lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost] > cost_to_goal) {
-                cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost];
-            }
-
-            if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > cost_to_goal) {
-                cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
-            }
-
-            if (t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost] > cost_to_goal) {
-                cost_to_goal = t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost];
-            }
-
-            if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > cost_to_goal) {
-                cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
-            }
-            break;
-            */
-
         case LR_OBLIQUE_EDGES_INNER_X_CENTERS_STAGE_666:
             heuristic_result = ida_heuristic(cube, type);
             cost_to_goal = unpaired_count_inner_x_centers_666[heuristic_result.unpaired_count][pt0_cost];
@@ -588,48 +512,16 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             result.pt3_cost = read_cost(pt3, prev_pt3_state * ROW_LENGTH);
             result.cost_to_goal = result.pt0_cost;
 
-            if (type == CENTERS_STAGE_555) {
-                unsigned char lr_t_centers_cost = result.pt0_cost;
-                unsigned char lr_x_centers_cost = result.pt1_cost;
-                unsigned char ud_t_centers_cost = result.pt2_cost;
-                unsigned char ud_x_centers_cost = result.pt3_cost;
+            if (result.pt1_cost > result.cost_to_goal) {
+                result.cost_to_goal = result.pt1_cost;
+            }
 
-                if (lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][lr_x_centers_cost];
-                }
+            if (result.pt2_cost > result.cost_to_goal) {
+                result.cost_to_goal = result.pt2_cost;
+            }
 
-                if (lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][ud_x_centers_cost];
-                }
-
-                if (lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = lr_centers_stage_555[lr_t_centers_cost][ud_x_centers_cost];
-                }
-
-                if (lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = lr_centers_stage_555[ud_t_centers_cost][lr_x_centers_cost];
-                }
-
-                if (t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = t_centers_stage_555[lr_t_centers_cost][ud_t_centers_cost];
-                }
-
-                if (x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost] > result.cost_to_goal) {
-                    result.cost_to_goal = x_centers_stage_555[lr_x_centers_cost][ud_x_centers_cost];
-                }
-
-            } else {
-                if (result.pt1_cost > result.cost_to_goal) {
-                    result.cost_to_goal = result.pt1_cost;
-                }
-
-                if (result.pt2_cost > result.cost_to_goal) {
-                    result.cost_to_goal = result.pt2_cost;
-                }
-
-                if (result.pt3_cost > result.cost_to_goal) {
-                    result.cost_to_goal = result.pt3_cost;
-                }
+            if (result.pt3_cost > result.cost_to_goal) {
+                result.cost_to_goal = result.pt3_cost;
             }
             break;
 
@@ -1077,7 +969,7 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
 struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_table_type type,
                                     unsigned int init_pt0_state, unsigned int init_pt1_state,
                                     unsigned int init_pt2_state, unsigned int init_pt3_state,
-                                    unsigned int init_pt4_state, unsigned char use_uthash) {
+                                    unsigned int init_pt4_state) {
     struct ida_search_result search_result;
     unsigned char cost_to_goal = 0;
     unsigned char f_cost = 0;
@@ -1156,30 +1048,6 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
             free(node);
             continue;
         }
-
-        // The following works, it does reduce the number of nodes we explore but it does so at the cost
-        // of the memory to remember all of the nodes and the CPU to do the hash search to see if the
-        // node is one that has already been explored.
-        /*
-        if (use_uthash) {
-            // keep memory usage in check
-            if (ida_count % 1000000 == 0) {
-                hash_delete_all(&ida_explored);
-            }
-
-            sprintf(key, "%u-%u-%u-%u-%u-%u-%u-%u", node->pt0_state, node->pt1_state, node->pt2_state, node->pt3_state,
-                    node->pt4_state,
-                    orbit0_wide_quarter_turns ? get_orbit0_wide_quarter_turn_count(node->moves_to_here) : 0,
-                    orbit1_wide_quarter_turns ? get_orbit1_wide_quarter_turn_count(node->moves_to_here) : 0,
-                    node->cost_to_here);
-
-            if (hash_find(&ida_explored, key)) {
-                free(node);
-                continue;
-            }
-            hash_add(&ida_explored, key, 0);
-        }
-        */
 
         prev_move_move_matrix = move_matrix[node->prev_move];
         cube_copy = NULL;
@@ -1382,8 +1250,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
 struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_table_type type, unsigned int pt0_state,
                                    unsigned int pt1_state, unsigned int pt2_state, unsigned int pt3_state,
                                    unsigned int pt4_state, unsigned char min_ida_threshold,
-                                   unsigned char max_ida_threshold, unsigned char use_uthash,
-                                   unsigned char find_extra) {
+                                   unsigned char max_ida_threshold, unsigned char find_extra) {
     struct ida_search_result search_result;
     struct timeval stop, start, start_this_threshold;
     unsigned char pt0_cost = 0;
@@ -1418,11 +1285,8 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
         gettimeofday(&start_this_threshold, NULL);
-        hash_delete_all(&ida_explored);
-
         search_result =
-            ida_search(cube, cube_size, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state, use_uthash);
-
+            ida_search(cube, cube_size, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         gettimeofday(&stop, NULL);
         ida_count_total += ida_count;
 
@@ -1509,7 +1373,6 @@ int main(int argc, char *argv[]) {
     unsigned char min_ida_threshold = 0;
     unsigned char max_ida_threshold = 30;
     unsigned char centers_only = 0;
-    unsigned char use_uthash = 0;
     unsigned char find_extra = 0;
     char *prune_table_states_filename = NULL;
     lookup_table_type type = NONE;
@@ -1534,11 +1397,7 @@ int main(int argc, char *argv[]) {
         } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
             i++;
 
-            if (strmatch(argv[i], "5x5x5-centers-stage")) {
-                type = CENTERS_STAGE_555;
-                cube_size_type = 5;
-
-            } else if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
+            if (strmatch(argv[i], "6x6x6-LR-oblique-edges-stage")) {
                 type = LR_OBLIQUE_EDGES_STAGE_666;
                 cube_size_type = 6;
 
@@ -1671,9 +1530,6 @@ int main(int argc, char *argv[]) {
 
         } else if (strmatch(argv[i], "--centers-only")) {
             centers_only = 1;
-
-            // } else if (strmatch(argv[i], "--uthash")) {
-            //     use_uthash = 1;
 
         } else if (strmatch(argv[i], "--find-extra")) {
             find_extra = 1;
@@ -1943,7 +1799,7 @@ int main(int argc, char *argv[]) {
             }
 
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
-            printf("\nida_search --kociemba KOCIEMBA_STRING --type 5x5x5-UD-centers-stage\n\n");
+            printf("\nida_search --kociemba KOCIEMBA_STRING --type ...\n\n");
             exit(0);
 
         } else {
@@ -2065,7 +1921,7 @@ int main(int argc, char *argv[]) {
 
                 search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state,
                                           prune_table_2_state, prune_table_3_state, prune_table_4_state,
-                                          i_ida_threshold, i_ida_threshold, use_uthash, find_extra);
+                                          i_ida_threshold, i_ida_threshold, find_extra);
                 pt_states_ida_count_total += ida_count;
 
                 if (search_result.found_solution) {
@@ -2121,7 +1977,7 @@ int main(int argc, char *argv[]) {
 
             search_result = ida_solve(cube, cube_size, type, prune_table_0_state, prune_table_1_state, prune_table_2_state,
                                       prune_table_3_state, prune_table_4_state, min_ida_threshold, max_ida_threshold,
-                                      use_uthash, find_extra);
+                                      find_extra);
         }
     }
 

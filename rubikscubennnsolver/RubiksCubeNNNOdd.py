@@ -12,8 +12,8 @@ moves are rewritten as the matching wide turns on this cube.
     1. Stage every LR center orbit (7x7x7 phases 1-3, or t-centers / oblique
        pairing when the outer x-centers of that orbit are not in play).
     2. Stage every UD center orbit the same way.
-    3. Solve the t-centers of each orbit (7x7x7 vertical bars plus the t-center
-       IDA).
+    3. Daisy-solve each orbit with the combined 7x7x7 ranked search, then run
+       the t-center IDA (step70) to the single solved orientation.
 
 After the centers are a 5x5x5, ``group_edges`` (on ``RubiksCubeNNNOddEdges``)
 pairs each wing orbit via a fake 5x5x5, inside to outside. ``solve_333`` then
@@ -371,8 +371,7 @@ def solve_t_centers(cube: RubiksCube777) -> None:
     lt_init_t_centers(cube)
     assert cube.LR_centers_staged()
     assert cube.UD_centers_staged()
-    cube.LR_centers_vertical_bars()
-    cube.UD_centers_vertical_bars()
+    cube.centers_combined_daisy_solve()
 
     tmp_solution_len = len(cube.solution)
     cube.lt_step70.solve_via_c()

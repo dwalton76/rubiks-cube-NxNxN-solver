@@ -32,17 +32,15 @@ Phase 5/6 - stage UD outer x-centers and pair UD obliques
     also stages the remaining UD centers. Larger odd cubes keep the older
     split path when a fake-7x7 outer-x coordinate is only a placeholder.
 
-Phase 7 - LR centers to vertical bars
-    Step-40 IDA (prune tables step41-44).
+Phase 7/8/9 - daisy-solve UD, LR, and FB centers
+    One ranked IDA over five C(8,4) orbits per axis, ignoring outer-x. The
+    first attempt uses fifteen leave-one-out 70^4 tables; three 70^5 tables
+    are the fallback if that search is slower than the old serial bars path.
+    The remaining puzzle is a 5x5x5.
 
-Phase 8 - UD centers to vertical bars
-    Step-50 IDA (prune tables step51-55). LR is already in bars.
-
-Phase 9 - daisy-solve the centers
-    Step-60 IDA (prune tables step61/62/65/66). The centers are now a 5x5x5.
-
-Odd cubes larger than 7x7x7 reuse this solver on concentric orbits. Their
-t-center IDA (step70) lives in ``RubiksCubeNNNOdd``.
+Odd cubes larger than 7x7x7 reuse this solver on concentric orbits. After
+the combined daisy search they still run the t-center IDA (step70) in
+``RubiksCubeNNNOdd``.
 """
 
 # standard libraries
@@ -497,86 +495,6 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
                 self.parent.state[x] = "."
 
 
-# phase 5 history
-"""
-Originally I used the unpaired-count heuristic for getting the UD oblique edges paired at any
-location on sides UDFB. It works but is not admissable so I went through the effort of creating
-a lookup-table based solution here. What I found in the end is that the unpaired-count heuristic
-approach works shockingly well.  There are corner cases where it will find a longer solution but
-in general it runs much faster and most of the time it finds a solution of the same length.
-Here is a good example where it finds a solution one step longer but runs 55x faster.
-
-Using a pair of perfect-hash lookup tables (which is admissable) we find a 12 step solution but it takes 12.3s.
-This is an unusually long solution for this phase..normally they are around 9 or 10 moves.
-
-./ida_search_via_graph \
-    --prune-table-0-filename lookup-tables/lookup-table-7x7x7-phase5-left-oblique.bin --prune-table-0-state 3967 \
-    --prune-table-1-filename lookup-tables/lookup-table-7x7x7-phase5-right-oblique.bin --prune-table-1-state 958 \
-    --prune-table-2-filename lookup-tables/lookup-table-7x7x7-phase5-middle-oblique.bin --prune-table-2-state 11045 \
-    --prune-table-perfect-hash01 lookup-tables/lookup-table-7x7x7-phase5-left-right-oblique.perfect-hash --pt1-state-max 12870 \
-    --prune-table-perfect-hash02 lookup-tables/lookup-table-7x7x7-phase5-left-middle-oblique.perfect-hash --pt2-state-max 12870 \
-    --centers-only --type 7x7x7-UD-oblique-edges-stage-new --legal-moves "U,U',U2,Uw2,3Uw2,Lw,Lw',Lw2,3Lw2,F,F',F2,Fw2,3Fw2,Rw,Rw',Rw2,3Rw2,B,B',B2,Bw2,3Bw2,D,D',D2,Dw2,3Dw2"
-
-[2021-10-03T13:09:47.745] pt0_state 3967, pt1_state 958, pt2_state 11045, pt3_state 0, pt4_state 0
-[2021-10-03T13:09:47.746] IDA threshold 8, explored 1,164 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
-[2021-10-03T13:09:47.759] IDA threshold 9, explored 56,781 nodes, took 0.013s, 4,367,769 nodes-per-sec
-[2021-10-03T13:09:48.237] IDA threshold 10, explored 1,958,490 nodes, took 0.478s, 4,097,259 nodes-per-sec
-[2021-10-03T13:09:59.101] IDA threshold 11, explored 55,942,853 nodes, took 10.864s, 5,149,379 nodes-per-sec
-[2021-10-03T13:10:00.137] IDA count 5,084,327, f_cost 12 vs threshold 12 (cost_to_here 12, cost_to_goal 0)
-SOLUTION (12 steps): 3Dw2 Bw2 3Lw2 Fw2 Lw' U 3Uw2 Rw F 3Fw2 3Dw2 3Lw2
-[2021-10-03T13:10:00.137] IDA threshold 12, explored 5,084,327 nodes, took 1.035s, 4,912,393 nodes-per-sec
-[2021-10-03T13:10:00.137] IDA found solution, explored 63,043,615 total nodes, took 12.392s, 5,087,445 nodes-per-sec
-
-
-       PT0  PT1  PT2  PER01  PER02  CTG  TRU  IDX
-       ===  ===  ===  =====  =====  ===  ===  ===
- INIT    6    7    8      4      8    8   12    0
- 3Dw2    5    7    9      5      7    7   11    1
-  Bw2    5    7    9      6      7    7   10    2
- 3Lw2    5    7    8      5      7    7    9    3
-  Fw2    6    7    8      4      8    8    8    4
-  Lw'    7    7    8      3      7    7    7    5
-    U    7    7    7      3      6    6    6    6
- 3Uw2    6    6    7      3      5    5    5    7
-   Rw    6    6    7      3      4    4    4    8
-    F    6    6    7      3      3    3    3    9
- 3Fw2    7    6    7      2      2    2    2   10
- 3Dw2    6    6    7      1      1    1    1   11
- 3Lw2    6    6    6      0      0    0    0   12
-
-
- vs. the unpaired-count heuristic approach which finds a 13 step solution in 247ms
-
-./ida_search_via_graph \
-    --kociemba DBLBLBBRBUBDURBUUDUFRRFDUUUULDUDUDDUDBFFURUFLFDFRBFRBUDRULLRLRDLLLRRRBDLLRLRRFLLLLRBDRLRRLRRRRUDFDLRDLRDULBDDFFRUDFFBUULFFFFDBFFFFBFUBFUDBBFFFFDRRDULRFBBFDDDBFFBDUDUDUFBDUDUFRUBDDDDFFUBBUUUULFULLFBUDDUFBURLRRLDDRRRRLBULLLRLDBRRRLRLBRLLRLULLRRLLRDUBLFDLBDDUBDLDFBBFFFFUBBBUFUBBBFBRDFUBBBLLBBLUUF \
-    --centers-only --type 7x7x7-UD-oblique-edges-stage  --legal-moves "U,U',U2,Uw2,3Uw2,Lw,Lw',Lw2,3Lw2,F,F',F2,Fw2,3Fw2,Rw,Rw',Rw2,3Rw2,B,B',B2,Bw2,3Bw2,D,D',D2,Dw2,3Dw2"
-
-[2021-10-03T13:11:08.331] pt0_state 0, pt1_state 0, pt2_state 0, pt3_state 0, pt4_state 0
-[2021-10-03T13:11:08.331] IDA threshold 11, explored 70 nodes, took 0.000s, 9,223,372,036,854,775,808 nodes-per-sec
-[2021-10-03T13:11:08.356] IDA threshold 12, explored 79,843 nodes, took 0.024s, 3,326,791 nodes-per-sec
-[2021-10-03T13:11:08.578] IDA count 1,673,135, f_cost 13 vs threshold 13 (cost_to_here 13, cost_to_goal 0)
-SOLUTION (13 steps): D' Rw' 3Bw2 3Uw2 3Rw2 B' Rw' D' 3Bw2 Dw2 Lw D' 3Fw2
-[2021-10-03T13:11:08.578] IDA threshold 13, explored 1,673,135 nodes, took 0.222s, 7,536,644 nodes-per-sec
-[2021-10-03T13:11:08.578] IDA found solution, explored 1,753,048 total nodes, took 0.247s, 7,097,360 nodes-per-sec
-
-       UNPAIRED  EST  CTG  TRU  IDX
-       ========  ===  ===  ===  ===
- INIT        10   11   11   13    0
-   D'        10   11   11   12    1
-  Rw'        10   11   11   11    2
- 3Bw2         8   10   10   10    3
- 3Uw2         6    7    7    9    4
- 3Rw2         4    5    5    8    5
-   B'         4    5    5    7    6
-  Rw'         4    5    5    6    7
-   D'         4    5    5    5    8
- 3Bw2         2    1    1    4    9
-  Dw2         2    1    1    3   10
-   Lw         2    1    1    2   11
-   D'         2    1    1    1   12
- 3Fw2         0    0    0    0   13
-"""
-
 # ==================================================
 # phase 5
 # pair the UD oblique edges via perfect-hash tables
@@ -942,6 +860,91 @@ class LookupTableIDA777UDObliquesOuterXStage:
                 self.parent.state[x] = "U" if self.parent.state[x] in ("U", "D") else "x"
             else:
                 self.parent.state[x] = "."
+
+
+# ==================================================
+# combined phases 7/8/9
+# daisy-solve UD, LR, and FB centers
+# ==================================================
+DAISY_ORBIT_SLUGS_777 = (
+    "without-left-oblique",
+    "without-middle-oblique",
+    "without-right-oblique",
+    "without-inner-t",
+    "without-inner-x",
+)
+
+DAISY_LEAVE_ONE_OUT_TABLES_777 = tuple(
+    (
+        f"--{axis.lower()}-{slug}-cost",
+        f"lookup-tables/lookup-table-7x7x7-daisy-{axis}-{slug}-centers.cost-only.bin",
+    )
+    for axis in ("UD", "LR", "FB")
+    for slug in DAISY_ORBIT_SLUGS_777
+)
+
+DAISY_PERFECT_TABLES_777 = tuple(
+    (
+        f"--{axis.lower()}-perfect-cost",
+        f"lookup-tables/lookup-table-7x7x7-daisy-{axis}-perfect-centers.cost-only.bin",
+    )
+    for axis in ("UD", "LR", "FB")
+)
+
+# A wide quarter turn would move centers out of their orbit, so the daisy keeps the
+# outer turns and the 2- and 3-wide half turns. This must match move_is_allowed() in
+# ida_search_777_daisy_centers.c
+DAISY_CENTERS_ILLEGAL_MOVES_777 = tuple(
+    f"{prefix}{face}{suffix}" for prefix in ("", "3") for face in "ULFRBD" for suffix in ("w", "w'")
+)
+
+
+class LookupTableIDA777DaisyCenters:
+    """
+    Daisy-solve the remaining centers on all three axes. Fifteen leave-one-out
+    70^4 ranked tables, or three perfect 70^5 tables, each C(8,4) per orbit.
+    """
+
+    def __init__(self, parent, use_perfect_tables=False, multiplier=None):
+        self.parent = parent
+        self.avoid_oll = None
+        self.use_perfect_tables = use_perfect_tables
+        # Without a multiplier the C searcher uses its sampled per-axis cost matrix,
+        # which is what utils/build-777-daisy-cost-matrix.py exists to rebuild.
+        self.multiplier = multiplier
+
+    def solve_via_c(self, **_kwargs):
+        tables = DAISY_PERFECT_TABLES_777 if self.use_perfect_tables else DAISY_LEAVE_ONE_OUT_TABLES_777
+        cmd = ["./ida_search_777_daisy_centers", "--kociemba", self.parent.get_kociemba_string(True)]
+        for flag, filename in tables:
+            download_file_if_needed(filename)
+            cmd.extend((flag, filename))
+        if self.multiplier:
+            cmd.extend(("--multiplier", str(self.multiplier)))
+
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+
+        raise SolveError(f"ida_search_777_daisy_centers failed with exit {returncode}\n{output}")
 
 
 # ==================================================
@@ -2389,6 +2392,9 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # when the fake-7x7 outer-x coordinate is only a placeholder.
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
+        # phases 7/8/9 - daisy-solve remaining centers on all three axes
+        self.lt_daisy_centers = LookupTableIDA777DaisyCenters(self, use_perfect_tables=True)
+
         # phase 7 - LR centers to vertical bars
         self.lt_step41 = LookupTable777Step41(self)
         self.lt_step42 = LookupTable777Step42(self)
@@ -2675,9 +2681,14 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.print_cube_add_comment("LR solved, UD vertical bars", tmp_solution_len)
 
     def centers_daisy_solve(self):
-        # phase 9 - centers daisy solve
+        # phase 9 - centers daisy solve (serial graph path, kept for A/B)
         tmp_solution_len = len(self.solution)
         self.lt_step60.solve_via_c()
+        self.print_cube_add_comment("centers daisy solved", tmp_solution_len)
+
+    def centers_combined_daisy_solve(self):
+        tmp_solution_len = len(self.solution)
+        self.lt_daisy_centers.solve_via_c()
         self.print_cube_add_comment("centers daisy solved", tmp_solution_len)
 
     def solve_centers(self):
@@ -2705,9 +2716,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_init()
         self.stage_LR_centers()
         self.stage_UD_centers()
-        self.LR_centers_vertical_bars()
-        self.UD_centers_vertical_bars()
-        self.centers_daisy_solve()
+        self.centers_combined_daisy_solve()
 
 
 def rotate_777(cube, step):

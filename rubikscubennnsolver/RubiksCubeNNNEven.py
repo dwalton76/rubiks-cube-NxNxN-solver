@@ -110,17 +110,6 @@ moves_10x10x10 = (
 # fmt: on
 
 
-def daisy_solve_centers(cube: RubiksCube666) -> None:
-    """Daisy-solve staged 6x6x6 centers without EO'ing the inside wings."""
-    tmp_solution_len = len(cube.solution)
-    cube.lt_step50_without_edges.solve_via_c()
-    cube.print_cube_add_comment("LR centers reduced to 5x5x5", tmp_solution_len)
-
-    tmp_solution_len = len(cube.solution)
-    cube.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solve_via_c()
-    cube.print_cube_add_comment("UD FB centers reduced to 5x5x5", tmp_solution_len)
-
-
 class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
     """
     Even cubes 8x8x8 and larger. A fake 6x6x6 builds a plus sign so the cube can
@@ -159,7 +148,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         center_orbit_count = int((self.size - 4) / 2)
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}
         original_solution_len = len(self.solution)
-        max_center_orbit_id = center_orbit_count - 1
 
         # Make a big "plus" sign on each side
         for center_orbit_id in range(center_orbit_count):
@@ -256,11 +244,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             # Stage this orbit with the ranked 6x6x6 phases 1-3, then reduce
             # its centers to a 5x5x5.
             fake_666.stage_centers()
-
-            if center_orbit_id == max_center_orbit_id:
-                fake_666.daisy_solve_centers_eo_edges()
-            else:
-                daisy_solve_centers(fake_666)
+            fake_666.daisy_solve_centers()
 
             # Apply the 6x6x6 solution to our cube
             half_size = str(int(self.size / 2))

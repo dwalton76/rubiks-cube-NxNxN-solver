@@ -5,8 +5,15 @@ from unittest.mock import patch
 # rubiks cube libraries
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666, UFBD_outer_x_centers_666, solved_666
+from rubikscubennnsolver.RubiksCube666 import (
+    DAISY_PLUS_TABLES_666,
+    RubiksCube666,
+    UFBD_outer_x_centers_666,
+    solved_666,
+)
 from rubikscubennnsolver.RubiksCube777 import (
+    DAISY_LEAVE_ONE_OUT_TABLES_777,
+    DAISY_PERFECT_TABLES_777,
     RubiksCube777,
     UFBD_inner_t_centers_777,
     UFBD_inner_x_centers_777,
@@ -32,13 +39,27 @@ class CenterStagingTablesTest(unittest.TestCase):
     def test_666_ranked_path_splits_oll_parity_between_phase_one_and_three(self):
         """Phases 2 and 3 have no 3Xw quarter turn, so only phase 1 can flip orbit1."""
         cube = RubiksCube666(solved_666, "URFDLB")
-        cube.lt_init()
+        with patch("rubikscubennnsolver.LookupTable.download_file_if_needed"):
+            cube.lt_init()
 
         self.assertEqual(cube.lt_all_inner_x_centers_stage.avoid_oll, 1)
         self.assertEqual(cube.lt_UD_centers_stage.avoid_oll, 0)
         self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_stage_inner_x_stage"))
+        self.assertFalse(hasattr(cube, "lt_centers_reduce_555"))
+        self.assertEqual(cube.lt_daisy_centers.__class__.__name__, "LookupTableIDA666DaisyCenters")
+        self.assertEqual(len(DAISY_PLUS_TABLES_666), 18)
 
-    def test_even_plus_sign_uses_ranked_staging_and_keeps_outer_eo(self):
+    def test_666_has_no_eo_phase_of_its_own(self):
+        """The fake 4x4x4 that pairs the inside wings EOes them along the way."""
+        cube = RubiksCube666(solved_666, "URFDLB")
+        with patch("rubikscubennnsolver.LookupTable.download_file_if_needed"):
+            cube.lt_init()
+
+        self.assertFalse(hasattr(cube, "lt_EO_inside_wings"))
+        self.assertFalse(hasattr(cube, "lt_LR_highlow_edges"))
+        self.assertFalse(hasattr(cube, "lt_UD_solve_inner_x_centers_and_oblique_edges"))
+
+    def test_even_plus_sign_daisy_solves_every_center_orbit(self):
         events = []
 
         class Fake666:
@@ -49,20 +70,16 @@ class CenterStagingTablesTest(unittest.TestCase):
             def stage_centers(self):
                 events.append("stage")
 
-            def daisy_solve_centers_eo_edges(self):
-                events.append("outer-eo")
+            def daisy_solve_centers(self):
+                events.append("daisy")
 
         cube = RubiksCubeNNNEven(solved_888, "URFDLB")
         fake_666 = Fake666()
         cube.get_fake_666 = lambda: fake_666
 
-        with patch(
-            "rubikscubennnsolver.RubiksCubeNNNEven.daisy_solve_centers",
-            side_effect=lambda unused: events.append("inner-no-eo"),
-        ):
-            cube.make_plus_sign()
+        cube.make_plus_sign()
 
-        self.assertEqual(events, ["stage", "inner-no-eo", "stage", "outer-eo"])
+        self.assertEqual(events, ["stage", "daisy", "stage", "daisy"])
 
     def test_777_combined_phase_recolors_both_coordinates(self):
         cube = RubiksCube777(solved_777, "URFDLB")
@@ -111,6 +128,29 @@ class CenterStagingTablesTest(unittest.TestCase):
         for square in tracked:
             expected = "U" if square < 50 or square > 245 else "x"
             self.assertEqual(cube.state[square], expected)
+
+    def test_777_combined_daisy_replaces_serial_bar_phases(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        daisy = cube.lt_daisy_centers
+
+        self.assertNotIsInstance(daisy, LookupTableIDAViaGraph)
+        self.assertTrue(daisy.use_perfect_tables)
+        self.assertEqual(len(DAISY_LEAVE_ONE_OUT_TABLES_777), 15)
+        self.assertEqual(len(DAISY_PERFECT_TABLES_777), 3)
+
+        # A per-axis table tops out at depth 15 while the combined daisy is 19+ moves
+        # away, so the C searcher leans on its sampled cost matrix rather than a
+        # multiplier over the admissible max.
+        self.assertIsNone(daisy.multiplier)
+
+    def test_larger_odd_cubes_daisy_then_keep_step70(self):
+        cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
+        fake_777 = cube.get_fake_777()
+        fake_777.lt_init()
+
+        self.assertFalse(hasattr(fake_777, "lt_step70"))
+        self.assertIsNotNone(fake_777.lt_daisy_centers)
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):
@@ -357,86 +397,37 @@ class PhaseTwoPortfolioTest(unittest.TestCase):
         )
 
 
-class PhaseFiveSixPortfolioTest(unittest.TestCase):
-    class FakeStep50PruneTable:
-        def state_index(self):
-            return 0
+class Reduce555Test(unittest.TestCase):
+    def test_reduce_555_daisies_the_centers_then_hands_the_wings_to_the_444(self):
+        events = []
 
-    class FakePhaseFive:
-        def __init__(self):
-            self.prune_tables = [
-                PhaseFiveSixPortfolioTest.FakeStep50PruneTable(),
-                PhaseFiveSixPortfolioTest.FakeStep50PruneTable(),
-            ]
+        class FakeDaisy:
+            def solve_via_c(self):
+                events.append("daisy")
 
-        def solutions_via_c(self, pt_states, solution_count, find_extra):
-            assert solution_count == 64
-            assert find_extra
-            assert list(pt_states) == [(0, 0)]
-            return [
-                (("A",), (0, 0, 0, 0, 0)),
-                (("B", "C", "D"), (0, 0, 0, 0, 0)),
-            ]
+        class FakeCube:
+            solution = []
+            lt_daisy_centers = FakeDaisy()
+            daisy_solve_centers = RubiksCube666.daisy_solve_centers
 
-    class FakePhaseSixPruneTable:
-        def __init__(self, parent, coordinate):
-            self.parent = parent
-            self.coordinate = coordinate
+            def reduced_to_555(self):
+                return False
 
-        def state_index(self):
-            roots = {
-                "A": (10, 20, 30),
-                "B": (11, 21, 31),
-                "D": (11, 21, 31),
-            }
-            return roots[self.parent.state[0]][self.coordinate]
+            def lt_init(self):
+                events.append("lt_init")
 
-    class FakePhaseSix:
-        def __init__(self, parent):
-            self.parent = parent
-            self.calls = []
-            self.prune_tables = [
-                PhaseFiveSixPortfolioTest.FakePhaseSixPruneTable(parent, 0),
-                PhaseFiveSixPortfolioTest.FakePhaseSixPruneTable(parent, 1),
-                PhaseFiveSixPortfolioTest.FakePhaseSixPruneTable(parent, 2),
-            ]
+            def stage_centers(self):
+                events.append("stage")
 
-        def solutions_via_c(self, pt_states, solution_count):
-            assert solution_count == 1
-            self.calls.append(tuple(pt_states))
-            roots = set(pt_states)
-            if roots == {(10, 20, 30)}:
-                return [(("PA1", "PA2", "PA3"), (10, 20, 30, 0, 0))]
-            if roots == {(11, 21, 31)}:
-                return [(("PB1", "PB2"), (11, 21, 31, 0, 0))]
-            raise AssertionError(f"phase 6 searched mixed length groups: {pt_states}")
+            def pair_inside_edges_via_444(self):
+                events.append("pair-444")
 
-    class FakeCube:
-        def __init__(self):
-            self.state = ["root"]
-            self.solution = []
-            self.edge_mapping = None
-            self.lt_step50 = PhaseFiveSixPortfolioTest.FakePhaseFive()
-            self.lt_UFBD_solve_inner_x_centers_and_oblique_edges = PhaseFiveSixPortfolioTest.FakePhaseSix(self)
+            def print_cube_add_comment(self, _comment, _start):
+                pass
 
-        def rotate(self, move):
-            self.solution.append(move)
-            if move in {"A", "B", "C", "D"}:
-                self.state[0] = move
+        RubiksCube666.reduce_555(FakeCube())
 
-        def print_cube_add_comment(self, _comment, _start):
-            pass
-
-    def test_phase_five_portfolio_deduplicates_phase_six_roots_and_picks_shortest_total(self):
-        cube = self.FakeCube()
-
-        RubiksCube666.daisy_solve_centers_eo_edges(cube)
-
-        self.assertEqual(cube.solution, ["A", "PA1", "PA2", "PA3"])
-        self.assertEqual(
-            cube.lt_UFBD_solve_inner_x_centers_and_oblique_edges.calls,
-            [((10, 20, 30),), ((11, 21, 31),)],
-        )
+        self.assertEqual(events, ["lt_init", "stage", "daisy", "pair-444"])
 
 
 if __name__ == "__main__":

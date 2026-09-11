@@ -1,0 +1,1276 @@
+#include <errno.h>
+#include <fcntl.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <math.h>
+#include <pthread.h>
+#include <stdatomic.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+#include "ida_search_core.h"
+
+#define CUBE_SIZE 7
+#define CUBE_ARRAY_SIZE 295
+#define GROUP_SIZE 8
+#define GROUP_COLOR_COUNT 4
+#define GROUP_UNIVERSE UINT64_C(70)
+#define LEAVE_ONE_OUT_UNIVERSE UINT64_C(24010000)
+#define PERFECT_UNIVERSE UINT64_C(1680700000)
+#define AXIS_COUNT 3
+#define ORBIT_COUNT 5
+#define LEAVE_ONE_OUT_TABLE_COUNT 15
+#define PERFECT_TABLE_COUNT 3
+#define TABLE_COUNT (LEAVE_ONE_OUT_TABLE_COUNT + PERFECT_TABLE_COUNT)
+#define DEFAULT_MAX_IDA_THRESHOLD 30
+#define MAX_IDA_THRESHOLD 99
+/* Every per-axis ranked table tops out at depth 15. */
+#define MATRIX_COST_MAX 15
+#define MAX_THREADS 64
+#define NO_TASK UINT_MAX
+
+enum axis_index { AXIS_UD, AXIS_LR, AXIS_FB };
+
+enum orbit_index {
+    ORBIT_LEFT_OBLIQUE,
+    ORBIT_MIDDLE_OBLIQUE,
+    ORBIT_RIGHT_OBLIQUE,
+    ORBIT_INNER_T,
+    ORBIT_INNER_X,
+};
+
+/*
+ * Exact 8-sticker (4,4) orbits from builder777.py DAISY_CENTER_ORBITS_777.
+ * Outer-x and the fixed middles are untracked. Rank order per axis is
+ * left-oblique, middle-oblique (outer t), right-oblique, inner-t, inner-x.
+ */
+static const unsigned int orbit_squares[AXIS_COUNT][ORBIT_COUNT][GROUP_SIZE] = {
+    {
+        {10, 20, 30, 40, 255, 265, 275, 285},
+        {11, 23, 27, 39, 256, 268, 272, 284},
+        {12, 16, 34, 38, 257, 261, 279, 283},
+        {18, 24, 26, 32, 263, 269, 271, 277},
+        {17, 19, 31, 33, 262, 264, 276, 278},
+    },
+    {
+        {59, 69, 79, 89, 157, 167, 177, 187},
+        {60, 72, 76, 88, 158, 170, 174, 186},
+        {61, 65, 83, 87, 159, 163, 181, 185},
+        {67, 73, 75, 81, 165, 171, 173, 179},
+        {66, 68, 80, 82, 164, 166, 178, 180},
+    },
+    {
+        {108, 118, 128, 138, 206, 216, 226, 236},
+        {109, 121, 125, 137, 207, 219, 223, 235},
+        {110, 114, 132, 136, 208, 212, 230, 234},
+        {116, 122, 124, 130, 214, 220, 222, 228},
+        {115, 117, 129, 131, 213, 215, 227, 229},
+    },
+};
+
+/* Alphabetically sorted pair used by the builder's multiset rank. */
+static const char axis_small[AXIS_COUNT] = {'D', 'L', 'B'};
+static const char axis_large[AXIS_COUNT] = {'U', 'R', 'F'};
+static const char axis_primary[AXIS_COUNT] = {'U', 'L', 'F'};
+static const char axis_opposite[AXIS_COUNT] = {'D', 'R', 'B'};
+static const char *axis_name[AXIS_COUNT] = {"UD", "LR", "FB"};
+static const char *orbit_name[ORBIT_COUNT] = {
+    "LEFT_OBLIQUE",
+    "MIDDLE_OBLIQUE",
+    "RIGHT_OBLIQUE",
+    "INNER_T",
+    "INNER_X",
+};
+
+/*
+ * Combined cost to the daisy, indexed by the per-axis table costs [UD][LR][FB].
+ *
+ * Each table only covers one axis and tops out at depth 15, while a combined daisy is
+ * 19 or more moves away, so max(UD, LR, FB) is admissible but can never guide a search
+ * that deep. Column and row 0 hold that admissible max. Every other cell is the
+ * smallest remaining move count observed for that triple while sampling solutions,
+ * never below max(UD, LR, FB), and propagated along each axis so a more scrambled axis
+ * never looks closer to the goal.
+ *
+ * utils/build-777-daisy-cost-matrix.py was used to build this.
+ */
+static const unsigned char daisy_axis_costs_777[MATRIX_COST_MAX + 1][MATRIX_COST_MAX + 1][MATRIX_COST_MAX + 1] = {
+    {  // UD 0
+        { 0,  2,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        { 2,  2,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        { 3,  3,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        { 5,  5,  5,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 1
+        { 2,  2,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        { 2,  2,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        { 3,  3,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        { 5,  5,  5,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 2
+        { 3,  3,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        { 3,  3,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        { 3,  3,  3,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        { 5,  5,  5,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 3
+        { 5,  5,  5,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        { 5,  5,  5,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        { 5,  5,  5,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        { 5,  5,  5,  5,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 4
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        { 7,  7,  7,  7,  7,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 5
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        { 9,  9,  9,  9,  9,  9, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 6
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {11, 11, 11, 11, 11, 11, 11, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 7
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {13, 13, 13, 13, 13, 13, 13, 13, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 8
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 9
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 0
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 1
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 2
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 3
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 4
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 5
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 6
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 7
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 8
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 10
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 0
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 1
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 2
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 3
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 4
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 5
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 6
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 7
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 8
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 11
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 0
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 1
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 2
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 3
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 4
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 5
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 6
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 7
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 8
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 9
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 23, 25, 27},  // LR 10
+        {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 22, 24, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 24, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 12
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 0
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 1
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 2
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 3
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 4
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 5
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 25, 27},  // LR 6
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 7
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 8
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 9
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 25, 27},  // LR 10
+        {22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 24, 25, 27},  // LR 11
+        {22, 22, 22, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 24, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 13
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 0
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 1
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 2
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 3
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 4
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 5
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 6
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 7
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 8
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 9
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 25, 27},  // LR 10
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 25, 27},  // LR 11
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 25, 27},  // LR 12
+        {23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 14
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 0
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 1
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 2
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 3
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 4
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 5
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 6
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 7
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 8
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 9
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 10
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 11
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 12
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 13
+        {25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+    {  // UD 15
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 0
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 1
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 2
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 3
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 4
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 5
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 6
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 7
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 8
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 9
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 10
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 11
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 12
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 13
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 14
+        {27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27},  // LR 15
+    },
+};
+
+static struct ranked_table {
+    const char *flag;
+    const char *label;
+    unsigned char axis;
+    unsigned char omitted;
+    uint64_t universe;
+    const char *filename;
+    unsigned char *costs;
+    int fd;
+} ranked_tables[TABLE_COUNT] = {
+    {"--ud-without-left-oblique-cost", "UD_WITHOUT_LEFT_OBLIQUE", AXIS_UD, ORBIT_LEFT_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--ud-without-middle-oblique-cost", "UD_WITHOUT_MIDDLE_OBLIQUE", AXIS_UD, ORBIT_MIDDLE_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--ud-without-right-oblique-cost", "UD_WITHOUT_RIGHT_OBLIQUE", AXIS_UD, ORBIT_RIGHT_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--ud-without-inner-t-cost", "UD_WITHOUT_INNER_T", AXIS_UD, ORBIT_INNER_T, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--ud-without-inner-x-cost", "UD_WITHOUT_INNER_X", AXIS_UD, ORBIT_INNER_X, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--lr-without-left-oblique-cost", "LR_WITHOUT_LEFT_OBLIQUE", AXIS_LR, ORBIT_LEFT_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--lr-without-middle-oblique-cost", "LR_WITHOUT_MIDDLE_OBLIQUE", AXIS_LR, ORBIT_MIDDLE_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--lr-without-right-oblique-cost", "LR_WITHOUT_RIGHT_OBLIQUE", AXIS_LR, ORBIT_RIGHT_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--lr-without-inner-t-cost", "LR_WITHOUT_INNER_T", AXIS_LR, ORBIT_INNER_T, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--lr-without-inner-x-cost", "LR_WITHOUT_INNER_X", AXIS_LR, ORBIT_INNER_X, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--fb-without-left-oblique-cost", "FB_WITHOUT_LEFT_OBLIQUE", AXIS_FB, ORBIT_LEFT_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--fb-without-middle-oblique-cost", "FB_WITHOUT_MIDDLE_OBLIQUE", AXIS_FB, ORBIT_MIDDLE_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--fb-without-right-oblique-cost", "FB_WITHOUT_RIGHT_OBLIQUE", AXIS_FB, ORBIT_RIGHT_OBLIQUE,
+     LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--fb-without-inner-t-cost", "FB_WITHOUT_INNER_T", AXIS_FB, ORBIT_INNER_T, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--fb-without-inner-x-cost", "FB_WITHOUT_INNER_X", AXIS_FB, ORBIT_INNER_X, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
+    {"--ud-perfect-cost", "UD_PERFECT", AXIS_UD, ORBIT_COUNT, PERFECT_UNIVERSE, NULL, NULL, -1},
+    {"--lr-perfect-cost", "LR_PERFECT", AXIS_LR, ORBIT_COUNT, PERFECT_UNIVERSE, NULL, NULL, -1},
+    {"--fb-perfect-cost", "FB_PERFECT", AXIS_FB, ORBIT_COUNT, PERFECT_UNIVERSE, NULL, NULL, -1},
+};
+
+static uint64_t binom[GROUP_SIZE + 1][GROUP_SIZE + 1];
+static move_type inverse_move[MOVE_MAX];
+static unsigned char legal_move_count[MOVE_MAX];
+static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_777];
+static move_type solution[MAX_IDA_THRESHOLD + 1];
+static atomic_uint next_task;
+static atomic_uint solution_task = NO_TASK;
+static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
+static unsigned char search_threshold;
+static unsigned int loaded_table_count;
+static unsigned int loaded_tables[TABLE_COUNT];
+static float cost_to_goal_multiplier;
+
+struct heuristic_result {
+    uint64_t orbit_rank[AXIS_COUNT][ORBIT_COUNT];
+    uint64_t table_rank[TABLE_COUNT];
+    unsigned char table_cost[TABLE_COUNT];
+    unsigned char axis_cost[AXIS_COUNT];
+    unsigned char cost;
+    unsigned char daisy;
+};
+
+struct worker {
+    const char *root_cube;
+    uint64_t ida_count;
+    move_type solution[MAX_IDA_THRESHOLD + 1];
+};
+
+struct child {
+    move_type move;
+    unsigned char cost;
+};
+
+static void usage(const char *program)
+{
+    printf(
+        "usage: %s --kociemba STATE "
+        "(all 15 --{ud,lr,fb}-without-{left-oblique,middle-oblique,right-oblique,inner-t,inner-x}-cost FILE "
+        "| --ud-perfect-cost FILE --lr-perfect-cost FILE --fb-perfect-cost FILE) "
+        "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] [--multiplier F] "
+        "[--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
+        program
+    );
+    printf(
+        "  --multiplier F  scale max(UD, LR, FB) by F instead of using the sampled\n"
+        "                  daisy_axis_costs_777 matrix. F must be at least 1.0 and is not\n"
+        "                  admissible. This is how the matrix samples are collected, see\n"
+        "                  utils/build-777-daisy-cost-matrix.py\n"
+    );
+}
+
+static void init_binom(void)
+{
+    for (unsigned int n = 0; n <= GROUP_SIZE; n++) {
+        binom[n][0] = 1;
+        binom[n][n] = 1;
+        for (unsigned int k = 1; k < n; k++) {
+            binom[n][k] = binom[n - 1][k - 1] + binom[n - 1][k];
+        }
+    }
+}
+
+/*
+ * Rank four copies of `small` and four copies of `large` in lexicographic
+ * order. `small`/`large` must be the sorted symbol pair so this matches
+ * buildercore.multiset_rank.
+ */
+static uint64_t combination_rank(
+    const char *cube,
+    const unsigned int squares[GROUP_SIZE],
+    char small,
+    char large
+)
+{
+    unsigned int remaining[2] = {GROUP_COLOR_COUNT, GROUP_COLOR_COUNT};
+    uint64_t permutations = GROUP_UNIVERSE;
+    uint64_t rank = 0;
+    unsigned int slots = GROUP_SIZE;
+
+    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+        char sticker = cube[squares[position]];
+        unsigned int symbol_index;
+
+        if (sticker == small) {
+            symbol_index = 0;
+        } else if (sticker == large) {
+            symbol_index = 1;
+        } else {
+            return UINT64_MAX;
+        }
+        if (!remaining[symbol_index]) {
+            return UINT64_MAX;
+        }
+        for (unsigned int smaller = 0; smaller < symbol_index; smaller++) {
+            rank += permutations * remaining[smaller] / slots;
+        }
+        permutations = permutations * remaining[symbol_index] / slots;
+        remaining[symbol_index]--;
+        slots--;
+    }
+    return rank;
+}
+
+static uint64_t mixed_radix_rank(const uint64_t *ranks, unsigned int count)
+{
+    uint64_t mixed = 0;
+
+    for (unsigned int index = 0; index < count; index++) {
+        if (ranks[index] == UINT64_MAX) {
+            return UINT64_MAX;
+        }
+        mixed = mixed * GROUP_UNIVERSE + ranks[index];
+    }
+    return mixed;
+}
+
+static uint64_t table_rank_for(const struct ranked_table *table, const uint64_t orbit_rank[ORBIT_COUNT])
+{
+    uint64_t selected[ORBIT_COUNT];
+    unsigned int count = 0;
+
+    for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+        if (orbit == table->omitted) {
+            continue;
+        }
+        selected[count++] = orbit_rank[orbit];
+    }
+    return mixed_radix_rank(selected, count);
+}
+
+static int orbit_has_colors(
+    const char *cube,
+    const unsigned int squares[GROUP_SIZE],
+    char first,
+    char second
+)
+{
+    for (unsigned int index = 0; index < 4; index++) {
+        if (cube[squares[index]] != first) {
+            return 0;
+        }
+    }
+    for (unsigned int index = 4; index < GROUP_SIZE; index++) {
+        if (cube[squares[index]] != second) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int axis_is_daisy(const char *cube, unsigned int axis)
+{
+    char primary = axis_primary[axis];
+    char opposite = axis_opposite[axis];
+    int native = 1;
+    int swapped = 1;
+
+    for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+        const unsigned int *squares = orbit_squares[axis][orbit];
+        int native_orbit = orbit_has_colors(cube, squares, primary, opposite);
+        int swapped_orbit;
+
+        if (orbit <= ORBIT_RIGHT_OBLIQUE) {
+            swapped_orbit = orbit_has_colors(cube, squares, opposite, primary);
+        } else {
+            swapped_orbit = native_orbit;
+        }
+        native = native && native_orbit;
+        swapped = swapped && swapped_orbit;
+    }
+    return native || swapped;
+}
+
+static int cube_is_daisy(const char *cube)
+{
+    return axis_is_daisy(cube, AXIS_UD) && axis_is_daisy(cube, AXIS_LR) && axis_is_daisy(cube, AXIS_FB);
+}
+
+static unsigned char decode_cost(unsigned char encoded)
+{
+    return encoded ? encoded - 1 : UINT8_MAX;
+}
+
+static unsigned char matrix_cost(const unsigned char axis_cost[AXIS_COUNT])
+{
+    unsigned char index[AXIS_COUNT];
+
+    for (unsigned int axis = 0; axis < AXIS_COUNT; axis++) {
+        index[axis] = axis_cost[axis] > MATRIX_COST_MAX ? MATRIX_COST_MAX : axis_cost[axis];
+    }
+    return daisy_axis_costs_777[index[AXIS_UD]][index[AXIS_LR]][index[AXIS_FB]];
+}
+
+static struct heuristic_result heuristic(const char *cube)
+{
+    struct heuristic_result result;
+    int valid = 1;
+
+    memset(&result, 0, sizeof(result));
+    result.daisy = cube_is_daisy(cube) ? 1 : 0;
+    for (unsigned int axis = 0; axis < AXIS_COUNT; axis++) {
+        for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+            result.orbit_rank[axis][orbit] =
+                combination_rank(cube, orbit_squares[axis][orbit], axis_small[axis], axis_large[axis]);
+            if (result.orbit_rank[axis][orbit] == UINT64_MAX) {
+                valid = 0;
+            }
+        }
+    }
+    for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+        unsigned int index = loaded_tables[loaded];
+        struct ranked_table *table = &ranked_tables[index];
+        unsigned char encoded;
+
+        if (!valid || !table->costs) {
+            result.table_rank[index] = UINT64_MAX;
+            result.table_cost[index] = UINT8_MAX;
+            result.axis_cost[table->axis] = UINT8_MAX;
+            continue;
+        }
+        result.table_rank[index] = table_rank_for(table, result.orbit_rank[table->axis]);
+        if (result.table_rank[index] == UINT64_MAX || result.table_rank[index] >= table->universe) {
+            result.table_cost[index] = UINT8_MAX;
+            result.axis_cost[table->axis] = UINT8_MAX;
+            continue;
+        }
+        encoded = table->costs[result.table_rank[index]];
+        result.table_cost[index] = decode_cost(encoded);
+        /* Leave-one-out mode loads five tables per axis, so an axis costs the most
+         * any of its tables reports. */
+        if (result.table_cost[index] == UINT8_MAX) {
+            result.axis_cost[table->axis] = UINT8_MAX;
+        } else if (result.axis_cost[table->axis] != UINT8_MAX &&
+                   result.table_cost[index] > result.axis_cost[table->axis]) {
+            result.axis_cost[table->axis] = result.table_cost[index];
+        }
+    }
+    for (unsigned int axis = 0; axis < AXIS_COUNT; axis++) {
+        if (result.axis_cost[axis] == UINT8_MAX) {
+            result.cost = UINT8_MAX;
+        } else if (result.cost != UINT8_MAX && result.axis_cost[axis] > result.cost) {
+            result.cost = result.axis_cost[axis];
+        }
+    }
+    if (result.cost != UINT8_MAX) {
+        if (cost_to_goal_multiplier) {
+            float scaled = roundf(result.cost * cost_to_goal_multiplier);
+
+            /* Stay clear of the UINT8_MAX "absent from the table" sentinel. Any cost
+             * above MAX_IDA_THRESHOLD prunes at every threshold we can search. */
+            if (result.cost) {
+                result.cost = scaled > MAX_IDA_THRESHOLD ? MAX_IDA_THRESHOLD + 1 : (unsigned char)scaled;
+            }
+        } else {
+            result.cost = matrix_cost(result.axis_cost);
+        }
+    }
+    if (result.daisy) {
+        result.cost = 0;
+    } else if (result.cost == 0) {
+        result.cost = 1;
+    }
+    return result;
+}
+
+static int move_is_allowed(move_type move)
+{
+    switch (move) {
+        case Uw:
+        case Uw_PRIME:
+        case threeUw:
+        case threeUw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case threeFw:
+        case threeFw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+            return 0;
+        default:
+            return 1;
+    }
+}
+
+static void init_move_tables(void)
+{
+    for (unsigned int move_index = 0; move_index < MOVE_COUNT_777; move_index++) {
+        move_type move = moves_777[move_index];
+        unsigned int quarter_turn_offset = ((unsigned int)move - 1) % 3;
+
+        inverse_move[move] = quarter_turn_offset == 0 ? move + 1 :
+                             quarter_turn_offset == 1 ? move - 1 : move;
+        if (move_is_allowed(move)) {
+            legal_move_index[MOVE_NONE][legal_move_count[MOVE_NONE]++] = (unsigned char)move_index;
+        }
+    }
+
+    for (unsigned int previous_index = 0; previous_index < MOVE_COUNT_777; previous_index++) {
+        move_type previous_move = moves_777[previous_index];
+
+        if (!move_is_allowed(previous_move)) {
+            continue;
+        }
+        for (unsigned int move_index = 0; move_index < MOVE_COUNT_777; move_index++) {
+            move_type move = moves_777[move_index];
+
+            if (!move_is_allowed(move) ||
+                steps_on_same_face_and_layer(previous_move, move) ||
+                !outer_layer_moves_in_order(previous_move, move) ||
+                !steps_on_same_face_in_order(previous_move, move) ||
+                !steps_on_opposite_faces_in_order(previous_move, move)) {
+                continue;
+            }
+            legal_move_index[previous_move][legal_move_count[previous_move]++] = (unsigned char)move_index;
+        }
+    }
+}
+
+static void map_ranked_tables(void)
+{
+    for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+        struct ranked_table *table = &ranked_tables[loaded_tables[loaded]];
+        struct stat file_stat;
+        int mmap_flags = MAP_SHARED;
+
+        table->fd = open(table->filename, O_RDONLY);
+        if (table->fd < 0) {
+            fprintf(stderr, "ERROR: could not open %s: %s\n", table->filename, strerror(errno));
+            exit(1);
+        }
+        if (fstat(table->fd, &file_stat) != 0) {
+            fprintf(stderr, "ERROR: could not stat %s: %s\n", table->filename, strerror(errno));
+            exit(1);
+        }
+        if ((uint64_t)file_stat.st_size != table->universe) {
+            fprintf(
+                stderr, "ERROR: %s is %" PRIu64 " bytes, expected %" PRIu64 "\n",
+                table->filename, (uint64_t)file_stat.st_size, table->universe
+            );
+            exit(1);
+        }
+#ifdef MAP_POPULATE
+        if ((uint64_t)file_stat.st_blocks * 512 >= table->universe) {
+            mmap_flags |= MAP_POPULATE;
+        }
+#endif
+        table->costs = mmap(NULL, (size_t)table->universe, PROT_READ, mmap_flags, table->fd, 0);
+        if (table->costs == MAP_FAILED) {
+            fprintf(stderr, "ERROR: could not mmap %s: %s\n", table->filename, strerror(errno));
+            exit(1);
+        }
+    }
+}
+
+static void unmap_ranked_tables(void)
+{
+    for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+        struct ranked_table *table = &ranked_tables[loaded_tables[loaded]];
+
+        if (table->costs && table->costs != MAP_FAILED) {
+            munmap(table->costs, (size_t)table->universe);
+        }
+        if (table->fd >= 0) {
+            close(table->fd);
+        }
+        table->costs = NULL;
+        table->fd = -1;
+    }
+}
+
+static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
+{
+    const unsigned int face_size = CUBE_SIZE * CUBE_SIZE;
+
+    if (strlen(kociemba) != face_size * 6) {
+        fprintf(stderr, "ERROR: --kociemba must contain 294 stickers for a 7x7x7 cube\n");
+        exit(1);
+    }
+    cube[0] = 'x';
+    memcpy(&cube[1], &kociemba[0], face_size);                            /* U */
+    memcpy(&cube[1 + face_size], &kociemba[face_size * 4], face_size);    /* L */
+    memcpy(&cube[1 + face_size * 2], &kociemba[face_size * 2], face_size); /* F */
+    memcpy(&cube[1 + face_size * 3], &kociemba[face_size], face_size);    /* R */
+    memcpy(&cube[1 + face_size * 4], &kociemba[face_size * 5], face_size); /* B */
+    memcpy(&cube[1 + face_size * 5], &kociemba[face_size * 3], face_size); /* D */
+}
+
+static int is_edge_or_corner(unsigned int square)
+{
+    unsigned int face_offset = (square - 1) % (CUBE_SIZE * CUBE_SIZE);
+    unsigned int row = face_offset / CUBE_SIZE;
+    unsigned int col = face_offset % CUBE_SIZE;
+
+    return row == 0 || row == CUBE_SIZE - 1 || col == 0 || col == CUBE_SIZE - 1;
+}
+
+static int is_outer_x_center(unsigned int square)
+{
+    unsigned int face_offset = (square - 1) % (CUBE_SIZE * CUBE_SIZE);
+
+    return face_offset == 8 || face_offset == 12 || face_offset == 36 || face_offset == 40;
+}
+
+/*
+ * The daisy only tracks the five (4,4) orbits per axis. Blanking everything it
+ * ignores keeps those squares out of print_cube and makes a placeholder outer-x
+ * from a fake 7x7x7 harmless: moves only ever shuffle '.' among '.' positions.
+ */
+static void blank_untracked_squares(char cube[CUBE_ARRAY_SIZE])
+{
+    for (unsigned int square = 1; square < CUBE_ARRAY_SIZE; square++) {
+        if (is_edge_or_corner(square) || is_outer_x_center(square)) {
+            cube[square] = '.';
+        }
+    }
+}
+
+static move_type parse_move(const char *move_string)
+{
+    for (unsigned int index = 0; index < MOVE_COUNT_777; index++) {
+        move_type move = moves_777[index];
+
+        if (!strcmp(move2str[move], move_string)) {
+            return move;
+        }
+    }
+    return MOVE_NONE;
+}
+
+static int ida_search(
+    struct worker *worker,
+    char cube[CUBE_ARRAY_SIZE],
+    unsigned char depth,
+    unsigned char threshold,
+    move_type previous_move
+)
+{
+    struct child children[MOVE_COUNT_777];
+    unsigned int child_count = 0;
+    unsigned char next_depth = depth + 1;
+    char rotate_tmp[CUBE_ARRAY_SIZE];
+
+    if (atomic_load_explicit(&solution_task, memory_order_relaxed) != NO_TASK) {
+        return 0;
+    }
+    for (unsigned int index = 0; index < legal_move_count[previous_move]; index++) {
+        move_type move = moves_777[legal_move_index[previous_move][index]];
+        struct heuristic_result h;
+
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        h = heuristic(cube);
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
+        worker->ida_count++;
+
+        if (h.cost == UINT8_MAX || next_depth + h.cost > threshold) {
+            continue;
+        }
+        if (h.daisy) {
+            worker->solution[depth] = move;
+            worker->solution[next_depth] = MOVE_NONE;
+            return 1;
+        }
+        children[child_count].move = move;
+        children[child_count].cost = h.cost;
+        child_count++;
+    }
+
+    if (next_depth >= threshold || next_depth >= MAX_IDA_THRESHOLD) {
+        worker->solution[depth] = MOVE_NONE;
+        return 0;
+    }
+
+    for (unsigned int index = 1; index < child_count; index++) {
+        struct child pending = children[index];
+        unsigned int destination = index;
+
+        while (destination && children[destination - 1].cost > pending.cost) {
+            children[destination] = children[destination - 1];
+            destination--;
+        }
+        children[destination] = pending;
+    }
+
+    for (unsigned int index = 0; index < child_count; index++) {
+        move_type move = children[index].move;
+
+        worker->solution[depth] = move;
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        if (ida_search(worker, cube, next_depth, threshold, move)) {
+            return 1;
+        }
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
+    }
+    worker->solution[depth] = MOVE_NONE;
+    return 0;
+}
+
+static void *search_root_moves(void *argument)
+{
+    struct worker *worker = argument;
+
+    while (1) {
+        unsigned int task = atomic_fetch_add(&next_task, 1);
+        char cube[CUBE_ARRAY_SIZE];
+        char rotate_tmp[CUBE_ARRAY_SIZE];
+        move_type first;
+        struct heuristic_result h;
+        int found;
+
+        if (task >= legal_move_count[MOVE_NONE] || atomic_load(&solution_task) != NO_TASK) {
+            break;
+        }
+        first = moves_777[legal_move_index[MOVE_NONE][task]];
+        memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
+        worker->ida_count++;
+        h = heuristic(cube);
+
+        if (h.cost == UINT8_MAX || 1 + h.cost > search_threshold) {
+            continue;
+        }
+        worker->solution[0] = first;
+        if (h.daisy) {
+            worker->solution[1] = MOVE_NONE;
+            found = 1;
+        } else if (search_threshold <= 1) {
+            continue;
+        } else {
+            found = ida_search(worker, cube, 1, search_threshold, first);
+        }
+
+        if (found) {
+            pthread_mutex_lock(&solution_lock);
+            if (atomic_load(&solution_task) == NO_TASK) {
+                memcpy(solution, worker->solution, sizeof(solution));
+                atomic_store(&solution_task, task);
+            }
+            pthread_mutex_unlock(&solution_lock);
+            break;
+        }
+    }
+    return NULL;
+}
+
+static int search_at_threshold(
+    const char cube[CUBE_ARRAY_SIZE],
+    unsigned char threshold,
+    unsigned int thread_count,
+    uint64_t *nodes
+)
+{
+    struct worker workers[MAX_THREADS];
+    pthread_t threads[MAX_THREADS];
+    unsigned int worker_count = thread_count < legal_move_count[MOVE_NONE] ?
+                                thread_count : legal_move_count[MOVE_NONE];
+
+    *nodes = 1;
+    search_threshold = threshold;
+    atomic_store(&next_task, 0);
+    atomic_store(&solution_task, NO_TASK);
+    for (unsigned int index = 0; index < worker_count; index++) {
+        memset(&workers[index], 0, sizeof(workers[index]));
+        workers[index].root_cube = cube;
+        if (pthread_create(&threads[index], NULL, search_root_moves, &workers[index]) != 0) {
+            fprintf(stderr, "ERROR: could not create search thread %u\n", index);
+            exit(1);
+        }
+    }
+    for (unsigned int index = 0; index < worker_count; index++) {
+        pthread_join(threads[index], NULL);
+        *nodes += workers[index].ida_count;
+    }
+    return atomic_load(&solution_task) != NO_TASK;
+}
+
+static double elapsed_seconds(const struct timeval *start, const struct timeval *end)
+{
+    return (end->tv_sec - start->tv_sec) + (end->tv_usec - start->tv_usec) / 1000000.0;
+}
+
+static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int length)
+{
+    char walk[CUBE_ARRAY_SIZE];
+    char rotate_tmp[CUBE_ARRAY_SIZE];
+
+    memcpy(walk, cube, CUBE_ARRAY_SIZE);
+    printf("\n      ");
+    for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+        printf(" %4s", ranked_tables[loaded_tables[loaded]].label);
+    }
+    printf("  CTG  TRU  IDX  DAY\n      ");
+    for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+        printf(" ====");
+    }
+    printf("  ===  ===  ===  ===\n");
+    for (unsigned int step = 0; step <= length; step++) {
+        struct heuristic_result h = heuristic(walk);
+
+        if (step) {
+            printf("%5s ", move2str[solution[step - 1]]);
+        } else {
+            printf(" INIT ");
+        }
+        for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+            printf(" %4u", h.table_cost[loaded_tables[loaded]]);
+        }
+        printf("  %3u  %3u  %3u  %3u\n", h.cost, length - step, step, h.daisy);
+        if (step < length) {
+            rotate_777_centers(walk, rotate_tmp, CUBE_ARRAY_SIZE, solution[step]);
+        }
+    }
+    printf("\n");
+}
+
+static void print_ranks(const struct heuristic_result *initial)
+{
+    for (unsigned int axis = 0; axis < AXIS_COUNT; axis++) {
+        for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+            if (axis || orbit) {
+                printf(" ");
+            }
+            printf("%s_%s_RANK %" PRIu64, axis_name[axis], orbit_name[orbit], initial->orbit_rank[axis][orbit]);
+        }
+    }
+    for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+        unsigned int index = loaded_tables[loaded];
+
+        printf(
+            " %s_RANK %" PRIu64 " %s_COST %u",
+            ranked_tables[index].label, initial->table_rank[index],
+            ranked_tables[index].label, initial->table_cost[index]
+        );
+    }
+    printf(" COST %u DAISY %u\n", initial->cost, initial->daisy);
+}
+
+static int configure_loaded_tables(void)
+{
+    unsigned int leave_one_out = 0;
+    unsigned int perfect = 0;
+
+    loaded_table_count = 0;
+    for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+        if (!ranked_tables[index].filename) {
+            continue;
+        }
+        if (ranked_tables[index].omitted == ORBIT_COUNT) {
+            perfect++;
+        } else {
+            leave_one_out++;
+        }
+        loaded_tables[loaded_table_count++] = index;
+    }
+    if (leave_one_out == LEAVE_ONE_OUT_TABLE_COUNT && perfect == 0) {
+        return 1;
+    }
+    if (perfect == PERFECT_TABLE_COUNT && leave_one_out == 0) {
+        return 1;
+    }
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    const char *kociemba = NULL;
+    const char *apply_move_string = NULL;
+    unsigned char min_threshold = 0;
+    unsigned char max_threshold = DEFAULT_MAX_IDA_THRESHOLD;
+    long detected_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    unsigned int thread_count = detected_cpus > 0 ? (unsigned int)detected_cpus : 1;
+    int print_summary = 0;
+    int print_ranks_flag = 0;
+    int print_legal_moves = 0;
+    int max_threshold_is_explicit = 0;
+    char cube[CUBE_ARRAY_SIZE];
+    char rotate_tmp[CUBE_ARRAY_SIZE];
+
+    if (thread_count > MAX_THREADS) {
+        thread_count = MAX_THREADS;
+    }
+    for (int index = 1; index < argc; index++) {
+        int matched_table = 0;
+
+        for (unsigned int table = 0; table < TABLE_COUNT; table++) {
+            if (!strcmp(argv[index], ranked_tables[table].flag) && index + 1 < argc) {
+                ranked_tables[table].filename = argv[++index];
+                matched_table = 1;
+                break;
+            }
+        }
+        if (matched_table) {
+            continue;
+        }
+        if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
+            kociemba = argv[++index];
+        } else if (!strcmp(argv[index], "--min-ida-threshold") && index + 1 < argc) {
+            min_threshold = (unsigned char)atoi(argv[++index]);
+        } else if (!strcmp(argv[index], "--max-ida-threshold") && index + 1 < argc) {
+            max_threshold = (unsigned char)atoi(argv[++index]);
+            max_threshold_is_explicit = 1;
+        } else if (!strcmp(argv[index], "--threads") && index + 1 < argc) {
+            thread_count = (unsigned int)atoi(argv[++index]);
+        } else if (!strcmp(argv[index], "--multiplier") && index + 1 < argc) {
+            cost_to_goal_multiplier = (float)atof(argv[++index]);
+        } else if (!strcmp(argv[index], "--apply-move") && index + 1 < argc) {
+            apply_move_string = argv[++index];
+        } else if (!strcmp(argv[index], "--print-rank") || !strcmp(argv[index], "--print-ranks")) {
+            print_ranks_flag = 1;
+        } else if (!strcmp(argv[index], "--print-legal-moves")) {
+            print_legal_moves = 1;
+        } else if (!strcmp(argv[index], "--print-ida-summary")) {
+            print_summary = 1;
+        } else {
+            usage(argv[0]);
+            return 1;
+        }
+    }
+    /* Below 1.0 would weaken an already weak heuristic rather than inflate it. */
+    if (cost_to_goal_multiplier && cost_to_goal_multiplier < 1.0f) {
+        fprintf(stderr, "ERROR: --multiplier must be at least 1.0\n");
+        return 2;
+    }
+    /* A multiplier scales the initial cost too, and that seeds the first threshold.
+     * Scale the default ceiling with it so it cannot start out of range. */
+    if (cost_to_goal_multiplier && !max_threshold_is_explicit) {
+        float scaled = roundf(DEFAULT_MAX_IDA_THRESHOLD * cost_to_goal_multiplier);
+
+        max_threshold = scaled > MAX_IDA_THRESHOLD ? MAX_IDA_THRESHOLD : (unsigned char)scaled;
+    }
+    if (!kociemba || !thread_count || thread_count > MAX_THREADS ||
+        min_threshold > max_threshold || max_threshold > MAX_IDA_THRESHOLD ||
+        !configure_loaded_tables()) {
+        usage(argv[0]);
+        return 2;
+    }
+
+    init_binom();
+    init_move_tables();
+    map_ranked_tables();
+    init_cube(cube, kociemba);
+    blank_untracked_squares(cube);
+    if (apply_move_string) {
+        move_type move = parse_move(apply_move_string);
+
+        if (move == MOVE_NONE || !move_is_allowed(move)) {
+            fprintf(stderr, "ERROR: invalid --apply-move %s\n", apply_move_string);
+            unmap_ranked_tables();
+            return 2;
+        }
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+    }
+
+    struct heuristic_result initial = heuristic(cube);
+    if (print_legal_moves) {
+        printf("LEGAL_MOVES");
+        for (unsigned int index = 0; index < legal_move_count[MOVE_NONE]; index++) {
+            printf(" %s", move2str[moves_777[legal_move_index[MOVE_NONE][index]]]);
+        }
+        printf("\n");
+    }
+    if (print_ranks_flag) {
+        print_ranks(&initial);
+        unmap_ranked_tables();
+        return initial.cost == UINT8_MAX;
+    }
+
+    printf("START\n");
+    print_cube(cube, CUBE_SIZE);
+
+    if (initial.cost == UINT8_MAX) {
+        fprintf(stderr, "ERROR: initial center state is absent from a ranked cost table\n");
+        unmap_ranked_tables();
+        return 1;
+    }
+    if (cost_to_goal_multiplier) {
+        LOG("searching with cost to goal multiplier %.2f\n", cost_to_goal_multiplier);
+    } else {
+        LOG("searching with the sampled per-axis cost matrix\n");
+    }
+    LOG(
+        "initial cost %u, axis costs %u/%u/%u, daisy %u, threads %u, ranked tables %u\n",
+        initial.cost, initial.axis_cost[AXIS_UD], initial.axis_cost[AXIS_LR], initial.axis_cost[AXIS_FB],
+        initial.daisy, thread_count, loaded_table_count
+    );
+    if (min_threshold < initial.cost) {
+        min_threshold = initial.cost;
+    }
+
+    for (unsigned char threshold = min_threshold; threshold <= max_threshold; threshold++) {
+        struct timeval start;
+        struct timeval end;
+        uint64_t threshold_nodes = 1;
+
+        gettimeofday(&start, NULL);
+        int found = initial.daisy || search_at_threshold(cube, threshold, thread_count, &threshold_nodes);
+        gettimeofday(&end, NULL);
+        LOG(
+            "IDA threshold %u, explored %" PRIu64 " nodes, took %.3fs\n",
+            threshold,
+            threshold_nodes,
+            elapsed_seconds(&start, &end)
+        );
+        if (found) {
+            unsigned int length = 0;
+
+            while (solution[length] != MOVE_NONE) {
+                length++;
+            }
+            printf("SOLUTION (%u steps):", length);
+            for (unsigned int index = 0; index < length; index++) {
+                printf(" %s", move2str[solution[index]]);
+            }
+            printf("\n");
+            if (print_summary) {
+                print_ida_summary(cube, length);
+            }
+            for (unsigned int index = 0; index < length; index++) {
+                rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
+            }
+            printf("END\n");
+            print_cube(cube, CUBE_SIZE);
+            unmap_ranked_tables();
+            return 0;
+        }
+    }
+
+    fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
+    unmap_ranked_tables();
+    return 1;
+}

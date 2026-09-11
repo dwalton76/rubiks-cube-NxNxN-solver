@@ -866,7 +866,7 @@ class LookupTable(object):
             for index, state in enumerate(states):
                 fh.write("%s:%d\n" % (state, index))
 
-        subprocess.call(["./utils/pad-lines.py", self.filename_state_index])
+        subprocess.call(["./utils/pad-lines", self.filename_state_index])
         logger.info(f"{self}: state_index end")
 
         logger.info(f"{self}: json begin")

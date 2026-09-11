@@ -8,8 +8,8 @@ wings so the remaining puzzle is a 5x5x5. ``RubiksCube666.reduce_555`` does
 that reduction; ``group_edges`` (via the 5x5x5 solver) then pairs the outer
 wings and ``solve_333`` finishes the cube.
 
-Each IDA phase is guided by prune tables. Phases 2+3 and 5+6 are searched as
-portfolios: many solutions of the earlier phase are collected, later phases
+Each IDA phase is guided by prune tables. Phases 2 and 3 are searched as a
+portfolio: many solutions of the earlier phase are collected, later phases
 are solved from those endpoints, and the shortest combined path is kept.
 
 Phase 1 - stage all inner x-centers and pair the LR obliques
@@ -29,16 +29,16 @@ Phase 3 - stage UD left/right obliques and outer x-centers
     onto U/D. This phase owns orbit-0 OLL. The search keeps the shortest
     phase-2 plus phase-3 pair.
 
-Phase 5 - LR centers to daisy and EO the inside wings
-    Put the LR centers into a daisy (solvable by L/R turns) and split the
-    inside wings into high/low groups. All 2048 even high/low mappings are
-    tried. A large portfolio of phase-5 solutions (default 64) is passed to
-    phase 6.
+Phase 5 - daisy-solve all centers
+    Eighteen overlapping 70^4 ranked tables (one complete axis plus one
+    foreign orbit) guide a dedicated C IDA. That pairs every oblique and
+    solves every inner x-center. Outer x-centers are left for the 5x5x5.
 
-Phase 6 - solve UD/FB inner x-centers and pair remaining obliques
-    Solve the UD and FB inner x-centers and pair the remaining obliques so
-    the centers are a 5x5x5. The inside wings are then paired with the 4x4x4
-    solver.
+The inside wings are then paired by ``pair_inside_edges_via_444``, which maps
+the 6x6x6 slices a 4x4x4 can see onto a fake 4x4x4 and runs the whole 4x4x4
+reduction on it. That is where the inside wings get EOed, so the 6x6x6 needs
+no EO phase of its own. Those moves leave the daisy intact because the fake
+4x4x4 ends with its own centers solved.
 """
 
 # standard libraries
@@ -49,11 +49,9 @@ import sys
 import tempfile
 
 # rubiks cube libraries
-from rubikscubennnsolver import SolveError, reverse_steps
-from rubikscubennnsolver.LookupTable import LookupTable, download_file_if_needed
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver import SolveError
+from rubikscubennnsolver.LookupTable import download_file_if_needed
 from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
-from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinations
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from rubikscubennnsolver.swaps import swaps_666
@@ -169,31 +167,6 @@ UFBD_inner_x_centers_666 = (
     159, 160, 165, 166,  # Back
     195, 196, 201, 202,  # Down
 )
-
-LR_inner_x_centers_oblique_edges_666 = (
-    45, 46, 50, 51, 52, 53, 56, 57, 58, 59, 63, 64,  # Left
-    117, 118, 122, 123, 124, 125, 128, 129, 130, 131, 135, 136,  # Right
-)
-
-UD_inner_x_centers_oblique_edges = (
-    9, 10, 14, 15, 16, 17, 20, 21, 22, 23, 27, 28,  # Upper
-    189, 190, 194, 195, 196, 197, 200, 201, 202, 203, 207, 208,  # Down
-)
-
-FB_inner_x_centers_oblique_edges = (
-    81, 82, 86, 87, 88, 89, 92, 93, 94, 95, 99, 100,  # Front
-    153, 154, 158, 159, 160, 161, 164, 165, 166, 167, 171, 172,  # Back
-)
-
-LR_oblique_edges_UFBD_inner_x_centers = (
-    15, 16, 21, 22,  # Upper
-    45, 46, 50, 53, 56, 59, 63, 64,  # Left
-    87, 88, 93, 94,  # Front
-    117, 118, 122, 125, 128, 131, 135, 136,  # Right
-    159, 160, 165, 166,  # Back
-    195, 196, 201, 202,  # Down
-)
-
 
 edge_orbit_0 = (
     2, 5, 12, 30, 35, 32, 25, 7,
@@ -328,27 +301,6 @@ PHASE5_ILLEGAL_MOVES = (
     "Bw", "Bw'",
     "Uw", "Uw'",
     "Dw", "Dw'",
-)
-
-PHASE6_ILLEGAL_MOVES = (
-    "3Rw", "3Rw'",
-    "3Lw", "3Lw'",
-    "3Fw", "3Fw'",
-    "3Bw", "3Bw'",
-    "3Uw", "3Uw'",
-    "3Dw", "3Dw'",
-    "Rw", "Rw'",
-    "Lw", "Lw'",
-    "Fw", "Fw'",
-    "Bw", "Bw'",
-    "Uw", "Uw'",
-    "Dw", "Dw'",
-    "3Uw2",
-    "3Dw2",
-    "3Fw2",
-    "3Bw2",
-    "L", "L'",
-    "R", "R'",
 )
 
 # fmt: on
@@ -637,475 +589,68 @@ class LookupTableIDA666UDCentersStage:
 
 # ==================================================
 # phase 5
-# LR centers to daisy and EO the inside wings
+# daisy-solve all centers with overlapping 70^4 ranked tables
 # ==================================================
-class LookupTable666Step50LRCenters(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . L L . .  . . . . . .  . . x x . .  . . . . . .
-    . L L L L .  . . . . . .  . x x x x .  . . . . . .
-    . L L L L .  . . . . . .  . x x x x .  . . . . . .
-    . . L L . .  . . . . . .  . . x x . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-
-    lookup-table-6x6x6-step50-LR-solve-inner-x-center-and-oblique-edges.txt
-    =======================================================================
-    0 steps has 9 entries (0 percent, 0.00x previous step)
-    1 steps has 189 entries (0 percent, 21.00x previous step)
-    2 steps has 748 entries (0 percent, 3.96x previous step)
-    3 steps has 2,914 entries (0 percent, 3.90x previous step)
-    4 steps has 12,388 entries (3 percent, 4.25x previous step)
-    5 steps has 44,604 entries (13 percent, 3.60x previous step)
-    6 steps has 109,148 entries (31 percent, 2.45x previous step)
-    7 steps has 132,424 entries (38 percent, 1.21x previous step)
-    8 steps has 37,920 entries (11 percent, 0.29x previous step)
-    9 steps has 2,624 entries (0 percent, 0.07x previous step)
-    10 steps has 32 entries (0 percent, 0.01x previous step)
-
-    Total: 343,000 entries
-    Average: 6.39 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "LLLLLLLLLLLLxxxxxxxxxxxx",
-        "LLLLLLLLLLxxLLxxxxxxxxxx",
-        "LLLLLLLLLLxxxxxxxxxxxxLL",
-        "LLLLLxLLLxLLxxLxxxLxxxxx",
-        "LLLLLxLLLxLLxxxxxLxxxLxx",
-        "LLLLLxLLLxxxLLLxxxLxxxxx",
-        "LLLLLxLLLxxxLLxxxLxxxLxx",
-        "LLLLLxLLLxxxxxLxxxLxxxLL",
-        "LLLLLxLLLxxxxxxxxLxxxLLL",
-        "LLxLLLxLLLLLxxLxxxLxxxxx",
-        "LLxLLLxLLLLLxxxxxLxxxLxx",
-        "LLxLLLxLLLxxLLLxxxLxxxxx",
-        "LLxLLLxLLLxxLLxxxLxxxLxx",
-        "LLxLLLxLLLxxxxLxxxLxxxLL",
-        "LLxLLLxLLLxxxxxxxLxxxLLL",
-        "LLxLLxxLLxLLxxLxxLLxxLxx",
-        "LLxLLxxLLxxxLLLxxLLxxLxx",
-        "LLxLLxxLLxxxxxLxxLLxxLLL",
-        "xxLLLLLLLLLLLLxxxxxxxxxx",
-        "xxLLLLLLLLLLxxxxxxxxxxLL",
-        "xxLLLLLLLLxxLLxxxxxxxxLL",
-        "xxLLLxLLLxLLLLLxxxLxxxxx",
-        "xxLLLxLLLxLLLLxxxLxxxLxx",
-        "xxLLLxLLLxLLxxLxxxLxxxLL",
-        "xxLLLxLLLxLLxxxxxLxxxLLL",
-        "xxLLLxLLLxxxLLLxxxLxxxLL",
-        "xxLLLxLLLxxxLLxxxLxxxLLL",
-        "xxxLLLxLLLLLLLLxxxLxxxxx",
-        "xxxLLLxLLLLLLLxxxLxxxLxx",
-        "xxxLLLxLLLLLxxLxxxLxxxLL",
-        "xxxLLLxLLLLLxxxxxLxxxLLL",
-        "xxxLLLxLLLxxLLLxxxLxxxLL",
-        "xxxLLLxLLLxxLLxxxLxxxLLL",
-        "xxxLLxxLLxLLLLLxxLLxxLxx",
-        "xxxLLxxLLxLLxxLxxLLxxLLL",
-        "xxxLLxxLLxxxLLLxxLLxxLLL"
+DAISY_PLUS_TABLES_666 = tuple(
+    (
+        f"--{axis.lower()}-plus-{extra_axis.lower()}-{orbit}-cost",
+        f"lookup-tables/lookup-table-6x6x6-daisy-{axis}-plus-{extra_axis}-{orbit}-centers.cost-only.bin",
     )
+    for axis in ("UD", "LR", "FB")
+    for extra_axis in ("UD", "LR", "FB")
+    if extra_axis != axis
+    for orbit in ("left-oblique", "right-oblique", "inner-x")
+)
 
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step50-LR-solve-inner-x-center-and-oblique-edges.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=8,
-            all_moves=moves_666,
-            illegal_moves=PHASE5_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-    # fmt: on
-
-    def state(self):
-        return "".join(["L" if self.parent.state[x] == "L" else "x" for x in LR_inner_x_centers_oblique_edges_666])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(LR_inner_x_centers_oblique_edges_666, state):
-            cube[pos] = pos_state
+# Each 70^4 table covers four of nine orbits, so the admissible max is a weak
+# lower bound on the combined daisy. Inflate it to keep the search affordable.
+DAISY_MULTIPLIER_666 = 2.5
 
 
-class LookupTable666Step50HighLowEdges(LookupTable):
+class LookupTableIDA666DaisyCenters:
     """
-    24! / (12! * 12!) = 2,704,156 states
+    Daisy-solve remaining centers with eighteen mixed-axis 70^4 ranked tables.
 
-                 . . U D . .
-                 . . . . . .
-                 D . . . . U
-                 U . . . . D
-                 . . . . . .
-                 . . D U . .
-
-    . . D U . .  . . D U . .  . . D U . .  . . D U . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    D . . . . U  U . . . . D  D . . . . U  U . . . . D
-    U . . . . D  D . . . . U  U . . . . D  D . . . . U
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . U D . .  . . U D . .  . . U D . .  . . U D . .
-
-                 . . U D . .
-                 . . . . . .
-                 D . . . . U
-                 U . . . . D
-                 . . . . . .
-                 . . D U . .
-
-    lookup-table-6x6x6-step51-highlow-edges.txt
-    ===========================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 2 entries (0 percent, 2.00x previous step)
-    2 steps has 29 entries (0 percent, 14.50x previous step)
-    3 steps has 278 entries (0 percent, 9.59x previous step)
-    4 steps has 1,934 entries (0 percent, 6.96x previous step)
-    5 steps has 15,640 entries (0 percent, 8.09x previous step)
-    6 steps has 124,249 entries (4 percent, 7.94x previous step)
-    7 steps has 609,241 entries (22 percent, 4.90x previous step)
-    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
-    9 steps has 688,124 entries (25 percent, 0.56x previous step)
-    10 steps has 40,560 entries (1 percent, 0.06x previous step)
-
-    Total: 2,704,156 entries
-    Average: 7.95 moves
+    Each table is 24,010,000 states. Extra-oblique tables top out at 12 moves
+    (average 8.50); extra inner-x tables top out at 13 (average 9.43).
     """
 
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step51-highlow-edges.txt",
-            "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU",
-            linecount=2704156,
-            max_depth=8,
-            all_moves=moves_666,
-            illegal_moves=PHASE5_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
+    def __init__(self, parent, multiplier=DAISY_MULTIPLIER_666):
+        self.parent = parent
+        self.avoid_oll = None
+        self.multiplier = multiplier
 
-    def state(self) -> str:
-        """
-        Returns:
-            the state of the cube per this lookup table
-        """
-        self.parent.populate_fake_444_for_inner_x_centers_stage()
-        self.parent.fake_444.edge_mapping = self.parent.edge_mapping
-        return self.parent.fake_444.lt_phase2_edges.state()
+    def solve_via_c(self, **_kwargs):
+        cmd = ["./ida_search_666_daisy_centers", "--kociemba", self.parent.get_kociemba_string(True)]
+        for flag, filename in DAISY_PLUS_TABLES_666:
+            download_file_if_needed(filename)
+            cmd.extend((flag, filename))
+        if self.multiplier:
+            cmd.extend(("--multiplier", str(self.multiplier)))
 
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        steps_to_solve = steps_to_solve.split()
-        steps_to_scramble = reverse_steps(steps_to_solve)
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
 
-        self.parent.state = ["x"]
-        self.parent.state.extend(
-            list(
-                "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
-            )
-        )
-        self.parent.nuke_corners()
-        self.parent.nuke_centers()
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
 
-        for step in steps_to_scramble:
-            self.parent.rotate(step)
-
-
-class LookupTableIDA666Step50(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=PHASE5_ILLEGAL_MOVES,
-            prune_tables=(
-                parent.lt_LR_centers,
-                parent.lt_LR_highlow_edges,
-            ),
-        )
-        # fmt: on
-
-
-class LookupTableIDA666Step50WithoutEdges(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=PHASE5_ILLEGAL_MOVES,
-            prune_tables=(
-                parent.lt_LR_centers,
-            ),
-            centers_only=True,
-        )
-        # fmt: on
-
-
-# ==================================================
-# phase 6
-# solve UD/FB inner x-centers and pair remaining obliques
-# ==================================================
-class LookupTable666UDInnerXCenterAndObliqueEdges(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-                 . . . . . .
-                 . . U U . .
-                 . U U U U .
-                 . U U U U .
-                 . . U U . .
-                 . . . . . .
-
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-
-                 . . . . . .
-                 . . D D . .
-                 . D D D D .
-                 . D D D D .
-                 . . D D . .
-                 . . . . . .
-
-    lookup-table-6x6x6-step61-UD-solve-inner-x-center-and-oblique-edges.txt
-    =======================================================================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 12 entries (0 percent, 6.00x previous step)
-    2 steps has 68 entries (0 percent, 5.67x previous step)
-    3 steps has 282 entries (0 percent, 4.15x previous step)
-    4 steps has 1,218 entries (0 percent, 4.32x previous step)
-    5 steps has 5,382 entries (1 percent, 4.42x previous step)
-    6 steps has 20,484 entries (5 percent, 3.81x previous step)
-    7 steps has 62,640 entries (18 percent, 3.06x previous step)
-    8 steps has 118,196 entries (34 percent, 1.89x previous step)
-    9 steps has 104,328 entries (30 percent, 0.88x previous step)
-    10 steps has 29,872 entries (8 percent, 0.29x previous step)
-    11 steps has 516 entries (0 percent, 0.02x previous step)
-
-    Total: 343,000 entries
-    Average: 8.11 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "DDDUUDDUUDDDUUUDDUUDDUUU",
-        "UUUUUUUUUUUUDDDDDDDDDDDD",
-    )
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step61-UD-solve-inner-x-center-and-oblique-edges.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=11,
-            all_moves=moves_666,
-            illegal_moves=PHASE6_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        return "".join([self.parent.state[x] for x in UD_inner_x_centers_oblique_edges])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UD_inner_x_centers_oblique_edges, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666FBInnerXCenterAndObliqueEdges(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . B B . .  . . . . . .  . . F F . .
-    . . . . . .  . B F F B .  . . . . . .  . F B B F .
-    . . . . . .  . B F F B .  . . . . . .  . F B B F .
-    . . . . . .  . . B B . .  . . . . . .  . . F F . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-                 . . . . . .
-
-    lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt
-    =======================================================================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 12 entries (0 percent, 6.00x previous step)
-    2 steps has 68 entries (0 percent, 5.67x previous step)
-    3 steps has 282 entries (0 percent, 4.15x previous step)
-    4 steps has 1,218 entries (0 percent, 4.32x previous step)
-    5 steps has 5,382 entries (1 percent, 4.42x previous step)
-    6 steps has 20,484 entries (5 percent, 3.81x previous step)
-    7 steps has 62,640 entries (18 percent, 3.06x previous step)
-    8 steps has 118,196 entries (34 percent, 1.89x previous step)
-    9 steps has 104,328 entries (30 percent, 0.88x previous step)
-    10 steps has 29,872 entries (8 percent, 0.29x previous step)
-    11 steps has 516 entries (0 percent, 0.02x previous step)
-
-    Total: 343,000 entries
-    Average: 8.11 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "BBBFFBBFFBBBFFFBBFFBBFFF",
-        "FFFFFFFFFFFFBBBBBBBBBBBB",
-    )
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step62-FB-solve-inner-x-center-and-oblique-edges.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=11,
-            all_moves=moves_666,
-            illegal_moves=PHASE6_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in FB_inner_x_centers_oblique_edges])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(FB_inner_x_centers_oblique_edges, state):
-            cube[pos] = pos_state
-
-
-class LookupTable666LRObliqueEdges(LookupTable):
-    """
-    6 * 6 * 4,900 = 176,400 states
-
-                 . . . . . .
-                 . . . . . .
-                 . . U U . .
-                 . . U U . .
-                 . . . . . .
-                 . . . . . .
-
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . L L . .  . . . . . .  . . R R . .  . . . . . .
-    . L . . L .  . . F F . .  . R . . R .  . . B B . .
-    . L . . L .  . . F F . .  . R . . R .  . . B B . .
-    . . L L . .  . . . . . .  . . R R . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-
-                 . . . . . .
-                 . . . . . .
-                 . . D D . .
-                 . . D D . .
-                 . . . . . .
-                 . . . . . .
-
-    lookup-table-6x6x6-step63-LR-oblique-edges.txt
-    ==============================================
-    0 steps has 2 entries (0 percent, 0.00x previous step)
-    1 steps has 12 entries (0 percent, 6.00x previous step)
-    2 steps has 96 entries (0 percent, 8.00x previous step)
-    3 steps has 728 entries (0 percent, 7.58x previous step)
-    4 steps has 3,446 entries (1 percent, 4.73x previous step)
-    5 steps has 10,036 entries (5 percent, 2.91x previous step)
-    6 steps has 26,472 entries (15 percent, 2.64x previous step)
-    7 steps has 44,832 entries (25 percent, 1.69x previous step)
-    8 steps has 41,312 entries (23 percent, 0.92x previous step)
-    9 steps has 32,560 entries (18 percent, 0.79x previous step)
-    10 steps has 15,176 entries (8 percent, 0.47x previous step)
-    11 steps has 1,728 entries (0 percent, 0.11x previous step)
-
-    Total: 176,400 entries
-    Average: 7.56 moves
-    """
-
-    # fmt: off
-    state_targets = (
-        "UUUULLLLLLLLFFFFRRRRRRRRBBBBDDDD",
-        "UUUURRRRRRRRFFFFLLLLLLLLBBBBDDDD",
-    )
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-6x6x6-step63-LR-oblique-edges.txt",
-            self.state_targets,
-            linecount=176400,
-            max_depth=11,
-            all_moves=moves_666,
-            illegal_moves=PHASE6_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in LR_oblique_edges_UFBD_inner_x_centers])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(LR_oblique_edges_UFBD_inner_x_centers, state):
-            cube[pos] = pos_state
-
-
-class LookupTableIDA666UFBDInnerXCenterAndObliqueEdges(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        # fmt: off
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_666,
-            illegal_moves=PHASE6_ILLEGAL_MOVES,
-            prune_tables=(
-                parent.lt_UD_solve_inner_x_centers_and_oblique_edges,
-                parent.lt_FB_solve_inner_x_centers_and_oblique_edges,
-                parent.lt_LR_oblique_edges,
-            ),
-            centers_only=True,
-        )
-        # fmt: on
+        raise SolveError(f"ida_search_666_daisy_centers failed with exit {returncode}\n{output}")
 
 
 class RubiksCube666(RubiksCubeNNNEvenEdges):
@@ -1293,41 +838,8 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # Only orbit0 here; phase 1 owns orbit1 for the reason above.
         self.lt_UD_centers_stage.avoid_oll = 0
 
-        # phases 5 and 6 - daisy-solve centers and EO the inside wings
-        self.lt_LR_centers = LookupTable666Step50LRCenters(self)
-        self.lt_LR_highlow_edges = LookupTable666Step50HighLowEdges(self)
-        self.lt_step50 = LookupTableIDA666Step50(self)
-        self.lt_step50_without_edges = LookupTableIDA666Step50WithoutEdges(self)
-        self.lt_UD_solve_inner_x_centers_and_oblique_edges = LookupTable666UDInnerXCenterAndObliqueEdges(self)
-        self.lt_FB_solve_inner_x_centers_and_oblique_edges = LookupTable666FBInnerXCenterAndObliqueEdges(self)
-        self.lt_LR_oblique_edges = LookupTable666LRObliqueEdges(self)
-        self.lt_UFBD_solve_inner_x_centers_and_oblique_edges = LookupTableIDA666UFBDInnerXCenterAndObliqueEdges(self)
-
-    def populate_fake_444_for_inner_x_centers_stage(self):
-        fake_444 = self.get_fake_444()
-        fake_444.nuke_corners()
-        fake_444.nuke_edges()
-        fake_444.nuke_centers()
-
-        for side_index in range(6):
-            offset_444 = side_index * 16
-            offset_666 = side_index * 36
-
-            # Centers
-            fake_444.state[6 + offset_444] = self.state[15 + offset_666]
-            fake_444.state[7 + offset_444] = self.state[16 + offset_666]
-            fake_444.state[10 + offset_444] = self.state[21 + offset_666]
-            fake_444.state[11 + offset_444] = self.state[22 + offset_666]
-
-            # Edges
-            fake_444.state[2 + offset_444] = self.state[3 + offset_666]
-            fake_444.state[3 + offset_444] = self.state[4 + offset_666]
-            fake_444.state[5 + offset_444] = self.state[13 + offset_666]
-            fake_444.state[9 + offset_444] = self.state[19 + offset_666]
-            fake_444.state[8 + offset_444] = self.state[18 + offset_666]
-            fake_444.state[12 + offset_444] = self.state[24 + offset_666]
-            fake_444.state[14 + offset_444] = self.state[33 + offset_666]
-            fake_444.state[15 + offset_444] = self.state[34 + offset_666]
+        # phase 5 - daisy-solve all centers with overlapping 70^4 ranked tables
+        self.lt_daisy_centers = LookupTableIDA666DaisyCenters(self)
 
     def populate_fake_555_for_ULFRBD_solve(self):
         fake_555 = self.get_fake_555()
@@ -1423,120 +935,11 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         return True
 
-    def daisy_solve_centers_eo_edges(self, phase5_solution_count: int = 64) -> None:
-        """
-        The inner x-centers and oblique edges are staged. Daisy solve the centers so that our
-        centers are reduced to 555 while also EOing the inside orbit of edges.
-
-        Thoughts on other ways to tackle this problem:
-        - There are 70^3 per side so to do this in one phase would be a 70^9 search space which is unrealistic.
-        """
-
-        # phase 5
-        # - put LR centers such that they can be solved with L L' R R'
-        # - EO the inside oribit of edges to prep for the 444 solver to pair those edges
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        phase5_comment_start = len(self.solution)
-        pt_state_indexes_to_edge_mapping = {}
-
-        # try all 2048 edge mappings
-        for edges_to_flip_sets in highlow_edge_mapping_combinations.values():
-            for edge_mapping in edges_to_flip_sets:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
-                self.edge_mapping = edge_mapping
-                pt_state_indexes_to_edge_mapping[tuple([pt.state_index() for pt in self.lt_step50.prune_tables])] = (
-                    edge_mapping
-                )
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        phase5_solutions = self.lt_step50.solutions_via_c(
-            pt_states=pt_state_indexes_to_edge_mapping.keys(),
-            solution_count=phase5_solution_count,
-            find_extra=True,
-        )
-
-        phase5_by_phase6_root = {}
-        for phase5_solution, (pt0_state, pt1_state, pt2_state, pt3_state, pt4_state) in phase5_solutions:
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            self.edge_mapping = pt_state_indexes_to_edge_mapping[(pt0_state, pt1_state)]
-            for step in phase5_solution:
-                self.rotate(step)
-
-            phase6_root = tuple(
-                pt.state_index() for pt in self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.prune_tables
-            )
-            previous = phase5_by_phase6_root.get(phase6_root)
-            if previous is None or len(phase5_solution) < len(previous[0]):
-                phase5_by_phase6_root[phase6_root] = (
-                    phase5_solution,
-                    self.edge_mapping,
-                )
-
-        roots_by_phase5_len = {}
-        for phase6_root, (phase5_solution, _edge_mapping) in phase5_by_phase6_root.items():
-            roots_by_phase5_len.setdefault(len(phase5_solution), []).append(phase6_root)
-
-        logger.info(
-            "phase-5 portfolio has %d solutions and %d distinct phase-6 roots in %d length groups",
-            len(phase5_solutions),
-            len(phase5_by_phase6_root),
-            len(roots_by_phase5_len),
-        )
-
-        best = None
-        prune_table_count = len(self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.prune_tables)
-        for phase5_len, phase6_roots in sorted(roots_by_phase5_len.items()):
-            if best is not None and phase5_len >= best[0]:
-                break
-
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-            phase6_solution, phase6_states = self.lt_UFBD_solve_inner_x_centers_and_oblique_edges.solutions_via_c(
-                pt_states=phase6_roots,
-                solution_count=1,
-            )[0]
-            phase6_root = tuple(phase6_states[:prune_table_count])
-            phase5_solution, edge_mapping = phase5_by_phase6_root[phase6_root]
-            candidate = (
-                len(phase5_solution) + len(phase6_solution),
-                len(phase6_solution),
-                phase5_solution,
-                phase6_solution,
-                edge_mapping,
-            )
-            if best is None or candidate < best:
-                best = candidate
-
-        if best is None:
-            raise SolveError("could not reduce UD/FB centers from any phase-5 portfolio endpoint")
-
-        _, _, phase5_solution, phase6_solution, self.edge_mapping = best
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in phase5_solution:
-            self.rotate(step)
-        self.print_cube_add_comment("LR centers reduced to 555, EOed inside edges", phase5_comment_start)
-
-        # phase 6
-        # solve the UD inner x-centers, pair the UD oblique edges and daisy solve UD
-        # solve the FB inner x-centers, pair the FB oblique edges and daisy solve FB
-        # daisy solve LR
-        # this takes ~14 steps
-        phase6_comment_start = len(self.solution)
-        for step in phase6_solution:
-            self.rotate(step)
-        self.print_cube_add_comment("UD FB centers reduced to 555", phase6_comment_start)
-        logger.info(
-            "selected phase-5 length %d and phase-6 length %d (%d total)",
-            len(phase5_solution),
-            len(phase6_solution),
-            len(phase5_solution) + len(phase6_solution),
-        )
+    def daisy_solve_centers(self) -> None:
+        """Daisy-solve the staged centers with the ranked C search."""
+        comment_start = len(self.solution)
+        self.lt_daisy_centers.solve_via_c()
+        self.print_cube_add_comment("centers reduced to 555", comment_start)
 
     def stage_LR_and_UD_centers(self, phase2_solution_count: int = 64) -> None:
         """Select the phase-2 endpoint that gives the shortest ranked phase 3."""
@@ -1622,7 +1025,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
         self.lt_init()
         self.stage_centers()
-        self.daisy_solve_centers_eo_edges()
+        self.daisy_solve_centers()
         self.pair_inside_edges_via_444()
 
 

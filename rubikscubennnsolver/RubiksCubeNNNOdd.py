@@ -634,6 +634,9 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         if action == "stage_UD_centers":
             if outer_x_centers_valid:
+                # All four UFBD coordinates map to real stickers, so the
+                # combined outer-x / oblique ranked search can replace the
+                # old phase-5/6 split.
                 self.fake_777.stage_UD_centers()
             else:
                 if cycle == max_cycle:

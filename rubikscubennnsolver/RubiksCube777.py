@@ -26,11 +26,11 @@ Phase 4 - stage UD inner centers
     Same as phase 1, but for U/D via the 5x5x5 FB stager. Only larger odd
     cubes run this; on a 7x7x7 phase 2 has already staged them.
 
-Phase 5 - pair UD oblique edges
-    Pair every U/D oblique orbit, anywhere on U/F/D/B. Heuristic only.
-
-Phase 6 - stage the remaining UD centers
-    Same as phase 3, but for U/D.
+Phase 5/6 - stage UD outer x-centers and pair UD obliques
+    Ranked pairwise tables over the UFBD outer-x, left, middle, and right
+    oblique coordinates. The middle obliques are the outer t-centers, so this
+    also stages the remaining UD centers. Larger odd cubes keep the older
+    split path when a fake-7x7 outer-x coordinate is only a placeholder.
 
 Phase 7 - LR centers to vertical bars
     Step-40 IDA (prune tables step41-44).
@@ -92,6 +92,13 @@ outer_x_centers_777 = (
     58, 62, 86, 90,  # Left
     107, 111, 135, 139,  # Front
     156, 160, 184, 188,  # Right
+    205, 209, 233, 237,  # Back
+    254, 258, 282, 286,  # Down
+)
+
+UFBD_outer_x_centers_777 = (
+    9, 13, 37, 41,  # Upper
+    107, 111, 135, 139,  # Front
     205, 209, 233, 237,  # Back
     254, 258, 282, 286,  # Down
 )
@@ -839,6 +846,100 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
                     self.parent.state[x] = "U"
                 else:
                     self.parent.state[x] = "x"
+            else:
+                self.parent.state[x] = "."
+
+
+# ==================================================
+# combined phases 5/6
+# stage UD outer x-centers and pair UD obliques
+# ==================================================
+UD_PHASE56_TABLES_777 = (
+    (
+        "--left-middle-oblique-cost",
+        "lookup-tables/lookup-table-7x7x7-phase5-6-UD-left-middle-oblique-centers-stage.cost-only.bin",
+    ),
+    (
+        "--left-right-oblique-cost",
+        "lookup-tables/lookup-table-7x7x7-phase5-6-UD-left-right-oblique-centers-stage.cost-only.bin",
+    ),
+    (
+        "--left-oblique-outer-x-cost",
+        "lookup-tables/lookup-table-7x7x7-phase5-6-UD-left-oblique-outer-x-centers-stage.cost-only.bin",
+    ),
+    (
+        "--middle-right-oblique-cost",
+        "lookup-tables/lookup-table-7x7x7-phase5-6-UD-middle-right-oblique-centers-stage.cost-only.bin",
+    ),
+    (
+        "--middle-oblique-outer-x-cost",
+        "lookup-tables/lookup-table-7x7x7-phase5-6-UD-middle-oblique-outer-x-centers-stage.cost-only.bin",
+    ),
+    (
+        "--right-oblique-outer-x-cost",
+        "lookup-tables/lookup-table-7x7x7-phase5-6-UD-right-oblique-outer-x-centers-stage.cost-only.bin",
+    ),
+)
+
+
+class LookupTableIDA777UDObliquesOuterXStage:
+    """
+    Stage the U/D outer x-centers while pairing the U/D left, middle, and
+    right obliques anywhere on U/F/D/B. Six pairwise ranked tables, each
+    (16! / (8! * 8!))^2 = 165,636,900 states. The middle obliques are the
+    outer t-centers, so this also finishes staging the remaining U/D centers.
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.avoid_oll = None
+
+    def solve_via_c(self, **_kwargs):
+        cmd = ["./ida_search_777_UD_centers_stage", "--kociemba", self.parent.get_kociemba_string(True)]
+        for flag, filename in UD_PHASE56_TABLES_777:
+            download_file_if_needed(filename)
+            cmd.extend((flag, filename))
+
+        if self.avoid_oll is not None:
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+            if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
+                cmd.append("--orbit0-need-odd-w" if 0 in orbits_with_oll else "--orbit0-need-even-w")
+            if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
+                cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
+
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+
+        raise SolveError(f"ida_search_777_UD_centers_stage failed with exit {returncode}\n{output}")
+
+    def recolor(self):
+        logger.info(f"{self}: recolor (custom)")
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        tracked = set(UFBD_outer_x_centers_777 + UFBD_oblique_edges_777)
+        for x in centers_777:
+            if x in tracked:
+                self.parent.state[x] = "U" if self.parent.state[x] in ("U", "D") else "x"
             else:
                 self.parent.state[x] = "."
 
@@ -2276,11 +2377,16 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # Phase 3 and everything after it only turns the outer orbit, so no
         # 3Xw quarter turn survives past phase 2 and it is the last chance to
-        # fix orbit1 parity. Orbit0 is handled by the fake 5x5x5 FB staging in
-        # phase 6.
+        # fix orbit1 parity. Orbit0 is handled by the combined UD outer-x /
+        # oblique phase that replaced fake 5x5x5 FB staging.
         self.lt_LR_oblique_edges_UD_inner_centers_stage.avoid_oll = 1
 
-        # phase 5 - pair the oblique UD edges (unpaired-count heuristic)
+        # phase 5/6 - stage U/D outer x-centers and pair U/D obliques
+        self.lt_UD_obliques_outer_x_stage = LookupTableIDA777UDObliquesOuterXStage(self)
+        self.lt_UD_obliques_outer_x_stage.avoid_oll = 0
+
+        # Larger odd cubes pair U/D obliques of an inner orbit on their own
+        # when the fake-7x7 outer-x coordinate is only a placeholder.
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
         # phase 7 - LR centers to vertical bars
@@ -2526,21 +2632,23 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.group_inside_UD_centers()
             self.print_cube_add_comment("UD inner x-centers staged", tmp_solution_len)
 
-        # phase 5 - pair the oblique UD edges
+        if all_centers:
+            # phases 5 and 6 - stage UD outer x-centers and pair UD obliques
+            tmp_solution_len = len(self.solution)
+            self.lt_UD_obliques_outer_x_stage.solve_via_c()
+            self.print_cube_add_comment("UD centers staged", tmp_solution_len)
+            return
+
+        # t-centers-only fallback used by larger odd cubes when the fake-7x7
+        # outer-x coordinate is not a real sticker from the active orbit.
         tmp_solution_len = len(self.solution)
         self.lt_UD_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
         self.print_cube_add_comment("UD oblique edges paired", tmp_solution_len)
 
-        # phase 6 - use 5x5x5 to stage the remaining UD centers
         tmp_solution_len = len(self.solution)
         self.create_fake_555_from_outside_centers()
-
-        if all_centers:
-            self.fake_555.group_centers_stage_FB()
-            desc = "UD centers staged"
-        else:
-            self.fake_555.lt_UD_t_centers_stage_ida.solve_via_c()
-            desc = "UD t-centers staged"
+        self.fake_555.lt_UD_t_centers_stage_ida.solve_via_c()
+        desc = "UD t-centers staged"
 
         for step in self.fake_555.solution:
             if step.startswith("COMMENT"):

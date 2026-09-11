@@ -10,6 +10,10 @@ from rubikscubennnsolver.RubiksCube777 import (
     RubiksCube777,
     UFBD_inner_t_centers_777,
     UFBD_inner_x_centers_777,
+    UFBD_left_oblique_777,
+    UFBD_middle_oblique_777,
+    UFBD_outer_x_centers_777,
+    UFBD_right_oblique_777,
     oblique_edges_777,
     solved_777,
 )
@@ -91,6 +95,22 @@ class CenterStagingTablesTest(unittest.TestCase):
 
         self.assertFalse(fake_777.stage_UD_inner_centers_in_phase2)
         self.assertIsInstance(fake_777.lt_LR_oblique_edge_pairing, LookupTableIDAViaGraph)
+        self.assertEqual(fake_777.lt_UD_obliques_outer_x_stage.avoid_oll, 0)
+        self.assertIsInstance(fake_777.lt_UD_oblique_edge_pairing, LookupTableIDAViaGraph)
+
+    def test_777_combined_ud_phase_recolors_four_coordinates(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        combined = cube.lt_UD_obliques_outer_x_stage
+
+        self.assertEqual(combined.avoid_oll, 0)
+        self.assertNotIsInstance(combined, LookupTableIDAViaGraph)
+        combined.recolor()
+
+        tracked = UFBD_outer_x_centers_777 + UFBD_left_oblique_777 + UFBD_middle_oblique_777 + UFBD_right_oblique_777
+        for square in tracked:
+            expected = "U" if square < 50 or square > 245 else "x"
+            self.assertEqual(cube.state[square], expected)
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

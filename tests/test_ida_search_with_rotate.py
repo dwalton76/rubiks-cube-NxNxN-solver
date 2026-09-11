@@ -3,8 +3,16 @@ import unittest
 from unittest.mock import patch
 
 # rubiks cube libraries
+from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, UFBD_outer_x_centers_666, solved_666
+from rubikscubennnsolver.RubiksCube777 import (
+    RubiksCube777,
+    UFBD_inner_t_centers_777,
+    UFBD_inner_x_centers_777,
+    oblique_edges_777,
+    solved_777,
+)
 from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_888
 
 
@@ -50,6 +58,29 @@ class CenterStagingTablesTest(unittest.TestCase):
             cube.make_plus_sign()
 
         self.assertEqual(events, ["stage", "inner-no-eo", "stage", "outer-eo"])
+
+    def test_777_combined_phase_recolors_both_coordinates(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        combined = cube.lt_LR_oblique_edges_UD_inner_centers_stage
+
+        self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_pairing"))
+        self.assertNotIsInstance(combined, LookupTableIDAViaGraph)
+        self.assertEqual(
+            combined.filename,
+            "lookup-tables/lookup-table-7x7x7-step20-UD-inner-centers-stage.cost-only.bin",
+        )
+
+        combined.recolor()
+
+        inner_centers = UFBD_inner_t_centers_777 + UFBD_inner_x_centers_777
+        for square in inner_centers:
+            expected = "U" if square < 50 or square > 245 else "x"
+            self.assertEqual(cube.state[square], expected)
+
+        for square in oblique_edges_777:
+            expected = "L" if 49 < square < 99 or 147 < square < 197 else "x"
+            self.assertEqual(cube.state[square], expected)
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

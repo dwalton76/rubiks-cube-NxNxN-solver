@@ -1617,9 +1617,8 @@ class RubiksCube(object):
                 move = side
 
             if quarter_turns > 1:
-                move += str(quarter_turns)
-
-            if not clockwise:
+                move += "2"
+            elif not clockwise:
                 move += "'"
 
             if moves is not None and move not in moves:

@@ -82,5 +82,14 @@ class SolveCubeTest(unittest.TestCase):
         self._solve("10x10x10")
 
 
+class RandomizeTest(unittest.TestCase):
+    def test_randomize_does_not_emit_half_turn_primes(self):
+        cube = RubiksCube444(solved_444, ORDER)
+        cube.randomize(count=500)
+        illegal = [step for step in cube.solution if step.endswith("2'")]
+        self.assertEqual(illegal, [])
+        cube.compress_solution()
+
+
 if __name__ == "__main__":
     unittest.main()

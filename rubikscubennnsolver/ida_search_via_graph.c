@@ -190,7 +190,6 @@ void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
     int L_start_kociemba = D_start_kociemba + squares_per_side;
     int B_start_kociemba = L_start_kociemba + squares_per_side;
 
-    char ones_UL[3] = {'U', 'L', 0};
     char ones_UF[3] = {'U', 'F', 0};
     char ones_UR[3] = {'U', 'R', 0};
     char ones_UB[3] = {'U', 'B', 0};

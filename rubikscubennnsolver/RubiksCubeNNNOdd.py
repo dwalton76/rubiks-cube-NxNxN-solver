@@ -647,7 +647,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                 if cycle == max_cycle:
                     self.fake_777.stage_LR_t_centers()
                 else:
-                    self.fake_777.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
+                    self.fake_777.lt_LR_oblique_edges_UD_inner_centers_stage.solve_via_c(use_kociemba_string=True)
 
         elif action == "solve_t_centers":
             solve_t_centers(self.fake_777)
@@ -681,20 +681,20 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         max_center_orbits = int((self.size - 3) / 2) - 2
 
-        # Stage all LR centers
-        if not self.LR_centers_staged():
-            tmp_solution_len = len(self.solution)
+        # Stage all LR centers. This also stages the corresponding U/D inner
+        # centers, so run it even if L/R happened to start staged.
+        tmp_solution_len = len(self.solution)
 
-            for center_orbit_id in range(max_center_orbits + 1):
-                width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
-                max_cycle = int((width - 5) / 2)
+        for center_orbit_id in range(max_center_orbits + 1):
+            width = self.size - 2 - ((max_center_orbits - center_orbit_id) * 2)
+            max_cycle = int((width - 5) / 2)
 
-                for cycle in range(max_cycle + 1):
-                    self.stage_or_solve_inside_777(
-                        center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
-                    )
+            for cycle in range(max_cycle + 1):
+                self.stage_or_solve_inside_777(
+                    center_orbit_id, max_center_orbits, width, cycle, max_cycle, "stage_LR_centers"
+                )
 
-            self.print_cube_add_comment("NNN LR centers staged", tmp_solution_len)
+        self.print_cube_add_comment("NNN LR centers staged", tmp_solution_len)
 
         # Stage all UD centers
         if not self.UD_centers_staged():

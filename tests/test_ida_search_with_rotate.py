@@ -14,6 +14,7 @@ from rubikscubennnsolver.RubiksCube777 import (
     solved_777,
 )
 from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_888
+from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd, solved_999
 
 
 class CenterStagingTablesTest(unittest.TestCase):
@@ -64,7 +65,8 @@ class CenterStagingTablesTest(unittest.TestCase):
         cube.lt_init()
         combined = cube.lt_LR_oblique_edges_UD_inner_centers_stage
 
-        self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_pairing"))
+        self.assertTrue(cube.stage_UD_inner_centers_in_phase2)
+        self.assertEqual(combined.avoid_oll, 1)
         self.assertNotIsInstance(combined, LookupTableIDAViaGraph)
         self.assertEqual(
             combined.filename,
@@ -81,6 +83,14 @@ class CenterStagingTablesTest(unittest.TestCase):
         for square in oblique_edges_777:
             expected = "L" if 49 < square < 99 or 147 < square < 197 else "x"
             self.assertEqual(cube.state[square], expected)
+
+    def test_larger_odd_cubes_pair_obliques_without_the_combined_phase(self):
+        """One orbit at a time means the U/D inner centers cannot be staged here."""
+        cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
+        fake_777 = cube.get_fake_777()
+
+        self.assertFalse(fake_777.stage_UD_inner_centers_in_phase2)
+        self.assertIsInstance(fake_777.lt_LR_oblique_edge_pairing, LookupTableIDAViaGraph)
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

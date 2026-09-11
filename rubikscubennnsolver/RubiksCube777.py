@@ -22,6 +22,10 @@ Phase 2 - stage UD inner centers and pair LR oblique edges
 Phase 3 - stage the remaining LR centers
     Map the outer 5x5 of each face onto a fake 5x5x5 and stage its LR centers.
 
+Phase 4 - stage UD inner centers
+    Same as phase 1, but for U/D via the 5x5x5 FB stager. Only larger odd
+    cubes run this; on a 7x7x7 phase 2 has already staged them.
+
 Phase 5 - pair UD oblique edges
     Pair every U/D oblique orbit, anywhere on U/F/D/B. Heuristic only.
 
@@ -201,6 +205,11 @@ UFBD_inner_x_centers_777 = (
     115, 117, 129, 131,  # Front
     213, 215, 227, 229,  # Back
     262, 264, 276, 278,  # Down
+)
+
+UD_inside_centers_777 = (
+    17, 18, 19, 24, 25, 26, 31, 32, 33,  # Upper
+    262, 263, 264, 269, 270, 271, 276, 277, 278,  # Down
 )
 
 UFBD_left_oblique_777 = (
@@ -2234,6 +2243,11 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     """
 
+    # Odd cubes larger than 7x7x7 reduce one center orbit at a time on a fake
+    # 7x7x7, so staging that orbit's U/D inner centers here would be undone by
+    # the next orbit. They clear this and pair the L/R obliques on their own.
+    stage_UD_inner_centers_in_phase2 = True
+
     def sanity_check(self):
         self._sanity_check("edge-orbit-0", edge_orbit_0_777, 8)
         self._sanity_check("edge-orbit-1", edge_orbit_1_777, 8)
@@ -2255,10 +2269,15 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 2 - stage U/D inner centers and pair L/R obliques
         self.lt_LR_oblique_edges_UD_inner_centers_stage = LookupTableIDA777LRObliqueEdgesUDInnerCentersStage(self)
 
-        # Phase 3 and everything after it maps a fake 5x5x5 solution onto the
-        # outer orbit, so no 3Xw quarter turn survives past this phase and it
-        # is the last chance to fix orbit1 parity. Orbit0 is handled by the
-        # fake 5x5x5 FB staging in phase 6.
+        # Odd cubes larger than 7x7x7 pair the L/R obliques of an inner center
+        # orbit on their own, where the U/D inner centers of the fake 7x7x7 are
+        # not a meaningful coordinate.
+        self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
+
+        # Phase 3 and everything after it only turns the outer orbit, so no
+        # 3Xw quarter turn survives past phase 2 and it is the last chance to
+        # fix orbit1 parity. Orbit0 is handled by the fake 5x5x5 FB staging in
+        # phase 6.
         self.lt_LR_oblique_edges_UD_inner_centers_stage.avoid_oll = 1
 
         # phase 5 - pair the oblique UD edges (unpaired-count heuristic)
@@ -2413,6 +2432,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         - use 5x5x5 solver to stage the LR centers (10 moves)
         - use 5x5x5 solver to stage the LR t-centers (5 moves)
         """
+        if self.LR_centers_staged():
+            # Phase 2 also stages the U/D inner centers, so L/R being staged
+            # is not on its own enough to skip this.
+            if not self.stage_UD_inner_centers_in_phase2 or self.UD_inside_centers_staged():
+                return
+
         # phase 1 - use 5x5x5 solver to stage the LR inner centers
         tmp_solution_len = len(self.solution)
         self.group_inside_LR_centers()
@@ -2420,8 +2445,15 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
         # phase 2 - stage UD inner centers and pair LR oblique edges
         tmp_solution_len = len(self.solution)
-        self.lt_LR_oblique_edges_UD_inner_centers_stage.solve_via_c(use_kociemba_string=True)
-        self.print_cube_add_comment("UD inner centers staged, LR oblique edges paired", tmp_solution_len)
+
+        if self.stage_UD_inner_centers_in_phase2:
+            self.lt_LR_oblique_edges_UD_inner_centers_stage.solve_via_c(use_kociemba_string=True)
+            desc = "UD inner centers staged, LR oblique edges paired"
+        else:
+            self.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
+            desc = "LR oblique edges paired"
+
+        self.print_cube_add_comment(desc, tmp_solution_len)
 
         # phase 3 - use 5x5x5 solver to stage the LR centers
         tmp_solution_len = len(self.solution)
@@ -2458,9 +2490,41 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_step40.solve_via_c()
         self.print_cube_add_comment("LR centers vertical bars", tmp_solution_len)
 
+    # UD centers
+    def UD_inside_centers_staged(self):
+        state = self.state
+
+        for x in UD_inside_centers_777:
+            if state[x] not in ("U", "D"):
+                return False
+        return True
+
+    def group_inside_UD_centers(self):
+        self.create_fake_555_from_inside_centers()
+        self.fake_555.group_centers_stage_FB()
+
+        for step in self.fake_555.solution:
+            if step.startswith("COMMENT"):
+                pass
+            else:
+                if step.startswith("5"):
+                    step = "7" + step[1:]
+                elif step.startswith("3"):
+                    step = "4" + step[1:]
+                elif "w" in step:
+                    step = "3" + step
+
+                self.rotate(step)
+
     def _stage_UD_centers(self, all_centers: bool):
         if self.UD_centers_staged():
             return
+
+        # phase 4 - use 5x5x5 solver to stage the UD inner centers
+        if not self.stage_UD_inner_centers_in_phase2:
+            tmp_solution_len = len(self.solution)
+            self.group_inside_UD_centers()
+            self.print_cube_add_comment("UD inner x-centers staged", tmp_solution_len)
 
         # phase 5 - pair the oblique UD edges
         tmp_solution_len = len(self.solution)

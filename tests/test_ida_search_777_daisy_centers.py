@@ -230,6 +230,18 @@ class DaisyCenters777Test(unittest.TestCase):
                 self.assertEqual(actual["DAISY"], daisy)
                 self.assertEqual(actual["COST"], 0 if daisy else 1)
 
+        for cube, daisy in ((native, 1), (swapped, 0), (mixed, 0)):
+            with self.subTest(native_only=True, daisy=daisy):
+                result = subprocess.run(
+                    self.command(cube, "--native-only", "--print-ranks"),
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                actual = parse_ranks(result.stdout)
+                self.assertEqual(actual["DAISY"], daisy)
+                self.assertEqual(actual["COST"], 0 if daisy else 1)
+
         # Costs 1 through 15 hand each axis a different maximum: UD 5, LR 10, FB 15.
         distinct = {label: index + 2 for index, (label, _, _, _) in enumerate(LEAVE_ONE_OUT_TABLES)}
         self.write_leave_one_out([moved], distinct)

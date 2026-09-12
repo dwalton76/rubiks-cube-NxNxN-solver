@@ -44,6 +44,12 @@ parser.add_argument("--colormap", default=None, type=str, help="Colors for sides
 parser.add_argument("--order", type=str, default="URFDLB", help="order of sides in --state, default kociemba URFDLB")
 parser.add_argument("--solution333", type=str, default=None, help="cube explorer optimal steps for solving 3x3x3")
 parser.add_argument(
+    "--two-phase-centers",
+    default=False,
+    action="store_true",
+    help="on 5x5x5, use the legacy LR-then-FB two-phase center staging",
+)
+parser.add_argument(
     "--state",
     type=str,
     help="Cube state",
@@ -82,7 +88,12 @@ elif size == 5:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube555 import RubiksCube555
 
-    cube = RubiksCube555(args.state, args.order, args.colormap)
+    cube = RubiksCube555(
+        args.state,
+        args.order,
+        args.colormap,
+        use_one_phase_centers_stage=not args.two_phase_centers,
+    )
 elif size == 6:
     # rubiks cube libraries
     from rubikscubennnsolver.RubiksCube666 import RubiksCube666

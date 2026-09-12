@@ -24,7 +24,7 @@ class RubiksCubeNNNOddEdges(RubiksCube):
                 # from using the more advanced 555 edge pairing code path...and it
                 # takes much longer to run.  For now use the old L4E way it is only
                 # about 1 move longer if the centers are solved but runs 3x faster.
-                self.fake_555 = RubiksCube555(solved_555, "URFDLB")
+                self.fake_555 = RubiksCube555(solved_555, "URFDLB", use_one_phase_centers_stage=False)
                 self.fake_555.lt_init()
                 self.fake_555.enable_print_cube = False
         else:

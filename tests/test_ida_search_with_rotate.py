@@ -14,6 +14,7 @@ from rubikscubennnsolver.RubiksCube666 import (
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_LEAVE_ONE_OUT_TABLES_777,
     DAISY_PERFECT_TABLES_777,
+    NATIVE_SOLVE_PERFECT_TABLES_777,
     RubiksCube777,
     UFBD_inner_t_centers_777,
     UFBD_inner_x_centers_777,
@@ -29,8 +30,8 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCube777ForNNNOdd, RubiksC
 
 
 class CenterStagingTablesTest(unittest.TestCase):
-    def test_default_cube_keeps_graph_based_center_staging(self):
-        cube = RubiksCube555(solved_555, "URFDLB")
+    def test_two_phase_option_keeps_graph_based_center_staging(self):
+        cube = RubiksCube555(solved_555, "URFDLB", use_one_phase_centers_stage=False)
         cube.lt_init()
 
         self.assertFalse(hasattr(cube, "lt_centers_stage_one_phase"))
@@ -147,13 +148,52 @@ class CenterStagingTablesTest(unittest.TestCase):
         # multiplier over the admissible max.
         self.assertIsNone(daisy.multiplier)
 
-    def test_larger_odd_cubes_daisy_then_keep_step70(self):
+    def test_larger_odd_cubes_use_native_only_daisy_without_step_tables(self):
         cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
         fake_777 = cube.get_fake_777()
-        fake_777.lt_init()
+        calls = []
 
-        self.assertFalse(hasattr(fake_777, "lt_step70"))
+        with (
+            patch.object(cube, "populate_fake_777"),
+            patch.object(
+                fake_777,
+                "centers_combined_daisy_solve",
+                side_effect=lambda **kwargs: calls.append(kwargs),
+            ),
+        ):
+            cube.stage_or_solve_inside_777(0, 0, 7, 0, 0, "solve_centers")
+
+        self.assertEqual(calls, [{"native_only": True}])
+        for step in (70, 71, 72, 75, 76):
+            self.assertFalse(hasattr(fake_777, f"lt_step{step}"))
         self.assertIsNotNone(fake_777.lt_daisy_centers)
+
+    def test_native_only_daisy_uses_its_own_perfect_tables(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        daisy = cube.lt_daisy_centers
+        commands = []
+
+        def fake_run(cmd):
+            commands.append(cmd)
+            return "SOLUTION (0 steps):"
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch.object(daisy, "_run", side_effect=fake_run),
+        ):
+            daisy.solve_via_c(native_only=True)
+            daisy.solve_via_c()
+
+        self.assertEqual(len(NATIVE_SOLVE_PERFECT_TABLES_777), 3)
+        self.assertIn("--native-only", commands[0])
+        self.assertNotIn("--native-only", commands[1])
+        for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777:
+            self.assertIn(filename, commands[0])
+            self.assertNotIn(filename, commands[1])
+        for _, filename in DAISY_PERFECT_TABLES_777:
+            self.assertIn(filename, commands[1])
+            self.assertNotIn(filename, commands[0])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

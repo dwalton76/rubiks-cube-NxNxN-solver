@@ -56,11 +56,12 @@ IDA objects, without going through this six-phase reduction.
 # standard libraries
 import itertools
 import logging
+import subprocess
 from typing import List
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
-from rubikscubennnsolver.LookupTable import LookupTable
+from rubikscubennnsolver.LookupTable import LookupTable, download_file_if_needed
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
@@ -864,6 +865,102 @@ class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
             prune_tables=(parent.lt_LR_t_centers_stage,),
             centers_only=True,
         )
+
+
+class LookupTable555RankedCenterStage:
+    """A dense ranked-cost center table consumed by the one-phase C search."""
+
+    def __init__(self, parent, filename: str):
+        self.parent = parent
+        self.filename = "lookup-tables/" + filename
+        download_file_if_needed(self.filename)
+
+
+class LookupTable555XCenterStageOnePhase(LookupTable555RankedCenterStage):
+    def __init__(self, parent):
+        LookupTable555RankedCenterStage.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step15-x-centers-stage-one-phase.cost-only.bin",
+        )
+
+
+class LookupTable555TCenterStageOnePhase(LookupTable555RankedCenterStage):
+    def __init__(self, parent):
+        LookupTable555RankedCenterStage.__init__(
+            self,
+            parent,
+            "lookup-table-5x5x5-step16-t-centers-stage-one-phase.cost-only.bin",
+        )
+
+
+class LookupTableIDA555CentersStageOnePhase:
+    """Stage all x- and t-centers with the sampled two-coordinate heuristic."""
+
+    def __init__(self, parent, multiplier=None):
+        self.parent = parent
+        self.multiplier = multiplier
+
+    def center_only_kociemba_string(self) -> str:
+        state = self.parent.get_kociemba_string(True)
+        center_indexes = {6, 7, 8, 11, 12, 13, 16, 17, 18}
+        return "".join(value if index % 25 in center_indexes else "." for index, value in enumerate(state))
+
+    def solve_via_c(
+        self,
+        min_ida_threshold: int = None,
+        max_ida_threshold: int = None,
+        perimeter_depth: int = 0,
+        perimeter_max_states: int = 2_000_000,
+    ) -> None:
+        cmd = [
+            "./ida_search_555_centers_stage",
+            "--kociemba",
+            self.center_only_kociemba_string(),
+            "--x-cost",
+            self.parent.lt_x_centers_stage_one_phase.filename,
+            "--t-cost",
+            self.parent.lt_t_centers_stage_one_phase.filename,
+        ]
+        if self.multiplier is not None:
+            cmd.extend(("--multiplier", str(self.multiplier)))
+        if min_ida_threshold is not None:
+            cmd.extend(("--min-ida-threshold", str(min_ida_threshold)))
+        if max_ida_threshold is not None:
+            cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
+        if perimeter_depth:
+            cmd.extend(
+                (
+                    "--perimeter-depth",
+                    str(perimeter_depth),
+                    "--perimeter-max-states",
+                    str(perimeter_max_states),
+                )
+            )
+
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+
+        raise SolveError(f"ida_search_555_centers_stage failed with exit {returncode}\n{output}")
 
 
 # ==================================================
@@ -2695,6 +2792,16 @@ class RubiksCube555(RubiksCube):
     - solve as 3x3x3
     """
 
+    def __init__(
+        self,
+        state_string: str,
+        order: str,
+        colormap: dict = None,
+        use_one_phase_centers_stage: bool = True,
+    ):
+        super().__init__(state_string, order, colormap)
+        self.use_one_phase_centers_stage = use_one_phase_centers_stage
+
     reduce333_orient_edges_tuples = (
         (2, 104),
         (3, 103),
@@ -2861,6 +2968,12 @@ class RubiksCube555(RubiksCube):
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
         self.lt_LR_t_centers_stage_ida = LookupTableIDA555LRTCenterStage(self)
+
+        if self.use_one_phase_centers_stage:
+            logger.info("loading 5x5x5 one-phase X and T center staging tables")
+            self.lt_x_centers_stage_one_phase = LookupTable555XCenterStageOnePhase(self)
+            self.lt_t_centers_stage_one_phase = LookupTable555TCenterStageOnePhase(self)
+            self.lt_centers_stage_one_phase = LookupTableIDA555CentersStageOnePhase(self)
 
         # phase 2 - stage FB (and UD) centers
         self.lt_FB_t_centers_stage = LookupTable555FBTCenterStage(self)
@@ -3297,6 +3410,21 @@ class RubiksCube555(RubiksCube):
 
         self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
+    def group_centers_stage_one_phase(self) -> None:
+        """Stage every x- and t-center in one ranked-table IDA search."""
+        if self.centers_staged():
+            if self.edge_swaps_odd(False, 0, False):
+                self.prevent_OLL()
+            return
+
+        tmp_solution_len = len(self.solution)
+        self.lt_centers_stage_one_phase.solve_via_c()
+        if not self.centers_staged():
+            raise SolveError("one-phase search did not stage all centers")
+        if self.edge_swaps_odd(False, 0, False):
+            self.prevent_OLL()
+        self.print_cube_add_comment("ULFRBD centers staged", tmp_solution_len)
+
     def group_centers_phase1_and_2(self) -> None:
         """
         Find up to 64 optimal phase-1 LR-center solutions, then solve phase 2
@@ -3551,7 +3679,10 @@ class RubiksCube555(RubiksCube):
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        self.group_centers_phase1_and_2()
+        if self.use_one_phase_centers_stage:
+            self.group_centers_stage_one_phase()
+        else:
+            self.group_centers_phase1_and_2()
 
         # phase 3
         self.eo_edges()

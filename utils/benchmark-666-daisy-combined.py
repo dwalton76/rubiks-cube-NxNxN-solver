@@ -4,54 +4,44 @@
 
 # standard libraries
 import argparse
-import random
+import json
 import re
 import statistics
 import subprocess
 import time
+from pathlib import Path
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube666 import (
-    DAISY_PLUS_TABLES_666,
-    PHASE5_ILLEGAL_MOVES,
-    RubiksCube666,
-    moves_666,
-    solved_666,
-)
+from rubikscubennnsolver.RubiksCube666 import DAISY_PLUS_TABLES_666, RubiksCube666
 
 BINARY = "./ida_search_666_daisy_centers"
-LEGAL_MOVES = tuple(move for move in moves_666 if move not in PHASE5_ILLEGAL_MOVES)
 SOLUTION_RE = re.compile(r"SOLUTION \((\d+) steps\)")
-SCRAMBLE_LENGTH = 60
-
-
-def scramble(sample):
-    rng = random.Random(f"666-daisy-{sample}")
-    cube = RubiksCube666(solved_666, "URFDLB")
-    for _ in range(SCRAMBLE_LENGTH):
-        cube.rotate(rng.choice(LEGAL_MOVES))
-    return cube
 
 
 def solve_command(cube, multiplier):
     cmd = [BINARY, "--kociemba", cube.get_kociemba_string(True)]
     for flag, filename in DAISY_PLUS_TABLES_666:
         cmd.extend((flag, filename))
-    cmd.extend(("--multiplier", str(multiplier)))
+    if multiplier is not None:
+        cmd.extend(("--multiplier", str(multiplier)))
     return cmd
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("multipliers", nargs="+", type=float)
+    parser.add_argument("multipliers", nargs="+", help="numbers or 'matrix'")
     parser.add_argument("--cubes", type=int, default=5)
     parser.add_argument("--timeout", type=float, default=120.0)
     args = parser.parse_args()
 
-    results = {multiplier: [] for multiplier in args.multipliers}
-    for sample in range(args.cubes):
-        cube = scramble(sample)
-        for multiplier in args.multipliers:
+    multipliers = [None if value == "matrix" else float(value) for value in args.multipliers]
+    states = json.loads((Path(__file__).parent / "10k-666-cubes.json").read_text())["6x6x6"][: args.cubes]
+    results = {multiplier: [] for multiplier in multipliers}
+    for sample, state in enumerate(states):
+        cube = RubiksCube666(state, "URFDLB")
+        cube.lt_init()
+        cube.stage_centers()
+        for multiplier in multipliers:
             started = time.perf_counter()
             try:
                 proc = subprocess.run(
@@ -70,8 +60,10 @@ def main():
                 status = "TIMEOUT"
 
             results[multiplier].append((wall, moves))
+            label = multiplier if multiplier is not None else "matrix"
             print(
-                f"DAISY_666 sample={sample:03d} multiplier={multiplier:g} " f"wall={wall:.3f} moves={moves} {status}",
+                f"DAISY_666 sample={sample:03d} multiplier={label} "
+                f"wall={wall:.3f} moves={moves} {status}",
                 flush=True,
             )
 
@@ -79,8 +71,9 @@ def main():
         solved = [(wall, moves) for wall, moves in measurements if moves is not None]
         walls = [wall for wall, _ in solved]
         moves = [moves for _, moves in solved]
+        label = multiplier if multiplier is not None else "matrix"
         print(
-            f"DAISY_666_SUMMARY multiplier={multiplier:g} "
+            f"DAISY_666_SUMMARY multiplier={label} "
             f"solved={len(solved)}/{len(measurements)} "
             f"median_wall={statistics.median(walls) if walls else 0:.3f} "
             f"max_wall={max(walls) if walls else 0:.3f} "

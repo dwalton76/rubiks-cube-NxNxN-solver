@@ -34,11 +34,12 @@ Phase 5 - daisy-solve all centers
     foreign orbit) guide a dedicated C IDA. That pairs every oblique and
     solves every inner x-center. Outer x-centers are left for the 5x5x5.
 
-The inside wings are then paired by ``pair_inside_edges_via_444``, which maps
-the 6x6x6 slices a 4x4x4 can see onto a fake 4x4x4 and runs the whole 4x4x4
-reduction on it. That is where the inside wings get EOed, so the 6x6x6 needs
-no EO phase of its own. Those moves leave the daisy intact because the fake
-4x4x4 ends with its own centers solved.
+Phase 6 - EO the inside wings
+    The inside wings are then paired by ``pair_inside_edges_via_444``, which maps
+    the 6x6x6 slices a 4x4x4 can see onto a fake 4x4x4 and runs the whole 4x4x4
+    reduction on it. That is where the inside wings get EOed, so the 6x6x6 needs
+    no EO phase of its own. Those moves leave the daisy intact because the fake
+    4x4x4 ends with its own centers solved.
 """
 
 # standard libraries
@@ -602,10 +603,6 @@ DAISY_PLUS_TABLES_666 = tuple(
     for orbit in ("left-oblique", "right-oblique", "inner-x")
 )
 
-# Each 70^4 table covers four of nine orbits, so the admissible max is a weak
-# lower bound on the combined daisy. Inflate it to keep the search affordable.
-DAISY_MULTIPLIER_666 = 2.5
-
 
 class LookupTableIDA666DaisyCenters:
     """
@@ -615,7 +612,7 @@ class LookupTableIDA666DaisyCenters:
     (average 8.50); extra inner-x tables top out at 13 (average 9.43).
     """
 
-    def __init__(self, parent, multiplier=DAISY_MULTIPLIER_666):
+    def __init__(self, parent, multiplier=None):
         self.parent = parent
         self.avoid_oll = None
         self.multiplier = multiplier

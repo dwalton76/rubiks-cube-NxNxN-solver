@@ -25,7 +25,7 @@ from rubikscubennnsolver.RubiksCube777 import (
     solved_777,
 )
 from rubikscubennnsolver.RubiksCubeNNNEven import RubiksCubeNNNEven, solved_888
-from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCubeNNNOdd, solved_999
+from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCube777ForNNNOdd, RubiksCubeNNNOdd, solved_999
 
 
 class CenterStagingTablesTest(unittest.TestCase):
@@ -48,6 +48,7 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertFalse(hasattr(cube, "lt_centers_reduce_555"))
         self.assertEqual(cube.lt_daisy_centers.__class__.__name__, "LookupTableIDA666DaisyCenters")
         self.assertEqual(len(DAISY_PLUS_TABLES_666), 18)
+        self.assertIsNone(cube.lt_daisy_centers.multiplier)
 
     def test_666_has_no_eo_phase_of_its_own(self):
         """The fake 4x4x4 that pairs the inside wings EOes them along the way."""
@@ -86,7 +87,9 @@ class CenterStagingTablesTest(unittest.TestCase):
         cube.lt_init()
         combined = cube.lt_LR_oblique_edges_UD_inner_centers_stage
 
-        self.assertTrue(cube.stage_UD_inner_centers_in_phase2)
+        self.assertFalse(hasattr(cube, "stage_UD_inner_centers_in_phase2"))
+        self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_pairing"))
+        self.assertFalse(hasattr(cube, "lt_UD_oblique_edge_pairing"))
         self.assertEqual(combined.avoid_oll, 1)
         self.assertNotIsInstance(combined, LookupTableIDAViaGraph)
         self.assertEqual(
@@ -110,7 +113,7 @@ class CenterStagingTablesTest(unittest.TestCase):
         cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
         fake_777 = cube.get_fake_777()
 
-        self.assertFalse(fake_777.stage_UD_inner_centers_in_phase2)
+        self.assertIsInstance(fake_777, RubiksCube777ForNNNOdd)
         self.assertIsInstance(fake_777.lt_LR_oblique_edge_pairing, LookupTableIDAViaGraph)
         self.assertEqual(fake_777.lt_UD_obliques_outer_x_stage.avoid_oll, 0)
         self.assertIsInstance(fake_777.lt_UD_oblique_edge_pairing, LookupTableIDAViaGraph)

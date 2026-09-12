@@ -324,6 +324,17 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
     return cost ? cost : parity_flip_floor(parity);
 }
 
+/*
+ * Last ply must land on a goal: staged centers and both orbit parities already
+ * correct. A move that leaves an orbit on the wrong parity still needs the
+ * flip floor (1 for orbit0, 7 for orbit1), so it cannot be the 12th move of a
+ * depth-12 solution. Skip the rotate and table lookup for those moves.
+ */
+static int last_ply_can_be_goal(unsigned char parity, move_type move)
+{
+    return !parity_flip_floor(parity_after_move(parity, move));
+}
+
 static int move_is_allowed(move_type move)
 {
     switch (move) {
@@ -496,6 +507,7 @@ static int ida_search(
     struct child children[MOVE_COUNT_777];
     unsigned int child_count = 0;
     unsigned char next_depth = depth + 1;
+    int last_ply = next_depth == threshold;
     char rotate_tmp[CUBE_ARRAY_SIZE];
 
     if (atomic_load_explicit(&solution_task, memory_order_relaxed) != NO_TASK) {
@@ -503,9 +515,13 @@ static int ida_search(
     }
     for (unsigned int index = 0; index < legal_move_count[previous_move]; index++) {
         move_type move = moves_777[legal_move_index[previous_move][index]];
-        unsigned char next_parity = parity_after_move(parity, move);
+        unsigned char next_parity;
         unsigned char cost;
 
+        if (last_ply && !last_ply_can_be_goal(parity, move)) {
+            continue;
+        }
+        next_parity = parity_after_move(parity, move);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
         cost = cube_cost(cube, next_parity);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
@@ -572,6 +588,9 @@ static void *search_root_moves(void *argument)
             break;
         }
         first = moves_777[legal_move_index[MOVE_NONE][task]];
+        if (search_threshold == 1 && !last_ply_can_be_goal(0, first)) {
+            continue;
+        }
         parity = parity_after_move(0, first);
         memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);

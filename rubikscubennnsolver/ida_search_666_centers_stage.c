@@ -537,6 +537,17 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
     return cost ? cost : parity_flip_floor(parity);
 }
 
+/*
+ * Last ply must land on a goal: staged centers and both orbit parities already
+ * correct. A move that leaves an orbit on the wrong parity still needs the
+ * flip floor, so it cannot finish a solution at this threshold. Skip the
+ * rotate and table lookup for those moves.
+ */
+static int last_ply_can_be_goal(unsigned char parity, move_type move)
+{
+    return !parity_flip_floor(parity_after_move(parity, move));
+}
+
 static int move_is_allowed(move_type move)
 {
     /* Staging every inner x-center and pairing the obliques needs the full move set. */
@@ -907,6 +918,7 @@ static int ida_search(
     unsigned int child_count = 0;
     unsigned char count = legal_move_count[previous_move];
     unsigned char next_depth = depth + 1;
+    int last_ply = next_depth == threshold;
     char rotate_tmp[CUBE_ARRAY_SIZE];
 
     if (atomic_load_explicit(&best_task, memory_order_relaxed) < worker->task_id) {
@@ -916,9 +928,13 @@ static int ida_search(
 
     for (unsigned int index = 0; index < count; index++) {
         move_type move = moves_666[legal_move_index[previous_move][index]];
-        unsigned char next_parity = parity_after_move(parity, move);
+        unsigned char next_parity;
         unsigned char cost;
 
+        if (last_ply && !last_ply_can_be_goal(parity, move)) {
+            continue;
+        }
+        next_parity = parity_after_move(parity, move);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
         cost = cube_cost(cube, next_parity);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
@@ -986,8 +1002,12 @@ static int build_split_tasks(
     for (unsigned int first_index = 0; first_index < legal_move_count[MOVE_NONE]; first_index++) {
         move_type first = moves_666[legal_move_index[MOVE_NONE][first_index]];
         unsigned char cost;
-        unsigned char parity = parity_after_move(0, first);
+        unsigned char parity;
 
+        if (threshold == 1 && !last_ply_can_be_goal(0, first)) {
+            continue;
+        }
+        parity = parity_after_move(0, first);
         memcpy(cube, root, CUBE_ARRAY_SIZE);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
         (*nodes)++;
@@ -1032,6 +1052,9 @@ static void *search_split_tasks(void *argument)
         worker->aborted = 0;
         first = moves_666[legal_move_index[MOVE_NONE][split_tasks[task].first_index]];
         second = moves_666[legal_move_index[first][split_tasks[task].second_index]];
+        if (worker->threshold == 2 && !last_ply_can_be_goal(parity_after_move(0, first), second)) {
+            continue;
+        }
         parity = parity_after_move(parity_after_move(0, first), second);
 
         memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);

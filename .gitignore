@@ -103,6 +103,8 @@ tmp
 ida_search.dSYM
 ida_search_via_graph
 ida_search_*_centers_stage
+ida_search_666_daisy_centers
+ida_search_777_daisy_centers
 lookup-tables
 my-pt-states.txt
 gmon.out

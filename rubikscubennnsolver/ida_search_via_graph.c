@@ -46,6 +46,11 @@ unsigned char orbit0_wide_quarter_turns = 0;
 unsigned char orbit1_wide_quarter_turns = 0;
 unsigned int solution_count = 0;
 unsigned int min_solution_count = 1;
+
+// Lowest depth worth reporting at the current threshold. Iterative deepening searches the same
+// root at every threshold, so a goal shallower than the threshold was already reported by an
+// earlier pass and reporting it again duplicates solutions. Zero reports every goal.
+unsigned char report_min_depth = 0;
 float cost_to_goal_multiplier = 0.0;
 move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
@@ -262,6 +267,7 @@ struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type) {
 struct StackNode {
     unsigned char cost_to_here;
     unsigned char cost_to_goal;
+    unsigned char parity;
     move_type moves_to_here[MAX_IDA_THRESHOLD];
     move_type prev_move;
     unsigned int pt0_state;
@@ -275,10 +281,11 @@ struct StackNode {
 
 void push(struct StackNode **root, unsigned char cost_to_here, unsigned char cost_to_goal, move_type *moves_to_here,
           move_type prev_move, unsigned int pt0_state, unsigned int pt1_state, unsigned int pt2_state,
-          unsigned int pt3_state, unsigned int pt4_state, char *cube) {
+          unsigned int pt3_state, unsigned int pt4_state, char *cube, unsigned char parity) {
     struct StackNode *node = (struct StackNode *)malloc(sizeof(struct StackNode));
     node->cost_to_here = cost_to_here;
     node->cost_to_goal = cost_to_goal;
+    node->parity = parity;
 
     if (cost_to_here) {
 
@@ -803,6 +810,70 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     printf("\n");
 }
 
+/* Bit 0 counts orbit0 wide quarter turns, bit 1 counts orbit1 wide quarter turns. */
+static unsigned char parity_bit_of_move(move_type move) {
+    switch (move) {
+        case Uw:
+        case Uw_PRIME:
+        case Lw:
+        case Lw_PRIME:
+        case Fw:
+        case Fw_PRIME:
+        case Rw:
+        case Rw_PRIME:
+        case Bw:
+        case Bw_PRIME:
+        case Dw:
+        case Dw_PRIME:
+            return 1;
+        case threeUw:
+        case threeUw_PRIME:
+        case threeLw:
+        case threeLw_PRIME:
+        case threeFw:
+        case threeFw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+        case threeBw:
+        case threeBw_PRIME:
+        case threeDw:
+        case threeDw_PRIME:
+            return 2;
+        default:
+            return 0;
+    }
+}
+
+static unsigned char parity_after_move(unsigned char parity, move_type move) {
+    return parity ^ parity_bit_of_move(move);
+}
+
+static unsigned char orbit_parity_ok(unsigned char parity) {
+    if (orbit0_wide_quarter_turns == 1 && !(parity & 1)) {
+        return 0;
+    }
+    if (orbit0_wide_quarter_turns == 2 && (parity & 1)) {
+        return 0;
+    }
+    if (orbit1_wide_quarter_turns == 1 && !(parity & 2)) {
+        return 0;
+    }
+    if (orbit1_wide_quarter_turns == 2 && (parity & 2)) {
+        return 0;
+    }
+    return 1;
+}
+
+/*
+ * Last ply must land on a goal: prune cost 0 and both requested orbit parities
+ * already correct. A move that leaves an orbit on the wrong parity cannot
+ * finish a solution at this threshold, so skip the prune-table lookup (and
+ * cube rotate, when this search has a cube).
+ */
+static int last_ply_can_be_goal(unsigned char parity, move_type move) {
+    return orbit_parity_ok(parity_after_move(parity, move));
+}
+
 unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_here) {
     unsigned int orbit0_wide_quarter_turn_count = 0;
     unsigned int orbit1_wide_quarter_turn_count = 0;
@@ -910,7 +981,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
     struct StackNode *node = NULL;
 
     push(&root, 0, ctg.cost_to_goal, NULL, MOVE_NONE, init_pt0_state, init_pt1_state, init_pt2_state,
-         init_pt3_state, init_pt4_state, cube_copy);
+         init_pt3_state, init_pt4_state, cube_copy, 0);
 
     for (unsigned char i = 0; i < legal_move_count; i++) {
         offset[i] = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * i);
@@ -920,7 +991,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
         node = pop(&root);
 
         if (node->cost_to_goal == 0) {
-            if (parity_ok(node->cube, type, node->moves_to_here)) {
+            if (node->cost_to_here >= report_min_depth && parity_ok(node->cube, type, node->moves_to_here)) {
                 // We found a solution!!
                 solution_count++;
                 f_cost = node->cost_to_here + node->cost_to_goal;
@@ -985,11 +1056,17 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                 break;
         }
 
+        int last_ply = node->cost_to_here + 1 == threshold;
+
         for (unsigned char i = 0; i < legal_move_count; i++) {
             move = prev_move_move_matrix[i];
 
             // This is the scenario where the move is on the same face and layer as prev_move
             if (move == MOVE_NONE) {
+                continue;
+            }
+
+            if (last_ply && !last_ply_can_be_goal(node->parity, move)) {
                 continue;
             }
 
@@ -1138,7 +1215,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
 
             if (node->cost_to_here + 1 + cost_to_goal <= threshold) {
                 push(&root, node->cost_to_here + 1, cost_to_goal, node->moves_to_here, move, pt0_state, pt1_state, pt2_state,
-                     pt3_state, pt4_state, cube_copy);
+                     pt3_state, pt4_state, cube_copy, parity_after_move(node->parity, move));
             } else {
                 if (cube_copy) {
                     free(cube_copy);
@@ -1194,6 +1271,15 @@ struct ida_search_result ida_solve(char *cube, unsigned int cube_size, lookup_ta
 
     for (threshold = min_ida_threshold; threshold <= max_ida_threshold; threshold++) {
         ida_count = 0;
+
+        // When this call owns the iterative deepening, every threshold below this one has already
+        // reported its goals. A scaled cost_to_goal is not a lower bound and can hide a shallow
+        // goal until a later threshold, so only skip shallow goals for an admissible heuristic.
+        // Callers that loop thresholds themselves (--prune-table-states) set report_min_depth.
+        if (max_ida_threshold > min_ida_threshold) {
+            report_min_depth = (!cost_to_goal_multiplier && threshold > min_ida_threshold) ? threshold : 0;
+        }
+
         gettimeofday(&start_this_threshold, NULL);
         search_result =
             ida_search(cube, cube_size, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
@@ -1789,6 +1875,11 @@ int main(int argc, char *argv[]) {
         for (unsigned char i_ida_threshold = min_ida_threshold; i_ida_threshold <= max_ida_threshold;
              i_ida_threshold++) {
             LOG("loop %d/%d\n", i_ida_threshold, max_ida_threshold);
+
+            // Each pass re-searches every pt state from scratch, so goals shallower than this
+            // threshold were already reported by an earlier pass.
+            report_min_depth =
+                (!cost_to_goal_multiplier && i_ida_threshold > min_ida_threshold) ? i_ida_threshold : 0;
 
             fh_read = fopen(prune_table_states_filename, "r");
             while ((read = getline(&line, &len, fh_read)) != -1) {

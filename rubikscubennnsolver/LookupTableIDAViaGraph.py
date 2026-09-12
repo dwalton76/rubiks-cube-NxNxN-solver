@@ -275,7 +275,7 @@ class LookupTableIDAViaGraph(LookupTable):
         pt_states=[],
         min_ida_threshold: int = None,
         max_ida_threshold: int = None,
-        solution_count: int = None,
+        solution_count: int = 1,
         find_extra: bool = False,
         use_kociemba_string: bool = False,
     ) -> List[List[str]]:
@@ -381,7 +381,8 @@ class LookupTableIDAViaGraph(LookupTable):
             cmd.append("--type")
             cmd.append(self.C_ida_type)
 
-        if solution_count is not None:
+        # ida_search_via_graph already stops at the first solution
+        if solution_count > 1:
             cmd.append("--solution-count")
             cmd.append(str(solution_count))
 
@@ -451,7 +452,7 @@ class LookupTableIDAViaGraph(LookupTable):
         pt_states=[],
         min_ida_threshold: int = None,
         max_ida_threshold: int = None,
-        solution_count: int = None,
+        solution_count: int = 1,
         find_extra: bool = False,
         use_kociemba_string: bool = False,
     ) -> None:

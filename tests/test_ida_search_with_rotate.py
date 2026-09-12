@@ -228,8 +228,7 @@ class PhaseOnePortfolioTest(unittest.TestCase):
             ]
             self.calls = []
 
-        def solutions_via_c(self, pt_states, solution_count):
-            assert solution_count == 1
+        def solutions_via_c(self, pt_states):
             parity = 0 in self.parent.center_solution_leads_to_oll_parity()
             self.calls.append((parity, tuple(pt_states)))
 
@@ -319,8 +318,7 @@ class PhaseOneTwoPortfolio444Test(unittest.TestCase):
             ]
             self.calls = []
 
-        def solutions_via_c(self, pt_states, solution_count):
-            assert solution_count == 1
+        def solutions_via_c(self, pt_states):
             parity = 0 in self.parent.center_solution_leads_to_oll_parity()
             self.calls.append((parity, tuple(pt_states)))
 

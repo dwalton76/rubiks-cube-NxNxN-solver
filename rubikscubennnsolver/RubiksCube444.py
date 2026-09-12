@@ -1189,10 +1189,7 @@ class RubiksCube444(RubiksCube):
             self.state = representative_state[:]
             self.solution = representative_solution[:]
 
-            phase2_solution, phase2_states = self.lt_phase2.solutions_via_c(
-                pt_states=phase2_roots,
-                solution_count=1,
-            )[0]
+            phase2_solution, phase2_states = self.lt_phase2.solutions_via_c(pt_states=phase2_roots)[0]
             phase2_root = tuple(phase2_states[: len(self.lt_phase2.prune_tables)])
             phase1_solution, edge_mapping = phase1_and_mapping_by_root[orbit0_has_oll, phase2_root]
             candidate = (

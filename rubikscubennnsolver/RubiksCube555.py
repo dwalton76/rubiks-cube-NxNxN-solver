@@ -3483,10 +3483,7 @@ class RubiksCube555(RubiksCube):
             self.state = representative_state[:]
             self.solution = representative_solution[:]
 
-            phase2_solution, phase2_states = self.lt_FB_centers_stage.solutions_via_c(
-                pt_states=phase2_roots,
-                solution_count=1,
-            )[0]
+            phase2_solution, phase2_states = self.lt_FB_centers_stage.solutions_via_c(pt_states=phase2_roots)[0]
             phase2_root = tuple(phase2_states[: len(self.lt_FB_centers_stage.prune_tables)])
             phase1_solution = phase1_solution_by_root[orbit0_has_oll, phase2_root]
             candidate = (

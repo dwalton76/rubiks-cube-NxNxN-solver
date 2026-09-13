@@ -7,10 +7,10 @@ the remaining puzzle is a 3x3x3. ``RubiksCube444.reduce_333`` runs four IDA
 phases; ``solve_333`` then solves the paired cube.
 
 Each phase is an IDA search over a restricted move set, guided by prune tables.
-Phases 3+4 are searched as a portfolio: many solutions of the first phase are
-collected, the second phase is solved from those endpoints, and the shortest
-combined path is kept. Phases 1 and 2 run in sequence (one LR-staging solution,
-then phase 2 from that cube).
+Phases 1 and 2 run in sequence. Phases 3 and 4 are one combined C IDA
+(``ida_search_444_phase3_and_4``) that pairs all 12 edges and solves the
+centers, then Python rejects PLL-parity solutions. The old 2000-prefix
+portfolio is ``phase3_and_4_portfolio``.
 
 Phase 1 - stage LR centers
     Put all eight L/R center stickers onto the L and R faces (they need not be
@@ -24,31 +24,23 @@ Phase 2 - stage the remaining centers and EO the wings
     searched as prune-table roots and the winning ``edge_mapping`` is kept.
     Orbit-0 OLL is avoided so the later 3x3x3 solve is not left with that parity.
 
-Phase 3 - pair four x-plane edges; LFRB centers to vertical bars
-    Pair four wings around the equator (x-plane) and arrange the L/F/R/B
-    centers into vertical bars. Outer L/R turns and most wide quarter-turns are
-    illegal. Which four edges to pair is not fixed: all C(12, 4) wing-string
-    combinations are searched, and a large portfolio of phase-3 solutions
-    (default 2000) is passed to phase 4.
-
-Phase 4 - pair the last eight edges and solve the centers
-    Pair the remaining wings and fully solve all 24 centers. The move set is
-    tighter still (no Uw2/Dw2, no outer F/B quarter-turns). Solutions that
-    would cause PLL parity are rejected; if none of the first batch is PLL-free
-    the search asks for more phase-4 solutions until one is. When
-    ``consider_solve_333`` is set, a handful of the shortest PLL-free phase-3
-    plus phase-4 pairs are run through the 3x3x3 solver so the total length
-    (not just the reduction) can be minimized.
+Phase 3+4 - pair all 12 edges and solve the centers
+    One ranked IDA over the phase-3 move set, using the dense all-edge pairing
+    table and the exact LFRB-center graph. Combined solutions that would cause
+    PLL parity are skipped. When ``consider_solve_333`` is set, a handful of
+    the shortest PLL-free reductions are run through the 3x3x3 solver so the
+    total length (not just the reduction) can be minimized.
 """
 
 # standard libraries
 import itertools
 import logging
+import subprocess
 from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
-from rubikscubennnsolver.LookupTable import LookupTable
+from rubikscubennnsolver.LookupTable import LookupTable, download_file_if_needed
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinations
@@ -72,6 +64,8 @@ moves_444: Tuple[str] = (
 )
 
 solved_444: str = "UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB"
+ALL_EDGES_PAIRED_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step33-all-edges-paired.cost-only.bin"
+PHASE34_SOLUTIONS_TO_EVALUATE = 5
 
 centers_444: Tuple[int] = (
     6, 7, 10, 11,  # Upper
@@ -1251,12 +1245,107 @@ class RubiksCube444(RubiksCube):
         self.highlow_edges_print()
         self.print_cube_add_comment("centers staged, edges EOed into high/low groups", phase2_comment_start)
 
-    def phase3_and_4(
+    def phase3_and_4(self, consider_solve_333: bool, max_ida_threshold: int = 20) -> None:
+        """Pair all 12 edges and solve the centers with ``ida_search_444_phase3_and_4``."""
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        want = PHASE34_SOLUTIONS_TO_EVALUATE if consider_solve_333 else 1
+        pll_free = []
+
+        download_file_if_needed(ALL_EDGES_PAIRED_TABLE_444)
+        cmd = [
+            "./ida_search_444_phase3_and_4",
+            "--kociemba",
+            self.get_kociemba_string(True),
+            "--edge-pairing-cost",
+            ALL_EDGES_PAIRED_TABLE_444,
+            "--center-graph",
+            self.lt_phase3_centers.filename_bin,
+            "--center-state-index",
+            str(self.lt_phase3_centers.state_index()),
+            "--solution-count",
+            "1000000",
+            "--max-ida-threshold",
+            str(max_ida_threshold),
+        ]
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+                if not line.startswith("SOLUTION"):
+                    continue
+                solution = tuple(line.split(":", 1)[1].strip().split())
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                for step in solution:
+                    self.rotate(step)
+                if not self.reduced_to_333():
+                    proc.terminate()
+                    proc.wait()
+                    raise SolveError(f"ida_search_444_phase3_and_4 did not reduce to 3x3x3: {solution}")
+                if self.edge_solution_leads_to_pll_parity():
+                    continue
+                pll_free.append(solution)
+                if len(pll_free) >= want:
+                    proc.terminate()
+                    proc.wait()
+                    break
+            else:
+                returncode = proc.wait()
+                if not pll_free:
+                    raise SolveError(f"ida_search_444_phase3_and_4 failed with exit {returncode}\n{''.join(lines)}")
+
+        self.solve_via_c_output = "".join(lines)
+        if consider_solve_333:
+            min_solution = None
+            min_solution_len = None
+            for solution in pll_free:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+                for step in solution:
+                    self.rotate(step)
+                tmp_solution_len = len(self.solution)
+                self.solve_333()
+                solve_333_solution_len = len(self.solution[tmp_solution_len:]) - 1  # -1 for the comment
+                solution_len = len(solution) + solve_333_solution_len
+                desc = f"phase 3+4 is {len(solution)} steps, solve 333 in {solve_333_solution_len} steps, total {solution_len}"
+                if min_solution_len is None or solution_len < min_solution_len:
+                    logger.warning("%s (NEW MIN)", desc)
+                    min_solution_len = solution_len
+                    min_solution = solution
+                else:
+                    logger.warning("%s", desc)
+            pll_free = [min_solution]
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        tmp_solution_len = len(self.solution)
+        for step in pll_free[0]:
+            self.rotate(step)
+        self.print_cube_add_comment("all edges paired, centers solved", tmp_solution_len)
+
+    def phase3_and_4_portfolio(
         self,
         consider_solve_333: bool,
         phase3_solution_count: int = 2000,
         phase4_solution_count: int = 200,
     ):
+        """
+        Unused. ``reduce_333`` runs ``phase3_and_4`` (combined C IDA) instead.
+
+        A 2000-prefix portfolio of four-edge pairings, then phase 4 from those
+        endpoints, keeping the shortest PLL-free combined path. Kept as a
+        fallback: the combined search saves about 1.75 moves but has a long
+        tail (one of 20 cubes took minutes).
+        """
         original_state = self.state[:]
         original_solution = self.solution[:]
 
@@ -1377,9 +1466,8 @@ class RubiksCube444(RubiksCube):
         if consider_solve_333:
             min_solution = []
             min_solution_len = None
-            PHASE_34_SOLUTIONS_TO_EVALUATE = 5
 
-            for phase3_solution, phase4_solution in solutions_without_pll[:PHASE_34_SOLUTIONS_TO_EVALUATE]:
+            for phase3_solution, phase4_solution in solutions_without_pll[:PHASE34_SOLUTIONS_TO_EVALUATE]:
                 self.state = original_state[:]
                 self.solution = original_solution[:]
 

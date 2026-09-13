@@ -66,7 +66,8 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 
 | Binary | Source | Used for |
 | --- | --- | --- |
-| `ida_search_via_graph` | `ida_search_via_graph.c` + `ida_search_666.c` + `ida_search_777.c` | 4x4/5x5 (and leftover graph) prune-table IDA |
+| `ida_search_via_graph` | `ida_search_via_graph.c` + `ida_search_666.c` + `ida_search_777.c` | 4x4 phase 1–2 / leftover graph prune-table IDA |
+| `ida_search_444_phase3_and_4` | `ida_search_444_phase3_and_4.c` | 4x4 combined edge pairing + centers |
 | `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 inner-x / LR-oblique / UD phase 3 |
 | `ida_search_666_daisy_centers` | `ida_search_666_daisy_centers.c` | 6x6 daisy |
 | `ida_search_777_centers_stage` | `ida_search_777_centers_stage.c` | 7x7 LR phase 2 (UD inner + LR obliques); `--obliques-only` for NNNOdd partial rings |
@@ -120,7 +121,7 @@ flowchart TD
 | --- | --- | --- | --- |
 | 2 | `RubiksCube222` | solved | Tiny tables |
 | 3 | `RubiksCube333` | solved | kociemba |
-| 4 | `RubiksCube444` | 3x3 | Phases 1 then 2 sequentially; 3+4 is a **portfolio** |
+| 4 | `RubiksCube444` | 3x3 | Phases 1 then 2 sequentially; 3+4 is combined C IDA |
 | 5 | `RubiksCube555` | 3x3 | Graph IDA stages LR then FB centers (phases 1+2 as a portfolio) |
 | 6 | `RubiksCube666` | 5x5 | Ranked inner-x; `--low-memory` / `--min-memory` can drop the huge table |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
@@ -133,7 +134,7 @@ Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNE
 
 - `--solution-count` is only passed from Python when `> 1`. C default is 1.
 - 4x4 phases 1 and 2 are sequential. ``phase1_and_2`` (64-prefix portfolio) is unused on the main path; it saved ~0.55 moves at ~5x runtime.
-- 4x4 phase 3 keeps a large portfolio (currently 2000) into phase 4.
+- 4x4 phases 3 and 4 are one ranked IDA (``ida_search_444_phase3_and_4``). ``phase3_and_4_portfolio`` (2000-prefix) is unused on the main path.
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
 - 6x6: phase 1 owns **orbit1** OLL (later phases forbid `3Xw` quarters). Phase 3 owns **orbit0**.
 - 7x7 daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.

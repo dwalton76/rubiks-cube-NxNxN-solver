@@ -507,6 +507,71 @@ class PhaseOneTwoPortfolio444Test(unittest.TestCase):
         self.assertEqual(calls, ["1", "2", "34"])
 
 
+class PhaseThreeFourCombined444Test(unittest.TestCase):
+    class FakeCenters:
+        filename_bin = "lookup-tables/lookup-table-4x4x4-step31-centers.bin"
+
+        def state_index(self):
+            return 69
+
+    class FakeCube:
+        def __init__(self):
+            self.state = ["start"]
+            self.solution = []
+            self.lt_phase3_centers = PhaseThreeFourCombined444Test.FakeCenters()
+            self.solve_via_c_output = ""
+
+        def get_kociemba_string(self, _all_squares):
+            return "U" * 96
+
+        def rotate(self, move):
+            self.solution.append(move)
+            self.state[0] = " ".join(self.solution)
+
+        def reduced_to_333(self):
+            return True
+
+        def edge_solution_leads_to_pll_parity(self):
+            return self.state[0] == "A B"
+
+        def print_cube_add_comment(self, comment, start):
+            self.solution.append(f"COMMENT_{comment}")
+
+    def test_phase3_and_4_skips_pll_and_applies_the_combined_search(self):
+        from rubikscubennnsolver.RubiksCube444 import RubiksCube444
+
+        cube = self.FakeCube()
+
+        class FakeProc:
+            def __init__(self):
+                self.stdout = iter(
+                    [
+                        "SOLUTION (2 steps): A B\n",
+                        "SOLUTION (3 steps): C D E\n",
+                    ]
+                )
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def terminate(self):
+                pass
+
+            def wait(self):
+                return 0
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube444.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCube444.subprocess.Popen", return_value=FakeProc()),
+        ):
+            RubiksCube444.phase3_and_4(cube, consider_solve_333=False)
+
+        self.assertEqual(cube.solution, ["C", "D", "E", "COMMENT_all edges paired, centers solved"])
+
+
 class PhaseTwoPortfolioTest(unittest.TestCase):
     class FakePhaseTwo:
         def solutions_via_c(self, solution_count):

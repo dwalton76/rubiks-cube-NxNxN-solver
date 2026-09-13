@@ -7,23 +7,22 @@ the remaining puzzle is a 3x3x3. ``RubiksCube444.reduce_333`` runs four IDA
 phases; ``solve_333`` then solves the paired cube.
 
 Each phase is an IDA search over a restricted move set, guided by prune tables.
-Phases 1+2 and 3+4 are searched as portfolios: many solutions of the first
-phase are collected, the second phase is solved from those endpoints, and the
-shortest combined path is kept.
+Phases 3+4 are searched as a portfolio: many solutions of the first phase are
+collected, the second phase is solved from those endpoints, and the shortest
+combined path is kept. Phases 1 and 2 run in sequence (one LR-staging solution,
+then phase 2 from that cube).
 
 Phase 1 - stage LR centers
     Put all eight L/R center stickers onto the L and R faces (they need not be
-    solved). ``phase1_and_2`` takes a portfolio of optimal LR-staging solutions
-    (default 64). Endpoints are grouped by whether orbit-0 wide turns would
-    cause OLL parity, because phase 2 must use a matching even/odd constraint.
+    solved). One optimal IDA solution is enough; a 64-prefix portfolio into
+    phase 2 saved only ~0.5 moves for several times the runtime.
 
 Phase 2 - stage the remaining centers and EO the wings
     Stage the UD centers onto U/D (LR is already staged) and split the 24 wings
     into high/low groups. Quarter-turn wide moves on U/D/F/B are illegal.
-    There are 2048 even high/low interpretations of the wings; each phase-1
-    endpoint is expanded across those mappings. The search keeps the shortest
-    phase-1 plus phase-2 pair and records the winning ``edge_mapping``. Orbit-0
-    OLL is avoided so the later 3x3x3 solve is not left with that parity.
+    There are 2048 even high/low interpretations of the wings; all of them are
+    searched as prune-table roots and the winning ``edge_mapping`` is kept.
+    Orbit-0 OLL is avoided so the later 3x3x3 solve is not left with that parity.
 
 Phase 3 - pair four x-plane edges; LFRB centers to vertical bars
     Pair four wings around the equator (x-plane) and arrange the L/F/R/B
@@ -1075,7 +1074,7 @@ class RubiksCube444(RubiksCube):
 
         # phase 1 - stage LR centers
         # UD/LR prune tables, plus an IDA that can stage all six faces (OLL-aware).
-        # reduce_333 searches lt_phase1 (LR staging only).
+        # reduce_333 searches lt_phase1 (LR staging only), then lt_phase2.
         self.lt_UD_centers_stage = LookupTable444UDCentersStage(self)
         self.lt_LR_centers_stage = LookupTable444LRCentersStage(self)
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
@@ -1135,13 +1134,36 @@ class RubiksCube444(RubiksCube):
         self.edge_mapping = original_mapping
         return pt_state_indexes_to_edge_mapping
 
+    def phase1(self) -> None:
+        if self.LR_centers_staged():
+            return
+
+        tmp_solution_len = len(self.solution)
+        self.lt_phase1.solve_via_c()
+        self.print_cube_add_comment("LR centers staged", tmp_solution_len)
+
+    def phase2(self) -> None:
+        tmp_solution_len = len(self.solution)
+        mapping_by_root = self.phase2_pt_state_indexes()
+        solution, states = self.lt_phase2.solutions_via_c(pt_states=list(mapping_by_root))[0]
+        self.edge_mapping = mapping_by_root[tuple(states[: len(self.lt_phase2.prune_tables)])]
+        for step in solution:
+            self.rotate(step)
+        self.highlow_edges_print()
+        self.print_cube_add_comment("centers staged, edges EOed into high/low groups", tmp_solution_len)
+
     def phase1_and_2(self, phase1_solution_count: int = 64) -> None:
         """
-        Find up to 64 optimal phase-1 LR-center solutions, then solve phase 2
-        from all distinct endpoints (including all 2048 high/low mappings) and
-        keep the pair with the shortest total solution. Phase-1 endpoints are
-        grouped by orbit-0 parity because phase 2 must use a different
-        wide-turn parity constraint for each group.
+        Unused. ``reduce_333`` runs ``phase1`` then ``phase2`` instead.
+
+        A 64-prefix portfolio of optimal LR-staging solutions, then phase 2 from
+        all distinct endpoints (including all 2048 high/low mappings), keeping
+        the shortest combined path. Endpoints are grouped by orbit-0 parity
+        because phase 2 must use a matching even/odd wide-turn constraint.
+
+        Kept for a rainy day: on 20 cubes the portfolio saved only ~0.55 moves
+        versus one phase-1 solution (never a longer prefix) at about 5x the
+        runtime, so it is not worth the coupling on the main path.
         """
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -1440,7 +1462,8 @@ class RubiksCube444(RubiksCube):
         if self.reduced_to_333():
             return
 
-        self.phase1_and_2()
+        self.phase1()
+        self.phase2()
         self.phase3_and_4(consider_solve_333=consider_solve_333)
 
 

@@ -120,7 +120,7 @@ flowchart TD
 | --- | --- | --- | --- |
 | 2 | `RubiksCube222` | solved | Tiny tables |
 | 3 | `RubiksCube333` | solved | kociemba |
-| 4 | `RubiksCube444` | 3x3 | Phases 1+2 and 3+4 are **portfolios** |
+| 4 | `RubiksCube444` | 3x3 | Phases 1 then 2 sequentially; 3+4 is a **portfolio** |
 | 5 | `RubiksCube555` | 3x3 | Graph IDA stages LR then FB centers (phases 1+2 as a portfolio) |
 | 6 | `RubiksCube666` | 5x5 | Ranked inner-x; `--low-memory` / `--min-memory` can drop the huge table |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
@@ -132,6 +132,7 @@ Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNE
 ### 4x4 / 5x5 portfolios and parity
 
 - `--solution-count` is only passed from Python when `> 1`. C default is 1.
+- 4x4 phases 1 and 2 are sequential. ``phase1_and_2`` (64-prefix portfolio) is unused on the main path; it saved ~0.55 moves at ~5x runtime.
 - 4x4 phase 3 keeps a large portfolio (currently 2000) into phase 4.
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
 - 6x6: phase 1 owns **orbit1** OLL (later phases forbid `3Xw` quarters). Phase 3 owns **orbit0**.

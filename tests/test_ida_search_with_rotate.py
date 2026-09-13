@@ -491,6 +491,21 @@ class PhaseOneTwoPortfolio444Test(unittest.TestCase):
             },
         )
 
+    def test_reduce_333_runs_phase1_then_phase2_not_the_portfolio(self):
+        from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+
+        cube = RubiksCube444(solved_444, "URFDLB")
+        calls = []
+        with (
+            patch.object(cube, "reduced_to_333", return_value=False),
+            patch.object(cube, "phase1", side_effect=lambda: calls.append("1")),
+            patch.object(cube, "phase2", side_effect=lambda: calls.append("2")),
+            patch.object(cube, "phase3_and_4", side_effect=lambda **_kwargs: calls.append("34")),
+            patch.object(cube, "phase1_and_2", side_effect=AssertionError("portfolio path should not run")),
+        ):
+            cube.reduce_333()
+        self.assertEqual(calls, ["1", "2", "34"])
+
 
 class PhaseTwoPortfolioTest(unittest.TestCase):
     class FakePhaseTwo:

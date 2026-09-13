@@ -9,9 +9,10 @@ centers (and the matching wing orbit) is copied onto a fake 7x7x7; 7x7x7
 moves are rewritten as the matching wide turns on this cube.
 
 ``reduce_555`` walks those orbits from the inside out:
-    1. Stage every LR center orbit (7x7x7 phases 1-3, or t-centers / oblique
-       pairing when the outer x-centers of that orbit are not in play).
-    2. Stage every UD center orbit the same way.
+    1. Stage every LR center orbit (7x7x7 phases 1-3 on slices whose outer
+       x-centers are real, or t-centers / oblique pairing otherwise).
+    2. Stage every UD center orbit the same way (ranked outer-x / oblique
+       tables on full mappings; ranked oblique-only tables otherwise).
     3. Solve every center orbit to its native orientation with the combined
        7x7x7 daisy search.
 
@@ -22,17 +23,17 @@ finishes the cube.
 
 # standard libraries
 import logging
+import subprocess
 from math import ceil
 
 # rubiks cube libraries
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
+from rubikscubennnsolver.LookupTable import download_file_if_needed
+from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube777 import (
-    LR_OBLIQUE_PAIRING_ILLEGAL_MOVES,
-    PHASE5_ILLEGAL_MOVES,
+    UD_OBLIQUE_ONLY_TABLES_777,
     RubiksCube777,
     UFBD_oblique_edges_777,
     centers_777,
-    moves_777,
     oblique_edges_777,
     solved_777,
 )
@@ -47,18 +48,42 @@ solved_151515 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
 solved_171717 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
 
 
-class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
-    """Pair L/R obliques on a fake 7x7 orbit without staging U/D centers."""
+class LookupTableIDA777LRObliqueEdgePairing:
+    """Pair L/R obliques on a fake 7x7 orbit without staging U/D inner centers."""
 
     def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_777,
-            illegal_moves=LR_OBLIQUE_PAIRING_ILLEGAL_MOVES,
-            centers_only=True,
-            C_ida_type="7x7x7-LR-oblique-edges-stage",
-        )
+        self.parent = parent
+
+    def solve_via_c(self, **_kwargs):
+        cmd = [
+            "./ida_search_777_centers_stage",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--obliques-only",
+        ]
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+
+        raise SolveError(f"ida_search_777_centers_stage --obliques-only failed with exit {returncode}\n{output}")
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
@@ -72,18 +97,46 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaGraph):
                 self.parent.state[position] = "."
 
 
-class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaGraph):
-    """Pair U/D obliques on a fake 7x7 orbit without staging outer x-centers."""
+class LookupTableIDA777UDObliqueEdgePairing:
+    """Pair U/D obliques (and therefore outer t-centers) without using outer-x tables."""
 
     def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_777,
-            illegal_moves=PHASE5_ILLEGAL_MOVES,
-            centers_only=True,
-            C_ida_type="7x7x7-UD-oblique-edges-stage",
-        )
+        self.parent = parent
+
+    def solve_via_c(self, **_kwargs):
+        cmd = [
+            "./ida_search_777_UD_centers_stage",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--obliques-only",
+        ]
+        for flag, filename in UD_OBLIQUE_ONLY_TABLES_777:
+            download_file_if_needed(filename)
+            cmd.extend((flag, filename))
+
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        lines = []
+        with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        ) as proc:
+            for line in proc.stdout:
+                lines.append(line)
+                logger.info("%s", line.rstrip("\n"))
+            returncode = proc.wait()
+
+        output = "".join(lines)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+
+        raise SolveError(f"ida_search_777_UD_centers_stage --obliques-only failed with exit {returncode}\n{output}")
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
@@ -108,7 +161,7 @@ class RubiksCube777ForNNNOdd(RubiksCube777):
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
 
-    def _stage_LR_centers(self, all_centers):
+    def stage_LR_t_centers(self):
         if self.LR_centers_staged():
             return
 
@@ -117,18 +170,12 @@ class RubiksCube777ForNNNOdd(RubiksCube777):
         self.print_cube_add_comment("LR inner centers staged", tmp_solution_len)
 
         tmp_solution_len = len(self.solution)
-        self.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
+        self.lt_LR_oblique_edge_pairing.solve_via_c()
         self.print_cube_add_comment("LR oblique edges paired", tmp_solution_len)
 
         tmp_solution_len = len(self.solution)
         self.create_fake_555_from_outside_centers()
-        if all_centers:
-            self.fake_555.group_centers_stage_LR()
-            description = "LR centers staged"
-        else:
-            self.fake_555.lt_LR_t_centers_stage_ida.solve_via_c()
-            description = "LR t-centers staged"
-
+        self.fake_555.lt_LR_t_centers_stage_ida.solve_via_c()
         for step in self.fake_555.solution:
             if not step.startswith("COMMENT"):
                 if step.startswith("5"):
@@ -136,15 +183,12 @@ class RubiksCube777ForNNNOdd(RubiksCube777):
                 elif step.startswith("3"):
                     raise Exception("5x5x5 solution has 3 wide turn")
                 self.rotate(step)
-        self.print_cube_add_comment(description, tmp_solution_len)
-
-    def stage_LR_centers(self):
-        self._stage_LR_centers(True)
-
-    def stage_LR_t_centers(self):
-        self._stage_LR_centers(False)
+        self.print_cube_add_comment("LR t-centers staged", tmp_solution_len)
 
     def group_inside_UD_centers(self):
+        if self.UD_inside_centers_staged():
+            return
+
         self.create_fake_555_from_inside_centers()
         self.fake_555.group_centers_stage_FB()
 
@@ -158,7 +202,16 @@ class RubiksCube777ForNNNOdd(RubiksCube777):
                     step = "3" + step
                 self.rotate(step)
 
-    def _stage_UD_centers(self, all_centers):
+    def stage_UD_centers(self):
+        if self.UD_centers_staged():
+            return
+
+        tmp_solution_len = len(self.solution)
+        self.group_inside_UD_centers()
+        self.print_cube_add_comment("UD inner x-centers staged", tmp_solution_len)
+        super().stage_UD_centers()
+
+    def stage_UD_t_centers(self):
         if self.UD_centers_staged():
             return
 
@@ -166,33 +219,9 @@ class RubiksCube777ForNNNOdd(RubiksCube777):
         self.group_inside_UD_centers()
         self.print_cube_add_comment("UD inner x-centers staged", tmp_solution_len)
 
-        if all_centers:
-            tmp_solution_len = len(self.solution)
-            self.lt_UD_obliques_outer_x_stage.solve_via_c()
-            self.print_cube_add_comment("UD centers staged", tmp_solution_len)
-            return
-
         tmp_solution_len = len(self.solution)
-        self.lt_UD_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
-        self.print_cube_add_comment("UD oblique edges paired", tmp_solution_len)
-
-        tmp_solution_len = len(self.solution)
-        self.create_fake_555_from_outside_centers()
-        self.fake_555.lt_UD_t_centers_stage_ida.solve_via_c()
-        for step in self.fake_555.solution:
-            if not step.startswith("COMMENT"):
-                if step.startswith("5"):
-                    step = "7" + step[1:]
-                elif step.startswith("3"):
-                    raise Exception("5x5x5 solution has 3 wide turn")
-                self.rotate(step)
-        self.print_cube_add_comment("UD t-centers staged", tmp_solution_len)
-
-    def stage_UD_centers(self):
-        self._stage_UD_centers(True)
-
-    def stage_UD_t_centers(self):
-        self._stage_UD_centers(False)
+        self.lt_UD_oblique_edge_pairing.solve_via_c()
+        self.print_cube_add_comment("UD t-centers and obliques staged", tmp_solution_len)
 
 
 class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
@@ -461,6 +490,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
 
         elif action == "stage_LR_centers":
             if outer_x_centers_valid:
+                # Real 7x7 of this orbit: stage UD inner t/x while pairing LR obliques.
                 self.fake_777.stage_LR_centers()
             else:
                 if cycle == max_cycle:

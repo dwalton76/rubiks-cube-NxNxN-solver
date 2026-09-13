@@ -16,6 +16,7 @@ from rubikscubennnsolver.RubiksCube777 import (
     DAISY_PERFECT_TABLES_777,
     NATIVE_SOLVE_PERFECT_TABLES_777,
     RubiksCube777,
+    UD_OBLIQUE_ONLY_TABLES_777,
     UFBD_inner_t_centers_777,
     UFBD_inner_x_centers_777,
     UFBD_left_oblique_777,
@@ -30,12 +31,13 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCube777ForNNNOdd, RubiksC
 
 
 class CenterStagingTablesTest(unittest.TestCase):
-    def test_two_phase_option_keeps_graph_based_center_staging(self):
-        cube = RubiksCube555(solved_555, "URFDLB", use_one_phase_centers_stage=False)
-        cube.lt_init()
+    def test_555_uses_graph_based_center_staging(self):
+        cube = RubiksCube555(solved_555, "URFDLB")
+        with patch("rubikscubennnsolver.LookupTable.download_file_if_needed"):
+            cube.lt_init()
 
-        self.assertFalse(hasattr(cube, "lt_centers_stage_one_phase"))
         self.assertEqual(cube.lt_LR_centers_stage.__class__.__name__, "LookupTableIDA555LRCenterStage")
+        self.assertEqual(cube.lt_FB_centers_stage.__class__.__name__, "LookupTableIDA555FBCentersStage")
 
     def test_666_ranked_path_splits_oll_parity_between_phase_one_and_three(self):
         """Phases 2 and 3 have no 3Xw quarter turn, so only phase 1 can flip orbit1."""
@@ -109,15 +111,129 @@ class CenterStagingTablesTest(unittest.TestCase):
             expected = "L" if 49 < square < 99 or 147 < square < 197 else "x"
             self.assertEqual(cube.state[square], expected)
 
-    def test_larger_odd_cubes_pair_obliques_without_the_combined_phase(self):
-        """One orbit at a time means the U/D inner centers cannot be staged here."""
+    def test_larger_odd_cubes_use_combined_phase_two_only_on_full_mapping_slices(self):
+        """Partial rings pair obliques only; a real 7x7 of that orbit uses phase 2."""
         cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
         fake_777 = cube.get_fake_777()
 
         self.assertIsInstance(fake_777, RubiksCube777ForNNNOdd)
-        self.assertIsInstance(fake_777.lt_LR_oblique_edge_pairing, LookupTableIDAViaGraph)
+        self.assertIs(RubiksCube777ForNNNOdd.stage_LR_centers, RubiksCube777.stage_LR_centers)
+        self.assertEqual(fake_777.lt_LR_oblique_edges_UD_inner_centers_stage.avoid_oll, 1)
+        self.assertNotIsInstance(fake_777.lt_LR_oblique_edge_pairing, LookupTableIDAViaGraph)
+        self.assertEqual(
+            fake_777.lt_LR_oblique_edge_pairing.__class__.__name__,
+            "LookupTableIDA777LRObliqueEdgePairing",
+        )
         self.assertEqual(fake_777.lt_UD_obliques_outer_x_stage.avoid_oll, 0)
-        self.assertIsInstance(fake_777.lt_UD_oblique_edge_pairing, LookupTableIDAViaGraph)
+        self.assertNotIsInstance(fake_777.lt_UD_oblique_edge_pairing, LookupTableIDAViaGraph)
+        self.assertEqual(
+            fake_777.lt_UD_oblique_edge_pairing.__class__.__name__,
+            "LookupTableIDA777UDObliqueEdgePairing",
+        )
+
+        calls = []
+        with (
+            patch.object(cube, "populate_fake_777"),
+            patch.object(fake_777, "stage_LR_centers", side_effect=lambda: calls.append("stage")),
+            patch.object(fake_777, "stage_LR_t_centers", side_effect=lambda: calls.append("t")),
+            patch.object(
+                fake_777.lt_LR_oblique_edge_pairing,
+                "solve_via_c",
+                side_effect=lambda **_kwargs: calls.append("pair"),
+            ),
+        ):
+            cube.stage_or_solve_inside_777(0, 1, 7, 0, 1, "stage_LR_centers")
+            cube.stage_or_solve_inside_777(1, 1, 7, 0, 1, "stage_LR_centers")
+            cube.stage_or_solve_inside_777(1, 1, 7, 1, 1, "stage_LR_centers")
+            cube.stage_or_solve_inside_777(0, 1, 7, 1, 1, "stage_LR_centers")
+
+        self.assertEqual(calls, ["stage", "pair", "stage", "t"])
+
+    def test_larger_odd_cubes_dispatch_ud_staging_like_lr(self):
+        cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
+        fake_777 = cube.get_fake_777()
+        calls = []
+        with (
+            patch.object(cube, "populate_fake_777"),
+            patch.object(fake_777, "stage_UD_centers", side_effect=lambda: calls.append("stage")),
+            patch.object(fake_777, "stage_UD_t_centers", side_effect=lambda: calls.append("t")),
+            patch.object(
+                fake_777.lt_UD_oblique_edge_pairing,
+                "solve_via_c",
+                side_effect=lambda **_kwargs: calls.append("pair"),
+            ),
+        ):
+            cube.stage_or_solve_inside_777(0, 1, 7, 0, 1, "stage_UD_centers")
+            cube.stage_or_solve_inside_777(1, 1, 7, 0, 1, "stage_UD_centers")
+            cube.stage_or_solve_inside_777(1, 1, 7, 1, 1, "stage_UD_centers")
+            cube.stage_or_solve_inside_777(0, 1, 7, 1, 1, "stage_UD_centers")
+
+        self.assertEqual(calls, ["stage", "pair", "stage", "t"])
+
+    def test_group_inside_ud_centers_skips_when_already_staged(self):
+        fake_777 = RubiksCubeNNNOdd(solved_999, "URFDLB").get_fake_777()
+        with (
+            patch.object(fake_777, "UD_inside_centers_staged", return_value=True),
+            patch.object(fake_777, "create_fake_555_from_inside_centers") as create,
+        ):
+            fake_777.group_inside_UD_centers()
+        create.assert_not_called()
+
+    def test_odd_ud_t_centers_do_not_use_fake_555_t_center_ida(self):
+        fake_777 = RubiksCubeNNNOdd(solved_999, "URFDLB").get_fake_777()
+        calls = []
+        with (
+            patch.object(fake_777, "UD_centers_staged", return_value=False),
+            patch.object(fake_777, "UD_inside_centers_staged", return_value=True),
+            patch.object(
+                fake_777,
+                "create_fake_555_from_outside_centers",
+                side_effect=AssertionError("5x5 t-center IDA should not run"),
+            ),
+            patch.object(
+                fake_777.lt_UD_oblique_edge_pairing,
+                "solve_via_c",
+                side_effect=lambda **_kwargs: calls.append("pair"),
+            ),
+        ):
+            fake_777.stage_UD_t_centers()
+        self.assertEqual(calls, ["pair"])
+
+    def test_odd_ud_oblique_pairing_invokes_obliques_only_binary(self):
+        fake_777 = RubiksCubeNNNOdd(solved_999, "URFDLB").get_fake_777()
+        captured = {}
+
+        class FakeProc:
+            def __init__(self):
+                self.stdout = iter(["SOLUTION (0 steps):\n"])
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def wait(self):
+                return 0
+
+        def fake_popen(cmd, **_kwargs):
+            captured["cmd"] = cmd
+            return FakeProc()
+
+        with (
+            patch("rubikscubennnsolver.RubiksCubeNNNOdd.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCubeNNNOdd.subprocess.Popen", side_effect=fake_popen),
+        ):
+            fake_777.lt_UD_oblique_edge_pairing.solve_via_c()
+
+        self.assertEqual(captured["cmd"][0], "./ida_search_777_UD_centers_stage")
+        self.assertIn("--obliques-only", captured["cmd"])
+        self.assertNotIn("--left-oblique-outer-x-cost", captured["cmd"])
+        self.assertEqual(len(UD_OBLIQUE_ONLY_TABLES_777), 3)
+        for flag, filename in UD_OBLIQUE_ONLY_TABLES_777:
+            self.assertIn(flag, captured["cmd"])
+            self.assertIn(filename, captured["cmd"])
+            self.assertNotIn("outer-x", flag)
 
     def test_777_combined_ud_phase_recolors_four_coordinates(self):
         cube = RubiksCube777(solved_777, "URFDLB")

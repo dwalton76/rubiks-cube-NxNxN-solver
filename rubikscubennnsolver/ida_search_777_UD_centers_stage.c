@@ -97,6 +97,7 @@ static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned char search_threshold;
 static float cost_to_goal_multiplier;
 static unsigned char orbit0_requirement;
+static int obliques_only;
 
 struct heuristic_result {
     uint64_t orbit_rank[ORBIT_COUNT];
@@ -121,14 +122,15 @@ static void usage(const char *program)
 {
     printf(
         "usage: %s --kociemba STATE "
-        "--left-middle-oblique-cost FILE --left-right-oblique-cost FILE "
-        "--left-oblique-outer-x-cost FILE --middle-right-oblique-cost FILE "
-        "--middle-oblique-outer-x-cost FILE --right-oblique-outer-x-cost FILE "
+        "(all six --*-cost FILE flags | --obliques-only and the three oblique-oblique FILE flags) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
         "[--multiplier F] [--print-ida-summary] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
         program
+    );
+    printf(
+        "  --obliques-only  pair U/D left/middle/right obliques; do not load outer-x tables\n"
     );
 }
 
@@ -168,13 +170,23 @@ static uint64_t combination_rank(const char *cube, const unsigned int squares[GR
     return u_remaining ? UINT64_MAX : rank;
 }
 
+static int table_is_oblique_only(const struct ranked_table *table)
+{
+    return table->orbit_a != ORBIT_OUTER_X && table->orbit_b != ORBIT_OUTER_X;
+}
+
 static struct heuristic_result heuristic(const char *cube)
 {
     struct heuristic_result result;
     int valid = 1;
+    int loaded = 0;
 
     memset(&result, 0, sizeof(result));
     for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+        if (obliques_only && orbit == ORBIT_OUTER_X) {
+            result.orbit_rank[orbit] = UINT64_MAX;
+            continue;
+        }
         result.orbit_rank[orbit] = combination_rank(cube, orbit_squares[orbit]);
         if (result.orbit_rank[orbit] == UINT64_MAX) {
             valid = 0;
@@ -184,7 +196,13 @@ static struct heuristic_result heuristic(const char *cube)
         const struct ranked_table *table = &ranked_tables[index];
         unsigned char encoded;
 
-        if (!valid || !table->costs) {
+        if (!table->costs) {
+            result.table_rank[index] = UINT64_MAX;
+            result.table_cost[index] = UINT8_MAX;
+            continue;
+        }
+        loaded = 1;
+        if (!valid) {
             result.table_rank[index] = UINT64_MAX;
             result.table_cost[index] = UINT8_MAX;
             result.cost = UINT8_MAX;
@@ -199,6 +217,9 @@ static struct heuristic_result heuristic(const char *cube)
         } else if (result.cost != UINT8_MAX && result.table_cost[index] > result.cost) {
             result.cost = result.table_cost[index];
         }
+    }
+    if (!loaded) {
+        result.cost = UINT8_MAX;
     }
     return result;
 }
@@ -346,6 +367,9 @@ static void map_ranked_tables(void)
         struct stat file_stat;
         int mmap_flags = MAP_SHARED;
 
+        if (!table->filename || (obliques_only && !table_is_oblique_only(table))) {
+            continue;
+        }
         table->fd = open(table->filename, O_RDONLY);
         if (table->fd < 0) {
             fprintf(stderr, "ERROR: could not open %s: %s\n", table->filename, strerror(errno));
@@ -692,6 +716,8 @@ int main(int argc, char **argv)
             print_ranks = 1;
         } else if (!strcmp(argv[index], "--print-legal-moves")) {
             print_legal_moves = 1;
+        } else if (!strcmp(argv[index], "--obliques-only")) {
+            obliques_only = 1;
         } else if (!strcmp(argv[index], "--print-ida-summary")) {
             print_summary = 1;
         } else {
@@ -705,9 +731,11 @@ int main(int argc, char **argv)
         return 2;
     }
     for (unsigned int table = 0; table < TABLE_COUNT; table++) {
-        if (!ranked_tables[table].filename) {
-            usage(argv[0]);
-            return 2;
+        if (table_is_oblique_only(&ranked_tables[table]) || !obliques_only) {
+            if (!ranked_tables[table].filename) {
+                usage(argv[0]);
+                return 2;
+            }
         }
     }
     /* Below 1.0 would weaken the heuristic rather than inflate it. */
@@ -768,7 +796,8 @@ int main(int argc, char **argv)
         unmap_ranked_tables();
         return 1;
     }
-    LOG("initial cost %u, threads %u, ranked tables %u\n", initial_cost, thread_count, TABLE_COUNT);
+    LOG("initial cost %u, threads %u, ranked tables %s\n",
+        initial_cost, thread_count, obliques_only ? "3 (obliques only)" : "6");
     if (min_threshold < initial_cost) {
         min_threshold = initial_cost;
     }

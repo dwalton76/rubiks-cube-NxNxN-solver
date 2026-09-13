@@ -121,6 +121,7 @@ static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned char search_threshold;
 static float unpaired_multiplier = 0.25f;
 static int use_unpaired_multiplier;
+static int obliques_only;
 static float cost_to_goal_multiplier;
 static unsigned char orbit0_requirement;
 static unsigned char orbit1_requirement;
@@ -140,7 +141,8 @@ struct child {
 static void usage(const char *program)
 {
     printf(
-        "usage: %s --kociemba STATE --ranked-UD-inner-centers-cost FILE "
+        "usage: %s --kociemba STATE "
+        "(--ranked-UD-inner-centers-cost FILE | --obliques-only) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
         "[--multiplier F] [--unpaired-multiplier F] [--print-ida-summary] "
         "[--orbit0-need-odd-w] [--orbit0-need-even-w] "
@@ -148,6 +150,7 @@ static void usage(const char *program)
         program
     );
     printf(
+        "  --obliques-only          pair L/R obliques only; ignore the U/D inner-center table\n"
         "  --multiplier F           scale the cost to goal by F to trade solution length for\n"
         "                           search speed, used to bootstrap the matrix samples\n"
         "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
@@ -311,13 +314,20 @@ static unsigned char parity_flip_floor(unsigned char parity)
 
 static unsigned char cube_cost(const char *cube, unsigned char parity)
 {
-    unsigned char centers_cost = centers_table_cost(cube);
+    unsigned char unpaired = unpaired_oblique_count(cube);
     unsigned char cost;
 
-    if (centers_cost == UINT8_MAX) {
-        return UINT8_MAX;
+    if (obliques_only) {
+        cost = use_unpaired_multiplier ? unpaired_cost(unpaired)
+                                       : unpaired_count_UD_inner_centers_777[unpaired][0];
+    } else {
+        unsigned char centers_cost = centers_table_cost(cube);
+
+        if (centers_cost == UINT8_MAX) {
+            return UINT8_MAX;
+        }
+        cost = combined_cost(centers_cost, unpaired);
     }
-    cost = combined_cost(centers_cost, unpaired_oblique_count(cube));
     if (cost && cost_to_goal_multiplier) {
         cost = (unsigned char)roundf(cost * cost_to_goal_multiplier);
     }
@@ -671,8 +681,8 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
     memcpy(walk, cube, CUBE_ARRAY_SIZE);
     printf("\n       TBL UNPR  CTG  TRU  IDX\n      ==== ====  ===  ===  ===\n");
     for (unsigned int step = 0; step <= length; step++) {
-        unsigned char centers_cost = centers_table_cost(walk);
         unsigned char unpaired = unpaired_oblique_count(walk);
+        unsigned char centers_cost = obliques_only ? 0 : centers_table_cost(walk);
 
         if (step) {
             printf("%5s ", move2str[solution[step - 1]]);
@@ -732,6 +742,8 @@ int main(int argc, char **argv)
             orbit1_requirement = PARITY_ODD;
         } else if (!strcmp(argv[index], "--orbit1-need-even-w")) {
             orbit1_requirement = PARITY_EVEN;
+        } else if (!strcmp(argv[index], "--obliques-only")) {
+            obliques_only = 1;
         } else if (!strcmp(argv[index], "--print-ida-summary")) {
             print_summary = 1;
         } else {
@@ -739,7 +751,7 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    if (!kociemba || !ranked_filename || !thread_count || thread_count > MAX_THREADS ||
+    if (!kociemba || (!obliques_only && !ranked_filename) || !thread_count || thread_count > MAX_THREADS ||
         min_threshold > max_threshold || max_threshold > MAX_IDA_THRESHOLD) {
         usage(argv[0]);
         return 1;
@@ -756,7 +768,9 @@ int main(int argc, char **argv)
 
     init_binom();
     init_move_tables();
-    map_ranked_cost_file(ranked_filename);
+    if (!obliques_only) {
+        map_ranked_cost_file(ranked_filename);
+    }
     init_cube(cube, kociemba);
     recolor_cube(cube);
     printf("START\n");
@@ -767,7 +781,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: initial ranked state is absent from the table\n");
         return 1;
     }
-    if (use_unpaired_multiplier) {
+    if (obliques_only) {
+        LOG("searching L/R obliques only\n");
+    } else if (use_unpaired_multiplier) {
         LOG("searching with unpaired multiplier %.2f\n", unpaired_multiplier);
     } else {
         LOG("searching with the empirical unpaired-count matrix\n");
@@ -816,14 +832,18 @@ int main(int argc, char **argv)
             }
             printf("END\n");
             print_cube(cube, CUBE_SIZE);
-            munmap(ranked_costs, (size_t)PRODUCT_UNIVERSE);
-            close(ranked_cost_fd);
+            if (ranked_costs && ranked_costs != MAP_FAILED) {
+                munmap(ranked_costs, (size_t)PRODUCT_UNIVERSE);
+                close(ranked_cost_fd);
+            }
             return 0;
         }
     }
 
     fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
-    munmap(ranked_costs, (size_t)PRODUCT_UNIVERSE);
-    close(ranked_cost_fd);
+    if (ranked_costs && ranked_costs != MAP_FAILED) {
+        munmap(ranked_costs, (size_t)PRODUCT_UNIVERSE);
+        close(ranked_cost_fd);
+    }
     return 1;
 }

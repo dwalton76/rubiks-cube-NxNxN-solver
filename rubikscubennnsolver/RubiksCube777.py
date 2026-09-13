@@ -627,6 +627,10 @@ UD_PHASE56_TABLES_777 = (
     ),
 )
 
+UD_OBLIQUE_ONLY_TABLES_777 = tuple(
+    (flag, filename) for flag, filename in UD_PHASE56_TABLES_777 if "outer-x" not in flag
+)
+
 
 class LookupTableIDA777UDObliquesOuterXStage:
     """

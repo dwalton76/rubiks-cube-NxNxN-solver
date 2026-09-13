@@ -174,6 +174,47 @@ class RankedUDCentersStage777Test(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("usage:", result.stdout)
 
+    def test_obliques_only_uses_three_tables_and_ignores_outer_x(self):
+        oblique_labels = {"LOMO", "LORO", "MORO"}
+        self.write_tables([self.solved])
+
+        missing = subprocess.run(
+            self.command(self.solved, "--obliques-only", "--print-ranks", labels={"LOMO"}),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(missing.returncode, 2)
+        self.assertIn("usage:", missing.stdout)
+
+        result = subprocess.run(
+            self.command(self.solved, "--obliques-only", "--print-ranks", labels=oblique_labels),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        actual = parse_ranks(result.stdout)
+        ranks = orbit_ranks(self.solved)
+        self.assertEqual(actual["LEFT_RANK"], ranks["left"])
+        self.assertEqual(actual["MIDDLE_RANK"], ranks["middle"])
+        self.assertEqual(actual["RIGHT_RANK"], ranks["right"])
+        self.assertEqual(actual["LOMO_COST"], 1)
+        self.assertEqual(actual["LORO_COST"], 2)
+        self.assertEqual(actual["MORO_COST"], 4)
+        self.assertEqual(actual["LOOX_COST"], 255)
+        self.assertEqual(actual["MOOX_COST"], 255)
+        self.assertEqual(actual["ROOX_COST"], 255)
+        self.assertEqual(actual["COST"], 4)
+
+        ignored_outer_x = subprocess.run(
+            self.command(self.solved, "--obliques-only", "--print-ranks"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(ignored_outer_x.returncode, 0, ignored_outer_x.stdout + ignored_outer_x.stderr)
+        ignored = parse_ranks(ignored_outer_x.stdout)
+        self.assertEqual(ignored["LOOX_COST"], 255)
+        self.assertEqual(ignored["COST"], 4)
+
     def test_zero_cost_goal_and_orbit0_parity(self):
         parity_goal = RubiksCube777(solved_777, "URFDLB")
         parity_goal.rotate("Lw")

@@ -192,6 +192,22 @@ class RankedCentersStage666Test(unittest.TestCase):
         result = self.run_rank(cube)
         self.assertEqual(result["COST"], max(result[f"{label}_COST"] for label in REQUIRED_LABELS))
 
+    def test_all_inner_x_requires_the_symmetry_index(self):
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                self.solved.get_kociemba_string(True),
+                "--all-inner-x-cost",
+                str(Path(self.tempdir.name) / "missing.cost-only.bin"),
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("usage:", result.stdout)
+
     def test_all_three_tables_are_required(self):
         self.write_tables([self.solved], labels=REQUIRED_LABELS)
 

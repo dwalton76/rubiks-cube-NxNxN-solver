@@ -124,7 +124,7 @@ flowchart TD
 | 3 | `RubiksCube333` | solved | kociemba |
 | 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1+2 and 3+4 |
 | 5 | `RubiksCube555` | 3x3 | Graph IDA: LR then FB staging (1+2 portfolio), EO, then a 4+5+6 portfolio that pairs edges and solves centers |
-| 6 | `RubiksCube666` | 5x5 | Ranked inner-x; `--low-memory` / `--min-memory` can drop the huge table |
+| 6 | `RubiksCube666` | 5x5 | 48-symmetry ranked inner-x (~188 MiB) |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
 | even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
 | odd ≥9 | `RubiksCubeNNNOdd` | 5x5 | Fake 7x7 per center orbit/cycle, then 5x5 edges |

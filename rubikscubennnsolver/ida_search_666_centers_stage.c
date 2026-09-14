@@ -15,6 +15,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "center_symmetry_444.h"
 #include "ida_search_core.h"
 
 #define CUBE_SIZE 6
@@ -165,8 +166,10 @@ static unsigned char orbit0_requirement;
 static unsigned char orbit1_requirement;
 static float cost_to_goal_multiplier;
 static const char *all_inner_x_filename;
+static const char *all_inner_x_index_filename;
 static unsigned char *all_inner_x_costs;
 static int all_inner_x_fd = -1;
+static uint64_t all_inner_x_cost_size;
 static int stage_all_inner_x;
 static float unpaired_multiplier = DEFAULT_UNPAIRED_MULTIPLIER;
 static int use_unpaired_multiplier = 0;
@@ -186,6 +189,30 @@ struct ranked_cost_file {
     int fd;
     unsigned char *costs;
 };
+
+struct symmetry_index_header {
+    char magic[8];
+    uint64_t raw_universe;
+    uint64_t orbit_count;
+    uint64_t low_word_count;
+    uint64_t high_bit_count;
+    uint64_t high_word_count;
+    uint64_t zero_sample_count;
+    uint32_t low_bits;
+    uint32_t zero_sample_rate;
+};
+
+struct symmetry_index {
+    int fd;
+    size_t size;
+    unsigned char *mapping;
+    const struct symmetry_index_header *header;
+    const uint64_t *low;
+    const uint64_t *high;
+    const uint32_t *zero_samples;
+};
+
+static struct symmetry_index all_inner_x_index = {-1, 0, NULL, NULL, NULL, NULL, NULL};
 
 struct heuristic_result {
     uint64_t orbit_rank[ORBIT_COUNT];
@@ -224,7 +251,7 @@ static void usage(const char *program)
 {
     printf(
         "usage: %s {--kociemba STATE | --kociemba-file FILE} "
-        "{--all-inner-x-cost FILE [--unpaired-multiplier FLOAT] | "
+        "{--all-inner-x-cost FILE --all-inner-x-index FILE [--unpaired-multiplier FLOAT] | "
         "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
         "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
@@ -307,13 +334,13 @@ static uint64_t multiset_permutations(const unsigned int counts[3])
     return binom[total][counts[0]] * binom[total - counts[0]][counts[1]];
 }
 
-static uint64_t all_inner_x_rank_cube(const char *cube)
+static uint64_t all_inner_x_rank_state(const unsigned char *state)
 {
     unsigned int counts[3] = {8, 8, 8};
     uint64_t rank = 0;
 
     for (unsigned int position = 0; position < ALL_INNER_X_SIZE; position++) {
-        unsigned int selected = staged_symbol(cube[all_inner_x_squares[position]]);
+        unsigned int selected = staged_symbol(state[position]);
 
         if (selected > 2 || !counts[selected]) {
             return UINT64_MAX;
@@ -329,6 +356,109 @@ static uint64_t all_inner_x_rank_cube(const char *cube)
         counts[selected]--;
     }
     return rank;
+}
+
+static uint64_t all_inner_x_canonical_rank(const char *cube)
+{
+    unsigned char state[ALL_INNER_X_SIZE];
+    unsigned char transformed[ALL_INNER_X_SIZE];
+    unsigned char canonical[ALL_INNER_X_SIZE];
+
+    for (unsigned int index = 0; index < ALL_INNER_X_SIZE; index++) {
+        switch (cube[all_inner_x_squares[index]]) {
+            case 'U':
+            case 'D':
+                state[index] = 'U';
+                break;
+            case 'L':
+            case 'R':
+                state[index] = 'L';
+                break;
+            case 'F':
+            case 'B':
+                state[index] = 'F';
+                break;
+            default:
+                return UINT64_MAX;
+        }
+    }
+    for (unsigned int symmetry = 0; symmetry < CENTER_SYMMETRY_COUNT_444; symmetry++) {
+        transform_centers_444(state, transformed, symmetry);
+        if (!symmetry || memcmp(transformed, canonical, sizeof(canonical)) < 0) {
+            memcpy(canonical, transformed, sizeof(canonical));
+        }
+    }
+    return all_inner_x_rank_state(canonical);
+}
+
+static uint64_t symmetry_select_zero(const struct symmetry_index *index, uint64_t zero)
+{
+    const struct symmetry_index_header *header = index->header;
+    uint64_t base = (zero / header->zero_sample_rate) * header->zero_sample_rate;
+    uint64_t position = index->zero_samples[zero / header->zero_sample_rate];
+    uint64_t remaining = zero - base;
+
+    if (!remaining) {
+        return position;
+    }
+    position++;
+    while (position < header->high_bit_count) {
+        uint64_t word_index = position >> 6;
+        unsigned int offset = position & 63;
+        uint64_t zeros = ~index->high[word_index] & (UINT64_MAX << offset);
+
+        if (word_index + 1 == header->high_word_count &&
+                (header->high_bit_count & 63)) {
+            zeros &= (UINT64_C(1) << (header->high_bit_count & 63)) - 1;
+        }
+        unsigned int count = __builtin_popcountll(zeros);
+        if (remaining <= count) {
+            for (uint64_t candidate = zeros; candidate; candidate &= candidate - 1) {
+                if (!--remaining) {
+                    return (word_index << 6) + __builtin_ctzll(candidate);
+                }
+            }
+        }
+        remaining -= count;
+        position = (word_index + 1) << 6;
+    }
+    return UINT64_MAX;
+}
+
+static uint64_t symmetry_low_value(const struct symmetry_index *index, uint64_t dense)
+{
+    uint64_t bit = dense * index->header->low_bits;
+    unsigned int offset = bit & 63;
+    uint64_t value = index->low[bit >> 6] >> offset;
+
+    if (offset > 64 - index->header->low_bits) {
+        value |= index->low[(bit >> 6) + 1] << (64 - offset);
+    }
+    return value & ((UINT64_C(1) << index->header->low_bits) - 1);
+}
+
+static uint64_t symmetry_dense_rank(const struct symmetry_index *index, uint64_t raw)
+{
+    uint64_t high = raw >> index->header->low_bits;
+    uint64_t low = raw & ((UINT64_C(1) << index->header->low_bits) - 1);
+    uint64_t start = high
+        ? symmetry_select_zero(index, high - 1) - (high - 1)
+        : 0;
+    uint64_t end = symmetry_select_zero(index, high) - high;
+
+    if (start == UINT64_MAX || end == UINT64_MAX || end > index->header->orbit_count) {
+        return UINT64_MAX;
+    }
+    for (uint64_t dense = start; dense < end; dense++) {
+        uint64_t candidate = symmetry_low_value(index, dense);
+        if (candidate == low) {
+            return dense;
+        }
+        if (candidate > low) {
+            break;
+        }
+    }
+    return UINT64_MAX;
 }
 
 /* Eight of the 24 oblique pairs hold the L/R obliques once they are all paired. */
@@ -467,10 +597,16 @@ static struct heuristic_result heuristic(const char *cube)
         unsigned char encoded;
 
         memset(&result, 0, sizeof(result));
-        result.all_inner_x_rank = all_inner_x_rank_cube(cube);
+        result.all_inner_x_rank = all_inner_x_canonical_rank(cube);
 
         if (result.all_inner_x_rank == UINT64_MAX) {
             result.cost = UINT8_MAX;
+            return result;
+        }
+        result.all_inner_x_rank = symmetry_dense_rank(&all_inner_x_index, result.all_inner_x_rank);
+        if (result.all_inner_x_rank == UINT64_MAX) {
+            result.cost = UINT8_MAX;
+            result.all_inner_x_cost = UINT8_MAX;
             return result;
         }
         encoded = all_inner_x_costs[result.all_inner_x_rank];
@@ -660,11 +796,66 @@ static struct ranked_cost_file map_ranked_cost_file(const char *filename, uint64
     return result;
 }
 
+static void map_symmetry_index(struct symmetry_index *index, const char *filename)
+{
+    struct stat file_stat;
+    uint64_t expected_size;
+
+    index->fd = open(filename, O_RDONLY);
+    if (index->fd < 0 || fstat(index->fd, &file_stat) != 0) {
+        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    index->size = (size_t) file_stat.st_size;
+    index->mapping = mmap(NULL, index->size, PROT_READ, MAP_SHARED, index->fd, 0);
+    if (index->mapping == MAP_FAILED) {
+        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    index->header = (const struct symmetry_index_header *) index->mapping;
+    if (index->size < sizeof(*index->header) ||
+            memcmp(index->header->magic, "CS444EF1", 8) ||
+            index->header->raw_universe != ALL_INNER_X_UNIVERSE ||
+            index->header->low_bits != 5 ||
+            index->header->zero_sample_rate != 512) {
+        fprintf(stderr, "ERROR: %s is not a supported 48-symmetry center index\n", filename);
+        exit(1);
+    }
+    expected_size = sizeof(*index->header) +
+        (index->header->low_word_count * sizeof(uint64_t)) +
+        (index->header->high_word_count * sizeof(uint64_t)) +
+        (index->header->zero_sample_count * sizeof(uint32_t));
+    if (expected_size != index->size) {
+        fprintf(stderr, "ERROR: %s has an invalid size\n", filename);
+        exit(1);
+    }
+    index->low = (const uint64_t *) (index->mapping + sizeof(*index->header));
+    index->high = index->low + index->header->low_word_count;
+    index->zero_samples = (const uint32_t *) (index->high + index->header->high_word_count);
+}
+
+static void unmap_symmetry_index(struct symmetry_index *index)
+{
+    if (index->mapping && index->mapping != MAP_FAILED) {
+        munmap(index->mapping, index->size);
+    }
+    if (index->fd >= 0) {
+        close(index->fd);
+    }
+    index->fd = -1;
+    index->mapping = NULL;
+    index->header = NULL;
+}
+
 static void map_ranked_tables(void)
 {
     if (stage_all_inner_x) {
-        struct ranked_cost_file file = map_ranked_cost_file(all_inner_x_filename, ALL_INNER_X_UNIVERSE);
+        struct ranked_cost_file file;
 
+        init_center_symmetry_444();
+        map_symmetry_index(&all_inner_x_index, all_inner_x_index_filename);
+        all_inner_x_cost_size = all_inner_x_index.header->orbit_count;
+        file = map_ranked_cost_file(all_inner_x_filename, all_inner_x_cost_size);
         all_inner_x_fd = file.fd;
         all_inner_x_costs = file.costs;
         return;
@@ -686,13 +877,15 @@ static void map_ranked_tables(void)
 static void unmap_ranked_tables(void)
 {
     if (all_inner_x_costs && all_inner_x_costs != MAP_FAILED) {
-        munmap(all_inner_x_costs, (size_t)ALL_INNER_X_UNIVERSE);
+        munmap(all_inner_x_costs, (size_t)all_inner_x_cost_size);
     }
     if (all_inner_x_fd >= 0) {
         close(all_inner_x_fd);
     }
     all_inner_x_costs = NULL;
     all_inner_x_fd = -1;
+    all_inner_x_cost_size = 0;
+    unmap_symmetry_index(&all_inner_x_index);
 
     for (unsigned int index = 0; index < TABLE_COUNT; index++) {
         struct ranked_table *table = &ranked_tables[index];
@@ -1239,6 +1432,8 @@ int main(int argc, char **argv)
         if (strmatch(argv[index], "--all-inner-x-cost") && index + 1 < argc) {
             all_inner_x_filename = argv[++index];
             stage_all_inner_x = 1;
+        } else if (strmatch(argv[index], "--all-inner-x-index") && index + 1 < argc) {
+            all_inner_x_index_filename = argv[++index];
         } else if (strmatch(argv[index], "--use-unpaired-matrix")) {
             specified_unpaired_matrix = 1;
         } else if (strmatch(argv[index], "--unpaired-multiplier") && index + 1 < argc) {
@@ -1297,6 +1492,9 @@ int main(int argc, char **argv)
                 return 2;
             }
         }
+    } else if (!all_inner_x_filename || !all_inner_x_index_filename) {
+        usage(argv[0]);
+        return 2;
     }
     /* The unpaired-count matrix is the default; --unpaired-multiplier opts into the formula. */
     if (specified_unpaired_matrix && use_unpaired_multiplier) {

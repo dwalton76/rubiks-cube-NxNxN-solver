@@ -13,10 +13,10 @@ portfolio: many solutions of the earlier phase are collected, later phases
 are solved from those endpoints, and the shortest combined path is kept.
 
 Phase 1 - stage all inner x-centers and pair the LR obliques
-    Stage all 24 inner x-centers and pair the LR obliques using a ranked
-    cost-only table. This phase owns orbit-1 OLL: later phases cannot flip
-    that orbit because they must keep the inner x-centers staged (no 3Xw
-    quarter turns).
+    Stage all 24 inner x-centers and pair the LR obliques using a 48-symmetry
+    ranked cost-only table (~188 MiB). This phase owns orbit-1 OLL: later
+    phases cannot flip that orbit because they must keep the inner x-centers
+    staged (no 3Xw quarter turns).
 
 Phase 2 - stage the remaining LR centers
     Map the outer 5x5 of each face onto a fake 5x5x5 and stage its LR
@@ -314,13 +314,15 @@ PHASE5_ILLEGAL_MOVES = (
 ALL_INNER_X_CENTERS_STAGE_TABLE = (
     "lookup-tables/lookup-table-6x6x6-step05-inner-x-centers-stage-one-phase.cost-only.bin"
 )
+ALL_INNER_X_CENTERS_STAGE_INDEX = f"{ALL_INNER_X_CENTERS_STAGE_TABLE}.symmetry-index.bin"
 
 
 class LookupTableIDA666InnerXCentersStageOnePhase:
     """
     Stage all 24 inner x-centers in one phase (8 UD, 8 LR, 8 FB).
 
-    24! / (8!^3) = 9,465,511,770 states. Built as a ranked cost-only table.
+    24! / (8!^3) = 9,465,511,770 raw colorings, stored as 197,221,662
+    orbits under the 48 cube symmetries (~188 MiB plus the index).
 
                  . . . . . .
                  . . . . . .
@@ -347,8 +349,10 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
     def __init__(self, parent):
         self.parent = parent
         self.filename = ALL_INNER_X_CENTERS_STAGE_TABLE
+        self.index_filename = ALL_INNER_X_CENTERS_STAGE_INDEX
         self.avoid_oll = None
         download_file_if_needed(self.filename)
+        download_file_if_needed(self.index_filename)
 
     def solve_via_c(self, unpaired_multiplier=None) -> None:
         cmd = [
@@ -357,6 +361,8 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
             self.parent.get_kociemba_string(True),
             "--all-inner-x-cost",
             self.filename,
+            "--all-inner-x-index",
+            self.index_filename,
         ]
         if unpaired_multiplier is not None:
             cmd.extend(("--unpaired-multiplier", str(unpaired_multiplier)))

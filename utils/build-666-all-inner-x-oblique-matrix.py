@@ -39,6 +39,8 @@ def solve_command(state):
         cube.get_kociemba_string(True),
         "--all-inner-x-cost",
         TABLE,
+        "--all-inner-x-index",
+        f"{TABLE}.symmetry-index.bin",
         "--unpaired-multiplier",
         "0.25",
     ]

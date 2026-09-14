@@ -49,15 +49,16 @@ Phase 6 - pair the last eight edges and solve the centers
     5) are grouped by length so the search can minimize the total, not just the
     phase-6 suffix.
 
-Larger even/odd cubes that have already reduced to a 5x5x5 also use the
-center-solve tables at the end of ``lt_init``, and the extra LR/UD t-center
-IDA objects, without going through this six-phase reduction.
+Larger cubes that have already reduced to a 5x5x5 reuse the phase-1 and
+phase-2 staging objects (``group_centers_stage_LR``, ``group_centers_stage_FB``,
+and ``lt_LR_t_centers_stage_ida``) without going through this six-phase
+reduction. Their remaining centers are solved by the 6x6/7x7 daisy searches,
+not by a separate 5x5 center-solve IDA.
 """
 
 # standard libraries
 import itertools
 import logging
-from typing import List
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, reverse_steps, wing_str_map, wing_strs_all
@@ -83,8 +84,6 @@ moves_555 = (
     # "2F", "2F'", "2F2", "2B", "2B'", "2B2"
 )
 solved_555 = "UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB"
-
-dead_centers = [13, 38, 63, 88, 113, 138]
 
 centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
@@ -204,28 +203,6 @@ outer_orbit_indexes = (
     52, 55, 56, 57, 59, 60, 62,
     63, 64, 67, 68, 69, 71,
 )
-
-UD_centers_LR_t_centers_555 = sorted([
-    7, 8, 9, 12, 13, 14, 17, 18, 19,  # Upper
-    33, 37, 39, 43,  # Left
-    83, 87, 89, 93,  # Right
-    132, 133, 134, 137, 138, 139, 142, 143, 144,  # Down
-])
-
-LR_centers_FB_x_centers_555 = sorted([
-    32, 33, 34, 37, 38, 39, 42, 43, 44,  # Left
-    57, 59, 67, 69,  # Front
-    107, 109, 117, 119,  # Back
-    82, 83, 84, 87, 88, 89, 92, 93, 94,  # Right
-])
-
-FB_centers_UD_t_centers_555 = sorted([
-    8, 12, 14, 18,  # Upper
-    57, 58, 59, 62, 63, 64, 67, 68, 69,  # Front
-    107, 108, 109, 112, 113, 114, 117, 118, 119,  # Back
-    133, 137, 139, 143,  # Down
-])
-
 
 """
 000 000 000 011 111 111 112 222 222 222 333 333
@@ -662,7 +639,6 @@ PHASE3_ILLEGAL_MOVES = (
     "Lw", "Lw'",
     "Rw", "Rw'",
 )
-CENTERS_SOLVE_ILLEGAL_MOVES = PHASE3_ILLEGAL_MOVES
 
 PHASE5_ILLEGAL_MOVES = (
     "Uw", "Uw'",
@@ -851,11 +827,12 @@ class LookupTableIDA555LRCenterStage(LookupTableIDAViaGraph):
             illegal_moves=(),
             prune_tables=(parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage),
             centers_only=True,
-            # C_ida_type="5x5x5-lr-centers-stage",
         )
 
 
 class LookupTableIDA555LRTCenterStage(LookupTableIDAViaGraph):
+    """LR t-center staging IDA used by 7x7/NNNOdd after they have reduced to a 5x5x5."""
+
     def __init__(self, parent):
         LookupTableIDAViaGraph.__init__(
             self,
@@ -1029,18 +1006,6 @@ class LookupTableIDA555FBCentersStage(LookupTableIDAViaGraph):
             centers_only=True,
         )
         # fmt: on
-
-
-class LookupTableIDA555UDTCenterStage(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=PHASE2_ILLEGAL_MOVES,
-            prune_tables=(parent.lt_FB_t_centers_stage,),
-            centers_only=True,
-        )
 
 
 # ==================================================
@@ -2469,231 +2434,11 @@ class LookupTableIDA555Phase6(LookupTableIDAViaGraph):
         )
 
 
-# ==================================================
-# solve remaining centers
-# used by cubes larger than 5x5
-# ==================================================
-class LookupTable555UDCenterSolve(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-               . . . . .
-               . U U U .
-               . U U U .
-               . U U U .
-               . . . . .
-
-    . . . . .  . . . . .  . . . . .  . . . . .
-    . . L . .  . . . . .  . . R . .  . . . . .
-    . L . L .  . . . . .  . R . R .  . . . . .
-    . . L . .  . . . . .  . . R . .  . . . . .
-    . . . . .  . . . . .  . . . . .  . . . . .
-
-               . . . . .
-               . D D D .
-               . D D D .
-               . D D D .
-               . . . . .
-
-    lookup-table-5x5x5-step34-UD-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 6.00x previous step)
-    2 steps has 71 entries (0 percent, 11.83x previous step)
-    3 steps has 560 entries (0 percent, 7.89x previous step)
-    4 steps has 3,136 entries (0 percent, 5.60x previous step)
-    5 steps has 15,246 entries (4 percent, 4.86x previous step)
-    6 steps has 58,108 entries (16 percent, 3.81x previous step)
-    7 steps has 130,214 entries (37 percent, 2.24x previous step)
-    8 steps has 109,626 entries (31 percent, 0.84x previous step)
-    9 steps has 24,832 entries (7 percent, 0.23x previous step)
-    10 steps has 1,200 entries (0 percent, 0.05x previous step)
-
-    Total: 343,000 entries
-    Average: 7.18 moves
-    """
-
-    state_targets = ("UUUUUUUUULLLLRRRRDDDDDDDDD",)
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step34-UD-centers-solve.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            all_moves=moves_555,
-            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in UD_centers_LR_t_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(UD_centers_LR_t_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555LRCenterSolve(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-               . . . . .
-               . . . . .
-               . . . . .
-               . . . . .
-               . . . . .
-
-    . . . . .  . . . . .  . . . . .  . . . . .
-    . L L L .  . F . F .  . R R R .  . B . B .
-    . L L L .  . . . . .  . R R R .  . . . . .
-    . L L L .  . F . F .  . R R R .  . B . B .
-    . . . . .  . . . . .  . . . . .  . . . . .
-
-               . . . . .
-               . . . . .
-               . . . . .
-               . . . . .
-               . . . . .
-
-    lookup-table-5x5x5-step35-LR-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 6.00x previous step)
-    2 steps has 67 entries (0 percent, 11.17x previous step)
-    3 steps has 476 entries (0 percent, 7.10x previous step)
-    4 steps has 2,571 entries (0 percent, 5.40x previous step)
-    5 steps has 11,792 entries (3 percent, 4.59x previous step)
-    6 steps has 43,263 entries (12 percent, 3.67x previous step)
-    7 steps has 98,148 entries (28 percent, 2.27x previous step)
-    8 steps has 111,960 entries (32 percent, 1.14x previous step)
-    9 steps has 61,836 entries (18 percent, 0.55x previous step)
-    10 steps has 12,336 entries (3 percent, 0.20x previous step)
-    11 steps has 544 entries (0 percent, 0.04x previous step)
-
-    Total: 343,000 entries
-    Average: 7.58 moves
-    """
-
-    state_targets = ("LLLLLLLLLFFFFRRRRRRRRRBBBB",)
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step35-LR-centers-solve.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            all_moves=moves_555,
-            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in LR_centers_FB_x_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(LR_centers_FB_x_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTable555FBCenterSolve(LookupTable):
-    """
-    (8! / (4! * 4!))^3 = 343,000 states
-
-               . . . . .
-               . . U . .
-               . U . U .
-               . . U . .
-               . . . . .
-
-    . . . . .  . . . . .  . . . . .  . . . . .
-    . . . . .  . F F F .  . . . . .  . B B B .
-    . . . . .  . F F F .  . . . . .  . B B B .
-    . . . . .  . F F F .  . . . . .  . B B B .
-    . . . . .  . . . . .  . . . . .  . . . . .
-
-               . . . . .
-               . . D . .
-               . D . D .
-               . . D . .
-               . . . . .
-
-    lookup-table-5x5x5-step36-FB-centers-solve.txt
-    ==============================================
-    0 steps has 1 entries (0 percent, 0.00x previous step)
-    1 steps has 6 entries (0 percent, 6.00x previous step)
-    2 steps has 71 entries (0 percent, 11.83x previous step)
-    3 steps has 560 entries (0 percent, 7.89x previous step)
-    4 steps has 3,136 entries (0 percent, 5.60x previous step)
-    5 steps has 15,246 entries (4 percent, 4.86x previous step)
-    6 steps has 58,108 entries (16 percent, 3.81x previous step)
-    7 steps has 130,214 entries (37 percent, 2.24x previous step)
-    8 steps has 109,626 entries (31 percent, 0.84x previous step)
-    9 steps has 24,832 entries (7 percent, 0.23x previous step)
-    10 steps has 1,200 entries (0 percent, 0.05x previous step)
-
-    Total: 343,000 entries
-    Average: 7.18 moves
-    """
-
-    state_targets = ("UUUUFFFFFFFFFBBBBBBBBBDDDD",)
-
-    def __init__(self, parent, build_state_index=False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-5x5x5-step36-FB-centers-solve.txt",
-            self.state_targets,
-            linecount=343000,
-            max_depth=10,
-            all_moves=moves_555,
-            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join([parent_state[x] for x in FB_centers_UD_t_centers_555])
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(FB_centers_UD_t_centers_555, state):
-            cube[pos] = pos_state
-
-
-class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDAViaGraph):
-    def __init__(self, parent):
-        LookupTableIDAViaGraph.__init__(
-            self,
-            parent,
-            all_moves=moves_555,
-            illegal_moves=CENTERS_SOLVE_ILLEGAL_MOVES,
-            prune_tables=(parent.lt_UD_centers_solve, parent.lt_LR_centers_solve, parent.lt_FB_centers_solve),
-        )
-
-
 class RubiksCube555(RubiksCube):
     """
-    5x5x5 strategy
-    - stage UD centers to sides U or D (use IDA)
-    - stage LR centers to sides L or R...this in turn stages FB centers to sides F or B
-    - solve all centers (use IDA)
-    - pair edges
-    - solve as 3x3x3
+    5x5x5 reduction: stage LR then FB centers, EO the edges, park and pair four
+    x-plane edges, pair the last eight while solving the centers, then finish
+    as a 3x3x3. See the module docstring for the six phases.
     """
 
     reduce333_orient_edges_tuples = (
@@ -2771,10 +2516,6 @@ class RubiksCube555(RubiksCube):
         (149, 122),  # Down
     )
 
-    def nuke_centers_specific(self, centers):
-        for square_index in centers:
-            self.state[square_index] = "."
-
     def nuke_edges_specific(self, edges):
         for square_index in edges:
             partner_index = edges_partner_555[square_index]
@@ -2800,45 +2541,6 @@ class RubiksCube555(RubiksCube):
     def nuke_edges_in_z_plane(self):
         z_plane_edges = (6, 11, 16, 10, 15, 20, 131, 136, 141, 135, 140, 145)
         self.nuke_edges_specific(z_plane_edges)
-
-    def x_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (31, 36, 41, 35, 40, 45, 81, 86, 91, 85, 90, 95):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
-
-    def y_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (2, 3, 4, 22, 23, 24, 127, 128, 129, 147, 148, 149):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
-
-    def z_plane_edges_are_l4e(self):
-        state = self.state
-        edges_in_plane = set()
-
-        for square_index in (6, 11, 16, 10, 15, 20, 131, 136, 141, 135, 140, 145):
-            partner_index = edges_partner_555[square_index]
-            square_value = state[square_index]
-            partner_value = state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            edges_in_plane.add(wing_str)
-
-        return len(edges_in_plane) == 4
 
     def sanity_check(self):
         centers = (13, 38, 63, 88, 113, 138)
@@ -2869,9 +2571,6 @@ class RubiksCube555(RubiksCube):
         self.lt_FB_centers_stage = LookupTableIDA555FBCentersStage(self)
         self.lt_FB_centers_stage.avoid_oll = 0
 
-        # used by 6x6x6 / 7x7x7 after they have reduced to a 5x5x5
-        self.lt_UD_t_centers_stage_ida = LookupTableIDA555UDTCenterStage(self)
-
         # phase 3 - EO the wings and midges; LR centers to 1-of-432
         self.lt_phase3_lr_center_stage = LookupTable555Phase3LRCenterStage(self)
         self.lt_phase3_eo_outer_orbit = LookupTable555EdgeOrientOuterOrbit(self)
@@ -2893,12 +2592,6 @@ class RubiksCube555(RubiksCube):
         self.lt_phase6_high_edge_midge = LookupTable555Phase6HighEdgeMidge(self)
         self.lt_phase6_low_edge_midge = LookupTable555Phase6LowEdgeMidge(self)
         self.lt_phase6 = LookupTableIDA555Phase6(self)
-
-        # for larger cubes that have reduced to 555
-        self.lt_UD_centers_solve = LookupTable555UDCenterSolve(self)
-        self.lt_LR_centers_solve = LookupTable555LRCenterSolve(self)
-        self.lt_FB_centers_solve = LookupTable555FBCenterSolve(self)
-        self.lt_ULFRBD_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
 
     def highlow_edges_state(self):
         state = self.state
@@ -2982,31 +2675,6 @@ class RubiksCube555(RubiksCube):
                 self.state[square_index] = partner_value
                 self.state[partner_index] = square_value
 
-    def get_x_plane_z_plane_wing_strs(self):
-        result = []
-
-        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
-        for square_index in (36, 40, 86, 90, 11, 15, 136, 140):
-            partner_index = edges_partner_555[square_index]
-            square_value = self.state[square_index]
-            partner_value = self.state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            result.append(wing_str)
-
-        return set(result)
-
-    def get_x_plane_wing_strs(self):
-        result = []
-
-        for square_index in (36, 40, 86, 90):
-            partner_index = edges_partner_555[square_index]
-            square_value = self.state[square_index]
-            partner_value = self.state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            result.append(wing_str)
-
-        return set(result)
-
     def get_y_plane_wing_strs(self):
         result = []
 
@@ -3031,22 +2699,12 @@ class RubiksCube555(RubiksCube):
 
         return set(result)
 
-    def get_y_plane_z_plane_wing_strs(self):
-        result = []
-
-        # The 4 paired edges are in the x-plane so look at midges in the y-plane and z-plane
-        for square_index in (3, 11, 15, 23, 128, 136, 140, 148):
-            partner_index = edges_partner_555[square_index]
-            square_value = self.state[square_index]
-            partner_value = self.state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            result.append(wing_str)
-
-        return set(result)
-
     def group_centers_stage_LR(self):
         """
-        Stage LR centers
+        Stage LR centers.
+
+        Used by 6x6/7x7/NNNOdd after they have reduced to a 5x5x5.
+        ``reduce_333`` uses ``group_centers_phase1_and_2`` instead.
         """
 
         if not self.LR_centers_staged():
@@ -3056,7 +2714,10 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_stage_FB(self, max_ida_threshold: int = None):
         """
-        Stage FB centers
+        Stage FB (and therefore UD) centers.
+
+        Used by 6x6/7x7/NNNOdd after they have reduced to a 5x5x5.
+        ``reduce_333`` uses ``group_centers_phase1_and_2`` instead.
         """
         if self.FB_centers_staged():
             if self.edge_swaps_odd(False, 0, False):
@@ -3066,13 +2727,10 @@ class RubiksCube555(RubiksCube):
             self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
             self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
-    def group_centers_stage_UD(self, max_ida_threshold: int = None):
-        self.group_centers_stage_FB(max_ida_threshold=max_ida_threshold)
-
     def eo_edges(self):
         """
         Our goal is to get the edges split into high/low groups but we do not care what
-        the final orienation is of the edges. Each edge can either be in its final
+        the final orientation is of the edges. Each edge can either be in its final
         orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2
         is because there cannot be an odd number of edges not in their final orientation.
         """
@@ -3088,7 +2746,6 @@ class RubiksCube555(RubiksCube):
         for _, square_index, partner_index in midges_recolor_tuples_555:
             square_value = self.state[square_index]
             partner_value = self.state[partner_index]
-            wing_str = square_value + partner_value
             wing_str = wing_str_map[square_value + partner_value]
             wing_strs.append(wing_str)
 
@@ -3160,64 +2817,11 @@ class RubiksCube555(RubiksCube):
         # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
         # the cube and re-apply the solution.
         self.edges_flip_orientation(wing_strs, [])
-        self.highlow_edges_print()
-
-    def high_edge_midge_pair_count(self, target_wing_str=[]):
-        count = 0
-        it = iter(high_wings_and_midges_555)
-
-        for index1 in it:
-            index2 = next(it)
-            index1_value = self.state[index1]
-            index2_value = self.state[index2]
-            index1_partner = edges_partner_555[index1]
-            index2_partner = edges_partner_555[index2]
-            index1_partner_value = self.state[index1_partner]
-            index2_partner_value = self.state[index2_partner]
-
-            if index1_value == index2_value and index1_partner_value == index2_partner_value:
-                if target_wing_str:
-                    index1_wing_str = wing_str_map[index1_value + index1_partner_value]
-                    # index2_wing_str = wing_str_map[index2_value + index2_partner_value]
-
-                    if index1_wing_str in target_wing_str:
-                        count += 1
-                else:
-                    count += 1
-
-        return count
-
-    def low_edge_midge_pair_count(self, target_wing_str=[]):
-        count = 0
-        it = iter(low_wings_and_midges_555)
-
-        for index1 in it:
-            index2 = next(it)
-            index1_value = self.state[index1]
-            index2_value = self.state[index2]
-            index1_partner = edges_partner_555[index1]
-            index2_partner = edges_partner_555[index2]
-            index1_partner_value = self.state[index1_partner]
-            index2_partner_value = self.state[index2_partner]
-
-            if index1_value == index2_value and index1_partner_value == index2_partner_value:
-                if target_wing_str:
-                    index1_wing_str = wing_str_map[index1_value + index1_partner_value]
-                    # index2_wing_str = wing_str_map[index2_value + index2_partner_value]
-
-                    if index1_wing_str in target_wing_str:
-                        count += 1
-                else:
-                    count += 1
-
-        return count
 
     def find_first_four_edges_to_pair(self):
         """
-        phase-5 requires a 4-edge combo where none of the edges are in the z-plane.
-        phase-4 will put a 4-edge combo into that state. There are 12!/(4!*8!) or 495
-        different 4-edge combinations.  Try them all and see which one has the lowest
-        phase-4 cost.
+        Rank all 12!/(4!*8!) = 495 four-edge combinations by phase-4 cost.
+        Phase 4 parks the chosen four on the x-plane so phase 5 can pair them.
         """
         original_state = self.state[:]
         original_solution = self.solution[:]
@@ -3245,58 +2849,6 @@ class RubiksCube555(RubiksCube):
         self.solution = original_solution[:]
         results.sort()
         return results
-
-    def pair_first_four_edges(self, phase4_wing_str_combo: List[str]):
-        tmp_solution_len = len(self.solution)
-        self.lt_phase4.wing_strs = phase4_wing_str_combo
-        self.lt_phase4.solve()
-        self.print_cube_add_comment("4-edges prepped for pairing", tmp_solution_len)
-
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-
-        self.edges_flip_orientation(phase4_wing_str_combo, [])
-        self.lt_phase5_high_edge_midge.wing_strs = phase4_wing_str_combo
-        self.lt_phase5_low_edge_midge.wing_strs = phase4_wing_str_combo
-        self.lt_phase5.solve_via_c()
-
-        pair_four_edge_solution = self.solution[tmp_solution_len:]
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in pair_four_edge_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
-
-    def pair_last_eight_edges(self, call_print_cube: bool = True):
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
-        tmp_solution_len = len(self.solution)
-
-        # We need the edge swaps to be even for our edges lookup table to work.
-        if self.edge_swaps_odd(False, 0, False):
-            raise SolveError("edge swaps are odd, cannot pair last 8-edges")
-
-        self.edges_flip_orientation(wing_strs_all, [])
-
-        yz_plane_edges = tuple(list(self.get_y_plane_wing_strs()) + list(self.get_z_plane_wing_strs()))
-        self.lt_phase6_high_edge_midge.ida_graph_node = None
-        self.lt_phase6_low_edge_midge.ida_graph_node = None
-        self.lt_phase6_high_edge_midge.wing_strs = yz_plane_edges
-        self.lt_phase6_low_edge_midge.wing_strs = yz_plane_edges
-        self.lt_phase6.solve_via_c()
-
-        pair_eight_edge_solution = self.solution[original_solution_len:]
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in pair_eight_edge_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def group_centers_phase1_and_2(self) -> None:
         """
@@ -3397,6 +2949,11 @@ class RubiksCube555(RubiksCube):
         self.print_cube_add_comment("UD FB centers staged", phase2_comment_start)
 
     def pair_edges(self):
+        """
+        Phases 4+5+6: park four edges on the x-plane, pair them while putting
+        LR/FB centers into vertical bars, then pair the last eight and solve
+        the centers. Keep the shortest combined path across the portfolio.
+        """
         # We need the edge swaps to be even for our phase6 lookup tables to work.
         if self.edge_swaps_odd(False, 0, False):
             raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
@@ -3541,6 +3098,7 @@ class RubiksCube555(RubiksCube):
         self.print_cube_add_comment("last eight edges paired, centers solved", tmp_solution_len)
 
     def reduce_333(self):
+        """Stage centers, EO, pair edges, and solve centers so the cube is a 3x3x3."""
         self.lt_init()
 
         if self.centers_solved() and self.edges_paired():

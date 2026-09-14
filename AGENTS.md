@@ -123,7 +123,7 @@ flowchart TD
 | 2 | `RubiksCube222` | solved | Tiny tables |
 | 3 | `RubiksCube333` | solved | kociemba |
 | 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1+2 and 3+4 |
-| 5 | `RubiksCube555` | 3x3 | Graph IDA stages LR then FB centers (phases 1+2 as a portfolio) |
+| 5 | `RubiksCube555` | 3x3 | Graph IDA: LR then FB staging (1+2 portfolio), EO, then a 4+5+6 portfolio that pairs edges and solves centers |
 | 6 | `RubiksCube666` | 5x5 | Ranked inner-x; `--low-memory` / `--min-memory` can drop the huge table |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
 | even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
@@ -139,6 +139,7 @@ Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNE
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
 - 6x6: phase 1 owns **orbit1** OLL (later phases forbid `3Xw` quarters). Phase 3 owns **orbit0**.
 - 7x7 daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.
+- 5x5 phases 1+2 are a graph-IDA portfolio (default 64 phase-1 solutions). Phases 4+5+6 are another (phase-5 default 500). There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse 5x5 LR/FB staging (`group_centers_stage_LR` / `group_centers_stage_FB` and `lt_LR_t_centers_stage_ida`).
 
 ### 7x7 and NNNOdd centers
 
@@ -158,7 +159,7 @@ flowchart LR
     native["every orbit: daisy --native-only"]
   end
   LRfull --> UDfull
-  LRpair --> UDpai
+  LRpair --> UDpair
   LRt --> UDt
   UDfull --> native
   UDpair --> native

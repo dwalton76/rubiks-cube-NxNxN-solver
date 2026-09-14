@@ -66,7 +66,8 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 
 | Binary | Source | Used for |
 | --- | --- | --- |
-| `ida_search_via_graph` | `ida_search_via_graph.c` + `ida_search_666.c` + `ida_search_777.c` | 4x4 phase 1–2 / leftover graph prune-table IDA |
+| `ida_search_via_graph` | `ida_search_via_graph.c` + `ida_search_666.c` + `ida_search_777.c` | Graph prune-table IDA |
+| `ida_search_444_phase1_and_2` | `ida_search_444_phase1_and_2.c` | 4x4 combined center staging + EO |
 | `ida_search_444_phase3_and_4` | `ida_search_444_phase3_and_4.c` | 4x4 combined edge pairing + centers |
 | `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 inner-x / LR-oblique / UD phase 3 |
 | `ida_search_666_daisy_centers` | `ida_search_666_daisy_centers.c` | 6x6 daisy |
@@ -121,7 +122,7 @@ flowchart TD
 | --- | --- | --- | --- |
 | 2 | `RubiksCube222` | solved | Tiny tables |
 | 3 | `RubiksCube333` | solved | kociemba |
-| 4 | `RubiksCube444` | 3x3 | Phases 1 then 2 sequentially; 3+4 is combined C IDA |
+| 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1+2 and 3+4 |
 | 5 | `RubiksCube555` | 3x3 | Graph IDA stages LR then FB centers (phases 1+2 as a portfolio) |
 | 6 | `RubiksCube666` | 5x5 | Ranked inner-x; `--low-memory` / `--min-memory` can drop the huge table |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
@@ -130,11 +131,11 @@ flowchart TD
 
 Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNEven.py` are the phase-level source of truth. Update them when you change a pipeline.
 
-### 4x4 / 5x5 portfolios and parity
+### 4x4 combined searches, 5x5 portfolios, and parity
 
 - `--solution-count` is only passed from Python when `> 1`. C default is 1.
-- 4x4 phases 1 and 2 are sequential. ``phase1_and_2`` (64-prefix portfolio) is unused on the main path; it saved ~0.55 moves at ~5x runtime.
-- 4x4 phases 3 and 4 are one ranked IDA (``ida_search_444_phase3_and_4``). ``phase3_and_4_portfolio`` (2000-prefix) is unused on the main path.
+- 4x4 phases 1 and 2 are one ranked IDA (``ida_search_444_phase1_and_2``) over the full move set. Heuristic is max of the 48-symmetry all-center table, the 51M LR-center table, and the high/low wing table (min over all 2048 even edge mappings). One of ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w`` is required. Last-ply pruning skips a rotate if the next ply cannot meet that parity.
+- 4x4 phases 3 and 4 are one ranked IDA (``ida_search_444_phase3_and_4``). When ``consider_solve_333`` is set, PLL-free reductions are scored with kociemba until a 20-move 3x3x3 appears or ``PHASE34_SOLUTIONS_TO_EVALUATE`` have been tried.
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
 - 6x6: phase 1 owns **orbit1** OLL (later phases forbid `3Xw` quarters). Phase 3 owns **orbit0**.
 - 7x7 daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.

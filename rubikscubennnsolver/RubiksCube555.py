@@ -7,9 +7,10 @@ orbit), and 8 corners. Reduction pairs each wing with its midge and solves the
 centers so the remaining puzzle is a 3x3x3. ``RubiksCube555.reduce_333`` runs
 six phases; ``solve_333`` then solves the paired cube.
 
-Each IDA phase is guided by prune tables. Phases 1+2 and 4+5+6 are searched as
-portfolios: many solutions of the earlier phase are collected, later phases
-are solved from those endpoints, and the shortest combined path is kept.
+Each IDA phase is guided by prune tables. Phases 1+2 are searched as a
+portfolio: many solutions of the earlier phase are collected, later phases are
+solved from those endpoints, and the shortest combined path is kept. Phases
+4+5+6 do the same.
 
 Phase 1 - stage LR centers
     Put all eight L/R t-centers and eight L/R x-centers onto the L and R faces
@@ -31,22 +32,22 @@ Phase 3 - EO the wings and midges; LR centers to 1-of-432
     searched and the shortest is kept. LR centers are reduced to one of 432
     shapes along the way.
 
-Phase 4 - park four edges on the x-plane
-    Choose four edges and move them onto the equator (x-plane). This is a
-    short lookup; ``pair_edges`` only keeps wing-string combinations that
-    finish in fewer than three moves.
-
-Phase 5 - pair those four edges; LR/FB centers to vertical bars
-    Pair the x-plane high wings, low wings, and midges, and put the L/R and
-    F/B centers into vertical bars. A perfect-hash table covers FB-centers
-    combined with high-edge-and-midge (and the same for low). A large
-    portfolio of phase-5 solutions (default 500) is passed to phase 6.
+Phases 4 and 5 - pair four edges on the x-plane; LR/FB centers to vertical bars
+    Phase 4 is a short lookup that parks four edges on the equator;
+    ``pair_edges`` only keeps wing-string combinations that finish in fewer
+    than three moves. Phase 5 then pairs the x-plane high wings, low wings, and
+    midges and puts the L/R and F/B centers into vertical bars, using
+    perfect-hash tables that cover FB-centers combined with high-edge-and-midge
+    (and the same for low). A large portfolio of phase-5 solutions (default
+    500) is passed to phase 6.
 
 Phase 6 - pair the last eight edges and solve the centers
     Pair the remaining wings with their midges and fully solve all 54 centers.
-    Another perfect-hash table covers the last-eight-edges pairing. Prefixes
-    (phase 4 plus 5) are grouped by length so the search can minimize the
-    total, not just the phase-6 suffix.
+    Another perfect-hash table covers the last-eight-edges pairing. This phase
+    pairs whatever sits in the y-plane and z-plane, so it requires the four
+    edges already paired to be the ones in the x-plane. Prefixes (phase 4 plus
+    5) are grouped by length so the search can minimize the total, not just the
+    phase-6 suffix.
 
 Larger even/odd cubes that have already reduced to a 5x5x5 also use the
 center-solve tables at the end of ``lt_init``, and the extra LR/UD t-center

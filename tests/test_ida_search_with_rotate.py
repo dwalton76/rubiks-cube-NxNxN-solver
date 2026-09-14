@@ -402,109 +402,19 @@ class PhaseOnePortfolioTest(unittest.TestCase):
         )
 
 
-class PhaseOneTwoPortfolio444Test(unittest.TestCase):
-    class FakePruneTable:
-        def __init__(self, parent, coordinate):
-            self.parent = parent
-            self.coordinate = coordinate
-
-        def state_index(self):
-            roots = {
-                "A": (10, 20),
-                "B": (11, 21),
-                "C": (11, 21),
-            }
-            return roots[self.parent.state[0]][self.coordinate]
-
-    class FakePhaseOne:
-        def solutions_via_c(self, solution_count):
-            assert solution_count == 64
-            return [
-                (("A",), (0, 0, 0, 0, 0)),
-                (("B",), (0, 0, 0, 0, 0)),
-                (("C",), (0, 0, 0, 0, 0)),
-            ]
-
-    class FakePhaseTwo:
-        def __init__(self, parent):
-            self.parent = parent
-            self.prune_tables = [
-                PhaseOneTwoPortfolio444Test.FakePruneTable(parent, 0),
-                PhaseOneTwoPortfolio444Test.FakePruneTable(parent, 1),
-            ]
-            self.calls = []
-
-        def solutions_via_c(self, pt_states):
-            parity = 0 in self.parent.center_solution_leads_to_oll_parity()
-            self.calls.append((parity, tuple(pt_states)))
-
-            if parity:
-                return [(("PA1", "PA2", "PA3"), (10, 20, 0, 0, 0))]
-            return [(("PB1", "PB2"), (11, 21, 0, 0, 0))]
-
-    class FakeCube:
-        def __init__(self):
-            self.state = ["root"]
-            self.solution = []
-            self.edge_mapping = None
-            self.lt_phase1 = PhaseOneTwoPortfolio444Test.FakePhaseOne()
-            self.lt_phase2 = PhaseOneTwoPortfolio444Test.FakePhaseTwo(self)
-
-        def LR_centers_staged(self):
-            return self.state[0] in {"A", "B", "C", "done"}
-
-        def center_solution_leads_to_oll_parity(self):
-            return [0] if self.state[0] == "A" else []
-
-        def phase2_pt_state_indexes(self):
-            if self.state[0] == "A":
-                return {(10, 20): "map-A"}
-            return {(11, 21): "map-B"}
-
-        def rotate(self, move):
-            self.solution.append(move)
-            if move in {"A", "B", "C"}:
-                self.state[0] = move
-            elif move.startswith("P"):
-                self.state[0] = "done"
-
-        def print_cube_add_comment(self, comment, start):
-            pass
-
-        def highlow_edges_print(self):
-            pass
-
-    def test_portfolio_deduplicates_roots_groups_parity_and_picks_shortest_phase_two(self):
-        # rubiks cube libraries
-        from rubikscubennnsolver.RubiksCube444 import RubiksCube444
-
-        cube = self.FakeCube()
-        RubiksCube444.phase1_and_2(cube)
-
-        self.assertEqual(cube.solution, ["B", "PB1", "PB2"])
-        self.assertEqual(cube.edge_mapping, "map-B")
-        self.assertEqual(
-            set(cube.lt_phase2.calls),
-            {
-                (True, ((10, 20),)),
-                (False, ((11, 21),)),
-            },
-        )
-
-    def test_reduce_333_runs_phase1_then_phase2_not_the_portfolio(self):
+class PhaseOneTwoCombined444Test(unittest.TestCase):
+    def test_reduce_333_runs_phase1_and_2_then_phase3_and_4(self):
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 
         cube = RubiksCube444(solved_444, "URFDLB")
         calls = []
         with (
             patch.object(cube, "reduced_to_333", return_value=False),
-            patch.object(cube, "phase1", side_effect=lambda: calls.append("1")),
-            patch.object(cube, "phase2", side_effect=lambda: calls.append("2")),
+            patch.object(cube, "phase1_and_2", side_effect=lambda: calls.append("12")),
             patch.object(cube, "phase3_and_4", side_effect=lambda **_kwargs: calls.append("34")),
-            patch.object(cube, "phase1_and_2", side_effect=AssertionError("portfolio path should not run")),
         ):
             cube.reduce_333()
-        self.assertEqual(calls, ["1", "2", "34"])
+        self.assertEqual(calls, ["12", "34"])
 
 
 class PhaseThreeFourCombined444Test(unittest.TestCase):
@@ -518,7 +428,7 @@ class PhaseThreeFourCombined444Test(unittest.TestCase):
         def __init__(self):
             self.state = ["start"]
             self.solution = []
-            self.lt_phase3_centers = PhaseThreeFourCombined444Test.FakeCenters()
+            self.lt_lfrb_centers = PhaseThreeFourCombined444Test.FakeCenters()
             self.solve_via_c_output = ""
 
         def get_kociemba_string(self, _all_squares):

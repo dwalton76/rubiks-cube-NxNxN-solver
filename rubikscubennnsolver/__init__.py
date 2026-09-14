@@ -3598,7 +3598,7 @@ class RubiksCube(object):
         else:
             raise NotImplementedError(f"pll_id {pll_id}")
 
-    def solve_333(self) -> None:
+    def solve_333(self, log_cube: bool = True) -> None:
         """
         Use the kociemba solver to solve a cube that has been reduced to a 3x3x3
         """
@@ -3618,16 +3618,18 @@ class RubiksCube(object):
         if not kociemba_ok:
             raise SolveError(f"parity error made kociemba barf,  kociemba {kociemba_string}")
 
-        logger.debug(f"kociemba       : {kociemba_string}")
-        logger.info(f"kociemba steps            : {' '.join(steps)}")
-        logger.info(f"kociemba steps (reversed) : {' '.join(reverse_steps(steps))}")
+        if log_cube:
+            logger.debug(f"kociemba       : {kociemba_string}")
+            logger.info(f"kociemba steps            : {' '.join(steps)}")
+            logger.info(f"kociemba steps (reversed) : {' '.join(reverse_steps(steps))}")
         reduce_333_solution_len = len(self.solution)
 
         for step in steps:
             step = str(step)
             self.rotate(step)
 
-        self.print_cube_add_comment("solve 3x3x3", reduce_333_solution_len)
+        if log_cube:
+            self.print_cube_add_comment("solve 3x3x3", reduce_333_solution_len)
 
         if not self.solved():
             self.solve_OLL()
@@ -4629,7 +4631,7 @@ class RubiksCube(object):
             self.print_cube_add_comment("solve 3x3x3", reduce_333_solution_len)
         else:
             logger.info("solve_333 begin")
-            self.solve_333()
+            self.solve_333(log_cube=False)
             logger.info("solve_333 end")
 
         self.compress_solution()

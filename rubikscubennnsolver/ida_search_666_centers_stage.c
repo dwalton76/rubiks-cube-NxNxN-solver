@@ -13,6 +13,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "center_symmetry_444.h"
@@ -29,39 +30,35 @@
 #define OBLIQUE_PAIR_COUNT 24
 #define BINOM_MAX ALL_INNER_X_SIZE
 #define DEFAULT_UNPAIRED_MULTIPLIER 0.90f
-#define ALL_INNER_X_MATRIX_COST_MAX 10
+#define ALL_INNER_X_MATRIX_COST_MAX 11
 #define DEFAULT_MAX_IDA_THRESHOLD 20
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
-#define MAX_SPLIT_TASKS (MOVE_COUNT_666 * MOVE_COUNT_666)
+#define MAX_SPLIT_PREFIX 4
 #define NO_TASK UINT_MAX
 #define PARITY_ANY 0
 #define PARITY_ODD 1
 #define PARITY_EVEN 2
 
 /*
- * Empirical combined heuristic for staging all inner x-centers and pairing the
- * L/R obliques.  The rows are the number of unpaired obliques (0..8), and the
- * columns are the exact all-inner-x table cost (0..10).  It was built from
- * 1,265 remaining-cost samples along solutions for 100 random cubes, found
- * with the admissible unpaired/4 bound.
+ * Combined heuristic for staging all inner x-centers and pairing the L/R
+ * obliques. Rows are unpaired obliques (0..8); columns are the exact
+ * all-inner-x table cost (0..11).
  *
- * Each occupied cell is the minimum remaining-move count seen for that
- * (unpaired, inner-x) pair, still never below max(inner-x, ceil(unpaired/4)).
- * Empty cells keep that admissible floor.
- *
- * utils/build-666-all-inner-x-oblique-matrix.py was used to build this table
+ * Cells are never below max(inner-x, ceil(unpaired/4)). Occupied cells are
+ * the minimum remaining-move count seen for that pair along solutions.
+ * Rebuild with utils/build-666-all-inner-x-oblique-matrix.py.
  */
 static const unsigned char unpaired_count_all_inner_x_centers_666[9][ALL_INNER_X_MATRIX_COST_MAX + 1] = {
-    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 0
-    {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 1
-    {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 2
-    {1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 3
-    {1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 4
-    {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 5
-    {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10},  // 6
-    {2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 11},  // 7
-    {2, 2, 2, 3, 4, 5, 7, 8, 9, 9, 11},  // 8
+    { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 0 unpaired
+    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 1 unpaired
+    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 2 unpaired
+    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 3 unpaired
+    { 1,  2,  3,  3,  5,  6,  7,  8,  9, 11, 12, 12},  // 4 unpaired
+    { 2,  2,  3,  3,  5,  6,  7,  8,  9, 11, 12, 12},  // 5 unpaired
+    { 2,  2,  3,  3,  5,  6,  7,  8,  9, 11, 12, 12},  // 6 unpaired
+    { 2,  2,  3,  3,  5,  6,  7,  8, 10, 11, 12, 12},  // 7 unpaired
+    { 2,  2,  3,  3,  5,  6,  7,  8, 10, 11, 12, 12},  // 8 unpaired
 };
 
 /*
@@ -179,11 +176,19 @@ static move_type best_solution[MAX_IDA_THRESHOLD + 1];
 static atomic_uint next_task;
 static atomic_uint best_task = NO_TASK;
 static pthread_mutex_t best_solution_lock = PTHREAD_MUTEX_INITIALIZER;
-static struct {
-    unsigned char first_index;
-    unsigned char second_index;
-} split_tasks[MAX_SPLIT_TASKS];
+static struct split_task {
+    unsigned char move_index[MAX_SPLIT_PREFIX];
+} *split_tasks;
 static unsigned int split_task_count;
+static unsigned int split_task_capacity;
+
+/*
+ * Subtree sizes are heavy tailed, so a shallow split leaves one task holding a
+ * large share of the search and caps the speedup regardless of thread count.
+ * Splitting on two moves left one task with 37% of all nodes; each extra move
+ * of prefix divides the hot subtree among its own children.
+ */
+static unsigned char split_task_depth = 2;
 
 struct ranked_cost_file {
     int fd;
@@ -258,7 +263,7 @@ static void usage(const char *program)
         "[--multiplier FLOAT] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--orbit1-need-odd-w|--orbit1-need-even-w] "
-        "[--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
+        "[--apply-move MOVE] [--print-ranks] [--print-legal-moves] [--benchmark COUNT]\n",
         program
     );
     printf(
@@ -334,15 +339,15 @@ static uint64_t multiset_permutations(const unsigned int counts[3])
     return binom[total][counts[0]] * binom[total - counts[0]][counts[1]];
 }
 
-static uint64_t all_inner_x_rank_state(const unsigned char *state)
+static uint64_t all_inner_x_rank_indices(const unsigned char *state)
 {
     unsigned int counts[3] = {8, 8, 8};
     uint64_t rank = 0;
 
     for (unsigned int position = 0; position < ALL_INNER_X_SIZE; position++) {
-        unsigned int selected = staged_symbol(state[position]);
+        unsigned int selected = state[position];
 
-        if (selected > 2 || !counts[selected]) {
+        if (!counts[selected]) {
             return UINT64_MAX;
         }
         for (unsigned int smaller = 0; smaller < selected; smaller++) {
@@ -358,37 +363,73 @@ static uint64_t all_inner_x_rank_state(const unsigned char *state)
     return rank;
 }
 
+/*
+ * Canonicalizing is the hot path: every node canonicalizes over 48 symmetries.
+ * transform_centers_444() writes to scattered destinations, so the old code had
+ * to materialize all 48 transforms and memcmp each one. Inverting the position
+ * permutation lets us emit a symmetry's output in destination order and stop at
+ * the first sticker that differs from the best candidate so far, which is
+ * usually within the first few.
+ */
+static unsigned char symmetry_dest_to_src[CENTER_SYMMETRY_COUNT_444][ALL_INNER_X_SIZE];
+static unsigned char symmetry_symbol_index[CENTER_SYMMETRY_COUNT_444][3];
+
+static void init_all_inner_x_symmetry(void)
+{
+    static const unsigned char symbols[3] = {'F', 'L', 'U'};
+
+    init_center_symmetry_444();
+    for (unsigned int symmetry = 0; symmetry < CENTER_SYMMETRY_COUNT_444; symmetry++) {
+        for (unsigned int source = 0; source < ALL_INNER_X_SIZE; source++) {
+            symmetry_dest_to_src[symmetry][center_symmetry_positions_444[symmetry][source]] =
+                (unsigned char)source;
+        }
+        for (unsigned int symbol = 0; symbol < 3; symbol++) {
+            unsigned char mapped = transform_center_symbol_444(symmetry, symbols[symbol]);
+
+            symmetry_symbol_index[symmetry][symbol] = (unsigned char)staged_symbol((char)mapped);
+        }
+    }
+}
+
 static uint64_t all_inner_x_canonical_rank(const char *cube)
 {
-    unsigned char state[ALL_INNER_X_SIZE];
-    unsigned char transformed[ALL_INNER_X_SIZE];
-    unsigned char canonical[ALL_INNER_X_SIZE];
+    unsigned char source[ALL_INNER_X_SIZE];
+    unsigned char best[ALL_INNER_X_SIZE];
 
     for (unsigned int index = 0; index < ALL_INNER_X_SIZE; index++) {
-        switch (cube[all_inner_x_squares[index]]) {
-            case 'U':
-            case 'D':
-                state[index] = 'U';
+        unsigned int selected = staged_symbol(cube[all_inner_x_squares[index]]);
+
+        if (selected > 2) {
+            return UINT64_MAX;
+        }
+        source[index] = (unsigned char)selected;
+    }
+
+    for (unsigned int index = 0; index < ALL_INNER_X_SIZE; index++) {
+        best[index] = symmetry_symbol_index[0][source[symmetry_dest_to_src[0][index]]];
+    }
+
+    for (unsigned int symmetry = 1; symmetry < CENTER_SYMMETRY_COUNT_444; symmetry++) {
+        const unsigned char *dest_to_src = symmetry_dest_to_src[symmetry];
+        const unsigned char *symbol_index = symmetry_symbol_index[symmetry];
+
+        for (unsigned int index = 0; index < ALL_INNER_X_SIZE; index++) {
+            unsigned char value = symbol_index[source[dest_to_src[index]]];
+
+            if (value > best[index]) {
                 break;
-            case 'L':
-            case 'R':
-                state[index] = 'L';
+            }
+            if (value < best[index]) {
+                best[index] = value;
+                for (unsigned int rest = index + 1; rest < ALL_INNER_X_SIZE; rest++) {
+                    best[rest] = symbol_index[source[dest_to_src[rest]]];
+                }
                 break;
-            case 'F':
-            case 'B':
-                state[index] = 'F';
-                break;
-            default:
-                return UINT64_MAX;
+            }
         }
     }
-    for (unsigned int symmetry = 0; symmetry < CENTER_SYMMETRY_COUNT_444; symmetry++) {
-        transform_centers_444(state, transformed, symmetry);
-        if (!symmetry || memcmp(transformed, canonical, sizeof(canonical)) < 0) {
-            memcpy(canonical, transformed, sizeof(canonical));
-        }
-    }
-    return all_inner_x_rank_state(canonical);
+    return all_inner_x_rank_indices(best);
 }
 
 static uint64_t symmetry_select_zero(const struct symmetry_index *index, uint64_t zero)
@@ -488,20 +529,13 @@ static unsigned char unpaired_cost(unsigned char unpaired)
 
 static unsigned char all_inner_x_combined_cost(unsigned char inner_x_cost, unsigned char unpaired)
 {
+    // dwalton
     if (use_unpaired_multiplier) {
         unsigned char oblique_cost = unpaired_cost(unpaired);
 
         return inner_x_cost > oblique_cost ? inner_x_cost : oblique_cost;
     }
-    if (inner_x_cost <= ALL_INNER_X_MATRIX_COST_MAX) {
-        return unpaired_count_all_inner_x_centers_666[unpaired][inner_x_cost];
-    }
-
-    /*
-     * The 100-cube sample did not cover table costs above 10.  The exact
-     * inner-x cost remains a safe and useful fallback for those rare states.
-     */
-    return inner_x_cost;
+    return unpaired_count_all_inner_x_centers_666[unpaired][inner_x_cost];
 }
 
 /*
@@ -616,7 +650,9 @@ static struct heuristic_result heuristic(const char *cube)
         if (!encoded) {
             result.cost = UINT8_MAX;
         } else {
+            // dwalton
             result.cost = all_inner_x_combined_cost(result.all_inner_x_cost, result.unpaired_count);
+            // result.cost = all_inner_x_combined_cost(result.all_inner_x_cost, 0);
         }
         return result;
     }
@@ -852,7 +888,7 @@ static void map_ranked_tables(void)
     if (stage_all_inner_x) {
         struct ranked_cost_file file;
 
-        init_center_symmetry_444();
+        init_all_inner_x_symmetry();
         map_symmetry_index(&all_inner_x_index, all_inner_x_index_filename);
         all_inner_x_cost_size = all_inner_x_index.header->orbit_count;
         file = map_ranked_cost_file(all_inner_x_filename, all_inner_x_cost_size);
@@ -1180,6 +1216,51 @@ static int ida_search(
     return 0;
 }
 
+/*
+ * Every move sequence of MAX_SPLIT_PREFIX legal moves is a possible task, so
+ * counting them gives the exact worst case to allocate once up front.
+ */
+static unsigned int count_move_prefixes(move_type previous, unsigned char depth)
+{
+    unsigned int total = 0;
+
+    if (depth == MAX_SPLIT_PREFIX) {
+        return 1;
+    }
+    for (unsigned int index = 0; index < legal_move_count[previous]; index++) {
+        total += count_move_prefixes(moves_666[legal_move_index[previous][index]], depth + 1);
+    }
+    return total;
+}
+
+static void allocate_split_tasks(void)
+{
+    split_task_capacity = count_move_prefixes(MOVE_NONE, 0);
+    split_tasks = malloc(sizeof(*split_tasks) * (size_t) split_task_capacity);
+    if (!split_tasks) {
+        fprintf(stderr, "ERROR: could not allocate %u split tasks\n", split_task_capacity);
+        exit(1);
+    }
+}
+
+static void add_split_tasks(move_type previous, unsigned char depth, unsigned char *prefix)
+{
+    if (depth == split_task_depth) {
+        if (split_task_count >= split_task_capacity) {
+            fprintf(stderr, "ERROR: more than %u split tasks\n", split_task_capacity);
+            exit(1);
+        }
+        memcpy(split_tasks[split_task_count].move_index, prefix, MAX_SPLIT_PREFIX);
+        split_task_count++;
+        return;
+    }
+    for (unsigned int index = 0; index < legal_move_count[previous]; index++) {
+        prefix[depth] = (unsigned char)index;
+        add_split_tasks(moves_666[legal_move_index[previous][index]], depth + 1, prefix);
+    }
+    prefix[depth] = 0;
+}
+
 static int build_split_tasks(
     const char *root,
     unsigned char threshold,
@@ -1187,10 +1268,12 @@ static int build_split_tasks(
     move_type *one_move_solution
 )
 {
+    unsigned char prefix[MAX_SPLIT_PREFIX] = {0};
     char cube[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
 
     split_task_count = 0;
+    split_task_depth = threshold < MAX_SPLIT_PREFIX ? (threshold < 2 ? 2 : threshold) : MAX_SPLIT_PREFIX;
     *one_move_solution = MOVE_NONE;
     for (unsigned int first_index = 0; first_index < legal_move_count[MOVE_NONE]; first_index++) {
         move_type first = moves_666[legal_move_index[MOVE_NONE][first_index]];
@@ -1215,13 +1298,24 @@ static int build_split_tasks(
         if (threshold < 2) {
             continue;
         }
-        for (unsigned int second_index = 0; second_index < legal_move_count[first]; second_index++) {
-            split_tasks[split_task_count].first_index = (unsigned char)first_index;
-            split_tasks[split_task_count].second_index = (unsigned char)second_index;
-            split_task_count++;
-        }
+        prefix[0] = (unsigned char)first_index;
+        add_split_tasks(first, 1, prefix);
     }
     return 0;
+}
+
+/*
+ * A prefix of length depth is walked by every task that shares it. Those tasks
+ * are contiguous and the first of them has zeros in all the deeper slots.
+ */
+static int is_first_task_of_prefix(unsigned int task, unsigned char depth)
+{
+    for (unsigned char step = depth; step < split_task_depth; step++) {
+        if (split_tasks[task].move_index[step]) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static void *search_split_tasks(void *argument)
@@ -1232,42 +1326,67 @@ static void *search_split_tasks(void *argument)
         unsigned int task = atomic_fetch_add(&next_task, 1);
         char cube[CUBE_ARRAY_SIZE];
         char rotate_tmp[CUBE_ARRAY_SIZE];
-        move_type first;
-        move_type second;
+        move_type previous;
         unsigned char parity;
         unsigned char cost;
         int found;
+        int pruned;
 
         if (task >= split_task_count || atomic_load(&best_task) < task) {
             break;
         }
         worker->task_id = task;
         worker->aborted = 0;
-        first = moves_666[legal_move_index[MOVE_NONE][split_tasks[task].first_index]];
-        second = moves_666[legal_move_index[first][split_tasks[task].second_index]];
-        if (worker->threshold == 2 && !last_ply_can_be_goal(parity_after_move(0, first), second)) {
-            continue;
-        }
-        parity = parity_after_move(parity_after_move(0, first), second);
-
         memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);
-        rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
-        rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, second);
-        worker->solution[0] = first;
-        worker->solution[1] = second;
-        worker->ida_count++;
-        cost = cube_cost(cube, parity);
+        previous = MOVE_NONE;
+        parity = 0;
+        found = 0;
+        pruned = 0;
 
-        if (cost == UINT8_MAX || 2 + cost > worker->threshold) {
+        for (unsigned char step = 0; step < split_task_depth; step++) {
+            unsigned char move_index = split_tasks[task].move_index[step];
+            move_type move = moves_666[legal_move_index[previous][move_index]];
+            unsigned char depth = step + 1;
+
+            if (depth == worker->threshold && !last_ply_can_be_goal(parity, move)) {
+                pruned = 1;
+                break;
+            }
+            parity = parity_after_move(parity, move);
+            rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+            worker->solution[step] = move;
+            previous = move;
+
+            /*
+             * Tasks sharing a prefix all re-walk it, so only the first task of
+             * each group counts these nodes.
+             */
+            if (is_first_task_of_prefix(task, depth)) {
+                worker->ida_count++;
+            }
+            cost = cube_cost(cube, parity);
+
+            if (cost == UINT8_MAX || depth + cost > worker->threshold) {
+                pruned = 1;
+                break;
+            }
+            if (!cost) {
+                worker->solution[depth] = MOVE_NONE;
+                found = 1;
+                break;
+            }
+        }
+
+        if (pruned) {
             continue;
         }
-        if (!cost) {
-            worker->solution[2] = MOVE_NONE;
-            found = 1;
-        } else if (worker->threshold <= 2) {
-            continue;
-        } else {
-            found = ida_search(worker, cube, 2, worker->threshold, second, parity);
+        if (!found) {
+            if (worker->threshold <= split_task_depth) {
+                continue;
+            }
+            found = ida_search(
+                worker, cube, split_task_depth, worker->threshold, previous, parity
+            );
         }
 
         if (found) {
@@ -1332,11 +1451,91 @@ static int search_threshold(
             exit(1);
         }
     }
+    uint64_t busiest = 0;
+
     for (unsigned int index = 0; index < worker_count; index++) {
         pthread_join(threads[index], NULL);
         *nodes += workers[index].ida_count;
+        if (workers[index].ida_count > busiest) {
+            busiest = workers[index].ida_count;
+        }
     }
+    LOG(
+        "threshold %u split into %u tasks over %u workers, busiest worker held %.1f%% of nodes\n",
+        threshold, split_task_count, worker_count, 100.0 * (double) busiest / (double) *nodes
+    );
     return atomic_load(&best_task) != NO_TASK;
+}
+
+/*
+ * --benchmark attributes per-node time to a stage. Every pass walks the same
+ * captured states single threaded, so the difference between two passes is the
+ * cost of whatever the later pass added.
+ */
+static double seconds_since(struct timespec start)
+{
+    struct timespec now;
+
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
+}
+
+static void run_benchmark(const char *root, unsigned int count)
+{
+    char (*states)[CUBE_ARRAY_SIZE] = malloc(CUBE_ARRAY_SIZE * (size_t) count);
+    char rotate_tmp[CUBE_ARRAY_SIZE];
+    char cube[CUBE_ARRAY_SIZE];
+    struct timespec start;
+    uint64_t sink = 0;
+
+    if (!states) {
+        printf("benchmark: could not allocate %u states\n", count);
+        return;
+    }
+
+    srandom(20260915);
+    memcpy(cube, root, CUBE_ARRAY_SIZE);
+    for (unsigned int index = 0; index < count; index++) {
+        rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, moves_666[random() % MOVE_COUNT_666]);
+        memcpy(states[index], cube, CUBE_ARRAY_SIZE);
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    for (unsigned int index = 0; index < count; index++) {
+        move_type move = moves_666[index % MOVE_COUNT_666];
+
+        rotate_666_centers(states[index], rotate_tmp, CUBE_ARRAY_SIZE, move);
+        rotate_666_centers(states[index], rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
+        sink += (unsigned char) states[index][1];
+    }
+    printf("rotate do+undo           %8.0f ns/op\n", seconds_since(start) * 1e9 / count);
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    for (unsigned int index = 0; index < count; index++) {
+        sink += unpaired_oblique_count(states[index]);
+    }
+    printf("unpaired oblique count   %8.0f ns/op\n", seconds_since(start) * 1e9 / count);
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    for (unsigned int index = 0; index < count; index++) {
+        sink += all_inner_x_canonical_rank(states[index]);
+    }
+    printf("canonical rank           %8.0f ns/op\n", seconds_since(start) * 1e9 / count);
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    for (unsigned int index = 0; index < count; index++) {
+        sink += symmetry_dense_rank(&all_inner_x_index, all_inner_x_canonical_rank(states[index]));
+    }
+    printf("  + dense rank           %8.0f ns/op\n", seconds_since(start) * 1e9 / count);
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    for (unsigned int index = 0; index < count; index++) {
+        sink += heuristic(states[index]).cost;
+    }
+    printf("full heuristic           %8.0f ns/op\n", seconds_since(start) * 1e9 / count);
+
+    printf("checksum %" PRIu64 "\n", sink);
+    free(states);
 }
 
 static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solution)
@@ -1407,6 +1606,7 @@ int main(int argc, char **argv)
     unsigned int loaded_table_count = 0;
     int print_ranks = 0;
     int print_legal_moves = 0;
+    unsigned int benchmark_count = 0;
     char cube[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
     struct heuristic_result initial;
@@ -1461,6 +1661,9 @@ int main(int argc, char **argv)
             orbit1_requirement = PARITY_EVEN;
         } else if (strmatch(argv[index], "--apply-move") && index + 1 < argc) {
             apply_move_string = argv[++index];
+        } else if (strmatch(argv[index], "--benchmark")) {
+            index++;
+            benchmark_count = (unsigned int) atoi(argv[index]);
         } else if (strmatch(argv[index], "--print-rank") || strmatch(argv[index], "--print-ranks")) {
             print_ranks = 1;
         } else if (strmatch(argv[index], "--print-legal-moves")) {
@@ -1531,6 +1734,7 @@ int main(int argc, char **argv)
     setlocale(LC_NUMERIC, "");
     init_binom();
     init_move_tables();
+    allocate_split_tasks();
 
     if (kociemba_filename) {
         roots = read_search_roots(kociemba_filename, &root_count);
@@ -1581,6 +1785,12 @@ int main(int argc, char **argv)
             printf(" %s", move2str[moves_666[legal_move_index[MOVE_NONE][index]]]);
         }
         printf("\n");
+    }
+    if (benchmark_count) {
+        run_benchmark(roots[0].cube, benchmark_count);
+        unmap_ranked_tables();
+        free(roots);
+        return 0;
     }
     if (print_ranks) {
         if (stage_all_inner_x) {

@@ -497,11 +497,13 @@ class RubiksCube444(RubiksCube):
             self.lt_lfrb_centers.filename_bin,
             "--center-state-index",
             str(self.lt_lfrb_centers.state_index()),
-            "--solution-count",
-            "1000000",
             "--max-ida-threshold",
             str(max_ida_threshold),
         ]
+        if consider_solve_333:
+            cmd.extend(("--solution-count", "1000000"))
+        else:
+            cmd.append("--avoid-pll")
         logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
         lines = []
         with subprocess.Popen(

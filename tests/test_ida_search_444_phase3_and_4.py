@@ -78,6 +78,38 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertIn("CENTER_EXACT_COST 0", result.stdout)
         self.assertIn("HEURISTIC 0", result.stdout)
 
+    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_GRAPH.is_file(), "phase 3+4 tables are not present")
+    def test_avoid_pll_returns_first_pll_free_reduction(self):
+        cube = RubiksCube444(
+            "DLLUUUUULUURUDDBDFFRLLLDURRBLLBLFBRRFBBDFFFRLUFBFLDDFDDFDDDUFDUU" "FRBLLRRRBLLURBLDBBDRFFFURBBRBBRU",
+            "URFDLB",
+        )
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                cube.get_kociemba_string(True),
+                "--edge-pairing-cost",
+                str(EDGE_TABLE),
+                "--center-graph",
+                str(CENTER_GRAPH),
+                "--center-state-index",
+                "653",
+                "--avoid-pll",
+                "--max-ida-threshold",
+                "20",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        solution_line = next(line for line in result.stdout.splitlines() if line.startswith("SOLUTION"))
+        for step in solution_line.split(":", 1)[1].split():
+            cube.rotate(step)
+        self.assertTrue(cube.reduced_to_333())
+        self.assertFalse(cube.edge_solution_leads_to_pll_parity())
+
 
 if __name__ == "__main__":
     unittest.main()

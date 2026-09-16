@@ -59,6 +59,7 @@ static unsigned char move_column[MOVE_MAX];
 static unsigned int requested_solutions = 1;
 static unsigned int min_threshold;
 static unsigned int max_threshold = DEFAULT_MAX_THRESHOLD;
+static int avoid_pll;
 static atomic_uint found_solutions;
 static atomic_int stop_search;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -77,7 +78,7 @@ static void usage(const char *program)
         "usage: %s --kociemba STATE --edge-pairing-cost FILE "
         "--center-graph FILE --center-state-index N "
         "[--solution-count N] [--min-ida-threshold N] "
-        "[--max-ida-threshold N] [--print-rank]\n",
+        "[--max-ida-threshold N] [--avoid-pll] [--print-rank]\n",
         program
     );
 }
@@ -255,6 +256,88 @@ static void print_solution(const move_type path[MAX_THRESHOLD + 1], unsigned int
     fflush(stdout);
 }
 
+static unsigned int solved_color(unsigned int square)
+{
+    static const char colors[] = {'U', 'L', 'F', 'R', 'B', 'D'};
+    return (unsigned int)colors[(square - 1) / 16];
+}
+
+static unsigned int color_bit(char color)
+{
+    switch (color) {
+        case 'U': return 1U << 0;
+        case 'L': return 1U << 1;
+        case 'F': return 1U << 2;
+        case 'R': return 1U << 3;
+        case 'B': return 1U << 4;
+        case 'D': return 1U << 5;
+        default: return 0;
+    }
+}
+
+static unsigned int corner_id(char first, char second, char third)
+{
+    return color_bit(first) | color_bit(second) | color_bit(third);
+}
+
+static int permutation_is_even(const unsigned int *current, const unsigned int *target, unsigned int count)
+{
+    unsigned int permutation[PAIR_COUNT];
+    unsigned int seen = 0;
+    unsigned int parity = 0;
+
+    for (unsigned int position = 0; position < count; position++) {
+        unsigned int solved_position = 0;
+
+        while (solved_position < count && target[solved_position] != current[position]) {
+            solved_position++;
+        }
+        if (solved_position == count || (seen & (1U << solved_position))) {
+            return 0;
+        }
+        seen |= 1U << solved_position;
+        permutation[position] = solved_position;
+    }
+    for (unsigned int left = 0; left < count; left++) {
+        for (unsigned int right = left + 1; right < count; right++) {
+            parity ^= permutation[left] > permutation[right];
+        }
+    }
+    return !parity;
+}
+
+static int reduction_has_pll_parity(const char cube[CUBE_ARRAY_SIZE])
+{
+    static const unsigned int corner_squares[8][3] = {
+        {1, 17, 68}, {4, 52, 65}, {13, 20, 33}, {16, 36, 49},
+        {81, 32, 45}, {84, 48, 61}, {93, 29, 80}, {96, 64, 77},
+    };
+    unsigned int current_edges[PAIR_COUNT];
+    unsigned int target_edges[PAIR_COUNT];
+    unsigned int current_corners[8];
+    unsigned int target_corners[8];
+
+    for (unsigned int index = 0; index < PAIR_COUNT; index++) {
+        current_edges[index] = edge_id(cube[high_squares[index]], cube[high_partners[index]]);
+        target_edges[index] = edge_id(
+            (char)solved_color(high_squares[index]),
+            (char)solved_color(high_partners[index])
+        );
+    }
+    for (unsigned int index = 0; index < 8; index++) {
+        const unsigned int *squares = corner_squares[index];
+
+        current_corners[index] = corner_id(cube[squares[0]], cube[squares[1]], cube[squares[2]]);
+        target_corners[index] = corner_id(
+            (char)solved_color(squares[0]),
+            (char)solved_color(squares[1]),
+            (char)solved_color(squares[2])
+        );
+    }
+    return permutation_is_even(current_edges, target_edges, PAIR_COUNT) !=
+           permutation_is_even(current_corners, target_corners, 8);
+}
+
 static int search(
     struct worker *worker,
     const char cube[CUBE_ARRAY_SIZE],
@@ -276,6 +359,9 @@ static int search(
     }
     if (!cost) {
         if (depth == threshold) {
+            if (avoid_pll && reduction_has_pll_parity(cube)) {
+                return 0;
+            }
             pthread_mutex_lock(&solution_lock);
             if (!atomic_load_explicit(&stop_search, memory_order_relaxed)) {
                 print_solution(worker->path, depth);
@@ -465,6 +551,8 @@ int main(int argc, char **argv)
             min_threshold = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--max-ida-threshold") && index + 1 < argc) {
             max_threshold = (unsigned int)strtoul(argv[++index], NULL, 10);
+        } else if (!strcmp(argv[index], "--avoid-pll")) {
+            avoid_pll = 1;
         } else if (!strcmp(argv[index], "--print-rank")) {
             print_rank = 1;
         } else if (!strcmp(argv[index], "-h") || !strcmp(argv[index], "--help")) {

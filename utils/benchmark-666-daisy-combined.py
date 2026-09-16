@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube666 import DAISY_PLUS_TABLES_666, RubiksCube666
+from rubikscubennnsolver.RubiksCube666 import DAISY_INNER_X_SPINE_TABLES_666, RubiksCube666
 
 BINARY = "./ida_search_666_daisy_centers"
 SOLUTION_RE = re.compile(r"SOLUTION \((\d+) steps\)")
@@ -20,7 +20,7 @@ SOLUTION_RE = re.compile(r"SOLUTION \((\d+) steps\)")
 
 def solve_command(cube, multiplier):
     cmd = [BINARY, "--kociemba", cube.get_kociemba_string(True)]
-    for flag, filename in DAISY_PLUS_TABLES_666:
+    for flag, filename in DAISY_INNER_X_SPINE_TABLES_666:
         cmd.extend((flag, filename))
     if multiplier is not None:
         cmd.extend(("--multiplier", str(multiplier)))
@@ -29,12 +29,12 @@ def solve_command(cube, multiplier):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("multipliers", nargs="+", help="numbers or 'matrix'")
+    parser.add_argument("multipliers", nargs="+", help="numbers or 'max'")
     parser.add_argument("--cubes", type=int, default=5)
     parser.add_argument("--timeout", type=float, default=120.0)
     args = parser.parse_args()
 
-    multipliers = [None if value == "matrix" else float(value) for value in args.multipliers]
+    multipliers = [None if value == "max" else float(value) for value in args.multipliers]
     states = json.loads((Path(__file__).parent / "10k-666-cubes.json").read_text())["6x6x6"][: args.cubes]
     results = {multiplier: [] for multiplier in multipliers}
     for sample, state in enumerate(states):
@@ -60,7 +60,7 @@ def main():
                 status = "TIMEOUT"
 
             results[multiplier].append((wall, moves))
-            label = multiplier if multiplier is not None else "matrix"
+            label = multiplier if multiplier is not None else "max"
             print(
                 f"DAISY_666 sample={sample:03d} multiplier={label} " f"wall={wall:.3f} moves={moves} {status}",
                 flush=True,
@@ -70,7 +70,7 @@ def main():
         solved = [(wall, moves) for wall, moves in measurements if moves is not None]
         walls = [wall for wall, _ in solved]
         moves = [moves for _, moves in solved]
-        label = multiplier if multiplier is not None else "matrix"
+        label = multiplier if multiplier is not None else "max"
         print(
             f"DAISY_666_SUMMARY multiplier={label} "
             f"solved={len(solved)}/{len(measurements)} "

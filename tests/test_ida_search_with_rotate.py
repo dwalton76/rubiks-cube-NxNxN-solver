@@ -6,7 +6,7 @@ from unittest.mock import patch
 from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import (
-    DAISY_PLUS_TABLES_666,
+    DAISY_INNER_X_SPINE_TABLES_666,
     RubiksCube666,
     UFBD_outer_x_centers_666,
     solved_666,
@@ -50,7 +50,7 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_stage_inner_x_stage"))
         self.assertFalse(hasattr(cube, "lt_centers_reduce_555"))
         self.assertEqual(cube.lt_daisy_centers.__class__.__name__, "LookupTableIDA666DaisyCenters")
-        self.assertEqual(len(DAISY_PLUS_TABLES_666), 18)
+        self.assertEqual(len(DAISY_INNER_X_SPINE_TABLES_666), 3)
         self.assertIsNone(cube.lt_daisy_centers.multiplier)
 
     def test_666_has_no_eo_phase_of_its_own(self):
@@ -257,7 +257,8 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertNotIsInstance(daisy, LookupTableIDAViaGraph)
         self.assertTrue(daisy.use_perfect_tables)
         self.assertEqual(len(DAISY_LEAVE_ONE_OUT_TABLES_777), 15)
-        self.assertEqual(len(DAISY_PERFECT_TABLES_777), 3)
+        # One cost table plus its symmetry index, shared by all three axes.
+        self.assertEqual(len(DAISY_PERFECT_TABLES_777), 2)
 
         # A per-axis table tops out at depth 15 while the combined daisy is 19+ moves
         # away, so the C searcher leans on its sampled cost matrix rather than a
@@ -301,7 +302,7 @@ class CenterStagingTablesTest(unittest.TestCase):
             daisy.solve_via_c(native_only=True)
             daisy.solve_via_c()
 
-        self.assertEqual(len(NATIVE_SOLVE_PERFECT_TABLES_777), 3)
+        self.assertEqual(len(NATIVE_SOLVE_PERFECT_TABLES_777), 2)
         self.assertIn("--native-only", commands[0])
         self.assertNotIn("--native-only", commands[1])
         for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777:
@@ -447,19 +448,14 @@ class PhaseThreeFourCombined444Test(unittest.TestCase):
         def print_cube_add_comment(self, comment, start):
             self.solution.append(f"COMMENT_{comment}")
 
-    def test_phase3_and_4_skips_pll_and_applies_the_combined_search(self):
+    def test_fake_444_phase3_and_4_requests_one_pll_free_solution(self):
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
         cube = self.FakeCube()
 
         class FakeProc:
             def __init__(self):
-                self.stdout = iter(
-                    [
-                        "SOLUTION (2 steps): A B\n",
-                        "SOLUTION (3 steps): C D E\n",
-                    ]
-                )
+                self.stdout = iter(["SOLUTION (3 steps): C D E\n"])
 
             def __enter__(self):
                 return self
@@ -475,10 +471,13 @@ class PhaseThreeFourCombined444Test(unittest.TestCase):
 
         with (
             patch("rubikscubennnsolver.RubiksCube444.download_file_if_needed"),
-            patch("rubikscubennnsolver.RubiksCube444.subprocess.Popen", return_value=FakeProc()),
+            patch("rubikscubennnsolver.RubiksCube444.subprocess.Popen", return_value=FakeProc()) as popen,
         ):
             RubiksCube444.phase3_and_4(cube, consider_solve_333=False)
 
+        command = popen.call_args.args[0]
+        self.assertIn("--avoid-pll", command)
+        self.assertNotIn("--solution-count", command)
         self.assertEqual(cube.solution, ["C", "D", "E", "COMMENT_all edges paired, centers solved"])
 
 

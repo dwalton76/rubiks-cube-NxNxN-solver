@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "center_symmetry_777.h"
 #include "ida_search_core.h"
 
 #define CUBE_SIZE 7
@@ -22,7 +23,6 @@
 #define GROUP_COLOR_COUNT 4
 #define GROUP_UNIVERSE UINT64_C(70)
 #define LEAVE_ONE_OUT_UNIVERSE UINT64_C(24010000)
-#define PERFECT_UNIVERSE UINT64_C(1680700000)
 #define AXIS_COUNT 3
 #define ORBIT_COUNT 5
 #define LEAVE_ONE_OUT_TABLE_COUNT 15
@@ -45,38 +45,9 @@ enum orbit_index {
     ORBIT_INNER_X,
 };
 
-/*
- * Exact 8-sticker (4,4) orbits from builder777.py DAISY_CENTER_ORBITS_777.
- * Outer-x and the fixed middles are untracked. Rank order per axis is
- * left-oblique, middle-oblique (outer t), right-oblique, inner-t, inner-x.
- */
-static const unsigned int orbit_squares[AXIS_COUNT][ORBIT_COUNT][GROUP_SIZE] = {
-    {
-        {10, 20, 30, 40, 255, 265, 275, 285},
-        {11, 23, 27, 39, 256, 268, 272, 284},
-        {12, 16, 34, 38, 257, 261, 279, 283},
-        {18, 24, 26, 32, 263, 269, 271, 277},
-        {17, 19, 31, 33, 262, 264, 276, 278},
-    },
-    {
-        {59, 69, 79, 89, 157, 167, 177, 187},
-        {60, 72, 76, 88, 158, 170, 174, 186},
-        {61, 65, 83, 87, 159, 163, 181, 185},
-        {67, 73, 75, 81, 165, 171, 173, 179},
-        {66, 68, 80, 82, 164, 166, 178, 180},
-    },
-    {
-        {108, 118, 128, 138, 206, 216, 226, 236},
-        {109, 121, 125, 137, 207, 219, 223, 235},
-        {110, 114, 132, 136, 208, 212, 230, 234},
-        {116, 122, 124, 130, 214, 220, 222, 228},
-        {115, 117, 129, 131, 213, 215, 227, 229},
-    },
-};
-
-/* Alphabetically sorted pair used by the builder's multiset rank. */
-static const char axis_small[AXIS_COUNT] = {'D', 'L', 'B'};
-static const char axis_large[AXIS_COUNT] = {'U', 'R', 'F'};
+/* The tracked orbits and their sorted colour pairs live in center_symmetry_777.h,
+ * as daisy_orbit_squares_777 and daisy_axis_{small,large}_777, so the searcher
+ * and the compaction tool rank a state identically. */
 static const char axis_primary[AXIS_COUNT] = {'U', 'L', 'F'};
 static const char axis_opposite[AXIS_COUNT] = {'D', 'R', 'B'};
 static const char *axis_name[AXIS_COUNT] = {"UD", "LR", "FB"};
@@ -689,6 +660,12 @@ static const unsigned char solve_axis_costs_777[MATRIX_COST_MAX + 1][MATRIX_COST
     },
 };
 
+/*
+ * The three perfect entries share one file. Their costs are one function under
+ * three indexings, and each is constant on the orbits of the 16 symmetries that
+ * fix its axis, so --perfect-cost holds 105,356,972 orbits rather than three
+ * copies of 1,680,700,000 raw ranks. See center_symmetry_777.h.
+ */
 static struct ranked_table {
     const char *flag;
     const char *label;
@@ -723,10 +700,13 @@ static struct ranked_table {
      LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
     {"--fb-without-inner-t-cost", "FB_WITHOUT_INNER_T", AXIS_FB, ORBIT_INNER_T, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
     {"--fb-without-inner-x-cost", "FB_WITHOUT_INNER_X", AXIS_FB, ORBIT_INNER_X, LEAVE_ONE_OUT_UNIVERSE, NULL, NULL, -1},
-    {"--ud-perfect-cost", "UD_PERFECT", AXIS_UD, ORBIT_COUNT, PERFECT_UNIVERSE, NULL, NULL, -1},
-    {"--lr-perfect-cost", "LR_PERFECT", AXIS_LR, ORBIT_COUNT, PERFECT_UNIVERSE, NULL, NULL, -1},
-    {"--fb-perfect-cost", "FB_PERFECT", AXIS_FB, ORBIT_COUNT, PERFECT_UNIVERSE, NULL, NULL, -1},
+    /* Filled from --perfect-cost, which all three share, so they carry no flag. */
+    {NULL, "UD_PERFECT", AXIS_UD, ORBIT_COUNT, DAISY_PERFECT_ORBIT_COUNT_777, NULL, NULL, -1},
+    {NULL, "LR_PERFECT", AXIS_LR, ORBIT_COUNT, DAISY_PERFECT_ORBIT_COUNT_777, NULL, NULL, -1},
+    {NULL, "FB_PERFECT", AXIS_FB, ORBIT_COUNT, DAISY_PERFECT_ORBIT_COUNT_777, NULL, NULL, -1},
 };
+
+static struct daisy_symmetry_index_777 perfect_index = {-1, 0, NULL, NULL, NULL, NULL};
 
 static uint64_t binom[GROUP_SIZE + 1][GROUP_SIZE + 1];
 static move_type inverse_move[MOVE_MAX];
@@ -741,6 +721,7 @@ static unsigned int loaded_table_count;
 static unsigned int loaded_tables[TABLE_COUNT];
 static float cost_to_goal_multiplier;
 static int native_only;
+static const char *perfect_index_filename;
 
 struct heuristic_result {
     uint64_t orbit_rank[AXIS_COUNT][ORBIT_COUNT];
@@ -767,12 +748,14 @@ static void usage(const char *program)
     printf(
         "usage: %s --kociemba STATE "
         "(all 15 --{ud,lr,fb}-without-{left-oblique,middle-oblique,right-oblique,inner-t,inner-x}-cost FILE "
-        "| --ud-perfect-cost FILE --lr-perfect-cost FILE --fb-perfect-cost FILE) "
+        "| --perfect-cost FILE --perfect-index FILE) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] [--multiplier F] [--native-only] "
         "[--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
         program
     );
     printf(
+        "  --perfect-cost F   one 105,356,972 orbit table covering all three axes\n"
+        "  --perfect-index F  the rank-select symmetry index that goes with it\n"
         "  --multiplier F  scale max(UD, LR, FB) by F instead of using the sampled\n"
         "                  per-axis cost matrix. F must be at least 1.0 and is not\n"
         "                  admissible. This is how the matrix samples are collected, see\n"
@@ -853,6 +836,17 @@ static uint64_t table_rank_for(const struct ranked_table *table, const uint64_t 
     uint64_t selected[ORBIT_COUNT];
     unsigned int count = 0;
 
+    /* A perfect table is shared by all three axes and indexed by symmetry
+     * orbit, so normalise this axis onto the UD coordinate and look the
+     * canonical rank up in the index. */
+    if (table->omitted == ORBIT_COUNT) {
+        uint64_t canonical = daisy_canonical_rank_777(table->axis, orbit_rank);
+
+        if (canonical == UINT64_MAX) {
+            return UINT64_MAX;
+        }
+        return daisy_symmetry_dense_rank_777(&perfect_index, canonical);
+    }
     for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
         if (orbit == table->omitted) {
             continue;
@@ -890,7 +884,7 @@ static int axis_is_daisy(const char *cube, unsigned int axis)
     int swapped = 1;
 
     for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
-        const unsigned int *squares = orbit_squares[axis][orbit];
+        const unsigned int *squares = daisy_orbit_squares_777[axis][orbit];
         int native_orbit = orbit_has_colors(cube, squares, primary, opposite);
         int swapped_orbit;
 
@@ -937,8 +931,9 @@ static struct heuristic_result heuristic(const char *cube)
     result.daisy = cube_is_daisy(cube) ? 1 : 0;
     for (unsigned int axis = 0; axis < AXIS_COUNT; axis++) {
         for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
-            result.orbit_rank[axis][orbit] =
-                combination_rank(cube, orbit_squares[axis][orbit], axis_small[axis], axis_large[axis]);
+            result.orbit_rank[axis][orbit] = combination_rank(
+                cube, daisy_orbit_squares_777[axis][orbit],
+                daisy_axis_small_777[axis], daisy_axis_large_777[axis]);
             if (result.orbit_rank[axis][orbit] == UINT64_MAX) {
                 valid = 0;
             }
@@ -1067,12 +1062,35 @@ static void init_move_tables(void)
     }
 }
 
+/*
+ * The three perfect entries name the same file, so only the first of them owns
+ * the mapping and the other two borrow it.
+ */
+static unsigned int owner_of_mapping(unsigned int loaded)
+{
+    const struct ranked_table *table = &ranked_tables[loaded_tables[loaded]];
+
+    for (unsigned int earlier = 0; earlier < loaded; earlier++) {
+        if (!strcmp(ranked_tables[loaded_tables[earlier]].filename, table->filename)) {
+            return earlier;
+        }
+    }
+    return loaded;
+}
+
 static void map_ranked_tables(void)
 {
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
         struct ranked_table *table = &ranked_tables[loaded_tables[loaded]];
+        unsigned int owner = owner_of_mapping(loaded);
         struct stat file_stat;
         int mmap_flags = MAP_SHARED;
+
+        if (owner != loaded) {
+            table->costs = ranked_tables[loaded_tables[owner]].costs;
+            table->fd = ranked_tables[loaded_tables[owner]].fd;
+            continue;
+        }
 
         table->fd = open(table->filename, O_RDONLY);
         if (table->fd < 0) {
@@ -1101,6 +1119,15 @@ static void map_ranked_tables(void)
             exit(1);
         }
     }
+    if (perfect_index_filename) {
+        const char *problem = NULL;
+
+        if (!daisy_symmetry_index_open_777(&perfect_index, perfect_index_filename, &problem)) {
+            fprintf(stderr, "ERROR: %s %s", problem, perfect_index_filename);
+            fprintf(stderr, errno ? ": %s\n" : "\n", strerror(errno));
+            exit(1);
+        }
+    }
 }
 
 static void unmap_ranked_tables(void)
@@ -1108,15 +1135,20 @@ static void unmap_ranked_tables(void)
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
         struct ranked_table *table = &ranked_tables[loaded_tables[loaded]];
 
-        if (table->costs && table->costs != MAP_FAILED) {
-            munmap(table->costs, (size_t)table->universe);
+        if (owner_of_mapping(loaded) == loaded) {
+            if (table->costs && table->costs != MAP_FAILED) {
+                munmap(table->costs, (size_t)table->universe);
+            }
+            if (table->fd >= 0) {
+                close(table->fd);
+            }
         }
-        if (table->fd >= 0) {
-            close(table->fd);
-        }
-        table->costs = NULL;
-        table->fd = -1;
     }
+    for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
+        ranked_tables[loaded_tables[loaded]].costs = NULL;
+        ranked_tables[loaded_tables[loaded]].fd = -1;
+    }
+    daisy_symmetry_index_close_777(&perfect_index);
 }
 
 static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
@@ -1402,10 +1434,11 @@ static int configure_loaded_tables(void)
         }
         loaded_tables[loaded_table_count++] = index;
     }
-    if (leave_one_out == LEAVE_ONE_OUT_TABLE_COUNT && perfect == 0) {
+    if (leave_one_out == LEAVE_ONE_OUT_TABLE_COUNT && perfect == 0 && !perfect_index_filename) {
         return 1;
     }
-    if (perfect == PERFECT_TABLE_COUNT && leave_one_out == 0) {
+    /* The shared perfect table is unreadable without its symmetry index. */
+    if (perfect == PERFECT_TABLE_COUNT && leave_one_out == 0 && perfect_index_filename) {
         return 1;
     }
     return 0;
@@ -1433,7 +1466,8 @@ int main(int argc, char **argv)
         int matched_table = 0;
 
         for (unsigned int table = 0; table < TABLE_COUNT; table++) {
-            if (!strcmp(argv[index], ranked_tables[table].flag) && index + 1 < argc) {
+            if (ranked_tables[table].flag &&
+                    !strcmp(argv[index], ranked_tables[table].flag) && index + 1 < argc) {
                 ranked_tables[table].filename = argv[++index];
                 matched_table = 1;
                 break;
@@ -1442,7 +1476,17 @@ int main(int argc, char **argv)
         if (matched_table) {
             continue;
         }
-        if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
+        if (!strcmp(argv[index], "--perfect-cost") && index + 1 < argc) {
+            const char *filename = argv[++index];
+
+            for (unsigned int table = 0; table < TABLE_COUNT; table++) {
+                if (ranked_tables[table].omitted == ORBIT_COUNT) {
+                    ranked_tables[table].filename = filename;
+                }
+            }
+        } else if (!strcmp(argv[index], "--perfect-index") && index + 1 < argc) {
+            perfect_index_filename = argv[++index];
+        } else if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
         } else if (!strcmp(argv[index], "--min-ida-threshold") && index + 1 < argc) {
             min_threshold = (unsigned char)atoi(argv[++index]);
@@ -1489,6 +1533,7 @@ int main(int argc, char **argv)
 
     init_binom();
     init_move_tables();
+    init_center_symmetry_777();
     map_ranked_tables();
     init_cube(cube, kociemba);
     blank_untracked_squares(cube);

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 """
-Measure average moves to reduce 4x4x4 through 10x10x10 cubes to a 3x3x3
-and optionally insert a new row in the README Move Counts table.
+Measure the average moves to solve 4x4x4 through 10x10x10 cubes and insert a new
+row at the top of README.md's Move Counts table. Each count covers the whole solve:
+reducing the cube to a 3x3x3 plus solving that 3x3x3.
 
 Example:
     cd ~/rubiks-cube-NxNxN-solver
     ./venv/bin/python3 utils/update-move-count-table.py
-    ./venv/bin/python3 utils/update-move-count-table.py --update-readme
+    ./venv/bin/python3 utils/update-move-count-table.py --sizes 4x4x4 5x5x5
 """
 
 # standard libraries
@@ -36,6 +37,10 @@ README = ROOT / "README.md"
 ORDER = "URFDLB"
 DEFAULT_SIZES = ("4x4x4", "5x5x5", "6x6x6", "7x7x7", "8x8x8", "9x9x9", "10x10x10")
 GITHUB_COMMIT_URL = "https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit"
+# Averages this far from the previous README row almost always mean we counted
+# the scramble, failed to reduce, or otherwise measured the wrong thing.
+SANITY_MIN_RATIO = 0.4
+SANITY_MAX_RATIO = 1.75
 
 CUBE_CLASSES = {
     "4x4x4": (RubiksCube444, solved_444),
@@ -49,7 +54,7 @@ CUBE_CLASSES = {
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Average reduce-to-3x3x3 move counts for the README table")
+    parser = argparse.ArgumentParser(description="Average full-solve move counts for the README table")
     parser.add_argument("--count", type=int, default=10, help="scrambles per size (default: 10)")
     parser.add_argument(
         "--sizes",
@@ -57,8 +62,6 @@ def parse_args():
         default=list(DEFAULT_SIZES),
         help="cube sizes to measure (default: 4x4x4 through 10x10x10)",
     )
-    parser.add_argument("--update-readme", action="store_true", help="insert a new row at the top of the README table")
-    parser.add_argument("--readme", type=Path, default=README, help="README.md to update")
     parser.add_argument("--quiet", action="store_true", help="hide IDA search logs")
     return parser.parse_args()
 
@@ -100,16 +103,31 @@ def previous_row_counts(readme: Path) -> Dict[str, float]:
     raise ValueError(f"Move Counts table not found in {readme}")
 
 
-def reduce_to_333_length(cube) -> int:
-    cube.lt_init()
-    if cube.is_odd() or cube.centers_solved():
-        cube.rotate_U_to_U()
-        cube.rotate_F_to_F()
-    cube.reduce_333()
-    if not cube.reduced_to_333():
-        raise RuntimeError(f"{cube} was not reduced to 3x3x3")
-    cube.compress_solution()
+def discard_scramble(cube) -> None:
+    """Keep the scrambled state but drop scramble steps from the solution list."""
+    cube.solution = []
+    cube.original_solution = []
+    cube.original_state = cube.state[:]
+
+
+def solve_length(cube) -> int:
+    """Solve the cube the way rubiks-cube-solver.py does and count the steps."""
+    cube.solve()
+    if not cube.solved():
+        raise RuntimeError(f"{cube} was not solved")
     return cube.get_solution_len_minus_rotates(cube.solution)
+
+
+def sanity_check_average(size: str, average: float, previous: float) -> None:
+    low = previous * SANITY_MIN_RATIO
+    high = previous * SANITY_MAX_RATIO
+    if not low <= average <= high:
+        raise RuntimeError(
+            f"{size} average {format_average(average)} is outside {format_average(low)}-"
+            f"{format_average(high)} (previous README row {format_average(previous)}). "
+            "This usually means the scramble was counted as part of the solution or the "
+            "3x3x3 stage was skipped."
+        )
 
 
 def measure_size(size: str, count: int) -> List[int]:
@@ -121,7 +139,8 @@ def measure_size(size: str, count: int) -> List[int]:
     for index in range(1, count + 1):
         cube.re_init()
         cube.randomize()
-        length = reduce_to_333_length(cube)
+        discard_scramble(cube)
+        length = solve_length(cube)
         lengths.append(length)
         average = sum(lengths) / len(lengths)
         logger.info("%s cube %d/%d: %d moves (running avg %s)", size, index, count, length, format_average(average))
@@ -179,20 +198,18 @@ def main() -> int:
         logger.error("unknown sizes: %s", ", ".join(unknown))
         return 1
 
-    previous = previous_row_counts(args.readme)
+    previous = previous_row_counts(README)
     averages = dict(previous)
 
     for size in args.sizes:
         lengths = measure_size(size, args.count)
         averages[size] = sum(lengths) / len(lengths)
         logger.info("%s average over %d cubes: %s", size, args.count, format_average(averages[size]))
+        sanity_check_average(size, averages[size], previous[size])
 
     row = build_row(averages, previous)
     print(row)
-
-    if args.update_readme:
-        update_readme(args.readme, row)
-
+    update_readme(README, row)
     return 0
 
 

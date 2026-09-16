@@ -30,9 +30,10 @@ Phase 3 - stage UD left/right obliques and outer x-centers
     phase-2 plus phase-3 pair.
 
 Phase 5 - daisy-solve all centers
-    Eighteen overlapping 70^4 ranked tables (one complete axis plus one
-    foreign orbit) guide a dedicated C IDA. That pairs every oblique and
-    solves every inner x-center. Outer x-centers are left for the 5x5x5.
+    Three 70^5 inner-x-spine tables guide a dedicated C IDA. Every table sees
+    all three inner x-center orbits plus both obliques from one axis. That
+    pairs every oblique and solves every inner x-center. Outer x-centers are
+    left for the 5x5x5.
 
 Phase 6 - EO the inside wings
     The inside wings are then paired by ``pair_inside_edges_via_444``, which maps
@@ -596,26 +597,23 @@ class LookupTableIDA666UDCentersStage:
 
 # ==================================================
 # phase 5
-# daisy-solve all centers with overlapping 70^4 ranked tables
+# daisy-solve all centers with three 70^5 inner-x-spine tables
 # ==================================================
-DAISY_PLUS_TABLES_666 = tuple(
+DAISY_INNER_X_SPINE_TABLES_666 = tuple(
     (
-        f"--{axis.lower()}-plus-{extra_axis.lower()}-{orbit}-cost",
-        f"lookup-tables/lookup-table-6x6x6-daisy-{axis}-plus-{extra_axis}-{orbit}-centers.cost-only.bin",
+        f"--all-inner-x-plus-{axis.lower()}-obliques-cost",
+        f"lookup-tables/lookup-table-6x6x6-daisy-all-inner-x-plus-{axis}-obliques-centers.cost-only.bin",
     )
     for axis in ("UD", "LR", "FB")
-    for extra_axis in ("UD", "LR", "FB")
-    if extra_axis != axis
-    for orbit in ("left-oblique", "right-oblique", "inner-x")
 )
 
 
 class LookupTableIDA666DaisyCenters:
     """
-    Daisy-solve remaining centers with eighteen mixed-axis 70^4 ranked tables.
+    Daisy-solve remaining centers with three 70^5 inner-x-spine ranked tables.
 
-    Each table is 24,010,000 states. Extra-oblique tables top out at 12 moves
-    (average 8.50); extra inner-x tables top out at 13 (average 9.43).
+    Each table contains all three inner-x orbits and both oblique orbits from
+    one axis. The heuristic is daisy_spine_costs_666 unless --multiplier is set.
     """
 
     def __init__(self, parent, multiplier=None):
@@ -625,7 +623,7 @@ class LookupTableIDA666DaisyCenters:
 
     def solve_via_c(self, **_kwargs):
         cmd = ["./ida_search_666_daisy_centers", "--kociemba", self.parent.get_kociemba_string(True)]
-        for flag, filename in DAISY_PLUS_TABLES_666:
+        for flag, filename in DAISY_INNER_X_SPINE_TABLES_666:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
         if self.multiplier:
@@ -841,7 +839,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         # Only orbit0 here; phase 1 owns orbit1 for the reason above.
         self.lt_UD_centers_stage.avoid_oll = 0
 
-        # phase 5 - daisy-solve all centers with overlapping 70^4 ranked tables
+        # phase 5 - daisy-solve all centers with three overlapping 70^5 tables
         self.lt_daisy_centers = LookupTableIDA666DaisyCenters(self)
 
     def populate_fake_555_for_ULFRBD_solve(self):

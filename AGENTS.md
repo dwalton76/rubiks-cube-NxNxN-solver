@@ -124,7 +124,7 @@ flowchart TD
 | 3 | `RubiksCube333` | solved | kociemba |
 | 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1+2 and 3+4 |
 | 5 | `RubiksCube555` | 3x3 | Graph IDA: LR then FB staging (1+2 portfolio), EO, then a 4+5+6 portfolio that pairs edges and solves centers |
-| 6 | `RubiksCube666` | 5x5 | 48-symmetry ranked inner-x (~188 MiB) |
+| 6 | `RubiksCube666` | 5x5 | Ranked center staging, three 70^5 inner-x-spine daisy tables, then fake-4x4 inside-edge pairing |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
 | even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
 | odd ≥9 | `RubiksCubeNNNOdd` | 5x5 | Fake 7x7 per center orbit/cycle, then 5x5 edges |
@@ -135,9 +135,9 @@ Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNE
 
 - `--solution-count` is only passed from Python when `> 1`. C default is 1.
 - 4x4 phases 1 and 2 are one ranked IDA (``ida_search_444_phase1_and_2``) over the full move set. Heuristic is max of the 48-symmetry all-center table, the 51M LR-center table, and the high/low wing table (min over all 2048 even edge mappings). One of ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w`` is required. Last-ply pruning skips a rotate if the next ply cannot meet that parity.
-- 4x4 phases 3 and 4 are one ranked IDA (``ida_search_444_phase3_and_4``). When ``consider_solve_333`` is set, PLL-free reductions are scored with kociemba until a 20-move 3x3x3 appears or ``PHASE34_SOLUTIONS_TO_EVALUATE`` have been tried.
+- 4x4 phases 3 and 4 are one ranked IDA (``ida_search_444_phase3_and_4``). When ``consider_solve_333`` is set, `--solution-count 1000000` is passed and PLL-free reductions are scored with kociemba until a 20-move 3x3x3 appears or ``PHASE34_SOLUTIONS_TO_EVALUATE`` have been tried. The fake 4x4 used to pair a 6x6/even inside orbit (`consider_solve_333=False`) uses `--avoid-pll` with the C default solution count of 1, so the search stops at its first PLL-free reduction.
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
-- 6x6: phase 1 owns **orbit1** OLL (later phases forbid `3Xw` quarters). Phase 3 owns **orbit0**.
+- 6x6: phase 1 owns **orbit1** OLL (later phases forbid `3Xw` quarters). Phase 3 owns **orbit0**. Phase 5 uses three 70^5 tables; each combines all three inner-x orbits with both obliques from one axis. The search uses their admissible max until a matrix is sampled for these coordinates.
 - 7x7 daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.
 - 5x5 phases 1+2 are a graph-IDA portfolio (default 64 phase-1 solutions). Phases 4+5+6 are another (phase-5 default 500). There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse 5x5 LR/FB staging (`group_centers_stage_LR` / `group_centers_stage_FB` and `lt_LR_t_centers_stage_ida`).
 
@@ -174,7 +174,9 @@ Dispatch is `RubiksCubeNNNOdd.stage_or_solve_inside_777`. Outer-x of the fake 7x
 | Intermediate cycle | `ida_search_777_centers_stage --obliques-only` (unpaired-count heuristic, no tables) | 3 ranked oblique tables, **no** outer-x |
 | Last dummy cycle | Pair obliques, then fake-5x5 `lt_LR_t_centers_stage_ida` | Same 3-table search (middle obliques **are** outer t-centers) |
 
-NNNOdd center **solve** always passes `native_only=True` and the `lookup-table-7x7x7-solve-*-perfect-centers.cost-only.bin` tables. Daisy tables score 0 at the swapped orientation, which is unsolved on 9x9+. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
+NNNOdd center **solve** always passes `native_only=True` and the `lookup-table-7x7x7-solve-perfect-centers.cost-only.bin` table. Daisy tables score 0 at the swapped orientation, which is unsolved on 9x9+. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
+
+That one table covers all three axes. The UD, LR and FB perfect tables held the same cost function under three square orderings, and the costs are constant on each orbit of the 16 axis-preserving cube symmetries, so `--perfect-cost` / `--perfect-index` name a single 314 MiB pair that the searcher probes by rotating the state onto the UD coordinate and canonicalizing. This replaced six 1.6 GiB tables.
 
 Walk orbits **inside-out**. On 9x9, inner-orbit `w` rewrites as `3w` and would smash an already-solved outer ring.
 

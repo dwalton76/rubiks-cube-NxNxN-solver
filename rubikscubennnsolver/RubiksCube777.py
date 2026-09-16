@@ -715,23 +715,28 @@ DAISY_LEAVE_ONE_OUT_TABLES_777 = tuple(
     for slug in DAISY_ORBIT_SLUGS_777
 )
 
-DAISY_PERFECT_TABLES_777 = tuple(
+# One table covers all three axes. Any cube rotation taking one axis onto another
+# carries that axis's tracked stickers along with it, so the three 70^5 coordinates
+# index a single cost function, and each is constant on the orbits of the 16
+# symmetries that fix its axis. That leaves 105,356,972 orbits, roughly 100 MiB plus
+# a 213 MiB rank-select index, where the three raw per-axis tables were 1.6 GiB each.
+DAISY_PERFECT_TABLES_777 = (
+    ("--perfect-cost", "lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin"),
     (
-        f"--{axis.lower()}-perfect-cost",
-        f"lookup-tables/lookup-table-7x7x7-daisy-{axis}-perfect-centers.cost-only.bin",
-    )
-    for axis in ("UD", "LR", "FB")
+        "--perfect-index",
+        "lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin.symmetry-index.bin",
+    ),
 )
 
 # The daisy tables cost 0 at either daisy orientation, which leaves --native-only
 # blind exactly where the remaining work is. These twins are built to the native
 # goal alone, so they measure the distance a larger odd cube actually has to walk.
-NATIVE_SOLVE_PERFECT_TABLES_777 = tuple(
+NATIVE_SOLVE_PERFECT_TABLES_777 = (
+    ("--perfect-cost", "lookup-tables/lookup-table-7x7x7-solve-perfect-centers.cost-only.bin"),
     (
-        f"--{axis.lower()}-perfect-cost",
-        f"lookup-tables/lookup-table-7x7x7-solve-{axis}-perfect-centers.cost-only.bin",
-    )
-    for axis in ("UD", "LR", "FB")
+        "--perfect-index",
+        "lookup-tables/lookup-table-7x7x7-solve-perfect-centers.cost-only.bin.symmetry-index.bin",
+    ),
 )
 
 # A wide quarter turn would move centers out of their orbit, so the daisy keeps the
@@ -745,7 +750,8 @@ DAISY_CENTERS_ILLEGAL_MOVES_777 = tuple(
 class LookupTableIDA777DaisyCenters:
     """
     Daisy-solve the remaining centers on all three axes. Fifteen leave-one-out
-    70^4 ranked tables, or three perfect 70^5 tables, each C(8,4) per orbit.
+    70^4 ranked tables, or one perfect 70^5 table shared by all three axes and
+    compacted onto its symmetry orbits, each C(8,4) per orbit.
 
     ``solve_via_c(native_only=True)`` narrows the goal to the native orientation
     and swaps in the perfect tables built to that same goal, which is what cubes

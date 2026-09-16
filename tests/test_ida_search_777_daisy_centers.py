@@ -21,7 +21,6 @@ ROOT = Path(__file__).resolve().parents[1]
 BINARY = ROOT / "ida_search_777_daisy_centers"
 GROUP_UNIVERSE = 70
 LEAVE_ONE_OUT_UNIVERSE = GROUP_UNIVERSE**4
-PERFECT_UNIVERSE = GROUP_UNIVERSE**5
 
 # Orbit order must match builder777.DAISY_CENTER_ORBITS_777 and the C searcher.
 AXES = (
@@ -71,7 +70,14 @@ LEAVE_ONE_OUT_TABLES = tuple(
     for axis, _, _ in AXES
     for orbit in ORBIT_NAMES
 )
-PERFECT_TABLES = tuple((f"{axis}_PERFECT", f"--{axis.lower()}-perfect-cost", axis) for axis, _, _ in AXES)
+PERFECT_LABELS = tuple(f"{axis}_PERFECT" for axis, _, _ in AXES)
+# One real table and index serve all three axes, and a fake is impractical: the
+# index has to name the canonical rank of each of the 105,356,972 symmetry
+# orbits, which is the compactor's whole job. tests/test_center_symmetry_777.c
+# in rubiks-cube-lookup-tables checks the compaction itself.
+PERFECT_COST = Path("lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin")
+PERFECT_INDEX = Path(f"{PERFECT_COST}.symmetry-index.bin")
+PERFECT_ORBIT_COUNT = 105_356_972
 ILLEGAL_MOVES = frozenset(DAISY_CENTERS_ILLEGAL_MOVES_777)
 
 
@@ -118,10 +124,6 @@ def leave_one_out_rank(ranks, axis, omitted):
     return mixed_radix([ranks[(axis, orbit)] for orbit in ORBIT_NAMES if orbit != omitted])
 
 
-def perfect_rank(ranks, axis):
-    return mixed_radix([ranks[(axis, orbit)] for orbit in ORBIT_NAMES])
-
-
 def make_sparse_table(path, size, entries):
     with open(path, "wb") as table:
         table.truncate(size)
@@ -154,7 +156,6 @@ class DaisyCenters777Test(unittest.TestCase):
         self.leave_paths = {
             label: Path(self.tempdir.name) / f"{label.lower()}.bin" for label, _, _, _ in LEAVE_ONE_OUT_TABLES
         }
-        self.perfect_paths = {label: Path(self.tempdir.name) / f"{label.lower()}.bin" for label, _, _ in PERFECT_TABLES}
         self.solved = RubiksCube777(solved_777, "URFDLB")
 
     def tearDown(self):
@@ -168,10 +169,7 @@ class DaisyCenters777Test(unittest.TestCase):
                 if label in selected:
                     command.extend((flag, str(self.leave_paths[label])))
         else:
-            selected = labels or {label for label, _, _ in PERFECT_TABLES}
-            for label, flag, _ in PERFECT_TABLES:
-                if label in selected:
-                    command.extend((flag, str(self.perfect_paths[label])))
+            command.extend(("--perfect-cost", str(PERFECT_COST), "--perfect-index", str(PERFECT_INDEX)))
         command.extend(extra)
         return command
 
@@ -182,12 +180,6 @@ class DaisyCenters777Test(unittest.TestCase):
         for label, _, axis, omitted in LEAVE_ONE_OUT_TABLES:
             entries = {leave_one_out_rank(orbit_ranks(cube), axis, omitted): encoded_by_label[label] for cube in cubes}
             make_sparse_table(self.leave_paths[label], LEAVE_ONE_OUT_UNIVERSE, entries)
-
-    def write_perfect(self, cubes, encoded_by_label=None):
-        encoded_by_label = encoded_by_label or {label: index + 2 for index, (label, _, _) in enumerate(PERFECT_TABLES)}
-        for label, _, axis in PERFECT_TABLES:
-            entries = {perfect_rank(orbit_ranks(cube), axis): encoded_by_label[label] for cube in cubes}
-            make_sparse_table(self.perfect_paths[label], PERFECT_UNIVERSE, entries)
 
     def test_rank_order_max_cost_and_both_daisy_orientations(self):
         native = self.solved
@@ -338,10 +330,13 @@ class DaisyCenters777Test(unittest.TestCase):
         self.assertRegex(search.stdout, r"SOLUTION \(1 steps\): Uw2")
         self.assertRegex(search.stdout, r"explored [1-9][0-9]* nodes")
 
-    def test_perfect_tables_rank_and_solved_search(self):
+    @unittest.skipUnless(PERFECT_INDEX.is_file(), "the optional 7x7x7 perfect tables have not been built")
+    def test_one_perfect_table_serves_all_three_axes(self):
+        # LR obliques swapped is the second daisy goal, so every axis is already
+        # at a goal and all three costs are 0 even though each reads the coordinate
+        # of a different axis out of the one shared table.
         swapped = RubiksCube777(solved_777, "URFDLB")
         set_orbit_orientation(swapped, "LR", True)
-        self.write_perfect([self.solved, swapped], {label: 1 for label, _, _ in PERFECT_TABLES})
 
         result = subprocess.run(
             self.command(swapped, "--print-ranks", mode="perfect"),
@@ -351,8 +346,16 @@ class DaisyCenters777Test(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         actual = parse_ranks(result.stdout)
         ranks = orbit_ranks(swapped)
-        for label, _, axis in PERFECT_TABLES:
-            self.assertEqual(actual[f"{label}_RANK"], perfect_rank(ranks, axis))
+
+        for axis, _, orbits in AXES:
+            for orbit in orbits:
+                key = f"{axis}_{orbit.replace('-', '_').upper()}_RANK"
+                self.assertEqual(actual[key], ranks[(axis, orbit)])
+
+        for label in PERFECT_LABELS:
+            # A canonical rank is mapped into the compacted table, so what the
+            # searcher probes is a dense orbit index, not the 70^5 raw rank.
+            self.assertLess(actual[f"{label}_RANK"], PERFECT_ORBIT_COUNT)
             self.assertEqual(actual[f"{label}_COST"], 0)
         self.assertEqual(actual["DAISY"], 1)
         self.assertEqual(actual["COST"], 0)
@@ -364,6 +367,24 @@ class DaisyCenters777Test(unittest.TestCase):
         )
         self.assertEqual(solved.returncode, 0, solved.stdout + solved.stderr)
         self.assertIn("SOLUTION (0 steps)", solved.stdout)
+
+    @unittest.skipUnless(PERFECT_INDEX.is_file(), "the optional 7x7x7 perfect tables have not been built")
+    def test_perfect_search_scrambled_state_costs_rise_with_distance(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        for move in ("Uw2", "Rw2", "F", "3Fw2", "L"):
+            cube.rotate(move)
+
+        result = subprocess.run(
+            self.command(cube, "--print-ranks", mode="perfect"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        actual = parse_ranks(result.stdout)
+
+        self.assertEqual(actual["DAISY"], 0)
+        self.assertGreater(max(actual[f"{label}_COST"] for label in PERFECT_LABELS), 0)
+        self.assertGreater(actual["COST"], 0)
 
 
 if __name__ == "__main__":

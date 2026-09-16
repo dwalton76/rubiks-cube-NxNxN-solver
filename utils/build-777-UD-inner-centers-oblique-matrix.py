@@ -21,37 +21,34 @@ This was used to build the unpaired_count_UD_inner_centers_777 matrix in
 ida_search_777_centers_stage.c
 """
 
+from __future__ import annotations
+
 # standard libraries
 import argparse
-import json
 import random
-import re
-import subprocess
-import time
-from collections import defaultdict
 from pathlib import Path
 
 # rubiks cube libraries
+from rubikscubennnsolver.heuristic_matrix import (
+    append_solve_sample,
+    fill_cost_matrix,
+    format_c_matrix_2d,
+    load_done_sample_ids,
+    parse_ida_summary_path,
+    scramble_cube,
+    summarize_jsonl,
+)
 from rubikscubennnsolver.RubiksCube777 import LR_OBLIQUE_PAIRING_ILLEGAL_MOVES, RubiksCube777, moves_777, solved_777
 
 TABLE = "lookup-tables/lookup-table-7x7x7-step20-UD-inner-centers-stage.cost-only.bin"
 BINARY = "./ida_search_777_centers_stage"
 SAMPLES = Path("utils/777-phase2-samples.jsonl")
-SOLUTION_RE = re.compile(r"SOLUTION \((\d+) steps\)")
 LEGAL_MOVES = tuple(move for move in moves_777 if move not in LR_OBLIQUE_PAIRING_ILLEGAL_MOVES)
-SCRAMBLE_LENGTH = 60
 UNPAIRED_MAX = 16
 COST_MAX = 12
 
 # unpaired-count costs the old oblique-only phase 2 used, indexed by unpaired count
 LR_OBLIQUE_ONLY_COST = (0, 1, 1, 4, 5, 6, 7, 8, 9, 9, 10, 11, 11, 12, 12, 12, 12)
-
-
-def scramble(rng):
-    cube = RubiksCube777(solved_777, "URFDLB")
-    for _ in range(SCRAMBLE_LENGTH):
-        cube.rotate(rng.choice(LEGAL_MOVES))
-    return cube
 
 
 def solve_command(cube, multiplier):
@@ -69,81 +66,19 @@ def solve_command(cube, multiplier):
 
 
 def parse_path(output):
-    """Pull (table cost, unpaired, remaining) from the --print-ida-summary rows."""
-    rows = []
-    started = False
-    for line in output.splitlines():
-        tokens = line.split()
-        if not started:
-            started = tokens[:1] == ["INIT"]
-            if not started:
-                continue
-        if len(tokens) != 6:
-            continue
-        try:
-            table_cost, unpaired, _ctg, remaining, _index = (int(value) for value in tokens[1:])
-        except ValueError:
-            continue
-        rows.append((table_cost, unpaired, remaining))
-    return rows
-
-
-def floor_cost(unpaired, table_cost):
-    return max(table_cost, LR_OBLIQUE_ONLY_COST[unpaired])
+    return parse_ida_summary_path(output, token_count=6, value_indexes=(0, 1, 3))
 
 
 def matrix_from_samples(samples):
-    """
-    Cells hold the smallest remaining count seen for that pair. Sampling is
-    sparse in the corners, so values also propagate down and to the right:
-    neither adding an unpaired oblique nor a more scrambled set of inner
-    centers can bring the goal closer, which fills the gaps and keeps the
-    matrix monotonic.
-    """
-    buckets = defaultdict(list)
-    for table_cost, unpaired, remaining in samples:
-        if 0 <= unpaired <= UNPAIRED_MAX and 0 <= table_cost <= COST_MAX:
-            buckets[(unpaired, table_cost)].append(remaining)
+    dims = (UNPAIRED_MAX + 1, COST_MAX + 1)
 
-    rows = []
-    counts = []
-    for unpaired in range(UNPAIRED_MAX + 1):
-        row = []
-        count_row = []
-        for table_cost in range(COST_MAX + 1):
-            values = buckets.get((unpaired, table_cost), [])
-            count_row.append(len(values))
-            estimate = min(values) if values else 0
-            estimate = max(estimate, floor_cost(unpaired, table_cost))
-            if table_cost:
-                estimate = max(estimate, row[table_cost - 1])
-            if unpaired:
-                estimate = max(estimate, rows[unpaired - 1][table_cost])
-            row.append(estimate)
-        rows.append(row)
-        counts.append(count_row)
-    return rows, counts
+    def admissible(index):
+        unpaired, table_cost = index
+        return max(table_cost, LR_OBLIQUE_ONLY_COST[unpaired])
 
-
-def print_c_matrix(rows):
-    print(
-        "static const unsigned char unpaired_count_UD_inner_centers_777"
-        "[MATRIX_UNPAIRED_MAX + 1][MATRIX_COST_MAX + 1] = {"
-    )
-    for unpaired, values in enumerate(rows):
-        joined = ", ".join(f"{value:2d}" for value in values)
-        print(f"    {{{joined}}},  // unpaired {unpaired}")
-    print("};")
-
-
-def load_done(path):
-    done = set()
-    if not path.exists():
-        return done
-    with path.open() as fh:
-        for line in fh:
-            done.add(json.loads(line)["sample"])
-    return done
+    # Samples are (table_cost, unpaired, remaining); the matrix is [unpaired][table_cost].
+    remapped = ((unpaired, table_cost, remaining) for table_cost, unpaired, remaining in samples)
+    return fill_cost_matrix(remapped, dims, admissible)
 
 
 def main():
@@ -157,75 +92,29 @@ def main():
     args = parser.parse_args()
 
     SAMPLES.parent.mkdir(parents=True, exist_ok=True)
-    done = load_done(SAMPLES)
+    done = load_done_sample_ids(SAMPLES)
     if not args.report_only:
         print(
             f"cubes={args.count} multiplier={args.multiplier} timeout={args.timeout:.0f}s " f"already_done={len(done)}",
             flush=True,
         )
-
         with SAMPLES.open("a") as out:
             for index in range(args.count):
                 sample_id = args.offset + index
                 if sample_id in done:
                     print(f"sample={sample_id:04d} skip", flush=True)
                     continue
-
-                cube = scramble(random.Random(f"{args.seed}-{sample_id}"))
-                record = {
-                    "sample": sample_id,
-                    "multiplier": args.multiplier,
-                    "ok": False,
-                    "timeout": False,
-                    "wall": None,
-                    "moves": None,
-                    "path": [],
-                }
-
-                started = time.perf_counter()
-                try:
-                    proc = subprocess.run(
-                        solve_command(cube, args.multiplier),
-                        capture_output=True,
-                        text=True,
-                        timeout=args.timeout,
-                    )
-                    record["wall"] = round(time.perf_counter() - started, 3)
-                    output = proc.stdout + proc.stderr
-                    match = SOLUTION_RE.search(output)
-                    if proc.returncode == 0 and match:
-                        record["ok"] = True
-                        record["moves"] = int(match.group(1))
-                        record["path"] = parse_path(output)
-                except subprocess.TimeoutExpired:
-                    record["timeout"] = True
-                    record["wall"] = args.timeout
-
-                out.write(json.dumps(record) + "\n")
-                out.flush()
-                status = "TIMEOUT" if record["timeout"] else ("FAIL" if not record["ok"] else "ok")
-                print(
-                    f"sample={sample_id:04d} moves={record['moves']} wall={record['wall']} "
-                    f"path={len(record['path'])} {status}",
-                    flush=True,
+                cube = scramble_cube(random.Random(f"{args.seed}-{sample_id}"), RubiksCube777, solved_777, LEGAL_MOVES)
+                append_solve_sample(
+                    out,
+                    sample_id,
+                    solve_command(cube, args.multiplier),
+                    args.timeout,
+                    parse_path,
+                    extra={"multiplier": args.multiplier},
                 )
 
-    samples = []
-    solved = timeout = failed = 0
-    walls = []
-    with SAMPLES.open() as fh:
-        for line in fh:
-            record = json.loads(line)
-            if record.get("timeout"):
-                timeout += 1
-            elif record.get("ok"):
-                solved += 1
-                if record.get("wall") is not None:
-                    walls.append(record["wall"])
-                samples.extend(tuple(row) for row in record.get("path", []))
-            else:
-                failed += 1
-
+    solved, timeout, failed, samples, walls, _solution_moves = summarize_jsonl(SAMPLES)
     rows, counts = matrix_from_samples(samples)
     print(
         f"\nsolved={solved} timeout={timeout} failed={failed} path_samples={len(samples)} "
@@ -233,10 +122,14 @@ def main():
         flush=True,
     )
     print("sample counts (rows=unpaired 0..16, cols=table cost 0..12):", flush=True)
-    for unpaired, count_row in enumerate(counts):
-        print(f"  u={unpaired:2d} {count_row}", flush=True)
+    for unpaired in range(UNPAIRED_MAX + 1):
+        print(f"  u={unpaired:2d} {[counts[(unpaired, table_cost)] for table_cost in range(COST_MAX + 1)]}", flush=True)
     print(flush=True)
-    print_c_matrix(rows)
+    opening = (
+        "static const unsigned char unpaired_count_UD_inner_centers_777"
+        "[MATRIX_UNPAIRED_MAX + 1][MATRIX_COST_MAX + 1] = {"
+    )
+    print(format_c_matrix_2d(opening, rows, lambda unpaired: f"unpaired {unpaired}"), end="")
 
 
 if __name__ == "__main__":

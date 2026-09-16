@@ -82,7 +82,6 @@ class LookupTableIDAViaGraph(LookupTable):
         pt2_state_max: int = None,
         pt4_state_max: int = None,
         centers_only: bool = False,
-        C_ida_type: str = None,
     ):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.recolor_positions = []
@@ -96,7 +95,6 @@ class LookupTableIDAViaGraph(LookupTable):
         self.main_table_max_depth = main_table_max_depth
         self.main_table_prune_tables = main_table_prune_tables
         self.centers_only = centers_only
-        self.C_ida_type = C_ida_type
 
         if perfect_hash01_filename:
             self.perfect_hash01_filename = "lookup-tables/" + perfect_hash01_filename
@@ -376,10 +374,6 @@ class LookupTableIDAViaGraph(LookupTable):
 
         if self.centers_only:
             cmd.append("--centers-only")
-
-        if self.C_ida_type is not None:
-            cmd.append("--type")
-            cmd.append(self.C_ida_type)
 
         # ida_search_via_graph already stops at the first solution
         if solution_count > 1:

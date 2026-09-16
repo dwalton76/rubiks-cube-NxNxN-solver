@@ -28,7 +28,6 @@
 #define ALL_INNER_X_SIZE 24
 #define ALL_INNER_X_UNIVERSE UINT64_C(9465511770)
 #define OBLIQUE_PAIR_COUNT 24
-#define BINOM_MAX ALL_INNER_X_SIZE
 #define DEFAULT_UNPAIRED_MULTIPLIER 0.90f
 #define ALL_INNER_X_MATRIX_COST_MAX 11
 #define DEFAULT_MAX_IDA_THRESHOLD 20
@@ -155,7 +154,6 @@ static struct ranked_table {
     {"--right-oblique-outer-x-cost", "ROOX", ORBIT_RIGHT_OBLIQUE, ORBIT_OUTER_X, NULL, NULL, -1},
 };
 
-static uint64_t binom[BINOM_MAX + 1][BINOM_MAX + 1];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_666];
 static move_type inverse_move[MOVE_MAX];
@@ -189,33 +187,6 @@ static unsigned int split_task_capacity;
  * of prefix divides the hot subtree among its own children.
  */
 static unsigned char split_task_depth = 2;
-
-struct ranked_cost_file {
-    int fd;
-    unsigned char *costs;
-};
-
-struct symmetry_index_header {
-    char magic[8];
-    uint64_t raw_universe;
-    uint64_t orbit_count;
-    uint64_t low_word_count;
-    uint64_t high_bit_count;
-    uint64_t high_word_count;
-    uint64_t zero_sample_count;
-    uint32_t low_bits;
-    uint32_t zero_sample_rate;
-};
-
-struct symmetry_index {
-    int fd;
-    size_t size;
-    unsigned char *mapping;
-    const struct symmetry_index_header *header;
-    const uint64_t *low;
-    const uint64_t *high;
-    const uint32_t *zero_samples;
-};
 
 static struct symmetry_index all_inner_x_index = {-1, 0, NULL, NULL, NULL, NULL, NULL};
 
@@ -270,48 +241,6 @@ static void usage(const char *program)
         "  --kociemba-file lines: ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,STATE\n"
         "  parity requirements are 0=any, 1=odd, 2=even\n"
     );
-}
-
-static void init_binom(void)
-{
-    for (unsigned int n = 0; n <= BINOM_MAX; n++) {
-        binom[n][0] = 1;
-        binom[n][n] = 1;
-        for (unsigned int k = 1; k < n; k++) {
-            binom[n][k] = binom[n - 1][k - 1] + binom[n - 1][k];
-        }
-    }
-}
-
-/*
- * Rank lexicographically among all 16-character strings containing eight U
- * stickers and eight non-U stickers.  This is the ordering of the generated
- * .state_index files because 'U' sorts before 'x'.
- */
-static uint64_t combination_rank_cube(const char *cube, const unsigned int squares[GROUP_SIZE])
-{
-    unsigned int u_remaining = GROUP_U_COUNT;
-    uint64_t rank = 0;
-
-    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
-        unsigned int positions_after = GROUP_SIZE - position - 1;
-        char sticker = cube[squares[position]];
-
-        if (sticker == 'U' || sticker == 'D') {
-            if (!u_remaining) {
-                return UINT64_MAX;
-            }
-            u_remaining--;
-        } else if (u_remaining) {
-            rank += binom[positions_after][u_remaining - 1];
-        }
-    }
-    return u_remaining ? UINT64_MAX : rank;
-}
-
-static unsigned char decoded_cost(unsigned char encoded)
-{
-    return encoded ? encoded - 1 : UINT8_MAX;
 }
 
 /* The builder ranks with the symbols sorted, so F is 0, L is 1 and U is 2. */
@@ -430,76 +359,6 @@ static uint64_t all_inner_x_canonical_rank(const char *cube)
         }
     }
     return all_inner_x_rank_indices(best);
-}
-
-static uint64_t symmetry_select_zero(const struct symmetry_index *index, uint64_t zero)
-{
-    const struct symmetry_index_header *header = index->header;
-    uint64_t base = (zero / header->zero_sample_rate) * header->zero_sample_rate;
-    uint64_t position = index->zero_samples[zero / header->zero_sample_rate];
-    uint64_t remaining = zero - base;
-
-    if (!remaining) {
-        return position;
-    }
-    position++;
-    while (position < header->high_bit_count) {
-        uint64_t word_index = position >> 6;
-        unsigned int offset = position & 63;
-        uint64_t zeros = ~index->high[word_index] & (UINT64_MAX << offset);
-
-        if (word_index + 1 == header->high_word_count &&
-                (header->high_bit_count & 63)) {
-            zeros &= (UINT64_C(1) << (header->high_bit_count & 63)) - 1;
-        }
-        unsigned int count = __builtin_popcountll(zeros);
-        if (remaining <= count) {
-            for (uint64_t candidate = zeros; candidate; candidate &= candidate - 1) {
-                if (!--remaining) {
-                    return (word_index << 6) + __builtin_ctzll(candidate);
-                }
-            }
-        }
-        remaining -= count;
-        position = (word_index + 1) << 6;
-    }
-    return UINT64_MAX;
-}
-
-static uint64_t symmetry_low_value(const struct symmetry_index *index, uint64_t dense)
-{
-    uint64_t bit = dense * index->header->low_bits;
-    unsigned int offset = bit & 63;
-    uint64_t value = index->low[bit >> 6] >> offset;
-
-    if (offset > 64 - index->header->low_bits) {
-        value |= index->low[(bit >> 6) + 1] << (64 - offset);
-    }
-    return value & ((UINT64_C(1) << index->header->low_bits) - 1);
-}
-
-static uint64_t symmetry_dense_rank(const struct symmetry_index *index, uint64_t raw)
-{
-    uint64_t high = raw >> index->header->low_bits;
-    uint64_t low = raw & ((UINT64_C(1) << index->header->low_bits) - 1);
-    uint64_t start = high
-        ? symmetry_select_zero(index, high - 1) - (high - 1)
-        : 0;
-    uint64_t end = symmetry_select_zero(index, high) - high;
-
-    if (start == UINT64_MAX || end == UINT64_MAX || end > index->header->orbit_count) {
-        return UINT64_MAX;
-    }
-    for (uint64_t dense = start; dense < end; dense++) {
-        uint64_t candidate = symmetry_low_value(index, dense);
-        if (candidate == low) {
-            return dense;
-        }
-        if (candidate > low) {
-            break;
-        }
-    }
-    return UINT64_MAX;
 }
 
 /* Eight of the 24 oblique pairs hold the L/R obliques once they are all paired. */
@@ -644,7 +503,7 @@ static struct heuristic_result heuristic(const char *cube)
             return result;
         }
         encoded = all_inner_x_costs[result.all_inner_x_rank];
-        result.all_inner_x_cost = decoded_cost(encoded);
+        result.all_inner_x_cost = decode_cost_byte(encoded);
         result.unpaired_count = unpaired_oblique_count(cube);
 
         if (!encoded) {
@@ -658,7 +517,7 @@ static struct heuristic_result heuristic(const char *cube)
     }
 
     for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
-        result.orbit_rank[orbit] = combination_rank_cube(cube, orbit_squares[orbit]);
+        result.orbit_rank[orbit] = ida_combination_rank_ud(cube, orbit_squares[orbit], GROUP_SIZE, GROUP_U_COUNT);
         if (result.orbit_rank[orbit] == UINT64_MAX) {
             ranks_are_valid = 0;
         }
@@ -677,7 +536,7 @@ static struct heuristic_result heuristic(const char *cube)
         result.table_rank[index] =
             result.orbit_rank[table->orbit_a] * GROUP_UNIVERSE + result.orbit_rank[table->orbit_b];
         encoded = table->costs[result.table_rank[index]];
-        result.table_cost[index] = decoded_cost(encoded);
+        result.table_cost[index] = decode_cost_byte(encoded);
 
         if (!encoded) {
             result.cost = UINT8_MAX;
@@ -762,136 +621,22 @@ static int move_is_allowed(move_type move)
 
 static void init_move_tables(void)
 {
-    for (unsigned int move_index = 0; move_index < MOVE_COUNT_666; move_index++) {
-        move_type move = moves_666[move_index];
-        unsigned int quarter_turn_offset = ((unsigned int)move - 1) % 3;
-
-        inverse_move[move] = quarter_turn_offset == 0 ? move + 1 :
-                             quarter_turn_offset == 1 ? move - 1 : move;
-        if (move_is_allowed(move)) {
-            legal_move_index[MOVE_NONE][legal_move_count[MOVE_NONE]++] = (unsigned char)move_index;
-        }
-    }
-
-    for (unsigned int previous_index = 0; previous_index < MOVE_COUNT_666; previous_index++) {
-        move_type previous_move = moves_666[previous_index];
-
-        if (!move_is_allowed(previous_move)) {
-            continue;
-        }
-        for (unsigned int move_index = 0; move_index < MOVE_COUNT_666; move_index++) {
-            move_type move = moves_666[move_index];
-
-            if (!move_is_allowed(move) ||
-                steps_on_same_face_and_layer(previous_move, move) ||
-                !outer_layer_moves_in_order(previous_move, move) ||
-                !steps_on_same_face_in_order(previous_move, move) ||
-                !steps_on_opposite_faces_in_order(previous_move, move)) {
-                continue;
-            }
-            legal_move_index[previous_move][legal_move_count[previous_move]++] = (unsigned char)move_index;
-        }
-    }
-}
-
-static struct ranked_cost_file map_ranked_cost_file(const char *filename, uint64_t universe)
-{
-    struct ranked_cost_file result = {-1, NULL};
-    struct stat file_stat;
-    int mmap_flags = MAP_SHARED;
-
-    result.fd = open(filename, O_RDONLY);
-    if (result.fd < 0) {
-        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    if (fstat(result.fd, &file_stat) != 0) {
-        fprintf(stderr, "ERROR: could not stat %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    if ((uint64_t)file_stat.st_size != universe) {
-        fprintf(
-            stderr,
-            "ERROR: %s is %" PRIu64 " bytes, expected %" PRIu64 "\n",
-            filename,
-            (uint64_t)file_stat.st_size,
-            universe
-        );
-        exit(1);
-    }
-#ifdef MAP_POPULATE
-    if ((uint64_t)file_stat.st_blocks * 512 >= universe) {
-        mmap_flags |= MAP_POPULATE;
-    }
-#endif
-    result.costs = mmap(NULL, (size_t)universe, PROT_READ, mmap_flags, result.fd, 0);
-    if (result.costs == MAP_FAILED) {
-        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    return result;
-}
-
-static void map_symmetry_index(struct symmetry_index *index, const char *filename)
-{
-    struct stat file_stat;
-    uint64_t expected_size;
-
-    index->fd = open(filename, O_RDONLY);
-    if (index->fd < 0 || fstat(index->fd, &file_stat) != 0) {
-        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    index->size = (size_t) file_stat.st_size;
-    index->mapping = mmap(NULL, index->size, PROT_READ, MAP_SHARED, index->fd, 0);
-    if (index->mapping == MAP_FAILED) {
-        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    index->header = (const struct symmetry_index_header *) index->mapping;
-    if (index->size < sizeof(*index->header) ||
-            memcmp(index->header->magic, "CS444EF1", 8) ||
-            index->header->raw_universe != ALL_INNER_X_UNIVERSE ||
-            index->header->low_bits != 5 ||
-            index->header->zero_sample_rate != 512) {
-        fprintf(stderr, "ERROR: %s is not a supported 48-symmetry center index\n", filename);
-        exit(1);
-    }
-    expected_size = sizeof(*index->header) +
-        (index->header->low_word_count * sizeof(uint64_t)) +
-        (index->header->high_word_count * sizeof(uint64_t)) +
-        (index->header->zero_sample_count * sizeof(uint32_t));
-    if (expected_size != index->size) {
-        fprintf(stderr, "ERROR: %s has an invalid size\n", filename);
-        exit(1);
-    }
-    index->low = (const uint64_t *) (index->mapping + sizeof(*index->header));
-    index->high = index->low + index->header->low_word_count;
-    index->zero_samples = (const uint32_t *) (index->high + index->header->high_word_count);
-}
-
-static void unmap_symmetry_index(struct symmetry_index *index)
-{
-    if (index->mapping && index->mapping != MAP_FAILED) {
-        munmap(index->mapping, index->size);
-    }
-    if (index->fd >= 0) {
-        close(index->fd);
-    }
-    index->fd = -1;
-    index->mapping = NULL;
-    index->header = NULL;
+    ida_init_move_tables(
+        moves_666, MOVE_COUNT_666, move_is_allowed, legal_move_count, legal_move_index, inverse_move
+    );
 }
 
 static void map_ranked_tables(void)
 {
     if (stage_all_inner_x) {
-        struct ranked_cost_file file;
+        struct mapped_cost_file file;
 
         init_all_inner_x_symmetry();
-        map_symmetry_index(&all_inner_x_index, all_inner_x_index_filename);
+        map_symmetry_index(
+            &all_inner_x_index, all_inner_x_index_filename, ALL_INNER_X_UNIVERSE, "48-symmetry center index"
+        );
         all_inner_x_cost_size = all_inner_x_index.header->orbit_count;
-        file = map_ranked_cost_file(all_inner_x_filename, all_inner_x_cost_size);
+        file = ida_map_cost_file(all_inner_x_filename, all_inner_x_cost_size);
         all_inner_x_fd = file.fd;
         all_inner_x_costs = file.costs;
         return;
@@ -899,12 +644,12 @@ static void map_ranked_tables(void)
 
     for (unsigned int index = 0; index < TABLE_COUNT; index++) {
         struct ranked_table *table = &ranked_tables[index];
-        struct ranked_cost_file file;
+        struct mapped_cost_file file;
 
         if (!table->filename) {
             continue;
         }
-        file = map_ranked_cost_file(table->filename, PRODUCT_UNIVERSE);
+        file = ida_map_cost_file(table->filename, PRODUCT_UNIVERSE);
         table->fd = file.fd;
         table->costs = file.costs;
     }
@@ -912,12 +657,7 @@ static void map_ranked_tables(void)
 
 static void unmap_ranked_tables(void)
 {
-    if (all_inner_x_costs && all_inner_x_costs != MAP_FAILED) {
-        munmap(all_inner_x_costs, (size_t)all_inner_x_cost_size);
-    }
-    if (all_inner_x_fd >= 0) {
-        close(all_inner_x_fd);
-    }
+    ida_unmap_cost_file(all_inner_x_fd, all_inner_x_costs, (size_t)all_inner_x_cost_size);
     all_inner_x_costs = NULL;
     all_inner_x_fd = -1;
     all_inner_x_cost_size = 0;
@@ -926,12 +666,7 @@ static void unmap_ranked_tables(void)
     for (unsigned int index = 0; index < TABLE_COUNT; index++) {
         struct ranked_table *table = &ranked_tables[index];
 
-        if (table->costs && table->costs != MAP_FAILED) {
-            munmap(table->costs, (size_t)PRODUCT_UNIVERSE);
-        }
-        if (table->fd >= 0) {
-            close(table->fd);
-        }
+        ida_unmap_cost_file(table->fd, table->costs, (size_t)PRODUCT_UNIVERSE);
         table->costs = NULL;
         table->fd = -1;
     }
@@ -939,28 +674,7 @@ static void unmap_ranked_tables(void)
 
 static void init_cube_from_kociemba(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
 {
-    const unsigned int face_size = CUBE_SIZE * CUBE_SIZE;
-
-    if (strlen(kociemba) != face_size * 6) {
-        fprintf(stderr, "ERROR: --kociemba must contain 216 stickers for a 6x6x6 cube\n");
-        exit(1);
-    }
-    cube[0] = 'x';
-    memcpy(&cube[1], &kociemba[0], face_size);                 /* U */
-    memcpy(&cube[1 + face_size], &kociemba[face_size * 4], face_size); /* L */
-    memcpy(&cube[1 + face_size * 2], &kociemba[face_size * 2], face_size); /* F */
-    memcpy(&cube[1 + face_size * 3], &kociemba[face_size], face_size); /* R */
-    memcpy(&cube[1 + face_size * 4], &kociemba[face_size * 5], face_size); /* B */
-    memcpy(&cube[1 + face_size * 5], &kociemba[face_size * 3], face_size); /* D */
-}
-
-static int is_edge_or_corner(unsigned int square)
-{
-    unsigned int face_offset = (square - 1) % (CUBE_SIZE * CUBE_SIZE);
-    unsigned int row = face_offset / CUBE_SIZE;
-    unsigned int col = face_offset % CUBE_SIZE;
-
-    return row == 0 || row == CUBE_SIZE - 1 || col == 0 || col == CUBE_SIZE - 1;
+    ida_init_cube(cube, CUBE_SIZE, kociemba);
 }
 
 /*
@@ -979,7 +693,7 @@ static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
             cube[square] = 'F';
         }
 
-        if (is_edge_or_corner(square)) {
+        if (ida_is_edge_or_corner(square, CUBE_SIZE)) {
             cube[square] = '.';
         }
     }
@@ -1043,14 +757,7 @@ static int parity_requirements_are_reachable(void)
 
 static move_type parse_move(const char *move_string)
 {
-    for (unsigned int move_index = 0; move_index < MOVE_COUNT_666; move_index++) {
-        move_type move = moves_666[move_index];
-
-        if (strmatch((char *)move2str[move], (char *)move_string)) {
-            return move;
-        }
-    }
-    return MOVE_NONE;
+    return ida_parse_move(move_string, moves_666, MOVE_COUNT_666);
 }
 
 static void prepare_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)

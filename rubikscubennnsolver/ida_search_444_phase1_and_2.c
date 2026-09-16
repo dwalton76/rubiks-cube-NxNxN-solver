@@ -69,28 +69,6 @@ struct cost_file {
     uint64_t universe;
 };
 
-struct symmetry_index_header {
-    char magic[8];
-    uint64_t raw_universe;
-    uint64_t orbit_count;
-    uint64_t low_word_count;
-    uint64_t high_bit_count;
-    uint64_t high_word_count;
-    uint64_t zero_sample_count;
-    uint32_t low_bits;
-    uint32_t zero_sample_rate;
-};
-
-struct symmetry_index {
-    int fd;
-    size_t size;
-    unsigned char *mapping;
-    const struct symmetry_index_header *header;
-    const uint64_t *low;
-    const uint64_t *high;
-    const uint32_t *zero_samples;
-};
-
 struct worker {
     char cube[CUBE_ARRAY_SIZE];
     char highlow[CUBE_ARRAY_SIZE];
@@ -130,18 +108,6 @@ static unsigned int root_threshold;
 static float cost_to_goal_multiplier;
 static move_type solution[MAX_THRESHOLD + 1];
 static unsigned int solution_length;
-
-static uint64_t binom[25][13];
-
-static void init_binom(void)
-{
-    for (unsigned int n = 0; n <= 24; n++) {
-        binom[n][0] = 1;
-        for (unsigned int k = 1; k <= 12 && k <= n; k++) {
-            binom[n][k] = k == n ? 1 : binom[n - 1][k - 1] + binom[n - 1][k];
-        }
-    }
-}
 
 static uint64_t center_888_rank(const unsigned char state[CENTER_COUNT])
 {
@@ -204,77 +170,7 @@ static unsigned char decoded_cost(const struct cost_file *table, uint64_t rank)
         return UINT8_MAX;
     }
     encoded = table->costs[rank];
-    return encoded ? encoded - 1 : UINT8_MAX;
-}
-
-static uint64_t symmetry_select_zero(const struct symmetry_index *index, uint64_t zero)
-{
-    const struct symmetry_index_header *header = index->header;
-    uint64_t base = (zero / header->zero_sample_rate) * header->zero_sample_rate;
-    uint64_t position = index->zero_samples[zero / header->zero_sample_rate];
-    uint64_t remaining = zero - base;
-
-    if (!remaining) {
-        return position;
-    }
-    position++;
-    while (position < header->high_bit_count) {
-        uint64_t word_index = position >> 6;
-        unsigned int offset = position & 63;
-        uint64_t zeros = ~index->high[word_index] & (UINT64_MAX << offset);
-
-        if (word_index + 1 == header->high_word_count &&
-                (header->high_bit_count & 63)) {
-            zeros &= (UINT64_C(1) << (header->high_bit_count & 63)) - 1;
-        }
-        unsigned int count = __builtin_popcountll(zeros);
-        if (remaining <= count) {
-            for (uint64_t candidate = zeros; candidate; candidate &= candidate - 1) {
-                if (!--remaining) {
-                    return (word_index << 6) + __builtin_ctzll(candidate);
-                }
-            }
-        }
-        remaining -= count;
-        position = (word_index + 1) << 6;
-    }
-    return UINT64_MAX;
-}
-
-static uint64_t symmetry_low_value(const struct symmetry_index *index, uint64_t dense)
-{
-    uint64_t bit = dense * index->header->low_bits;
-    unsigned int offset = bit & 63;
-    uint64_t value = index->low[bit >> 6] >> offset;
-
-    if (offset > 64 - index->header->low_bits) {
-        value |= index->low[(bit >> 6) + 1] << (64 - offset);
-    }
-    return value & ((UINT64_C(1) << index->header->low_bits) - 1);
-}
-
-static uint64_t symmetry_dense_rank(const struct symmetry_index *index, uint64_t raw)
-{
-    uint64_t high = raw >> index->header->low_bits;
-    uint64_t low = raw & ((UINT64_C(1) << index->header->low_bits) - 1);
-    uint64_t start = high
-        ? symmetry_select_zero(index, high - 1) - (high - 1)
-        : 0;
-    uint64_t end = symmetry_select_zero(index, high) - high;
-
-    if (start == UINT64_MAX || end == UINT64_MAX || end > index->header->orbit_count) {
-        return UINT64_MAX;
-    }
-    for (uint64_t dense = start; dense < end; dense++) {
-        uint64_t candidate = symmetry_low_value(index, dense);
-        if (candidate == low) {
-            return dense;
-        }
-        if (candidate > low) {
-            break;
-        }
-    }
-    return UINT64_MAX;
+    return decode_cost_byte(encoded);
 }
 
 static unsigned char all_center_cost(const char cube[CUBE_ARRAY_SIZE])
@@ -820,18 +716,7 @@ static void print_ida_summary(
 
 static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
 {
-    const unsigned int face_size = 16;
-    if (strlen(kociemba) != 96) {
-        fprintf(stderr, "ERROR: --kociemba must contain 96 stickers\n");
-        exit(1);
-    }
-    cube[0] = 'x';
-    memcpy(&cube[1], &kociemba[0], face_size);
-    memcpy(&cube[17], &kociemba[64], face_size);
-    memcpy(&cube[33], &kociemba[32], face_size);
-    memcpy(&cube[49], &kociemba[16], face_size);
-    memcpy(&cube[65], &kociemba[80], face_size);
-    memcpy(&cube[81], &kociemba[48], face_size);
+    ida_init_cube(cube, CUBE_SIZE, kociemba);
 }
 
 static void init_highlow(char highlow[CUBE_ARRAY_SIZE], const char *state)
@@ -878,71 +763,17 @@ static void print_phase12_cube(const char cube[CUBE_ARRAY_SIZE], const char high
 
 static void map_cost_file(struct cost_file *table, const char *filename)
 {
-    struct stat file_stat;
-    table->fd = open(filename, O_RDONLY);
-    if (table->fd < 0 || fstat(table->fd, &file_stat) != 0) {
-        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    if ((uint64_t)file_stat.st_size != table->universe) {
-        fprintf(stderr, "ERROR: %s has unexpected size %jd\n", filename, (intmax_t)file_stat.st_size);
-        exit(1);
-    }
-    table->costs = mmap(NULL, table->universe, PROT_READ, MAP_SHARED, table->fd, 0);
-    if (table->costs == MAP_FAILED) {
-        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
+    struct mapped_cost_file mapped = ida_map_cost_file(filename, table->universe);
+
+    table->fd = mapped.fd;
+    table->costs = mapped.costs;
 }
 
 static void unmap_cost_file(struct cost_file *table)
 {
-    munmap(table->costs, table->universe);
-    close(table->fd);
-}
-
-static void map_symmetry_index(struct symmetry_index *index, const char *filename)
-{
-    struct stat file_stat;
-    uint64_t expected_size;
-
-    index->fd = open(filename, O_RDONLY);
-    if (index->fd < 0 || fstat(index->fd, &file_stat) != 0) {
-        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    index->size = (size_t) file_stat.st_size;
-    index->mapping = mmap(NULL, index->size, PROT_READ, MAP_SHARED, index->fd, 0);
-    if (index->mapping == MAP_FAILED) {
-        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    index->header = (const struct symmetry_index_header *) index->mapping;
-    if (index->size < sizeof(*index->header) ||
-            memcmp(index->header->magic, "CS444EF1", 8) ||
-            index->header->raw_universe != ALL_CENTER_RAW_UNIVERSE ||
-            index->header->low_bits != 5 ||
-            index->header->zero_sample_rate != 512) {
-        fprintf(stderr, "ERROR: %s is not a supported 4x4x4 center symmetry index\n", filename);
-        exit(1);
-    }
-    expected_size = sizeof(*index->header) +
-        (index->header->low_word_count * sizeof(uint64_t)) +
-        (index->header->high_word_count * sizeof(uint64_t)) +
-        (index->header->zero_sample_count * sizeof(uint32_t));
-    if (expected_size != index->size) {
-        fprintf(stderr, "ERROR: %s has an invalid size\n", filename);
-        exit(1);
-    }
-    index->low = (const uint64_t *) (index->mapping + sizeof(*index->header));
-    index->high = index->low + index->header->low_word_count;
-    index->zero_samples = (const uint32_t *) (index->high + index->header->high_word_count);
-}
-
-static void unmap_symmetry_index(struct symmetry_index *index)
-{
-    munmap(index->mapping, index->size);
-    close(index->fd);
+    ida_unmap_cost_file(table->fd, table->costs, (size_t)table->universe);
+    table->fd = -1;
+    table->costs = NULL;
 }
 
 static void usage(const char *program)
@@ -1021,7 +852,7 @@ int main(int argc, char **argv)
     init_center_symmetry_444();
     init_cube(cube, kociemba);
     init_highlow(highlow, highlow_state);
-    map_symmetry_index(&all_center_index, all_center_index_filename);
+    map_symmetry_index(&all_center_index, all_center_index_filename, ALL_CENTER_RAW_UNIVERSE, "4x4x4 center symmetry index");
     all_center_table.universe = all_center_index.header->orbit_count;
     map_cost_file(&all_center_table, all_center_filename);
     map_cost_file(&lr_table, lr_filename);

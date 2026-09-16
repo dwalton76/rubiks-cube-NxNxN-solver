@@ -165,4 +165,83 @@ unsigned char steps_on_opposite_faces(move_type prev_move, move_type move);
 unsigned char steps_on_opposite_faces_in_order(move_type prev_move, move_type move);
 unsigned char invalid_prune(unsigned char cost_to_here, move_type *moves_to_here, unsigned int threshold);
 
+#define IDA_BINOM_MAX 32
+#define IDA_MOVE_INDEX_MAX MOVE_COUNT_666
+
+extern uint64_t binom[IDA_BINOM_MAX + 1][IDA_BINOM_MAX + 1];
+
+void init_binom(void);
+move_type ida_parse_move(const char *move_string, const move_type *moves, unsigned int move_count);
+void ida_init_move_tables(
+    const move_type *moves,
+    unsigned int move_count,
+    int (*move_is_allowed)(move_type),
+    unsigned char legal_move_count[MOVE_MAX],
+    unsigned char legal_move_index[MOVE_MAX][IDA_MOVE_INDEX_MAX],
+    move_type inverse_move[MOVE_MAX]
+);
+void ida_init_cube(char *cube, unsigned int cube_size, const char *kociemba);
+int ida_is_edge_or_corner(unsigned int square, unsigned int cube_size);
+uint64_t ida_mixed_radix_rank(const uint64_t *ranks, unsigned int count, uint64_t radix);
+uint64_t ida_combination_rank_ud(
+    const char *cube,
+    const unsigned int *squares,
+    unsigned int group_size,
+    unsigned int ud_count
+);
+uint64_t ida_combination_rank_pair(
+    const char *cube,
+    const unsigned int *squares,
+    unsigned int group_size,
+    unsigned int color_count,
+    uint64_t universe,
+    char small,
+    char large
+);
+
+struct mapped_cost_file {
+    int fd;
+    unsigned char *costs;
+    size_t size;
+};
+
+struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expected_size);
+void ida_unmap_cost_file(int fd, unsigned char *costs, size_t size);
+
+struct symmetry_index_header {
+    char magic[8];
+    uint64_t raw_universe;
+    uint64_t orbit_count;
+    uint64_t low_word_count;
+    uint64_t high_bit_count;
+    uint64_t high_word_count;
+    uint64_t zero_sample_count;
+    uint32_t low_bits;
+    uint32_t zero_sample_rate;
+};
+
+struct symmetry_index {
+    int fd;
+    size_t size;
+    unsigned char *mapping;
+    const struct symmetry_index_header *header;
+    const uint64_t *low;
+    const uint64_t *high;
+    const uint32_t *zero_samples;
+};
+
+uint64_t symmetry_dense_rank(const struct symmetry_index *index, uint64_t raw);
+void map_symmetry_index(
+    struct symmetry_index *index,
+    const char *filename,
+    uint64_t expected_raw_universe,
+    const char *kind
+);
+void unmap_symmetry_index(struct symmetry_index *index);
+
+static inline unsigned char decode_cost_byte(unsigned char encoded)
+{
+    return encoded ? (unsigned char)(encoded - 1) : UINT8_MAX;
+}
+
 #endif /* _IDA_SEARCH_CORE_H */

@@ -442,42 +442,15 @@ static uint64_t search_threshold(
 
 static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
 {
-    const unsigned int face_size = CUBE_SIZE * CUBE_SIZE;
-    if (strlen(kociemba) != face_size * 6) {
-        fprintf(stderr, "ERROR: --kociemba must contain 96 stickers\n");
-        exit(1);
-    }
-    cube[0] = 'x';
-    memcpy(&cube[1], &kociemba[0], face_size);                          /* U */
-    memcpy(&cube[1 + face_size], &kociemba[face_size * 4], face_size);  /* L */
-    memcpy(&cube[1 + face_size * 2], &kociemba[face_size * 2], face_size); /* F */
-    memcpy(&cube[1 + face_size * 3], &kociemba[face_size], face_size);  /* R */
-    memcpy(&cube[1 + face_size * 4], &kociemba[face_size * 5], face_size); /* B */
-    memcpy(&cube[1 + face_size * 5], &kociemba[face_size * 3], face_size); /* D */
+    ida_init_cube(cube, CUBE_SIZE, kociemba);
 }
 
 static void map_cost_file(const char *filename)
 {
-    struct stat file_stat;
-    edge_cost_fd = open(filename, O_RDONLY);
-    if (edge_cost_fd < 0 || fstat(edge_cost_fd, &file_stat) != 0) {
-        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    if ((uint64_t)file_stat.st_size != EDGE_PAIRING_UNIVERSE) {
-        fprintf(
-            stderr, "ERROR: %s is %" PRIu64 " bytes, expected %" PRIu64 "\n",
-            filename, (uint64_t)file_stat.st_size, EDGE_PAIRING_UNIVERSE
-        );
-        exit(1);
-    }
-    edge_costs = mmap(
-        NULL, EDGE_PAIRING_UNIVERSE, PROT_READ, MAP_SHARED, edge_cost_fd, 0
-    );
-    if (edge_costs == MAP_FAILED) {
-        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
+    struct mapped_cost_file mapped = ida_map_cost_file(filename, EDGE_PAIRING_UNIVERSE);
+
+    edge_cost_fd = mapped.fd;
+    edge_costs = mapped.costs;
 }
 
 static void map_center_graph(const char *filename)
@@ -614,8 +587,7 @@ int main(int argc, char **argv)
         );
     }
 
-    munmap(edge_costs, EDGE_PAIRING_UNIVERSE);
-    close(edge_cost_fd);
+    ida_unmap_cost_file(edge_cost_fd, edge_costs, EDGE_PAIRING_UNIVERSE);
     munmap(center_graph, CENTER_STATE_COUNT * CENTER_ROW_SIZE);
     close(center_graph_fd);
     return atomic_load(&found_solutions) ? 0 : 1;

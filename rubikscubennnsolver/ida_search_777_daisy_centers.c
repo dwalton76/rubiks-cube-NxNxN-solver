@@ -708,7 +708,6 @@ static struct ranked_table {
 
 static struct daisy_symmetry_index_777 perfect_index = {-1, 0, NULL, NULL, NULL, NULL};
 
-static uint64_t binom[GROUP_SIZE + 1][GROUP_SIZE + 1];
 static move_type inverse_move[MOVE_MAX];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_777];
@@ -766,22 +765,6 @@ static void usage(const char *program)
     );
 }
 
-static void init_binom(void)
-{
-    for (unsigned int n = 0; n <= GROUP_SIZE; n++) {
-        binom[n][0] = 1;
-        binom[n][n] = 1;
-        for (unsigned int k = 1; k < n; k++) {
-            binom[n][k] = binom[n - 1][k - 1] + binom[n - 1][k];
-        }
-    }
-}
-
-/*
- * Rank four copies of `small` and four copies of `large` in lexicographic
- * order. `small`/`large` must be the sorted symbol pair so this matches
- * buildercore.multiset_rank.
- */
 static uint64_t combination_rank(
     const char *cube,
     const unsigned int squares[GROUP_SIZE],
@@ -789,46 +772,14 @@ static uint64_t combination_rank(
     char large
 )
 {
-    unsigned int remaining[2] = {GROUP_COLOR_COUNT, GROUP_COLOR_COUNT};
-    uint64_t permutations = GROUP_UNIVERSE;
-    uint64_t rank = 0;
-    unsigned int slots = GROUP_SIZE;
-
-    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
-        char sticker = cube[squares[position]];
-        unsigned int symbol_index;
-
-        if (sticker == small) {
-            symbol_index = 0;
-        } else if (sticker == large) {
-            symbol_index = 1;
-        } else {
-            return UINT64_MAX;
-        }
-        if (!remaining[symbol_index]) {
-            return UINT64_MAX;
-        }
-        for (unsigned int smaller = 0; smaller < symbol_index; smaller++) {
-            rank += permutations * remaining[smaller] / slots;
-        }
-        permutations = permutations * remaining[symbol_index] / slots;
-        remaining[symbol_index]--;
-        slots--;
-    }
-    return rank;
+    return ida_combination_rank_pair(
+        cube, squares, GROUP_SIZE, GROUP_COLOR_COUNT, GROUP_UNIVERSE, small, large
+    );
 }
 
 static uint64_t mixed_radix_rank(const uint64_t *ranks, unsigned int count)
 {
-    uint64_t mixed = 0;
-
-    for (unsigned int index = 0; index < count; index++) {
-        if (ranks[index] == UINT64_MAX) {
-            return UINT64_MAX;
-        }
-        mixed = mixed * GROUP_UNIVERSE + ranks[index];
-    }
-    return mixed;
+    return ida_mixed_radix_rank(ranks, count, GROUP_UNIVERSE);
 }
 
 static uint64_t table_rank_for(const struct ranked_table *table, const uint64_t orbit_rank[ORBIT_COUNT])
@@ -906,7 +857,7 @@ static int cube_is_daisy(const char *cube)
 
 static unsigned char decode_cost(unsigned char encoded)
 {
-    return encoded ? encoded - 1 : UINT8_MAX;
+    return decode_cost_byte(encoded);
 }
 
 static unsigned char matrix_cost(const unsigned char axis_cost[AXIS_COUNT])
@@ -1030,36 +981,9 @@ static int move_is_allowed(move_type move)
 
 static void init_move_tables(void)
 {
-    for (unsigned int move_index = 0; move_index < MOVE_COUNT_777; move_index++) {
-        move_type move = moves_777[move_index];
-        unsigned int quarter_turn_offset = ((unsigned int)move - 1) % 3;
-
-        inverse_move[move] = quarter_turn_offset == 0 ? move + 1 :
-                             quarter_turn_offset == 1 ? move - 1 : move;
-        if (move_is_allowed(move)) {
-            legal_move_index[MOVE_NONE][legal_move_count[MOVE_NONE]++] = (unsigned char)move_index;
-        }
-    }
-
-    for (unsigned int previous_index = 0; previous_index < MOVE_COUNT_777; previous_index++) {
-        move_type previous_move = moves_777[previous_index];
-
-        if (!move_is_allowed(previous_move)) {
-            continue;
-        }
-        for (unsigned int move_index = 0; move_index < MOVE_COUNT_777; move_index++) {
-            move_type move = moves_777[move_index];
-
-            if (!move_is_allowed(move) ||
-                steps_on_same_face_and_layer(previous_move, move) ||
-                !outer_layer_moves_in_order(previous_move, move) ||
-                !steps_on_same_face_in_order(previous_move, move) ||
-                !steps_on_opposite_faces_in_order(previous_move, move)) {
-                continue;
-            }
-            legal_move_index[previous_move][legal_move_count[previous_move]++] = (unsigned char)move_index;
-        }
-    }
+    ida_init_move_tables(
+        moves_777, MOVE_COUNT_777, move_is_allowed, legal_move_count, legal_move_index, inverse_move
+    );
 }
 
 /*
@@ -1083,8 +1007,6 @@ static void map_ranked_tables(void)
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
         struct ranked_table *table = &ranked_tables[loaded_tables[loaded]];
         unsigned int owner = owner_of_mapping(loaded);
-        struct stat file_stat;
-        int mmap_flags = MAP_SHARED;
 
         if (owner != loaded) {
             table->costs = ranked_tables[loaded_tables[owner]].costs;
@@ -1092,32 +1014,10 @@ static void map_ranked_tables(void)
             continue;
         }
 
-        table->fd = open(table->filename, O_RDONLY);
-        if (table->fd < 0) {
-            fprintf(stderr, "ERROR: could not open %s: %s\n", table->filename, strerror(errno));
-            exit(1);
-        }
-        if (fstat(table->fd, &file_stat) != 0) {
-            fprintf(stderr, "ERROR: could not stat %s: %s\n", table->filename, strerror(errno));
-            exit(1);
-        }
-        if ((uint64_t)file_stat.st_size != table->universe) {
-            fprintf(
-                stderr, "ERROR: %s is %" PRIu64 " bytes, expected %" PRIu64 "\n",
-                table->filename, (uint64_t)file_stat.st_size, table->universe
-            );
-            exit(1);
-        }
-#ifdef MAP_POPULATE
-        if ((uint64_t)file_stat.st_blocks * 512 >= table->universe) {
-            mmap_flags |= MAP_POPULATE;
-        }
-#endif
-        table->costs = mmap(NULL, (size_t)table->universe, PROT_READ, mmap_flags, table->fd, 0);
-        if (table->costs == MAP_FAILED) {
-            fprintf(stderr, "ERROR: could not mmap %s: %s\n", table->filename, strerror(errno));
-            exit(1);
-        }
+        struct mapped_cost_file file = ida_map_cost_file(table->filename, table->universe);
+
+        table->fd = file.fd;
+        table->costs = file.costs;
     }
     if (perfect_index_filename) {
         const char *problem = NULL;
@@ -1136,12 +1036,7 @@ static void unmap_ranked_tables(void)
         struct ranked_table *table = &ranked_tables[loaded_tables[loaded]];
 
         if (owner_of_mapping(loaded) == loaded) {
-            if (table->costs && table->costs != MAP_FAILED) {
-                munmap(table->costs, (size_t)table->universe);
-            }
-            if (table->fd >= 0) {
-                close(table->fd);
-            }
+            ida_unmap_cost_file(table->fd, table->costs, (size_t)table->universe);
         }
     }
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
@@ -1153,28 +1048,7 @@ static void unmap_ranked_tables(void)
 
 static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
 {
-    const unsigned int face_size = CUBE_SIZE * CUBE_SIZE;
-
-    if (strlen(kociemba) != face_size * 6) {
-        fprintf(stderr, "ERROR: --kociemba must contain 294 stickers for a 7x7x7 cube\n");
-        exit(1);
-    }
-    cube[0] = 'x';
-    memcpy(&cube[1], &kociemba[0], face_size);                            /* U */
-    memcpy(&cube[1 + face_size], &kociemba[face_size * 4], face_size);    /* L */
-    memcpy(&cube[1 + face_size * 2], &kociemba[face_size * 2], face_size); /* F */
-    memcpy(&cube[1 + face_size * 3], &kociemba[face_size], face_size);    /* R */
-    memcpy(&cube[1 + face_size * 4], &kociemba[face_size * 5], face_size); /* B */
-    memcpy(&cube[1 + face_size * 5], &kociemba[face_size * 3], face_size); /* D */
-}
-
-static int is_edge_or_corner(unsigned int square)
-{
-    unsigned int face_offset = (square - 1) % (CUBE_SIZE * CUBE_SIZE);
-    unsigned int row = face_offset / CUBE_SIZE;
-    unsigned int col = face_offset % CUBE_SIZE;
-
-    return row == 0 || row == CUBE_SIZE - 1 || col == 0 || col == CUBE_SIZE - 1;
+    ida_init_cube(cube, CUBE_SIZE, kociemba);
 }
 
 static int is_outer_x_center(unsigned int square)
@@ -1192,7 +1066,7 @@ static int is_outer_x_center(unsigned int square)
 static void blank_untracked_squares(char cube[CUBE_ARRAY_SIZE])
 {
     for (unsigned int square = 1; square < CUBE_ARRAY_SIZE; square++) {
-        if (is_edge_or_corner(square) || is_outer_x_center(square)) {
+        if (ida_is_edge_or_corner(square, CUBE_SIZE) || is_outer_x_center(square)) {
             cube[square] = '.';
         }
     }
@@ -1200,14 +1074,7 @@ static void blank_untracked_squares(char cube[CUBE_ARRAY_SIZE])
 
 static move_type parse_move(const char *move_string)
 {
-    for (unsigned int index = 0; index < MOVE_COUNT_777; index++) {
-        move_type move = moves_777[index];
-
-        if (!strcmp(move2str[move], move_string)) {
-            return move;
-        }
-    }
-    return MOVE_NONE;
+    return ida_parse_move(move_string, moves_777, MOVE_COUNT_777);
 }
 
 static int ida_search(

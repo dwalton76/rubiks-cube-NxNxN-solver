@@ -43,7 +43,7 @@ SCRAMBLE_LENGTH = 60
 UNPAIRED_MAX = 16
 COST_MAX = 12
 
-# ida_heuristic_LR_oblique_edges_stage_777, indexed by unpaired count
+# unpaired-count costs the old oblique-only phase 2 used, indexed by unpaired count
 LR_OBLIQUE_ONLY_COST = (0, 1, 1, 4, 5, 6, 7, 8, 9, 9, 10, 11, 11, 12, 12, 12, 12)
 
 

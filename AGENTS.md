@@ -66,7 +66,7 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 
 | Binary | Source | Used for |
 | --- | --- | --- |
-| `ida_search_via_graph` | `ida_search_via_graph.c` + `ida_search_666.c` + `ida_search_777.c` | Graph prune-table IDA |
+| `ida_search_via_graph` | `ida_search_via_graph.c` | Graph prune-table IDA (5x5) |
 | `ida_search_444_phase1_and_2` | `ida_search_444_phase1_and_2.c` | 4x4 combined center staging + EO |
 | `ida_search_444_phase3_and_4` | `ida_search_444_phase3_and_4.c` | 4x4 combined edge pairing + centers |
 | `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 inner-x / LR-oblique / UD phase 3 |

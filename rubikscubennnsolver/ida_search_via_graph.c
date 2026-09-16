@@ -13,8 +13,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "ida_search_666.h"
-#include "ida_search_777.h"
 #include "ida_search_core.h"
 
 unsigned long long ida_count = 0;
@@ -56,15 +54,9 @@ move_type legal_moves[MOVE_MAX];
 move_type move_matrix[MOVE_MAX][MOVE_MAX];
 struct key_value_pair *ida_explored = NULL;
 
-// Supported IDA searches
+// Supported IDA searches. Graph prune tables (5x5) do not need a named --type.
 typedef enum {
     NONE,
-
-    // 7x7x7
-    LR_OBLIQUE_EDGES_STAGE_777,
-    UD_OBLIQUE_EDGES_STAGE_777,
-    UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777,
-
 } lookup_table_type;
 
 struct cost_to_goal_result {
@@ -80,28 +72,16 @@ struct cost_to_goal_result {
     unsigned char perfect_hash34_cost;
 };
 
-// Most searches only ever refine the prune table cost upwards: pt_states_to_cost_simple() maxes it against
-// a heuristic, and the perfect-hash tables are applied with a max.
-// That makes the prune table cost a lower bound on the final cost_to_goal, so ida_search() can reject a
-// child before it pays for a cube rotation and an unpaired-oblique count.
-//
-// The 7x7x7 phase 5 perfect-hash type discards the prune table cost entirely (it only uses the prune
-// tables to track state for the perfect-hash lookups). --cost-to-goal-multiplier can also scale the
-// cost down. Those searches must not prune early.
+// Most searches only ever refine the prune table cost upwards, and the perfect-hash
+// tables are applied with a max. That makes the prune table cost a lower bound on
+// the final cost_to_goal, so ida_search() can reject a child before a cube rotation.
+// --cost-to-goal-multiplier can scale the cost down; those searches must not prune early.
 unsigned char pt_cost_only_grows(lookup_table_type type) {
+    (void)type;
     if (cost_to_goal_multiplier) {
         return 0;
     }
-
-    switch (type) {
-        case NONE:
-        case LR_OBLIQUE_EDGES_STAGE_777:
-        case UD_OBLIQUE_EDGES_STAGE_777:
-            return 1;
-
-        default:
-            return 0;
-    }
+    return 1;
 }
 
 unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
@@ -144,124 +124,6 @@ unsigned char hash_cost_to_cost(unsigned char perfect_hash_cost) {
     };
 }
 
-void str_replace_for_binary(char *str, char *ones) {
-    int i = 0;
-    int j;
-    int is_a_one = 0;
-
-    /* Run till end of string */
-    while (str[i] != '\0') {
-        if (str[i] == '.') {
-            // pass
-        } else if (str[i] != '0') {
-            j = 0;
-            is_a_one = 0;
-
-            while (ones[j] != 0) {
-                /* If occurrence of character is found */
-                if (str[i] == ones[j]) {
-                    is_a_one = 1;
-                    break;
-                }
-                j++;
-            }
-
-            if (is_a_one) {
-                str[i] = '1';
-            } else {
-                str[i] = '0';
-            }
-        }
-
-        i++;
-    }
-}
-
-void init_cube(char *cube, int size, lookup_table_type type, char *kociemba) {
-    int squares_per_side = size * size;
-    int square_count = squares_per_side * 6;
-    int U_start = 1;
-    int L_start = U_start + squares_per_side;
-    int F_start = L_start + squares_per_side;
-    int R_start = F_start + squares_per_side;
-    int B_start = R_start + squares_per_side;
-    int D_start = B_start + squares_per_side;
-
-    // kociemba_string is in URFDLB order
-    int U_start_kociemba = 0;
-    int R_start_kociemba = U_start_kociemba + squares_per_side;
-    int F_start_kociemba = R_start_kociemba + squares_per_side;
-    int D_start_kociemba = F_start_kociemba + squares_per_side;
-    int L_start_kociemba = D_start_kociemba + squares_per_side;
-    int B_start_kociemba = L_start_kociemba + squares_per_side;
-
-    char ones_UF[3] = {'U', 'F', 0};
-    char ones_UR[3] = {'U', 'R', 0};
-    char ones_UB[3] = {'U', 'B', 0};
-    char ones_UD[3] = {'U', 'D', 0};
-    char ones_LF[3] = {'L', 'F', 0};
-    char ones_LR[3] = {'L', 'R', 0};
-    char ones_LB[3] = {'L', 'B', 0};
-    char ones_LD[3] = {'L', 'D', 0};
-    char ones_FR[3] = {'F', 'R', 0};
-    char ones_FB[3] = {'F', 'B', 0};
-    char ones_FD[3] = {'F', 'D', 0};
-    char ones_RB[3] = {'R', 'B', 0};
-    char ones_RD[3] = {'R', 'D', 0};
-    char ones_BD[3] = {'B', 'D', 0};
-    char ones_ULF[4] = {'U', 'L', 'F', 0};
-
-    char U[2] = {'U', 0};
-    char L[2] = {'L', 0};
-    char F[2] = {'F', 0};
-    char R[2] = {'R', 0};
-    char B[2] = {'B', 0};
-    char D[2] = {'D', 0};
-
-    memset(cube, 0, sizeof(char) * (square_count + 2));
-    cube[0] = 'x';  // placeholder
-    memcpy(&cube[U_start], &kociemba[U_start_kociemba], squares_per_side);
-    memcpy(&cube[L_start], &kociemba[L_start_kociemba], squares_per_side);
-    memcpy(&cube[F_start], &kociemba[F_start_kociemba], squares_per_side);
-    memcpy(&cube[R_start], &kociemba[R_start_kociemba], squares_per_side);
-    memcpy(&cube[B_start], &kociemba[B_start_kociemba], squares_per_side);
-    memcpy(&cube[D_start], &kociemba[D_start_kociemba], squares_per_side);
-    // LOG("cube:\n%s\n\n", cube);
-
-    switch (type) {
-        case LR_OBLIQUE_EDGES_STAGE_777:
-            // Convert to 1s and 0s
-            str_replace_for_binary(cube, ones_LR);
-            print_cube(cube, size);
-            break;
-
-        case UD_OBLIQUE_EDGES_STAGE_777:
-        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            // Convert to 1s and 0s
-            str_replace_for_binary(cube, ones_UD);
-            print_cube(cube, size);
-            break;
-
-        default:
-            printf("ERROR: init_cube() does not support this --type\n");
-            exit(1);
-    }
-}
-
-struct ida_heuristic_result ida_heuristic(char *cube, lookup_table_type type) {
-    switch (type) {
-        // 7x7x7
-        case LR_OBLIQUE_EDGES_STAGE_777:
-            return ida_heuristic_LR_oblique_edges_stage_777(cube);
-
-        case UD_OBLIQUE_EDGES_STAGE_777:
-            return ida_heuristic_UD_oblique_edges_stage_777(cube);
-
-        default:
-            printf("ERROR: ida_heuristic() does not support this --type\n");
-            exit(1);
-    }
-}
 
 // A structure to represent a stack
 struct StackNode {
@@ -331,29 +193,8 @@ unsigned char pt_states_to_cost_simple(char *cube, lookup_table_type type, unsig
     unsigned char ud_t_centers_cost = pt2_cost;
     unsigned char ud_x_centers_cost = pt3_cost;
      */
-    struct ida_heuristic_result heuristic_result;
-
-    switch (type) {
-        case NONE:
-            break;
-
-        case LR_OBLIQUE_EDGES_STAGE_777:
-        case UD_OBLIQUE_EDGES_STAGE_777:
-            heuristic_result = ida_heuristic(cube, type);
-            cost_to_goal = max(cost_to_goal, heuristic_result.cost_to_goal);
-            break;
-
-        // phase 5
-        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            // This is unusual but we ignore the cost of the pt0, pt1 and pt2 tables. In this scenario we are only
-            // using those to keep track of the cube state so that we can do a lookup in the perfect-hash tables.
-            cost_to_goal = 0;
-            break;
-
-        default:
-            printf("ERROR: pt_states_to_cost_simple() does not support this --type\n");
-            exit(1);
-    }
+    (void)cube;
+    (void)type;
 
     if (pt_perfect_hash01) {
         unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
@@ -419,7 +260,6 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
                                              unsigned int prev_pt1_state, unsigned int prev_pt2_state,
                                              unsigned int prev_pt3_state, unsigned int prev_pt4_state) {
     struct cost_to_goal_result result;
-    struct ida_heuristic_result heuristic_result;
     memset(&result, 0, sizeof(struct cost_to_goal_result));
 
     switch (pt_max) {
@@ -502,27 +342,8 @@ struct cost_to_goal_result pt_states_to_cost(char *cube, lookup_table_type type,
             break;
     }
 
-    switch (type) {
-        case NONE:
-            break;
-
-        case LR_OBLIQUE_EDGES_STAGE_777:
-        case UD_OBLIQUE_EDGES_STAGE_777:
-            heuristic_result = ida_heuristic(cube, type);
-            result.cost_to_goal = max(result.cost_to_goal, heuristic_result.cost_to_goal);
-            break;
-
-        // phase 5
-        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            // This is unusual but we ignore the cost of the pt0, pt1 and pt2 tables. In this scenario we are only
-            // using those to keep track of the cube state so that we can do a lookup in the perfect-hash tables.
-            result.cost_to_goal = 0;
-            break;
-
-        default:
-            printf("ERROR: pt_states_to_cost() does not support this --type\n");
-            exit(1);
-    }
+    (void)cube;
+    (void)type;
 
     if (pt_perfect_hash01) {
         unsigned int perfect_hash01_index = (prev_pt0_state * pt1_state_max) + prev_pt1_state;
@@ -588,22 +409,9 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     memset(&header_row0, 0, sizeof(char) * 64);
     memset(&header_row1, 0, sizeof(char) * 64);
     memset(&header_row2, 0, sizeof(char) * 64);
-    char cube_tmp[array_size];
-    size_t array_size_char = sizeof(char) * array_size;
-    struct ida_heuristic_result heuristic;
 
     printf("\n\n");
     printf("       ");
-
-    // header
-    switch (type) {
-        case NONE:
-        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            break;
-        default:
-            printf("UNPAIRED  EST  ");
-            break;
-    }
 
     if (pt_max == 4) {
         printf("PT0  PT1  PT2  PT3  PT4  ");
@@ -637,14 +445,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
 
     // divider line
     printf("       ");
-    switch (type) {
-        case NONE:
-        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            break;
-        default:
-            printf("========  ===  ");
-            break;
-    }
 
     if (pt_max == 4) {
         printf("===  ===  ===  ===  ===  ");
@@ -679,16 +479,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
     ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
 
     printf(" INIT  ");
-
-    switch (type) {
-        case NONE:
-        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            break;
-        default:
-            heuristic = ida_heuristic(cube, type);
-            printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
-            break;
-    }
 
     if (pt_max >= 0) {
         printf("%3d  ", ctg.pt0_cost);
@@ -757,23 +547,6 @@ void print_ida_summary(char *cube, lookup_table_type type, unsigned int pt0_stat
         }
 
         printf("%5s  ", move2str[solution[i]]);
-        switch (type) {
-            case NONE:
-            case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-                break;
-
-            case LR_OBLIQUE_EDGES_STAGE_777:
-            case UD_OBLIQUE_EDGES_STAGE_777:
-                rotate_777_centers(cube, cube_tmp, array_size, solution[i]);
-                heuristic = ida_heuristic(cube, type);
-                printf("%8d  %3d  ", heuristic.unpaired_count, heuristic.cost_to_goal);
-                break;
-
-            default:
-                printf("ERROR: print_ida_summary() does not support this --type\n");
-                exit(1);
-        }
-
         ctg = pt_states_to_cost(cube, type, pt0_state, pt1_state, pt2_state, pt3_state, pt4_state);
         steps_to_solved--;
 
@@ -920,23 +693,8 @@ unsigned char parity_ok(char *cube, lookup_table_type type, move_type *moves_to_
         }
     }
 
-    switch (type) {
-        case NONE:
-        case UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777:
-            break;
-
-        // 7x7x7
-        case LR_OBLIQUE_EDGES_STAGE_777:
-            return ida_search_complete_LR_oblique_edges_stage_777(cube);
-
-        case UD_OBLIQUE_EDGES_STAGE_777:
-            return ida_search_complete_UD_oblique_edges_stage_777(cube);
-
-        default:
-            printf("ERROR: parity_ok() does not support this --type\n");
-            exit(1);
-    }
-
+    (void)type;
+    (void)cube;
     return 1;
 }
 
@@ -1372,7 +1130,6 @@ int main(int argc, char *argv[]) {
     unsigned char find_extra = 0;
     char *prune_table_states_filename = NULL;
     lookup_table_type type = NONE;
-    unsigned int cube_size_type = 0;
     unsigned int cube_size_kociemba = 0;
     unsigned int cube_size = 0;
     char kociemba[300];
@@ -1389,26 +1146,6 @@ int main(int argc, char *argv[]) {
             i++;
             strcpy(kociemba, argv[i]);
             cube_size_kociemba = (unsigned int)sqrt(strlen(kociemba) / 6);
-
-        } else if (strmatch(argv[i], "-t") || strmatch(argv[i], "--type")) {
-            i++;
-
-            if (strmatch(argv[i], "7x7x7-LR-oblique-edges-stage")) {
-                type = LR_OBLIQUE_EDGES_STAGE_777;
-                cube_size_type = 7;
-
-            } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage")) {
-                type = UD_OBLIQUE_EDGES_STAGE_777;
-                cube_size_type = 7;
-
-            } else if (strmatch(argv[i], "7x7x7-UD-oblique-edges-stage-new")) {
-                type = UD_OBLIQUE_EDGES_STAGE_PERFECT_HASH_777;
-                cube_size_type = 7;
-
-            } else {
-                printf("ERROR: %s is an invalid --type\n", argv[i]);
-                exit(1);
-            }
 
         } else if (strmatch(argv[i], "--prune-table-0-filename")) {
             i++;
@@ -1779,7 +1516,7 @@ int main(int argc, char *argv[]) {
             }
 
         } else if (strmatch(argv[i], "-h") || strmatch(argv[i], "--help")) {
-            printf("\nida_search --kociemba KOCIEMBA_STRING --type ...\n\n");
+            printf("\nida_search_via_graph --kociemba KOCIEMBA_STRING --prune-table-0-filename ...\n\n");
             exit(0);
 
         } else {
@@ -1788,7 +1525,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (type != NONE || pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash12 || pt_perfect_hash34 || cost_to_goal_multiplier) {
+    if (pt_perfect_hash01 || pt_perfect_hash02 || pt_perfect_hash12 || pt_perfect_hash34 || cost_to_goal_multiplier) {
         call_pt_simple = 1;
     }
 
@@ -1829,16 +1566,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (cube_size_kociemba) {
-        if (!type) {
-            printf("ERROR: --type is required\n");
-            exit(1);
-        }
-
-        if (cube_size_type != cube_size_kociemba) {
-            printf("ERROR: --type cube size is %d, --kociemba cube size is %d\n", cube_size_type, cube_size_kociemba);
-            exit(1);
-        }
-
         cube_size = cube_size_kociemba;
         array_size = (cube_size * cube_size * 6) + 2;
         cube = malloc(sizeof(char) * array_size);
@@ -1848,7 +1575,7 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
 
-        init_cube(cube, cube_size, type, kociemba);
+        ida_init_cube(cube, cube_size, kociemba);
     }
 
     ROW_LENGTH = COST_LENGTH + ((STATE_LENGTH + COST_LENGTH) * legal_move_count);

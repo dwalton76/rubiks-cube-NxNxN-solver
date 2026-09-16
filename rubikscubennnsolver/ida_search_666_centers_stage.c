@@ -34,6 +34,11 @@
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
 #define MAX_SPLIT_PREFIX 4
+#define TRANSPOSITION_KEY_BYTES 38
+#define TRANSPOSITION_SET_BITS 15
+#define TRANSPOSITION_SET_COUNT (1U << TRANSPOSITION_SET_BITS)
+#define TRANSPOSITION_WAYS 2
+#define TRANSPOSITION_ENTRY_COUNT (TRANSPOSITION_SET_COUNT * TRANSPOSITION_WAYS)
 #define NO_TASK UINT_MAX
 #define PARITY_ANY 0
 #define PARITY_ODD 1
@@ -180,6 +185,7 @@ static struct split_task {
 } *split_tasks;
 static unsigned int split_task_count;
 static unsigned int split_task_capacity;
+static int use_transposition_table = 1;
 
 /*
  * Subtree sizes are heavy tailed, so a shallow split leaves one task holding a
@@ -209,12 +215,26 @@ struct search_root {
     char cube[CUBE_ARRAY_SIZE];
 };
 
+/*
+ * Exact duplicate detection for IDA nodes. The key packs all 96 center
+ * stickers (three bits each), followed by previous_move and parity. Including
+ * previous_move is required because legal_move_count depends on it.
+ */
+struct transposition_entry {
+    unsigned char key[TRANSPOSITION_KEY_BYTES];
+    unsigned char remaining;
+    unsigned char occupied;
+};
+
 struct worker {
     const char *root_cube;
     unsigned char threshold;
     unsigned int task_id;
     unsigned char aborted;
     uint64_t ida_count;
+    uint64_t transposition_lookups;
+    uint64_t transposition_hits;
+    struct transposition_entry *transpositions;
     move_type solution[MAX_IDA_THRESHOLD + 1];
 };
 
@@ -232,7 +252,7 @@ static void usage(const char *program)
         "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
         "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
-        "[--multiplier FLOAT] "
+        "[--multiplier FLOAT] [--no-transposition-table] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--orbit1-need-odd-w|--orbit1-need-even-w] "
         "[--apply-move MOVE] [--print-ranks] [--print-legal-moves] [--benchmark COUNT]\n",
@@ -842,6 +862,124 @@ static struct search_root *read_search_roots(const char *filename, unsigned int 
     return roots;
 }
 
+static unsigned char transposition_center_code(char sticker)
+{
+    switch (sticker) {
+        case 'U':
+            return 1;
+        case 'R':
+            return 2;
+        case 'F':
+            return 3;
+        case 'D':
+            return 4;
+        case 'L':
+            return 5;
+        case 'B':
+            return 6;
+        default:
+            return 0;
+    }
+}
+
+static void transposition_key(
+    const char cube[CUBE_ARRAY_SIZE],
+    move_type previous_move,
+    unsigned char parity,
+    unsigned char key[TRANSPOSITION_KEY_BYTES]
+)
+{
+    unsigned int bit = 0;
+
+    memset(key, 0, TRANSPOSITION_KEY_BYTES);
+    for (unsigned int face = 0; face < 6; face++) {
+        unsigned int face_start = face * CUBE_SIZE * CUBE_SIZE + 1;
+
+        for (unsigned int row = 1; row < CUBE_SIZE - 1; row++) {
+            for (unsigned int col = 1; col < CUBE_SIZE - 1; col++) {
+                unsigned char code = transposition_center_code(cube[face_start + row * CUBE_SIZE + col]);
+                unsigned int byte = bit >> 3;
+                unsigned int shift = bit & 7;
+
+                key[byte] |= (unsigned char)(code << shift);
+                if (shift > 5) {
+                    key[byte + 1] |= (unsigned char)(code >> (8 - shift));
+                }
+                bit += 3;
+            }
+        }
+    }
+    key[36] = (unsigned char)previous_move;
+    key[37] = parity;
+}
+
+static uint64_t transposition_hash(const unsigned char key[TRANSPOSITION_KEY_BYTES])
+{
+    uint64_t hash = UINT64_C(1469598103934665603);
+
+    for (unsigned int index = 0; index < TRANSPOSITION_KEY_BYTES; index++) {
+        hash ^= key[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    /* Avalanche the low bits used to select a set. */
+    hash ^= hash >> 33;
+    hash *= UINT64_C(0xff51afd7ed558ccd);
+    hash ^= hash >> 33;
+    return hash;
+}
+
+/*
+ * Return true when this exact search state was already reached with at least
+ * as many plies left. Two ways reduce direct-mapped replacement churn; when a
+ * set is full, retain the entry that was searched with more remaining depth.
+ */
+static int transposition_prune(
+    struct worker *worker,
+    const char cube[CUBE_ARRAY_SIZE],
+    move_type previous_move,
+    unsigned char parity,
+    unsigned char remaining
+)
+{
+    unsigned char key[TRANSPOSITION_KEY_BYTES];
+    struct transposition_entry *set;
+    struct transposition_entry *replacement;
+
+    if (!worker->transpositions) {
+        return 0;
+    }
+    transposition_key(cube, previous_move, parity, key);
+    set = worker->transpositions +
+          (transposition_hash(key) & (TRANSPOSITION_SET_COUNT - 1)) * TRANSPOSITION_WAYS;
+    replacement = &set[0];
+    worker->transposition_lookups++;
+
+    for (unsigned int way = 0; way < TRANSPOSITION_WAYS; way++) {
+        struct transposition_entry *entry = &set[way];
+
+        if (entry->occupied && !memcmp(entry->key, key, TRANSPOSITION_KEY_BYTES)) {
+            if (entry->remaining >= remaining) {
+                worker->transposition_hits++;
+                return 1;
+            }
+            entry->remaining = remaining;
+            return 0;
+        }
+        if (!entry->occupied) {
+            replacement = entry;
+            break;
+        }
+        if (entry->remaining < replacement->remaining) {
+            replacement = entry;
+        }
+    }
+
+    memcpy(replacement->key, key, TRANSPOSITION_KEY_BYTES);
+    replacement->remaining = remaining;
+    replacement->occupied = 1;
+    return 0;
+}
+
 static int ida_search(
     struct worker *worker,
     char cube[CUBE_ARRAY_SIZE],
@@ -860,6 +998,9 @@ static int ida_search(
 
     if (atomic_load_explicit(&best_task, memory_order_relaxed) < worker->task_id) {
         worker->aborted = 1;
+        return 0;
+    }
+    if (transposition_prune(worker, cube, previous_move, parity, threshold - depth)) {
         return 0;
     }
 
@@ -1125,6 +1266,8 @@ static int search_threshold(
     unsigned char cost = cube_cost(cube, 0);
     move_type one_move_solution = MOVE_NONE;
     unsigned int worker_count;
+    uint64_t transposition_lookups = 0;
+    uint64_t transposition_hits = 0;
 
     *nodes = 1;
     if (cost == UINT8_MAX || cost > threshold) {
@@ -1154,6 +1297,15 @@ static int search_threshold(
         workers[index].root_cube = cube;
         workers[index].threshold = threshold;
         workers[index].task_id = NO_TASK;
+        if (use_transposition_table) {
+            workers[index].transpositions = calloc(
+                TRANSPOSITION_ENTRY_COUNT, sizeof(*workers[index].transpositions)
+            );
+            if (!workers[index].transpositions) {
+                fprintf(stderr, "ERROR: could not allocate transposition table for worker %u\n", index);
+                exit(1);
+            }
+        }
         if (pthread_create(&threads[index], NULL, search_split_tasks, &workers[index]) != 0) {
             fprintf(stderr, "ERROR: could not create search thread %u\n", index);
             exit(1);
@@ -1164,14 +1316,25 @@ static int search_threshold(
     for (unsigned int index = 0; index < worker_count; index++) {
         pthread_join(threads[index], NULL);
         *nodes += workers[index].ida_count;
+        transposition_lookups += workers[index].transposition_lookups;
+        transposition_hits += workers[index].transposition_hits;
         if (workers[index].ida_count > busiest) {
             busiest = workers[index].ida_count;
         }
+        free(workers[index].transpositions);
     }
     LOG(
         "threshold %u split into %u tasks over %u workers, busiest worker held %.1f%% of nodes\n",
         threshold, split_task_count, worker_count, 100.0 * (double) busiest / (double) *nodes
     );
+    if (use_transposition_table) {
+        LOG(
+            "transposition table pruned %" PRIu64 " of %" PRIu64 " recursive nodes (%.1f%%)\n",
+            transposition_hits,
+            transposition_lookups,
+            transposition_lookups ? 100.0 * (double)transposition_hits / (double)transposition_lookups : 0.0
+        );
+    }
     return atomic_load(&best_task) != NO_TASK;
 }
 
@@ -1359,6 +1522,8 @@ int main(int argc, char **argv)
             thread_count = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (strmatch(argv[index], "--multiplier") && index + 1 < argc) {
             cost_to_goal_multiplier = atof(argv[++index]);
+        } else if (strmatch(argv[index], "--no-transposition-table")) {
+            use_transposition_table = 0;
         } else if (strmatch(argv[index], "--orbit0-need-odd-w")) {
             orbit0_requirement = PARITY_ODD;
         } else if (strmatch(argv[index], "--orbit0-need-even-w")) {
@@ -1575,6 +1740,12 @@ int main(int argc, char **argv)
         }
     }
     LOG("searching with %u threads over %u ranked tables\n", thread_count, loaded_table_count);
+    if (use_transposition_table) {
+        LOG(
+            "using a %.1f MiB exact transposition table per worker\n",
+            (double)(TRANSPOSITION_ENTRY_COUNT * sizeof(struct transposition_entry)) / (1024.0 * 1024.0)
+        );
+    }
     memset(best_solution, 0, sizeof(best_solution));
     gettimeofday(&start, NULL);
     for (unsigned char threshold = min_threshold; threshold <= max_threshold; threshold++) {

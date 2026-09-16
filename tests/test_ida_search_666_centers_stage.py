@@ -262,12 +262,13 @@ class RankedCentersStage666Test(unittest.TestCase):
             make_sparse_table(self.paths[label], entries)
 
         solutions = set()
-        for threads in ("1", "4"):
+        for threads, transposition_args in (("1", ()), ("4", ()), ("1", ("--no-transposition-table",))):
             result = subprocess.run(
                 self.command(
                     scrambled,
                     "--threads",
                     threads,
+                    *transposition_args,
                     "--max-ida-threshold",
                     "2",
                     "--orbit0-need-odd-w",

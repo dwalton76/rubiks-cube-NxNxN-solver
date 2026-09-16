@@ -4,8 +4,10 @@
 Start from the admissible floor max(inner-x, ceil(unpaired/4)), find the
 lowest IDA --multiplier that still finishes, then solve cubes from
 utils/10k-666-cubes.json. Remaining counts along those solutions fill
-unpaired_count_all_inner_x_centers_666. Orbit1 OLL is left off so TRU is
-staging/pairing work; the C parity floor still covers OLL at search time.
+unpaired_count_all_inner_x_centers_666; each cell uses the smallest remaining
+that appears in more than 5% of that cell (override with --min-fraction). Orbit1 OLL is
+left off so TRU is staging/pairing work; the C parity floor still covers OLL
+at search time.
 """
 
 from __future__ import annotations
@@ -70,7 +72,7 @@ def parse_path(output):
     return parse_ida_summary_path(output, token_count=6, value_indexes=(0, 1, 3))
 
 
-def matrix_from_samples(samples, fallback_multiplier):
+def matrix_from_samples(samples, fallback_multiplier, min_fraction=0.05):
     dims = (UNPAIRED_MAX + 1, COST_MAX + 1)
 
     def admissible(index):
@@ -80,7 +82,13 @@ def matrix_from_samples(samples, fallback_multiplier):
 
     # Samples are (ix_cost, unpaired, remaining); the matrix is [unpaired][ix_cost].
     remapped = ((unpaired, ix_cost, remaining) for ix_cost, unpaired, remaining in samples)
-    return fill_cost_matrix(remapped, dims, admissible, fallback_multiplier=fallback_multiplier)
+    return fill_cost_matrix(
+        remapped,
+        dims,
+        admissible,
+        fallback_multiplier=fallback_multiplier,
+        min_fraction=min_fraction,
+    )
 
 
 def format_matrix(matrix):
@@ -138,6 +146,12 @@ def main():
         help="set --orbit1-need-odd/even-w from OLL parity (production phase-1 flags)",
     )
     parser.add_argument("--fallback-multiplier", type=float, default=1.0)
+    parser.add_argument(
+        "--min-fraction",
+        type=float,
+        default=0.05,
+        help="ignore a cell's minimum remaining while it is this fraction or less of the cell",
+    )
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument("--samples", type=Path, default=DEFAULT_SAMPLES)
     parser.add_argument("--report-only", action="store_true")
@@ -184,7 +198,7 @@ def main():
                 )
 
     solved, timeout, failed, samples, walls, solution_moves = summarize_jsonl(args.samples)
-    matrix, counts = matrix_from_samples(samples, args.fallback_multiplier)
+    matrix, counts = matrix_from_samples(samples, args.fallback_multiplier, args.min_fraction)
     filled = sum(1 for count in counts.values() if count)
     total = (UNPAIRED_MAX + 1) * (COST_MAX + 1)
     print(f"\nsolved={solved} timeout={timeout} failed={failed} path_samples={len(samples)} " f"cells={filled}/{total}")

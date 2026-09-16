@@ -44,20 +44,21 @@
  * obliques. Rows are unpaired obliques (0..8); columns are the exact
  * all-inner-x table cost (0..11).
  *
- * Cells are never below max(inner-x, ceil(unpaired/4)). Occupied cells are
- * the minimum remaining-move count seen for that pair along solutions.
- * Rebuild with utils/build-666-all-inner-x-oblique-matrix.py.
+ * Cells are never below max(inner-x, ceil(unpaired/4)). Occupied cells use
+ * the smallest remaining-move count that is more than 5% of that cell
+ * along sampled solutions. Rebuild with
+ * utils/build-666-all-inner-x-oblique-matrix.py.
  */
 static const unsigned char unpaired_count_all_inner_x_centers_666[9][ALL_INNER_X_MATRIX_COST_MAX + 1] = {
-    { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 0 unpaired
-    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 1 unpaired
-    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 2 unpaired
-    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 3 unpaired
-    { 1,  2,  3,  3,  5,  6,  7,  8,  9, 11, 12, 12},  // 4 unpaired
-    { 2,  2,  3,  3,  5,  6,  7,  8,  9, 11, 12, 12},  // 5 unpaired
-    { 2,  2,  3,  3,  5,  6,  7,  8,  9, 11, 12, 12},  // 6 unpaired
-    { 2,  2,  3,  3,  5,  6,  7,  8, 10, 11, 12, 12},  // 7 unpaired
-    { 2,  2,  3,  3,  5,  6,  7,  8, 10, 11, 12, 12},  // 8 unpaired
+    { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 0
+    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11},  // 1
+    { 1,  1,  2,  3,  4,  5,  6,  7,  8, 10, 10, 11},  // 2
+    { 1,  1,  2,  3,  4,  5,  6,  7,  8, 10, 11, 11},  // 3
+    { 1,  2,  2,  3,  4,  5,  6,  8,  9, 11, 12, 12},  // 4
+    { 2,  2,  2,  3,  4,  5,  6,  8,  9, 11, 12, 12},  // 5
+    { 2,  2,  3,  4,  5,  6,  7,  8,  9, 11, 12, 12},  // 6
+    { 2,  2,  3,  4,  5,  6,  7,  8, 10, 11, 12, 12},  // 7
+    { 2,  2,  3,  4,  5,  6,  7,  9, 10, 11, 12, 12},  // 8
 };
 
 /*

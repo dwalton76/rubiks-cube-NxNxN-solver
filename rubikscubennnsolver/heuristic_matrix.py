@@ -7,7 +7,7 @@ import json
 import re
 import subprocess
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from itertools import permutations, product
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -157,6 +157,23 @@ def _set(matrix: Matrix, index: Coord, value: int) -> None:
     node[index[-1]] = value
 
 
+def cell_remaining_estimate(values: Sequence[int], min_fraction: float = 0.0) -> int:
+    """Smallest remaining whose share of the cell is above `min_fraction`.
+
+    Walk from the minimum upward and skip a value while it is `min_fraction`
+    or less of the cell (5% drops a lone 8 among twenty samples). If every
+    value is that rare, fall back to min.
+    """
+    if min_fraction <= 0:
+        return min(values)
+    n = len(values)
+    counts = Counter(values)
+    for remaining in sorted(counts):
+        if counts[remaining] / n > min_fraction:
+            return remaining
+    return min(values)
+
+
 def fill_cost_matrix(
     samples: Iterable[Sequence[int]],
     dims: Sequence[int],
@@ -164,11 +181,14 @@ def fill_cost_matrix(
     *,
     permute_coords: bool = False,
     fallback_multiplier: float = 1.0,
+    min_fraction: float = 0.0,
 ) -> Tuple[Matrix, Dict[Coord, int]]:
     """
-    Min remaining per cell, never below `admissible`. Empty cells use
-    fallback_multiplier times that floor. Values propagate so a more scrambled
-    coordinate cannot look closer to solved.
+    Remaining per cell, never below `admissible`. Occupied cells use the
+    smallest remaining whose share of the cell is above `min_fraction` (the
+    plain min when that is 0). Empty cells use fallback_multiplier times the
+    floor. Values propagate so a more scrambled coordinate cannot look closer
+    to solved.
     """
     ndim = len(dims)
     buckets = defaultdict(list)
@@ -188,7 +208,7 @@ def fill_cost_matrix(
         counts[index] = len(values)
         floor = admissible(index)
         if values:
-            estimate = max(min(values), floor)
+            estimate = max(cell_remaining_estimate(values, min_fraction), floor)
         else:
             estimate = max(int(fallback_multiplier * floor + 0.5), floor)
         for axis, coord in enumerate(index):

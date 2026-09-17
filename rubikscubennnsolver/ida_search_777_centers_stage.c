@@ -279,9 +279,8 @@ static unsigned char parity_flip_floor(unsigned char parity)
     return floor;
 }
 
-static unsigned char cube_cost(const char *cube, unsigned char parity)
+static unsigned char cube_cost_from_unpaired(const char *cube, unsigned char parity, unsigned char unpaired)
 {
-    unsigned char unpaired = unpaired_oblique_count(cube);
     unsigned char cost;
 
     if (obliques_only) {
@@ -299,6 +298,11 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
         cost = (unsigned char)roundf(cost * cost_to_goal_multiplier);
     }
     return cost ? cost : parity_flip_floor(parity);
+}
+
+static unsigned char cube_cost(const char *cube, unsigned char parity)
+{
+    return cube_cost_from_unpaired(cube, parity, unpaired_oblique_count(cube));
 }
 
 /*
@@ -410,6 +414,7 @@ static int ida_search(
     unsigned char next_depth = depth + 1;
     int last_ply = next_depth == threshold;
     char rotate_tmp[CUBE_ARRAY_SIZE];
+    unsigned char unpaired_before = unpaired_oblique_count(cube);
 
     if (atomic_load_explicit(&solution_task, memory_order_relaxed) != NO_TASK) {
         return 0;
@@ -417,6 +422,7 @@ static int ida_search(
     for (unsigned int index = 0; index < legal_move_count[previous_move]; index++) {
         move_type move = moves_777[legal_move_index[previous_move][index]];
         unsigned char next_parity;
+        unsigned char unpaired;
         unsigned char cost;
 
         if (last_ply && !last_ply_can_be_goal(parity, move)) {
@@ -424,7 +430,9 @@ static int ida_search(
         }
         next_parity = parity_after_move(parity, move);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-        cost = cube_cost(cube, next_parity);
+        unpaired = unpaired_oblique_count(cube);
+        cost = unpaired > unpaired_before ? UINT8_MAX
+                                          : cube_cost_from_unpaired(cube, next_parity, unpaired);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         worker->ida_count++;
 
@@ -475,6 +483,7 @@ static int ida_search(
 static void *search_root_moves(void *argument)
 {
     struct worker *worker = argument;
+    unsigned char unpaired_before = unpaired_oblique_count(worker->root_cube);
 
     while (1) {
         unsigned int task = atomic_fetch_add(&next_task, 1);
@@ -482,6 +491,7 @@ static void *search_root_moves(void *argument)
         char rotate_tmp[CUBE_ARRAY_SIZE];
         move_type first;
         unsigned char parity;
+        unsigned char unpaired;
         unsigned char cost;
         int found;
 
@@ -496,7 +506,8 @@ static void *search_root_moves(void *argument)
         memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
         worker->ida_count++;
-        cost = cube_cost(cube, parity);
+        unpaired = unpaired_oblique_count(cube);
+        cost = unpaired > unpaired_before ? UINT8_MAX : cube_cost_from_unpaired(cube, parity, unpaired);
 
         if (cost == UINT8_MAX || 1 + cost > search_threshold) {
             continue;
@@ -673,11 +684,11 @@ int main(int argc, char **argv)
         return 1;
     }
     if (obliques_only) {
-        LOG("searching L/R obliques only\n");
+        LOG("searching L/R obliques only, prune pairing regressions\n");
     } else if (use_unpaired_multiplier) {
-        LOG("searching with unpaired multiplier %.2f\n", unpaired_multiplier);
+        LOG("searching with unpaired multiplier %.2f, prune pairing regressions\n", unpaired_multiplier);
     } else {
-        LOG("searching with the empirical unpaired-count matrix\n");
+        LOG("searching with the empirical unpaired-count matrix, prune pairing regressions\n");
     }
     LOG(
         "initial cost %u, unpaired obliques %u, threads %u\n",

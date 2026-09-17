@@ -92,4 +92,4 @@ class IdaSearch777CentersStageObliquesOnlyTest(unittest.TestCase):
         self.assertGreater(unpaired_lr_obliques(fake_777), 0)
         fake_777.lt_LR_oblique_edge_pairing.solve_via_c()
         self.assertEqual(unpaired_lr_obliques(fake_777), 0)
-        self.assertIn("searching L/R obliques only", fake_777.solve_via_c_output)
+        self.assertIn("searching L/R obliques only, prune pairing regressions", fake_777.solve_via_c_output)

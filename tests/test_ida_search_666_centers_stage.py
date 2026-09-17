@@ -7,7 +7,9 @@ from pathlib import Path
 
 # rubiks cube libraries
 from rubikscubennnsolver.RubiksCube666 import (
+    LR_INNER_X_STAGE_TABLE_666,
     RubiksCube666,
+    UD_INNER_X_STAGE_TABLE_666,
     UFBD_left_oblique_edges_666,
     UFBD_outer_x_centers_666,
     UFBD_right_oblique_edges_666,
@@ -19,6 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 BINARY = ROOT / "ida_search_666_centers_stage"
 GROUP_UNIVERSE = math.comb(16, 8)
 PRODUCT_UNIVERSE = GROUP_UNIVERSE * GROUP_UNIVERSE
+UD_INNER_X = ROOT / UD_INNER_X_STAGE_TABLE_666
+LR_INNER_X = ROOT / LR_INNER_X_STAGE_TABLE_666
 
 ORBIT_SQUARES = {
     "outer": UFBD_outer_x_centers_666,
@@ -62,6 +66,18 @@ ILLEGAL_MOVES = frozenset(
         "R",
         "R'",
         "R2",
+    )
+)
+PHASE2_ILLEGAL_MOVES = frozenset(
+    (
+        "3Uw",
+        "3Uw'",
+        "3Dw",
+        "3Dw'",
+        "3Fw",
+        "3Fw'",
+        "3Bw",
+        "3Bw'",
     )
 )
 
@@ -192,22 +208,6 @@ class RankedCentersStage666Test(unittest.TestCase):
         result = self.run_rank(cube)
         self.assertEqual(result["COST"], max(result[f"{label}_COST"] for label in REQUIRED_LABELS))
 
-    def test_all_inner_x_requires_the_symmetry_index(self):
-        result = subprocess.run(
-            [
-                str(BINARY),
-                "--kociemba",
-                self.solved.get_kociemba_string(True),
-                "--all-inner-x-cost",
-                str(Path(self.tempdir.name) / "missing.cost-only.bin"),
-                "--print-ranks",
-            ],
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("usage:", result.stdout)
-
     def test_all_three_tables_are_required(self):
         self.write_tables([self.solved], labels=REQUIRED_LABELS)
 
@@ -222,6 +222,69 @@ class RankedCentersStage666Test(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("usage:", result.stdout)
+
+    @unittest.skipUnless(UD_INNER_X.is_file(), "UD inner-x table is not present")
+    def test_phase_two_combines_ud_inner_x_and_lr_oblique_pairing(self):
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                self.solved.get_kociemba_string(True),
+                "--stage-ud-inner-x-pair-lr-obliques",
+                "--ud-inner-x-cost",
+                str(UD_INNER_X),
+                "--orbit1-need-even-w",
+                "--max-ida-threshold",
+                "0",
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("UD_INNER_X_COST 0 UNPAIRED 0", result.stdout)
+
+    @unittest.skipUnless(LR_INNER_X.is_file(), "LR inner-x table is not present")
+    def test_phase_one_stages_lr_inner_x_only(self):
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                self.solved.get_kociemba_string(True),
+                "--stage-lr-inner-x",
+                "--lr-inner-x-cost",
+                str(LR_INNER_X),
+                "--max-ida-threshold",
+                "0",
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("LR_INNER_X_COST 0 COST 0", result.stdout)
+
+    @unittest.skipUnless(UD_INNER_X.is_file(), "UD inner-x table is not present")
+    def test_phase_two_preserves_lr_inner_x_but_keeps_three_lr_quarters(self):
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                self.solved.get_kociemba_string(True),
+                "--stage-ud-inner-x-pair-lr-obliques",
+                "--ud-inner-x-cost",
+                str(UD_INNER_X),
+                "--print-legal-moves",
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        line = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
+        self.assertEqual(line.split()[1:], [move for move in moves_666 if move not in PHASE2_ILLEGAL_MOVES])
+        self.assertIn("3Lw", line.split())
+        self.assertIn("3Rw", line.split())
 
     def test_zero_byte_is_absent_and_file_size_is_enforced(self):
         self.write_tables([], labels=REQUIRED_LABELS)
@@ -238,7 +301,7 @@ class RankedCentersStage666Test(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(str(PRODUCT_UNIVERSE), result.stderr)
 
-    def test_legal_moves_match_current_phase_three(self):
+    def test_legal_moves_match_phase_four(self):
         self.write_tables([self.solved])
         result = subprocess.run(
             self.command(self.solved, "--print-legal-moves", "--print-ranks"),
@@ -262,13 +325,12 @@ class RankedCentersStage666Test(unittest.TestCase):
             make_sparse_table(self.paths[label], entries)
 
         solutions = set()
-        for threads, transposition_args in (("1", ()), ("4", ()), ("1", ("--no-transposition-table",))):
+        for threads in ("1", "4"):
             result = subprocess.run(
                 self.command(
                     scrambled,
                     "--threads",
                     threads,
-                    *transposition_args,
                     "--max-ida-threshold",
                     "2",
                     "--orbit0-need-odd-w",

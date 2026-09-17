@@ -8,26 +8,31 @@ wings so the remaining puzzle is a 5x5x5. ``RubiksCube666.reduce_555`` does
 that reduction; ``group_edges`` (via the 5x5x5 solver) then pairs the outer
 wings and ``solve_333`` finishes the cube.
 
-Each IDA phase is guided by prune tables. Phases 2 and 3 are searched as a
+Each IDA phase is guided by prune tables. Phases 3 and 4 are searched as a
 portfolio: many solutions of the earlier phase are collected, later phases
 are solved from those endpoints, and the shortest combined path is kept.
 
-Phase 1 - stage all inner x-centers and pair the LR obliques
-    Stage all 24 inner x-centers and pair the LR obliques using a 48-symmetry
-    ranked cost-only table (~188 MiB). This phase owns orbit-1 OLL: later
-    phases cannot flip that orbit because they must keep the inner x-centers
-    staged (no 3Xw quarter turns).
+Phase 1 - stage LR inner x-centers
+    One fixed-axis C(24,8) table stages the eight L/R inner x-centers. No
+    oblique occupancy restriction is needed because phase 2 can still use
+    3Lw/3Rw quarter turns.
 
-Phase 2 - stage the remaining LR centers
+Phase 2 - pair LR obliques and stage UD inner x-centers
+    A second C(24,8) table stages U/D inner x-centers while the same search
+    pairs all eight L/R obliques anywhere. It preserves phase 1 by forbidding
+    3Uw/3Dw/3Fw/3Bw quarter turns, while 3Lw/3Rw quarters remain available to
+    rebalance the oblique orbits. This phase owns orbit-1 OLL.
+
+Phase 3 - stage the remaining LR centers
     Map the outer 5x5 of each face onto a fake 5x5x5 and stage its LR
     centers. ``stage_LR_and_UD_centers`` takes a portfolio of those solutions
-    (default 64) and searches phase 3 from all distinct endpoints in one C
+    (default 64) and searches phase 4 from all distinct endpoints in one C
     process.
 
-Phase 3 - stage UD left/right obliques and outer x-centers
+Phase 4 - stage UD left/right obliques and outer x-centers
     Ranked pairwise tables move the UD left/right obliques and outer x-centers
     onto U/D. This phase owns orbit-0 OLL. The search keeps the shortest
-    phase-2 plus phase-3 pair.
+    phase-3 plus phase-4 pair.
 
 Phase 5 - daisy-solve all centers
     Three 70^5 inner-x-spine tables guide a dedicated C IDA. Every table sees
@@ -310,70 +315,60 @@ PHASE5_ILLEGAL_MOVES = (
 
 # ==================================================
 # phase 1
-# stage all inner x-centers and pair the LR obliques
+# stage LR inner x-centers
 # ==================================================
-ALL_INNER_X_CENTERS_STAGE_TABLE = (
-    "lookup-tables/lookup-table-6x6x6-step05-inner-x-centers-stage-one-phase.cost-only.bin"
-)
-ALL_INNER_X_CENTERS_STAGE_INDEX = f"{ALL_INNER_X_CENTERS_STAGE_TABLE}.symmetry-index.bin"
+UD_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-binary.cost-only.bin"
+LR_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step12-LR-inner-x-centers-stage-binary.cost-only.bin"
 
 
-class LookupTableIDA666InnerXCentersStageOnePhase:
-    """
-    Stage all 24 inner x-centers in one phase (8 UD, 8 LR, 8 FB).
-
-    24! / (8!^3) = 9,465,511,770 raw colorings, stored as 197,221,662
-    orbits under the 48 cube symmetries (~188 MiB plus the index).
-
-                 . . . . . .
-                 . . . . . .
-                 . . U U . .
-                 . . U U . .
-                 . . . . . .
-                 . . . . . .
-
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . L L . .  . . F F . .  . . L L . .  . . F F . .
-    . . L L . .  . . F F . .  . . L L . .  . . F F . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-    . . . . . .  . . . . . .  . . . . . .  . . . . . .
-
-                 . . . . . .
-                 . . . . . .
-                 . . U U . .
-                 . . U U . .
-                 . . . . . .
-                 . . . . . .
-    """
-
+class LookupTableIDA666LRInnerXCentersStage:
     def __init__(self, parent):
         self.parent = parent
-        self.filename = ALL_INNER_X_CENTERS_STAGE_TABLE
-        self.index_filename = ALL_INNER_X_CENTERS_STAGE_INDEX
-        self.avoid_oll = None
-        download_file_if_needed(self.filename)
-        download_file_if_needed(self.index_filename)
+        download_file_if_needed(LR_INNER_X_STAGE_TABLE_666)
 
-    def solve_via_c(self, unpaired_multiplier=None) -> None:
+    def solve_via_c(self) -> None:
         cmd = [
             "./ida_search_666_centers_stage",
             "--kociemba",
             self.parent.get_kociemba_string(True),
-            "--all-inner-x-cost",
-            self.filename,
-            "--all-inner-x-index",
-            self.index_filename,
+            "--stage-lr-inner-x",
+            "--lr-inner-x-cost",
+            LR_INNER_X_STAGE_TABLE_666,
         ]
-        if unpaired_multiplier is not None:
-            cmd.extend(("--unpaired-multiplier", str(unpaired_multiplier)))
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+        self.parent.solve_via_c_output = output
+        for line in output.splitlines():
+            logger.info("%s", line)
+            if line.startswith("SOLUTION"):
+                for step in line.split(":", 1)[1].strip().split():
+                    self.parent.rotate(step)
+                return
+        raise SolveError(f"ida_search_666_centers_stage returned no phase-1 solution\n{output}")
 
-        if self.avoid_oll is not None:
-            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
-            if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
-                cmd.append("--orbit0-need-odd-w" if 0 in orbits_with_oll else "--orbit0-need-even-w")
-            if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
-                cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
+
+# ==================================================
+# phase 2
+# stage UD inner x-centers and pair LR obliques while preserving LR inner x
+# ==================================================
+
+
+class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
+    def __init__(self, parent):
+        self.parent = parent
+        download_file_if_needed(UD_INNER_X_STAGE_TABLE_666)
+
+    def solve_via_c(self) -> None:
+        cmd = [
+            "./ida_search_666_centers_stage",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            "--stage-ud-inner-x-pair-lr-obliques",
+            "--ud-inner-x-cost",
+            UD_INNER_X_STAGE_TABLE_666,
+        ]
+        orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+        cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
 
         logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
         lines = []
@@ -401,17 +396,17 @@ class LookupTableIDA666InnerXCentersStageOnePhase:
 
 
 # ==================================================
-# phase 2
+# phase 3
 # stage the remaining LR centers via a fake 5x5x5
 # ==================================================
 
 
 # ==================================================
-# phase 3
+# phase 4
 # stage UD left/right obliques and outer x-centers
 # ==================================================
-class LookupTable666RankedPhase3:
-    """Describe a dense pairwise ranked-cost table used by the phase-3 IDA."""
+class LookupTable666RankedPhase4:
+    """Describe a dense pairwise ranked-cost table used by the phase-4 IDA."""
 
     def __init__(self, parent, filename):
         self.parent = parent
@@ -419,7 +414,7 @@ class LookupTable666RankedPhase3:
         download_file_if_needed(self.filename)
 
 
-class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase3):
+class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase4):
     """
     (16! / (8! * 8!))^2 = 165,636,900 states
 
@@ -446,14 +441,14 @@ class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase3):
     """
 
     def __init__(self, parent):
-        LookupTable666RankedPhase3.__init__(
+        LookupTable666RankedPhase4.__init__(
             self,
             parent,
             "lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage.cost-only.bin",
         )
 
 
-class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase3):
+class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase4):
     """
     (16! / (8! * 8!))^2 = 165,636,900 states
 
@@ -480,14 +475,14 @@ class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase3):
     """
 
     def __init__(self, parent):
-        LookupTable666RankedPhase3.__init__(
+        LookupTable666RankedPhase4.__init__(
             self,
             parent,
             "lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage.cost-only.bin",
         )
 
 
-class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase3):
+class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase4):
     """
     (16! / (8! * 8!))^2 = 165,636,900 states
 
@@ -514,7 +509,7 @@ class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase3):
     """
 
     def __init__(self, parent):
-        LookupTable666RankedPhase3.__init__(
+        LookupTable666RankedPhase4.__init__(
             self,
             parent,
             "lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage.cost-only.bin",
@@ -780,6 +775,53 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             self.fake_444.re_init()
         return self.fake_444
 
+    def inner_x_centers_staged(self) -> bool:
+        """Return whether each inner-x center is on its color axis."""
+        expected_axes = ("UD", "LR", "FB", "LR", "FB", "UD")
+        for face, expected in enumerate(expected_axes):
+            for square in inner_x_centers_666[face * 4 : (face + 1) * 4]:
+                if self.state[square] not in expected:
+                    return False
+        return True
+
+    def LR_inner_x_centers_staged(self) -> bool:
+        """Return whether all eight L/R inner x-centers are on L/R."""
+        return all(
+            self.state[square] in ("L", "R")
+            for face in (1, 3)
+            for square in inner_x_centers_666[face * 4 : (face + 1) * 4]
+        )
+
+    def LR_obliques_paired(self) -> bool:
+        """Return whether the eight L/R oblique pairs occupy matching slots."""
+        return (
+            sum(
+                self.state[left] in ("L", "R") and self.state[right] in ("L", "R")
+                for left, right in zip(left_oblique_edges_666, right_oblique_edges_666)
+            )
+            == 8
+        )
+
+    def stage_LR_inner_x_centers(self) -> None:
+        """Stage only the L/R inner x-centers."""
+        if self.LR_inner_x_centers_staged():
+            return
+        self.lt_LR_inner_x_centers_stage.solve_via_c()
+        if not self.LR_inner_x_centers_staged():
+            raise SolveError("phase 1 did not stage the L/R inner x-centers")
+
+    def stage_UD_inner_x_centers_and_pair_LR_obliques(self) -> None:
+        """Finish inner-x staging while pairing the L/R obliques."""
+        if self.inner_x_centers_staged() and self.LR_obliques_paired():
+            return
+        self.lt_UD_inner_x_centers_stage_LR_oblique_pairing.solve_via_c()
+        if not self.inner_x_centers_staged():
+            raise SolveError("phase 2 did not finish staging the inner x-centers")
+        if not self.LR_obliques_paired():
+            raise SolveError("phase 2 did not pair the L/R obliques")
+        if 1 in self.center_solution_leads_to_oll_parity():
+            raise SolveError("phase 2 did not clear orbit-1 OLL parity")
+
     def get_fake_555(self):
         if self.fake_555 is None:
             self.fake_555 = RubiksCube555(solved_555, "URFDLB")
@@ -822,21 +864,21 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_init_called = True
 
-        # phase 1 - stage all inner x-centers and pair LR obliques
-        self.lt_all_inner_x_centers_stage = LookupTableIDA666InnerXCentersStageOnePhase(self)
+        # phase 1 - stage L/R inner x-centers
+        self.lt_LR_inner_x_centers_stage = LookupTableIDA666LRInnerXCentersStage(self)
 
-        # Phases 2 and 3 must preserve the staged inner x-centers, which
-        # rules out every 3Xw quarter turn, so this is the only phase that
-        # can still flip orbit1 parity.
-        self.lt_all_inner_x_centers_stage.avoid_oll = 1
+        # phase 2 - stage U/D inner x-centers and pair L/R obliques anywhere
+        self.lt_UD_inner_x_centers_stage_LR_oblique_pairing = LookupTableIDA666UDInnerXCentersStageLRObliquePairing(
+            self
+        )
 
-        # phase 3 - ranked UD oblique + outer-x tables to finish staging UD
+        # phase 4 - ranked UD oblique + outer-x tables to finish staging UD
         self.lt_UD_left_right_oblique_stage = LookupTable666UDLeftRightObliqueStage(self)
         self.lt_UD_left_oblique_outer_x_stage = LookupTable666UDLeftObliqueOuterXStage(self)
         self.lt_UD_right_oblique_outer_x_stage = LookupTable666UDRightObliqueOuterXStage(self)
         self.lt_UD_centers_stage = LookupTableIDA666UDCentersStage(self)
 
-        # Only orbit0 here; phase 1 owns orbit1 for the reason above.
+        # Only orbit0 here; phase 2 owns orbit1.
         self.lt_UD_centers_stage.avoid_oll = 0
 
         # phase 5 - daisy-solve all centers with three overlapping 70^5 tables
@@ -942,32 +984,32 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         self.lt_daisy_centers.solve_via_c()
         self.print_cube_add_comment("centers reduced to 555", comment_start)
 
-    def stage_LR_and_UD_centers(self, phase2_solution_count: int = 64) -> None:
-        """Select the phase-2 endpoint that gives the shortest ranked phase 3."""
+    def stage_LR_and_UD_centers(self, phase3_solution_count: int = 64) -> None:
+        """Select the phase-3 endpoint that gives the shortest ranked phase 4."""
         original_state = self.state[:]
         original_solution = self.solution[:]
-        phase2_comment_start = len(self.solution)
+        phase3_comment_start = len(self.solution)
 
         fake_555 = self.get_fake_555()
         self.populate_fake_555_for_ULFRBD_solve()
-        phase2_solutions = fake_555.lt_LR_centers_stage.solutions_via_c(solution_count=phase2_solution_count)
+        phase3_solutions = fake_555.lt_LR_centers_stage.solutions_via_c(solution_count=phase3_solution_count)
 
-        phase2_solution_by_root = {}
+        phase3_solution_by_root = {}
         root_keys = set()
         roots = []
-        phase3_squares = (
+        phase4_squares = (
             tuple(UFBD_outer_x_centers_666) + tuple(UFBD_left_oblique_edges_666) + tuple(UFBD_right_oblique_edges_666)
         )
 
-        for phase2_solution, _ in phase2_solutions:
+        for phase3_solution, _ in phase3_solutions:
             self.state = original_state[:]
             self.solution = original_solution[:]
-            for step in phase2_solution:
+            for step in phase3_solution:
                 self.rotate(step)
 
             orbits_with_oll = frozenset(self.center_solution_leads_to_oll_parity())
             root_key = (
-                tuple(self.state[square] for square in phase3_squares),
+                tuple(self.state[square] for square in phase4_squares),
                 0 in orbits_with_oll,
             )
             if root_key in root_keys:
@@ -975,43 +1017,49 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
 
             root_index = len(roots)
             root_keys.add(root_key)
-            phase2_solution_by_root[root_index] = phase2_solution
+            phase3_solution_by_root[root_index] = phase3_solution
             roots.append((root_index, self.get_kociemba_string(True), orbits_with_oll))
 
         logger.info(
-            "phase-2 portfolio has %d solutions and %d distinct phase-3 roots",
-            len(phase2_solutions),
+            "phase-3 portfolio has %d solutions and %d distinct phase-4 roots",
+            len(phase3_solutions),
             len(roots),
         )
-        root_index, phase3_solution = self.lt_UD_centers_stage.solution_via_c(roots)
-        phase2_solution = phase2_solution_by_root[root_index]
+        root_index, phase4_solution = self.lt_UD_centers_stage.solution_via_c(roots)
+        phase3_solution = phase3_solution_by_root[root_index]
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        for step in phase2_solution:
-            self.rotate(step)
-        self.print_cube_add_comment("LR centers staged", phase2_comment_start)
-
-        phase3_comment_start = len(self.solution)
         for step in phase3_solution:
             self.rotate(step)
-        self.print_cube_add_comment("UD centers staged", phase3_comment_start)
+        self.print_cube_add_comment("LR centers staged", phase3_comment_start)
+
+        phase4_comment_start = len(self.solution)
+        for step in phase4_solution:
+            self.rotate(step)
+        self.print_cube_add_comment("UD centers staged", phase4_comment_start)
         logger.info(
-            "selected phase-2 length %d and phase-3 length %d (%d total)",
-            len(phase2_solution),
+            "selected phase-3 length %d and phase-4 length %d (%d total)",
             len(phase3_solution),
-            len(phase2_solution) + len(phase3_solution),
+            len(phase4_solution),
+            len(phase3_solution) + len(phase4_solution),
         )
 
     def stage_centers(self):
         """
-        Stage all inner x-centers and pair LR obliques, then stage LR and UD
-        via a phase-2/3 portfolio. If LR is already staged, only run phase 3.
+        Stage LR inner x-centers, finish inner x while pairing LR obliques,
+        then stage LR and UD via a
+        phase-3/4 portfolio. If LR is already staged, only run phase 4.
         """
         if not self.LR_centers_staged():
             tmp_solution_len = len(self.solution)
-            self.lt_all_inner_x_centers_stage.solve_via_c()
-            self.print_cube_add_comment("inner x-centers staged, LR oblique edges paired", tmp_solution_len)
+            self.stage_LR_inner_x_centers()
+            self.print_cube_add_comment("LR inner x-centers staged", tmp_solution_len)
+
+            tmp_solution_len = len(self.solution)
+            self.stage_UD_inner_x_centers_and_pair_LR_obliques()
+            self.print_cube_add_comment("UD inner x-centers staged, LR oblique edges paired", tmp_solution_len)
+
             self.stage_LR_and_UD_centers()
             return
 

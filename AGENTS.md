@@ -69,7 +69,7 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 | `ida_search_via_graph` | `ida_search_via_graph.c` | Graph prune-table IDA (5x5) |
 | `ida_search_444_phase1_and_2` | `ida_search_444_phase1_and_2.c` | 4x4 combined center staging + EO |
 | `ida_search_444_phase3_and_4` | `ida_search_444_phase3_and_4.c` | 4x4 combined edge pairing + centers |
-| `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 inner-x / LR-oblique / UD phase 3 |
+| `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 LR-oblique pairing / ranked UD phase 4 |
 | `ida_search_666_daisy_centers` | `ida_search_666_daisy_centers.c` | 6x6 daisy |
 | `ida_search_777_centers_stage` | `ida_search_777_centers_stage.c` | 7x7 LR phase 2 (UD inner + LR obliques); `--obliques-only` for NNNOdd partial rings |
 | `ida_search_777_UD_centers_stage` | `ida_search_777_UD_centers_stage.c` | 7x7 UD outer-x + obliques (6 tables) or `--obliques-only` (3 tables) |
@@ -90,7 +90,6 @@ Pairwise 7x7 UD tables are \(C(16,8)^2 = 165{,}636{,}900\) bytes. C mmap size ch
 
 Sampled **cost matrices** (when max-of-axis is too weak) live as C arrays in the searcher and are rebuilt from the **solver** tree:
 
-- `utils/build-666-all-inner-x-oblique-matrix.py`
 - `utils/build-666-daisy-cost-matrix.py`
 - `utils/build-777-UD-inner-centers-oblique-matrix.py`
 - `utils/build-777-daisy-cost-matrix.py`
@@ -137,7 +136,7 @@ Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNE
 - 4x4 phases 1 and 2 are one ranked IDA (``ida_search_444_phase1_and_2``) over the full move set. Heuristic is max of the 48-symmetry all-center table, the 51M LR-center table, and the high/low wing table (min over all 2048 even edge mappings). One of ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w`` is required. Last-ply pruning skips a rotate if the next ply cannot meet that parity.
 - 4x4 phases 3 and 4 are one ranked IDA (``ida_search_444_phase3_and_4``). When ``consider_solve_333`` is set, `--solution-count 1000000` is passed and PLL-free reductions are scored with kociemba until a 20-move 3x3x3 appears or ``PHASE34_SOLUTIONS_TO_EVALUATE`` have been tried. The fake 4x4 used to pair a 6x6/even inside orbit (`consider_solve_333=False`) uses `--avoid-pll` with the C default solution count of 1, so the search stops at its first PLL-free reduction.
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
-- 6x6: phase 1 owns **orbit1** OLL (later phases forbid `3Xw` quarters). Phase 3 owns **orbit0**. Phase 5 uses three 70^5 tables; each combines all three inner-x orbits with both obliques from one axis. The search uses their admissible max until a matrix is sampled for these coordinates.
+- 6x6: phase 1 uses the fixed-axis C(24,8) LR inner-x table only. Phase 2 uses the UD C(24,8) table while pairing LR obliques anywhere; it preserves LR inner x by forbidding `3Uw`/`3Dw`/`3Fw`/`3Bw` quarters, retains `3Lw`/`3Rw` quarters to rebalance the oblique orbits, and owns **orbit1** OLL. Phase 3 stages LR through a fake 5x5, and ranked phase 4 owns **orbit0**. Phase 5 uses three 70^5 tables; each combines all three inner-x orbits with both obliques from one axis.
 - 7x7 daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.
 - 5x5 phases 1+2 are a graph-IDA portfolio (default 64 phase-1 solutions). Phases 4+5+6 are another (phase-5 default 500). There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse 5x5 LR/FB staging (`group_centers_stage_LR` / `group_centers_stage_FB` and `lt_LR_t_centers_stage_ida`).
 

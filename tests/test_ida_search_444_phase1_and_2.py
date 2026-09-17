@@ -56,7 +56,7 @@ class Phase12Search444Test(unittest.TestCase):
     def test_orbit0_flag_is_required(self):
         result = subprocess.run(self.command("--max-ida-threshold", "0"), capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("--orbit0-need-even-w or --orbit0-need-odd-w is required", result.stderr)
+        self.assertIn("an orbit0 parity policy is required", result.stderr)
 
     def test_mapping_count_is_rejected(self):
         result = subprocess.run(

@@ -39,16 +39,20 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(cube.lt_LR_centers_stage.__class__.__name__, "LookupTableIDA555LRCenterStage")
         self.assertEqual(cube.lt_FB_centers_stage.__class__.__name__, "LookupTableIDA555FBCentersStage")
 
-    def test_666_ranked_path_splits_oll_parity_between_phase_one_and_three(self):
-        """Phases 2 and 3 have no 3Xw quarter turn, so only phase 1 can flip orbit1."""
+    def test_666_uses_lr_then_combined_ud_oblique_and_ranked_ud(self):
         cube = RubiksCube666(solved_666, "URFDLB")
         with patch("rubikscubennnsolver.LookupTable.download_file_if_needed"):
             cube.lt_init()
 
-        self.assertEqual(cube.lt_all_inner_x_centers_stage.avoid_oll, 1)
+        self.assertEqual(
+            cube.lt_LR_inner_x_centers_stage.__class__.__name__,
+            "LookupTableIDA666LRInnerXCentersStage",
+        )
+        self.assertEqual(
+            cube.lt_UD_inner_x_centers_stage_LR_oblique_pairing.__class__.__name__,
+            "LookupTableIDA666UDInnerXCentersStageLRObliquePairing",
+        )
         self.assertEqual(cube.lt_UD_centers_stage.avoid_oll, 0)
-        self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_stage_inner_x_stage"))
-        self.assertFalse(hasattr(cube, "lt_centers_reduce_555"))
         self.assertEqual(cube.lt_daisy_centers.__class__.__name__, "LookupTableIDA666DaisyCenters")
         self.assertEqual(len(DAISY_INNER_X_SPINE_TABLES_666), 3)
         self.assertIsNone(cube.lt_daisy_centers.multiplier)
@@ -418,6 +422,35 @@ class PhaseOneTwoCombined444Test(unittest.TestCase):
         self.assertEqual(calls, ["12", "34"])
 
 
+class InnerXFake444MappingTest(unittest.TestCase):
+    def test_444_wide_turns_map_to_666_three_layer_turns(self):
+        from rubikscubennnsolver.RubiksCube444 import centers_444, moves_444, rotate_444, solved_444
+        from rubikscubennnsolver.RubiksCube666 import inner_x_centers_666, rotate_666, solved_666
+
+        state_444 = ["x", *solved_444]
+        state_666 = ["x", *solved_666]
+        for label, (square_444, square_666) in enumerate(zip(centers_444, inner_x_centers_666)):
+            marker = chr(65 + label)
+            state_444[square_444] = marker
+            state_666[square_666] = marker
+
+        for move_444 in moves_444:
+            with self.subTest(move=move_444):
+                move_666 = f"3{move_444}" if "w" in move_444 else move_444
+                moved_444 = rotate_444(state_444, move_444)
+                moved_666 = rotate_666(state_666, move_666)
+                self.assertEqual(
+                    [moved_444[square] for square in centers_444],
+                    [moved_666[square] for square in inner_x_centers_666],
+                )
+
+    def test_phase_two_goal_helpers_recognize_solved_cube(self):
+        cube = RubiksCube666(solved_666, "URFDLB")
+        self.assertTrue(cube.LR_inner_x_centers_staged())
+        self.assertTrue(cube.inner_x_centers_staged())
+        self.assertTrue(cube.LR_obliques_paired())
+
+
 class PhaseThreeFourCombined444Test(unittest.TestCase):
     class FakeCenters:
         filename_bin = "lookup-tables/lookup-table-4x4x4-step31-centers.bin"
@@ -481,17 +514,17 @@ class PhaseThreeFourCombined444Test(unittest.TestCase):
         self.assertEqual(cube.solution, ["C", "D", "E", "COMMENT_all edges paired, centers solved"])
 
 
-class PhaseTwoPortfolioTest(unittest.TestCase):
-    class FakePhaseTwo:
+class PhaseThreePortfolioTest(unittest.TestCase):
+    class FakePhaseThree:
         def solutions_via_c(self, solution_count):
             assert solution_count == 64
             return [(("A",), ()), (("B",), ()), (("C",), ())]
 
     class Fake555:
         def __init__(self):
-            self.lt_LR_centers_stage = PhaseTwoPortfolioTest.FakePhaseTwo()
+            self.lt_LR_centers_stage = PhaseThreePortfolioTest.FakePhaseThree()
 
-    class FakePhaseThree:
+    class FakePhaseFour:
         def __init__(self):
             self.roots = None
 
@@ -503,8 +536,8 @@ class PhaseTwoPortfolioTest(unittest.TestCase):
         def __init__(self):
             self.state = ["x"] * 217
             self.solution = []
-            self.fake_555 = PhaseTwoPortfolioTest.Fake555()
-            self.lt_UD_centers_stage = PhaseTwoPortfolioTest.FakePhaseThree()
+            self.fake_555 = PhaseThreePortfolioTest.Fake555()
+            self.lt_UD_centers_stage = PhaseThreePortfolioTest.FakePhaseFour()
 
         def get_fake_555(self):
             return self.fake_555
@@ -528,7 +561,7 @@ class PhaseTwoPortfolioTest(unittest.TestCase):
         def print_cube_add_comment(self, _comment, _start):
             pass
 
-    def test_phase_two_portfolio_deduplicates_roots_and_applies_selected_prefix(self):
+    def test_phase_three_portfolio_deduplicates_roots_and_applies_selected_prefix(self):
         cube = self.FakeCube()
 
         RubiksCube666.stage_LR_and_UD_centers(cube)

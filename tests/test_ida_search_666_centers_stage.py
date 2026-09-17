@@ -264,6 +264,30 @@ class RankedCentersStage666Test(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("LR_INNER_X_COST 0 COST 0", result.stdout)
 
+    @unittest.skipUnless(LR_INNER_X.is_file(), "LR inner-x table is not present")
+    def test_phase_one_solution_count_zero_lists_all_shortest_solutions(self):
+        scrambled = RubiksCube666(solved_666, "URFDLB")
+        scrambled.rotate("3Fw")
+        cmd = [
+            str(BINARY),
+            "--kociemba",
+            scrambled.get_kociemba_string(True),
+            "--stage-lr-inner-x",
+            "--lr-inner-x-cost",
+            str(LR_INNER_X),
+        ]
+        one = subprocess.run(cmd + ["--solution-count", "1"], capture_output=True, text=True)
+        self.assertEqual(one.returncode, 0, one.stdout + one.stderr)
+        one_lines = [line for line in one.stdout.splitlines() if line.startswith("SOLUTION")]
+        self.assertEqual(len(one_lines), 1)
+
+        all_shortest = subprocess.run(cmd + ["--solution-count", "0"], capture_output=True, text=True)
+        self.assertEqual(all_shortest.returncode, 0, all_shortest.stdout + all_shortest.stderr)
+        all_lines = [line for line in all_shortest.stdout.splitlines() if line.startswith("SOLUTION")]
+        self.assertGreater(len(all_lines), 1)
+        lengths = {line.split("(")[1].split()[0] for line in all_lines}
+        self.assertEqual(len(lengths), 1)
+
     @unittest.skipUnless(UD_INNER_X.is_file(), "UD inner-x table is not present")
     def test_phase_two_preserves_lr_inner_x_but_keeps_three_lr_quarters(self):
         result = subprocess.run(
@@ -285,6 +309,112 @@ class RankedCentersStage666Test(unittest.TestCase):
         self.assertEqual(line.split()[1:], [move for move in moves_666 if move not in PHASE2_ILLEGAL_MOVES])
         self.assertIn("3Lw", line.split())
         self.assertIn("3Rw", line.split())
+
+    def _phase_two_ranks(self, cube, *extra):
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                cube.get_kociemba_string(True),
+                "--stage-ud-inner-x-pair-lr-obliques",
+                "--ud-inner-x-cost",
+                str(UD_INNER_X),
+                "--print-ranks",
+                *extra,
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        line = next(line for line in result.stdout.splitlines() if line.startswith("UD_INNER_X_COST"))
+        tokens = line.split()
+        return {tokens[index]: int(tokens[index + 1]) for index in range(0, len(tokens), 2)}, result.stdout
+
+    @unittest.skipUnless(UD_INNER_X.is_file(), "UD inner-x table is not present")
+    def test_phase_two_uses_combined_matrix_by_default(self):
+        matrix = (
+            (0, 1, 2, 3, 4, 5, 6, 7, 8),
+            (1, 1, 2, 3, 6, 6, 6, 7, 8),
+            (1, 1, 2, 3, 6, 6, 6, 7, 8),
+            (1, 1, 2, 3, 6, 6, 6, 8, 8),
+            (1, 1, 2, 3, 6, 6, 6, 9, 9),
+            (2, 2, 2, 3, 6, 6, 6, 9, 9),
+            (2, 2, 2, 3, 6, 6, 6, 10, 10),
+            (2, 2, 4, 5, 6, 6, 7, 10, 10),
+            (2, 2, 4, 7, 8, 8, 8, 10, 10),
+        )
+        scrambled = RubiksCube666(solved_666, "URFDLB")
+        for move in ("Uw", "3Lw", "Fw", "Rw", "3Rw'", "Dw"):
+            scrambled.rotate(move)
+
+        ranks, _ = self._phase_two_ranks(scrambled)
+        self.assertEqual(
+            ranks["COST"],
+            matrix[ranks["UNPAIRED"]][ranks["UD_INNER_X_COST"]],
+        )
+        self.assertGreater(ranks["COST"], max(ranks["UD_INNER_X_COST"], math.ceil(ranks["UNPAIRED"] / 4)))
+
+        multiplier, _ = self._phase_two_ranks(scrambled, "--unpaired-multiplier", "0.25")
+        self.assertEqual(
+            multiplier["COST"],
+            max(multiplier["UD_INNER_X_COST"], math.ceil(multiplier["UNPAIRED"] * 0.25)),
+        )
+        self.assertLess(multiplier["COST"], ranks["COST"])
+
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                scrambled.get_kociemba_string(True),
+                "--stage-ud-inner-x-pair-lr-obliques",
+                "--ud-inner-x-cost",
+                str(UD_INNER_X),
+                "--max-ida-threshold",
+                "0",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("combined heuristic matrix", result.stdout)
+        self.assertIn("prune pairing regressions", result.stdout)
+
+    @unittest.skipUnless(UD_INNER_X.is_file() and LR_INNER_X.is_file(), "inner-x tables are not present")
+    def test_unpaired_multiplier_rejects_invalid_values(self):
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                self.solved.get_kociemba_string(True),
+                "--stage-ud-inner-x-pair-lr-obliques",
+                "--ud-inner-x-cost",
+                str(UD_INNER_X),
+                "--unpaired-multiplier",
+                "0",
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("must be in (0.0, 1.0]", result.stderr)
+
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                self.solved.get_kociemba_string(True),
+                "--stage-lr-inner-x",
+                "--lr-inner-x-cost",
+                str(LR_INNER_X),
+                "--unpaired-multiplier",
+                "0.25",
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("only valid with --stage-ud-inner-x-pair-lr-obliques", result.stderr)
 
     def test_zero_byte_is_absent_and_file_size_is_enforced(self):
         self.write_tables([], labels=REQUIRED_LABELS)

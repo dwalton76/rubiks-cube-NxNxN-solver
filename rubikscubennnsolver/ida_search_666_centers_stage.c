@@ -26,6 +26,8 @@
 #define PRODUCT_UNIVERSE UINT64_C(165636900)
 #define AXIS_CENTER_UNIVERSE UINT64_C(735471)
 #define OBLIQUE_PAIR_COUNT 24
+#define MATRIX_UNPAIRED_MAX 8
+#define MATRIX_COST_MAX 8
 #define DEFAULT_MAX_IDA_THRESHOLD 20
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
@@ -98,6 +100,34 @@ static const unsigned int *orbit_squares[ORBIT_COUNT] = {
 };
 
 /*
+ * Combined heuristic for staging the U/D inner x-centers while pairing the
+ * L/R obliques. Rows are the unpaired oblique count (0..8), columns are the
+ * exact ranked table cost (0..8, the table's completed depth).
+ *
+ * The table only sees the U/D inner x-centers and one move pairs at most four
+ * obliques, so max(table, ceil(unpaired/4)) is admissible yet far below the
+ * real remaining distance.
+ *
+ * Column 0 seeds from ceil(unpaired/4). Every other cell is the smallest
+ * remaining move count observed for that pair while sampling solutions, never
+ * below max(column 0, table cost). Sparse columns (table cost 7 and 8) are
+ * filled from neighbors.
+ *
+ * utils/build-666-UD-inner-centers-oblique-matrix.py was used to build this.
+ */
+static const unsigned char unpaired_count_UD_inner_centers_666[MATRIX_UNPAIRED_MAX + 1][MATRIX_COST_MAX + 1] = {
+    { 0,  1,  2,  3,  4,  5,  6,  7,  8},  // unpaired 0
+    { 1,  1,  2,  3,  6,  6,  6,  7,  8},  // unpaired 1
+    { 1,  1,  2,  3,  6,  6,  6,  7,  8},  // unpaired 2
+    { 1,  1,  2,  3,  6,  6,  6,  8,  8},  // unpaired 3
+    { 1,  1,  2,  3,  6,  6,  6,  9,  9},  // unpaired 4
+    { 2,  2,  2,  3,  6,  6,  6,  9,  9},  // unpaired 5
+    { 2,  2,  2,  3,  6,  6,  6, 10, 10},  // unpaired 6
+    { 2,  2,  4,  5,  6,  6,  7, 10, 10},  // unpaired 7
+    { 2,  2,  4,  7,  8,  8,  8, 10, 10},  // unpaired 8
+};
+
+/*
  * Each table holds the exact joint distance for one pair of orbits, so the
  * heuristic is the max over all three pairings of the remaining phase-4
  * orbits. A cost of 0 therefore means all three U/D center orbits are staged.
@@ -122,6 +152,8 @@ static move_type inverse_move[MOVE_MAX];
 static unsigned char orbit0_requirement;
 static unsigned char orbit1_requirement;
 static float cost_to_goal_multiplier;
+static float unpaired_multiplier = 0.25f;
+static int use_unpaired_multiplier;
 static int stage_lr_inner_x;
 static int stage_ud_inner_x_pair_lr_obliques;
 static const char *ud_inner_x_filename;
@@ -131,9 +163,10 @@ static unsigned char *lr_inner_x_costs;
 static int ud_inner_x_fd = -1;
 static int lr_inner_x_fd = -1;
 static move_type best_solution[MAX_IDA_THRESHOLD + 1];
+static unsigned int requested_solutions = 1;
+static atomic_uint found_solutions;
 
 static atomic_uint next_task;
-static atomic_uint best_task = NO_TASK;
 static pthread_mutex_t best_solution_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct split_task {
     unsigned char move_index[MAX_SPLIT_PREFIX];
@@ -191,7 +224,8 @@ static void usage(const char *program)
         "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
         "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
-        "[--multiplier FLOAT] "
+        "[--multiplier FLOAT] [--unpaired-multiplier FLOAT] [--solution-count N] "
+        "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--orbit1-need-odd-w|--orbit1-need-even-w] "
         "[--apply-move MOVE] [--print-ranks] [--print-legal-moves] [--benchmark COUNT]\n",
@@ -200,6 +234,10 @@ static void usage(const char *program)
     printf(
         "  --kociemba-file lines: ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,STATE\n"
         "  parity requirements are 0=any, 1=odd, 2=even\n"
+        "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
+        "                           matrix; 0.25 is admissible and larger values are not\n"
+        "  --solution-count N       stop after N solutions at the shortest length;\n"
+        "                           0 keeps searching until that length is exhausted\n"
     );
 }
 
@@ -217,6 +255,17 @@ static unsigned char unpaired_lr_oblique_count(const char *cube)
         }
     }
     return unpaired;
+}
+
+/*
+ * Phase 2 experiment: a move that raises the unpaired L/R oblique count is
+ * never expanded. This is incomplete — some shortest paths unpair for a ply —
+ * but it keeps the search on monotonically non-worsening pairing progress.
+ */
+static int pairing_got_worse(const char *cube, unsigned char unpaired_before)
+{
+    return stage_ud_inner_x_pair_lr_obliques &&
+           unpaired_lr_oblique_count(cube) > unpaired_before;
 }
 
 static uint64_t combination_rank_axis(
@@ -247,13 +296,41 @@ static uint64_t combination_rank_axis(
 }
 
 /*
- * Pairing is an intentionally fast, non-optimal phase. The admissible
- * ceil(unpaired / 4) bound takes tens of seconds even after phase 1, while the
- * unpaired count gives the search enough direction to finish quickly.
+ * One move pairs at most four of the eight L/R oblique pairs, so a multiplier
+ * of 0.25 is admissible. ceilf is required: integer ceil(unpaired / 4)
+ * truncates first and would treat UNPR 1..3 as solved.
  */
-static unsigned char oblique_pairing_cost(unsigned char unpaired)
+static unsigned char unpaired_cost(unsigned char unpaired)
 {
-    return ceil(unpaired / 4);
+    unsigned char cost = (unsigned char)ceilf(unpaired * unpaired_multiplier);
+
+    return unpaired && !cost ? 1 : cost;
+}
+
+static unsigned char ud_inner_x_table_cost(const char *cube)
+{
+    uint64_t ud_rank = combination_rank_axis(cube, all_inner_x_squares, 24, 'U', 'D');
+    unsigned char encoded;
+
+    if (ud_rank >= AXIS_CENTER_UNIVERSE) {
+        return UINT8_MAX;
+    }
+    encoded = ud_inner_x_costs[ud_rank];
+    return encoded ? decode_cost_byte(encoded) : UINT8_MAX;
+}
+
+static unsigned char combined_cost(unsigned char centers_cost, unsigned char unpaired)
+{
+    unsigned char obliques_cost;
+
+    if (unpaired > MATRIX_UNPAIRED_MAX) {
+        unpaired = MATRIX_UNPAIRED_MAX;
+    }
+    if (!use_unpaired_multiplier && centers_cost <= MATRIX_COST_MAX) {
+        return unpaired_count_UD_inner_centers_666[unpaired][centers_cost];
+    }
+    obliques_cost = unpaired_cost(unpaired);
+    return centers_cost > obliques_cost ? centers_cost : obliques_cost;
 }
 
 /*
@@ -365,25 +442,14 @@ static struct heuristic_result heuristic(const char *cube)
     }
 
     if (stage_ud_inner_x_pair_lr_obliques) {
-        uint64_t ud_rank = combination_rank_axis(cube, all_inner_x_squares, 24, 'U', 'D');
-        unsigned char encoded;
-
         memset(&result, 0, sizeof(result));
-        if (ud_rank >= AXIS_CENTER_UNIVERSE) {
+        result.ud_inner_x_cost = ud_inner_x_table_cost(cube);
+        if (result.ud_inner_x_cost == UINT8_MAX) {
             result.cost = UINT8_MAX;
             return result;
         }
-        encoded = ud_inner_x_costs[ud_rank];
-        if (!encoded) {
-            result.cost = UINT8_MAX;
-            return result;
-        }
-        result.ud_inner_x_cost = decode_cost_byte(encoded);
         result.unpaired_count = unpaired_lr_oblique_count(cube);
-        result.cost = oblique_pairing_cost(result.unpaired_count);
-        if (result.ud_inner_x_cost > result.cost) {
-            result.cost = result.ud_inner_x_cost;
-        }
+        result.cost = combined_cost(result.ud_inner_x_cost, result.unpaired_count);
         return result;
     }
 
@@ -426,10 +492,8 @@ static struct heuristic_result heuristic(const char *cube)
  * A cost of 0 means "staged with the parity the caller asked for", so callers
  * can treat 0 as a solved node without testing the parity a second time.
  */
-static unsigned char cube_cost(const char *cube, unsigned char parity)
+static unsigned char apply_multiplier_and_parity_floor(unsigned char cost, unsigned char parity)
 {
-    unsigned char cost = heuristic(cube).cost;
-
     if (cost == UINT8_MAX) {
         return UINT8_MAX;
     }
@@ -437,6 +501,25 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
         cost = (unsigned char)round(cost * cost_to_goal_multiplier);
     }
     return cost ? cost : parity_flip_floor(parity);
+}
+
+static unsigned char cube_cost(const char *cube, unsigned char parity)
+{
+    return apply_multiplier_and_parity_floor(heuristic(cube).cost, parity);
+}
+
+/*
+ * Phase 2 hot path: the caller already counted the unpaired obliques for the
+ * regression prune, so reuse that instead of scanning all 24 pairs again.
+ */
+static unsigned char phase2_cube_cost(const char *cube, unsigned char parity, unsigned char unpaired)
+{
+    unsigned char table = ud_inner_x_table_cost(cube);
+
+    if (table == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    return apply_multiplier_and_parity_floor(combined_cost(table, unpaired), parity);
 }
 
 /*
@@ -448,6 +531,35 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
 static int last_ply_can_be_goal(unsigned char parity, move_type move)
 {
     return !parity_flip_floor(parity_after_move(parity, move));
+}
+
+/* 0 means "every solution at this length". */
+static int have_enough_solutions(void)
+{
+    return requested_solutions &&
+           atomic_load_explicit(&found_solutions, memory_order_relaxed) >= requested_solutions;
+}
+
+/*
+ * The default single-solution mode prints after the search so ROOT_INDEX comes
+ * first, which is the order --kociemba-file callers parse. Asking for more than
+ * one solution has no such caller, so those stream out as they are found.
+ */
+static int record_solution(move_type *solution)
+{
+    pthread_mutex_lock(&best_solution_lock);
+    if (have_enough_solutions()) {
+        pthread_mutex_unlock(&best_solution_lock);
+        return 1;
+    }
+    if (requested_solutions != 1) {
+        print_moves(solution, MAX_IDA_THRESHOLD);
+        fflush(stdout);
+    }
+    memcpy(best_solution, solution, sizeof(best_solution));
+    atomic_fetch_add_explicit(&found_solutions, 1, memory_order_relaxed);
+    pthread_mutex_unlock(&best_solution_lock);
+    return have_enough_solutions();
 }
 
 static int move_is_allowed(move_type move)
@@ -727,8 +839,10 @@ static int ida_search(
     unsigned char next_depth = depth + 1;
     int last_ply = next_depth == threshold;
     char rotate_tmp[CUBE_ARRAY_SIZE];
+    unsigned char unpaired_before =
+        stage_ud_inner_x_pair_lr_obliques ? unpaired_lr_oblique_count(cube) : 0;
 
-    if (atomic_load_explicit(&best_task, memory_order_relaxed) < worker->task_id) {
+    if (have_enough_solutions()) {
         worker->aborted = 1;
         return 0;
     }
@@ -743,7 +857,13 @@ static int ida_search(
         }
         next_parity = parity_after_move(parity, move);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-        cost = cube_cost(cube, next_parity);
+        if (stage_ud_inner_x_pair_lr_obliques) {
+            unsigned char unpaired = unpaired_lr_oblique_count(cube);
+
+            cost = unpaired > unpaired_before ? UINT8_MAX : phase2_cube_cost(cube, next_parity, unpaired);
+        } else {
+            cost = cube_cost(cube, next_parity);
+        }
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         worker->ida_count++;
 
@@ -753,7 +873,10 @@ static int ida_search(
         if (!cost) {
             worker->solution[depth] = move;
             worker->solution[next_depth] = MOVE_NONE;
-            return 1;
+            if (record_solution(worker->solution)) {
+                return 1;
+            }
+            continue;
         }
         children[child_count].move = move;
         children[child_count].parity = next_parity;
@@ -786,7 +909,7 @@ static int ida_search(
             return 1;
         }
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[child.move]);
-        if (worker->aborted) {
+        if (worker->aborted || have_enough_solutions()) {
             return 0;
         }
     }
@@ -849,6 +972,8 @@ static int build_split_tasks(
     unsigned char prefix[MAX_SPLIT_PREFIX] = {0};
     char cube[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
+    unsigned char unpaired_before =
+        stage_ud_inner_x_pair_lr_obliques ? unpaired_lr_oblique_count(root) : 0;
 
     split_task_count = 0;
     split_task_depth = threshold < MAX_SPLIT_PREFIX ? (threshold < 2 ? 2 : threshold) : MAX_SPLIT_PREFIX;
@@ -864,14 +989,24 @@ static int build_split_tasks(
         parity = parity_after_move(0, first);
         memcpy(cube, root, CUBE_ARRAY_SIZE);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
+        if (pairing_got_worse(cube, unpaired_before)) {
+            continue;
+        }
         (*nodes)++;
         cost = cube_cost(cube, parity);
         if (cost == UINT8_MAX || 1 + cost > threshold) {
             continue;
         }
         if (!cost) {
+            move_type solution[MAX_IDA_THRESHOLD + 1];
+
+            solution[0] = first;
+            solution[1] = MOVE_NONE;
             *one_move_solution = first;
-            return 1;
+            if (record_solution(solution)) {
+                return 1;
+            }
+            continue;
         }
         if (threshold < 2) {
             continue;
@@ -910,7 +1045,7 @@ static void *search_split_tasks(void *argument)
         int found;
         int pruned;
 
-        if (task >= split_task_count || atomic_load(&best_task) < task) {
+        if (task >= split_task_count || have_enough_solutions()) {
             break;
         }
         worker->task_id = task;
@@ -925,6 +1060,8 @@ static void *search_split_tasks(void *argument)
             unsigned char move_index = split_tasks[task].move_index[step];
             move_type move = moves_666[legal_move_index[previous][move_index]];
             unsigned char depth = step + 1;
+            unsigned char unpaired_before =
+                stage_ud_inner_x_pair_lr_obliques ? unpaired_lr_oblique_count(cube) : 0;
 
             if (depth == worker->threshold && !last_ply_can_be_goal(parity, move)) {
                 pruned = 1;
@@ -932,6 +1069,10 @@ static void *search_split_tasks(void *argument)
             }
             parity = parity_after_move(parity, move);
             rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+            if (pairing_got_worse(cube, unpaired_before)) {
+                pruned = 1;
+                break;
+            }
             worker->solution[step] = move;
             previous = move;
 
@@ -962,18 +1103,12 @@ static void *search_split_tasks(void *argument)
             if (worker->threshold <= split_task_depth) {
                 continue;
             }
-            found = ida_search(
-                worker, cube, split_task_depth, worker->threshold, previous, parity
-            );
-        }
-
-        if (found) {
-            pthread_mutex_lock(&best_solution_lock);
-            if (task < atomic_load(&best_task)) {
-                memcpy(best_solution, worker->solution, sizeof(best_solution));
-                atomic_store(&best_task, task);
+            if (ida_search(
+                    worker, cube, split_task_depth, worker->threshold, previous, parity
+                )) {
+                break;
             }
-            pthread_mutex_unlock(&best_solution_lock);
+        } else if (record_solution(worker->solution)) {
             break;
         }
         if (worker->aborted) {
@@ -997,28 +1132,30 @@ static int search_threshold(
     unsigned int worker_count;
 
     *nodes = 1;
+    atomic_store(&found_solutions, 0);
     if (cost == UINT8_MAX || cost > threshold) {
         return 0;
     }
     if (!cost) {
         best_solution[0] = MOVE_NONE;
+        record_solution(best_solution);
         return 1;
     }
     if (!threshold) {
         return 0;
     }
     if (build_split_tasks(cube, threshold, nodes, &one_move_solution)) {
-        best_solution[0] = one_move_solution;
-        best_solution[1] = MOVE_NONE;
+        return 1;
+    }
+    if (have_enough_solutions()) {
         return 1;
     }
     if (!split_task_count) {
-        return 0;
+        return atomic_load(&found_solutions) > 0;
     }
 
     worker_count = thread_count < split_task_count ? thread_count : split_task_count;
     atomic_store(&next_task, 0);
-    atomic_store(&best_task, NO_TASK);
     for (unsigned int index = 0; index < worker_count; index++) {
         memset(&workers[index], 0, sizeof(workers[index]));
         workers[index].root_cube = cube;
@@ -1033,7 +1170,7 @@ static int search_threshold(
         pthread_join(threads[index], NULL);
         *nodes += workers[index].ida_count;
     }
-    return atomic_load(&best_task) != NO_TASK;
+    return atomic_load(&found_solutions) > 0;
 }
 
 /*
@@ -1212,6 +1349,11 @@ int main(int argc, char **argv)
             thread_count = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (strmatch(argv[index], "--multiplier") && index + 1 < argc) {
             cost_to_goal_multiplier = atof(argv[++index]);
+        } else if (strmatch(argv[index], "--unpaired-multiplier") && index + 1 < argc) {
+            unpaired_multiplier = (float)atof(argv[++index]);
+            use_unpaired_multiplier = 1;
+        } else if (strmatch(argv[index], "--solution-count") && index + 1 < argc) {
+            requested_solutions = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (strmatch(argv[index], "--orbit0-need-odd-w")) {
             orbit0_requirement = PARITY_ODD;
         } else if (strmatch(argv[index], "--orbit0-need-even-w")) {
@@ -1292,6 +1434,14 @@ int main(int argc, char **argv)
      */
     if (cost_to_goal_multiplier && cost_to_goal_multiplier < 1.0) {
         fprintf(stderr, "ERROR: --multiplier must be at least 1.0\n");
+        return 2;
+    }
+    if (use_unpaired_multiplier && !stage_ud_inner_x_pair_lr_obliques) {
+        fprintf(stderr, "ERROR: --unpaired-multiplier is only valid with --stage-ud-inner-x-pair-lr-obliques\n");
+        return 2;
+    }
+    if (use_unpaired_multiplier && (unpaired_multiplier <= 0.0f || unpaired_multiplier > 1.0f)) {
+        fprintf(stderr, "ERROR: --unpaired-multiplier must be in (0.0, 1.0]\n");
         return 2;
     }
 
@@ -1431,7 +1581,14 @@ int main(int argc, char **argv)
     if (stage_lr_inner_x) {
         LOG("staging L/R inner x-centers\n");
     } else if (stage_ud_inner_x_pair_lr_obliques) {
-        LOG("staging U/D inner x-centers while pairing L/R obliques anywhere\n");
+        if (use_unpaired_multiplier) {
+            LOG(
+                "staging U/D inner x-centers while pairing L/R obliques anywhere, unpaired multiplier %.2f, prune pairing regressions\n",
+                unpaired_multiplier
+            );
+        } else {
+            LOG("staging U/D inner x-centers while pairing L/R obliques anywhere, combined heuristic matrix, prune pairing regressions\n");
+        }
     }
     LOG("searching with %u threads over %u ranked tables\n", thread_count, loaded_table_count);
     memset(best_solution, 0, sizeof(best_solution));
@@ -1476,14 +1633,18 @@ int main(int argc, char **argv)
             us = ((stop.tv_sec - start.tv_sec) * 1000000) + ((stop.tv_usec - start.tv_usec));
             nodes_per_us = us ? total_nodes / us : 0;
             nodes_per_sec = nodes_per_us * 1000000;
-            LOG("IDA found solution, explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n",
+            LOG("IDA found %u solution%s, explored %'llu total nodes, took %.3fs, %'llu nodes-per-sec\n\n",
+                atomic_load(&found_solutions),
+                atomic_load(&found_solutions) == 1 ? "" : "s",
                 (unsigned long long)total_nodes, us / 1000000, (unsigned long long)nodes_per_sec);
             if (root_count > 1) {
                 printf("ROOT_INDEX %u\n", selected_root->index);
             }
-            print_moves(best_solution, threshold);
-            print_ida_summary(selected_root->cube, best_solution);
-            print_cube(selected_root->cube, CUBE_SIZE);
+            if (requested_solutions == 1) {
+                print_moves(best_solution, threshold);
+                print_ida_summary(selected_root->cube, best_solution);
+                print_cube(selected_root->cube, CUBE_SIZE);
+            }
             unmap_ranked_tables();
             free(roots);
             return 0;

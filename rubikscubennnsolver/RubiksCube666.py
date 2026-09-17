@@ -322,6 +322,8 @@ LR_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step12-LR-inner-x
 
 
 class LookupTableIDA666LRInnerXCentersStage:
+    """Stage L/R inner x-centers, keeping the endpoint with the most L/R pairs."""
+
     def __init__(self, parent):
         self.parent = parent
         download_file_if_needed(LR_INNER_X_STAGE_TABLE_666)
@@ -334,17 +336,44 @@ class LookupTableIDA666LRInnerXCentersStage:
             "--stage-lr-inner-x",
             "--lr-inner-x-cost",
             LR_INNER_X_STAGE_TABLE_666,
+            "--solution-count",
+            "0",
         ]
         logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
         self.parent.solve_via_c_output = output
+        solutions = []
         for line in output.splitlines():
             logger.info("%s", line)
             if line.startswith("SOLUTION"):
-                for step in line.split(":", 1)[1].strip().split():
-                    self.parent.rotate(step)
-                return
-        raise SolveError(f"ida_search_666_centers_stage returned no phase-1 solution\n{output}")
+                solutions.append(line.split(":", 1)[1].strip().split())
+        if not solutions:
+            raise SolveError(f"ida_search_666_centers_stage returned no phase-1 solution\n{output}")
+
+        original_state = self.parent.state[:]
+        original_solution = self.parent.solution[:]
+        best_steps = None
+        best_paired = -1
+        for steps in solutions:
+            self.parent.state = original_state[:]
+            self.parent.solution = original_solution[:]
+            for step in steps:
+                self.parent.rotate(step)
+            paired = self.parent.LR_oblique_pair_count()
+            if paired > best_paired:
+                best_paired = paired
+                best_steps = steps
+
+        self.parent.state = original_state[:]
+        self.parent.solution = original_solution[:]
+        for step in best_steps:
+            self.parent.rotate(step)
+        logger.info(
+            "%s: chose 1 of %d shortest solutions with %d/8 L/R oblique pairs",
+            self.__class__.__name__,
+            len(solutions),
+            best_paired,
+        )
 
 
 # ==================================================
@@ -792,15 +821,16 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             for square in inner_x_centers_666[face * 4 : (face + 1) * 4]
         )
 
+    def LR_oblique_pair_count(self) -> int:
+        """Return how many of the eight L/R oblique pairs occupy matching slots."""
+        return sum(
+            self.state[left] in ("L", "R") and self.state[right] in ("L", "R")
+            for left, right in zip(left_oblique_edges_666, right_oblique_edges_666)
+        )
+
     def LR_obliques_paired(self) -> bool:
         """Return whether the eight L/R oblique pairs occupy matching slots."""
-        return (
-            sum(
-                self.state[left] in ("L", "R") and self.state[right] in ("L", "R")
-                for left, right in zip(left_oblique_edges_666, right_oblique_edges_666)
-            )
-            == 8
-        )
+        return self.LR_oblique_pair_count() == 8
 
     def stage_LR_inner_x_centers(self) -> None:
         """Stage only the L/R inner x-centers."""

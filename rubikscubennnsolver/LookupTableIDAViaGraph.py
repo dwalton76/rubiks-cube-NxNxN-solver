@@ -375,8 +375,7 @@ class LookupTableIDAViaGraph(LookupTable):
         if self.centers_only:
             cmd.append("--centers-only")
 
-        # ida_search_via_graph already stops at the first solution
-        if solution_count > 1:
+        if solution_count != 1:
             cmd.append("--solution-count")
             cmd.append(str(solution_count))
 

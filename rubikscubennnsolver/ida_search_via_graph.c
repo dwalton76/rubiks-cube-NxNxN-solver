@@ -43,7 +43,8 @@ unsigned int ROW_LENGTH = 0;
 unsigned char orbit0_wide_quarter_turns = 0;
 unsigned char orbit1_wide_quarter_turns = 0;
 unsigned int solution_count = 0;
-unsigned int min_solution_count = 1;
+/* 0 means print every solution at the shortest length, then stop. */
+static unsigned int min_solution_count = 1;
 
 // Lowest depth worth reporting at the current threshold. Iterative deepening searches the same
 // root at every threshold, so a goal shallower than the threshold was already reported by an
@@ -768,7 +769,7 @@ struct ida_search_result ida_search(char *cube, unsigned int cube_size, lookup_t
                     print_cube(node->cube, cube_size);
                 }
 
-                if (solution_count >= min_solution_count) {
+                if (min_solution_count && solution_count >= min_solution_count) {
                     return search_result;
                 }
             }

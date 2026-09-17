@@ -115,6 +115,29 @@ class CenterStagingTablesTest(unittest.TestCase):
             expected = "L" if 49 < square < 99 or 147 < square < 197 else "x"
             self.assertEqual(cube.state[square], expected)
 
+    def test_777_phase_one_keeps_the_shortest_solution_with_the_most_lr_pairs(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        self.assertEqual(cube.LR_oblique_pair_count(), 16)
+
+        seen = {}
+
+        def fake_solutions(solution_count):
+            seen["solution_count"] = solution_count
+            return [(("Uw",), ()), ((), ())]
+
+        cube.lt_init()
+        cube.get_fake_555()
+        with (
+            patch.object(cube, "LR_inside_centers_staged", return_value=False),
+            patch.object(cube, "create_fake_555_from_inside_centers"),
+            patch.object(cube.fake_555.lt_LR_centers_stage, "solutions_via_c", side_effect=fake_solutions),
+        ):
+            cube.group_inside_LR_centers()
+
+        self.assertEqual(seen["solution_count"], 0)
+        self.assertEqual(cube.solution, [])
+        self.assertEqual(cube.LR_oblique_pair_count(), 16)
+
     def test_larger_odd_cubes_use_combined_phase_two_only_on_full_mapping_slices(self):
         """Partial rings pair obliques only; a real 7x7 of that orbit uses phase 2."""
         cube = RubiksCubeNNNOdd(solved_999, "URFDLB")

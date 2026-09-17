@@ -13,6 +13,8 @@ an unpaired-count heuristic.
 
 Phase 1 - stage LR inner centers
     Map the inner 3x3 of each face onto a fake 5x5x5 and stage its LR centers.
+    ``--solution-count 0`` collects every shortest fake-5x5x5 solution; the
+    7x7 keeps the one that leaves the most L/R oblique edges paired.
 
 Phase 2 - stage UD inner centers and pair LR oblique edges
     Stage the U/D inner t- and x-centers with a ranked table while pairing
@@ -146,6 +148,20 @@ right_oblique_edges_777 = (
     159, 163, 181, 185,  # Right
     208, 212, 230, 234,  # Back
     257, 261, 279, 283,  # Down
+)
+
+# Same left/middle/right triplets as unpaired_oblique_count() in ida_search_777_centers_stage.c
+LR_LEFT_OBLIQUES_777 = (
+    10, 30, 20, 40, 59, 79, 69, 89, 108, 128, 118, 138,
+    157, 177, 167, 187, 206, 226, 216, 236, 255, 275, 265, 285,
+)
+LR_MIDDLE_OBLIQUES_777 = (
+    11, 23, 27, 39, 60, 72, 76, 88, 109, 121, 125, 137,
+    158, 170, 174, 186, 207, 219, 223, 235, 256, 268, 272, 284,
+)
+LR_RIGHT_OBLIQUES_777 = (
+    12, 16, 34, 38, 61, 65, 83, 87, 110, 114, 132, 136,
+    159, 163, 181, 185, 208, 212, 230, 234, 257, 261, 279, 283,
 )
 
 edge_orbit_0_777 = (
@@ -733,29 +749,66 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                 return False
         return True
 
+    def LR_oblique_pair_count(self) -> int:
+        """Return how many L/R oblique slots are paired, matching the C unpaired count."""
+        paired = 0
+        for left, middle, right in zip(LR_LEFT_OBLIQUES_777, LR_MIDDLE_OBLIQUES_777, LR_RIGHT_OBLIQUES_777):
+            if self.state[middle] in ("L", "R"):
+                if self.state[left] in ("L", "R"):
+                    paired += 1
+                if self.state[right] in ("L", "R"):
+                    paired += 1
+        return paired
+
+    def _map_555_center_step_to_777(self, step):
+        if step.startswith("COMMENT"):
+            return None
+        if step.startswith("5"):
+            return "7" + step[1:]
+        if step.startswith("3"):
+            raise Exception("5x5x5 solution has 3 wide turn")
+        if "w" in step:
+            return "3" + step
+        return step
+
     def group_inside_LR_centers(self):
         if self.LR_inside_centers_staged():
             return
 
         self.create_fake_555_from_inside_centers()
-        self.fake_555.group_centers_stage_LR()
+        solutions = self.fake_555.lt_LR_centers_stage.solutions_via_c(solution_count=0)
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        best_steps = None
+        best_paired = -1
+        for steps, _ in solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            mapped = []
+            for step in steps:
+                mapped_step = self._map_555_center_step_to_777(step)
+                if mapped_step:
+                    self.rotate(mapped_step)
+                    mapped.append(mapped_step)
+            paired = self.LR_oblique_pair_count()
+            if paired > best_paired:
+                best_paired = paired
+                best_steps = mapped
 
-        for step in self.fake_555.solution:
-            if step.startswith("COMMENT"):
-                pass
-            else:
-                if step.startswith("5"):
-                    step = "7" + step[1:]
-                elif step.startswith("3"):
-                    raise Exception("5x5x5 solution has 3 wide turn")
-                elif "w" in step:
-                    step = "3" + step
-
-                self.rotate(step)
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        for step in best_steps:
+            self.rotate(step)
+        logger.info(
+            "group_inside_LR_centers: chose 1 of %d shortest solutions with %d/16 L/R oblique pairs",
+            len(solutions),
+            best_paired,
+        )
 
     def stage_LR_centers(self):
         """
-        phase 1 - use 5x5x5 solver to stage the LR inner centers (10 moves)
+        phase 1 - use 5x5x5 solver to stage the LR inner centers; keep the
+        shortest solution that pairs the most L/R obliques
         phase 2 - stage UD inner centers and pair LR oblique edges
         phase 3 - use 5x5x5 solver to stage the LR centers (10 moves)
         """

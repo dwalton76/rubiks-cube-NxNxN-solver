@@ -1087,12 +1087,18 @@ int main(int argc, char **argv)
         gettimeofday(&start, NULL);
         int found = initial.daisy || search_at_threshold(cube, threshold, thread_count, &threshold_nodes);
         gettimeofday(&end, NULL);
-        LOG(
-            "IDA threshold %u, explored %" PRIu64 " nodes, took %.3fs\n",
-            threshold,
-            threshold_nodes,
-            elapsed_seconds(&start, &end)
-        );
+        {
+            double seconds = elapsed_seconds(&start, &end);
+            uint64_t nodes_per_sec = seconds > 0.0 ? (uint64_t)(threshold_nodes / seconds) : 0;
+
+            LOG(
+                "IDA threshold %u, explored %" PRIu64 " nodes, took %.3fs, %" PRIu64 " nodes-per-sec\n",
+                threshold,
+                threshold_nodes,
+                seconds,
+                nodes_per_sec
+            );
+        }
         if (found) {
             unsigned int length = 0;
 

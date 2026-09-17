@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "ida_search_core.h"
@@ -399,6 +400,11 @@ static void *search_worker(void *argument)
     return NULL;
 }
 
+static double elapsed_seconds(const struct timeval *start, const struct timeval *end)
+{
+    return (end->tv_sec - start->tv_sec) + (end->tv_usec - start->tv_usec) / 1000000.0;
+}
+
 static uint64_t search_threshold(
     const char cube[CUBE_ARRAY_SIZE],
     unsigned int center_state,
@@ -577,14 +583,28 @@ int main(int argc, char **argv)
     }
     unsigned int first_threshold = initial_cost > min_threshold ? initial_cost : min_threshold;
     for (unsigned int threshold = first_threshold; initial_cost && threshold <= max_threshold; threshold++) {
-        uint64_t nodes = search_threshold(cube, center_state, threshold);
+        struct timeval start;
+        struct timeval end;
+        uint64_t nodes;
+        double seconds;
+        uint64_t nodes_per_sec;
+
+        gettimeofday(&start, NULL);
+        nodes = search_threshold(cube, center_state, threshold);
+        gettimeofday(&end, NULL);
+        seconds = elapsed_seconds(&start, &end);
+        nodes_per_sec = seconds > 0.0 ? (uint64_t)(nodes / seconds) : 0;
+        fprintf(
+            stderr,
+            "IDA threshold %u, explored %" PRIu64 " nodes, took %.3fs, %" PRIu64 " nodes-per-sec\n",
+            threshold,
+            nodes,
+            seconds,
+            nodes_per_sec
+        );
         if (atomic_load(&stop_search)) {
             break;
         }
-        fprintf(
-            stderr, "threshold %u searched %" PRIu64 " nodes, found %u solutions\n",
-            threshold, nodes, atomic_load(&found_solutions)
-        );
     }
 
     ida_unmap_cost_file(edge_cost_fd, edge_costs, EDGE_PAIRING_UNIVERSE);

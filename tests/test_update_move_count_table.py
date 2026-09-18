@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -76,9 +77,18 @@ class UpdateMoveCountTableTest(unittest.TestCase):
         self.assertTrue(replay.solved())
         self.assertEqual(length, replay.get_solution_len_minus_rotates(solution))
 
+    def test_cube_states_come_from_test_cubes_json(self):
+        with open(ROOT / "utils" / "test-cubes.json", encoding="utf-8") as fh:
+            cases = json.load(fh)
+        test_cubes = self.mod.load_test_cubes()
+        self.assertEqual(self.mod.cube_states_for_size(test_cubes, "4x4x4", 3), cases["4x4x4"][:3])
+        with self.assertRaisesRegex(ValueError, "need 9999"):
+            self.mod.cube_states_for_size(test_cubes, "4x4x4", 9999)
+
     def test_4x4_and_5x5_solve_counts_are_near_the_readme(self):
         previous = self.mod.previous_row_counts(ROOT / "README.md")
+        test_cubes = self.mod.load_test_cubes()
         for size in ("4x4x4", "5x5x5"):
-            lengths = self.mod.measure_size(size, 1)
+            lengths = self.mod.measure_size(size, self.mod.cube_states_for_size(test_cubes, size, 1))
             self.assertEqual(len(lengths), 1)
             self.mod.sanity_check_average(size, lengths[0], previous[size])

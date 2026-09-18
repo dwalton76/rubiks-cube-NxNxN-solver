@@ -31,13 +31,22 @@ from rubikscubennnsolver.RubiksCubeNNNOdd import RubiksCube777ForNNNOdd, RubiksC
 
 
 class CenterStagingTablesTest(unittest.TestCase):
-    def test_555_uses_graph_based_center_staging(self):
+    def test_555_uses_dedicated_ranked_center_staging(self):
         cube = RubiksCube555(solved_555, "URFDLB")
-        with patch("rubikscubennnsolver.LookupTable.download_file_if_needed"):
+        with (
+            patch("rubikscubennnsolver.LookupTable.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCube555.download_file_if_needed"),
+        ):
             cube.lt_init()
 
         self.assertEqual(cube.lt_LR_centers_stage.__class__.__name__, "LookupTableIDA555LRCenterStage")
         self.assertEqual(cube.lt_FB_centers_stage.__class__.__name__, "LookupTableIDA555FBCentersStage")
+        self.assertEqual(cube.lt_phase3.__class__.__name__, "LookupTableIDA555LRCenterStageEOBothOrbits")
+        self.assertEqual(cube.lt_phase4.__class__.__name__, "LookupTable555Phase4")
+        self.assertNotIsInstance(cube.lt_LR_centers_stage, LookupTableIDAViaGraph)
+        self.assertNotIsInstance(cube.lt_FB_centers_stage, LookupTableIDAViaGraph)
+        self.assertNotIsInstance(cube.lt_phase3, LookupTableIDAViaGraph)
+        self.assertNotIsInstance(cube.lt_phase4, LookupTableIDAViaGraph)
 
     def test_666_uses_lr_then_combined_ud_oblique_and_ranked_ud(self):
         cube = RubiksCube666(solved_666, "URFDLB")
@@ -126,7 +135,8 @@ class CenterStagingTablesTest(unittest.TestCase):
             return [(("Uw",), ()), ((), ())]
 
         cube.lt_init()
-        cube.get_fake_555()
+        with patch("rubikscubennnsolver.RubiksCube555.download_file_if_needed"):
+            cube.get_fake_555()
         with (
             patch.object(cube, "LR_inside_centers_staged", return_value=False),
             patch.object(cube, "create_fake_555_from_inside_centers"),
@@ -353,6 +363,9 @@ class PhaseOnePortfolioTest(unittest.TestCase):
                 "C": (11, 21),
             }
             return roots[self.parent.state[0]][self.coordinate]
+
+        def rank(self):
+            return self.state_index()
 
     class FakePhaseOne:
         def solutions_via_c(self, solution_count):

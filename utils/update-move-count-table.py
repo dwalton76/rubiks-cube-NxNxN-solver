@@ -3,7 +3,8 @@
 """
 Measure the average moves to solve 4x4x4 through 10x10x10 cubes and insert a new
 row at the top of README.md's Move Counts table. Each count covers the whole solve:
-reducing the cube to a 3x3x3 plus solving that 3x3x3.
+reducing the cube to a 3x3x3 plus solving that 3x3x3. Scrambles come from the first
+``--count`` entries per size in ``utils/test-cubes.json``.
 
 Example:
     cd ~/rubiks-cube-NxNxN-solver
@@ -13,6 +14,7 @@ Example:
 
 # standard libraries
 import argparse
+import json
 import logging
 import os
 import subprocess
@@ -34,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
+TEST_CUBES = ROOT / "utils" / "test-cubes.json"
 ORDER = "URFDLB"
 DEFAULT_SIZES = ("4x4x4", "5x5x5", "6x6x6", "7x7x7", "8x8x8", "9x9x9", "10x10x10")
 GITHUB_COMMIT_URL = "https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit"
@@ -55,7 +58,12 @@ CUBE_CLASSES = {
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Average full-solve move counts for the README table")
-    parser.add_argument("--count", type=int, default=10, help="scrambles per size (default: 10)")
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=10,
+        help="first N cubes per size from utils/test-cubes.json (default: 10)",
+    )
     parser.add_argument(
         "--sizes",
         nargs="+",
@@ -130,15 +138,28 @@ def sanity_check_average(size: str, average: float, previous: float) -> None:
         )
 
 
-def measure_size(size: str, count: int) -> List[int]:
+def load_test_cubes(path: Path = TEST_CUBES) -> Dict[str, List[str]]:
+    with path.open(encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def cube_states_for_size(test_cubes: Dict[str, List[str]], size: str, count: int) -> List[str]:
+    states = test_cubes.get(size, [])
+    if len(states) < count:
+        raise ValueError(f"{size} has {len(states)} cubes in {TEST_CUBES.name}, need {count}")
+    return states[:count]
+
+
+def measure_size(size: str, states: List[str]) -> List[int]:
     cube_class, solved_state = CUBE_CLASSES[size]
     cube = cube_class(solved_state, ORDER)
     cube.enable_print_cube = False
     lengths = []
+    count = len(states)
 
-    for index in range(1, count + 1):
+    for index, scramble in enumerate(states, 1):
         cube.re_init()
-        cube.randomize()
+        cube.load_state(scramble, ORDER)
         discard_scramble(cube)
         length = solve_length(cube)
         lengths.append(length)
@@ -200,9 +221,11 @@ def main() -> int:
 
     previous = previous_row_counts(README)
     averages = dict(previous)
+    test_cubes = load_test_cubes()
 
     for size in args.sizes:
-        lengths = measure_size(size, args.count)
+        states = cube_states_for_size(test_cubes, size, args.count)
+        lengths = measure_size(size, states)
         averages[size] = sum(lengths) / len(lengths)
         logger.info("%s average over %d cubes: %s", size, args.count, format_average(averages[size]))
         sanity_check_average(size, averages[size], previous[size])

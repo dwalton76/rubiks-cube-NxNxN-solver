@@ -66,7 +66,11 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 
 | Binary | Source | Used for |
 | --- | --- | --- |
-| `ida_search_via_graph` | `ida_search_via_graph.c` | Graph prune-table IDA (5x5) |
+| `ida_search_via_graph` | `ida_search_via_graph.c` | Graph prune-table IDA (5x5 phases 4–6) |
+| `ida_search_555_phase1` | `ida_search_555_phase1.c` | 5x5 LR t/x center staging |
+| `ida_search_555_phase2` | `ida_search_555_phase2.c` | 5x5 FB t/x center staging |
+| `ida_search_555_phase3` | `ida_search_555_phase3.c` | 5x5 EO + LR 1-of-432 |
+| `ida_search_555_phase4` | `ida_search_555_phase4.c` | 5x5 park one four-edge group on x-plane |
 | `ida_search_444_phase1` | `ida_search_444_phase1.c` | 4x4 combined center staging + EO |
 | `ida_search_444_phase2` | `ida_search_444_phase2.c` | 4x4 combined edge pairing + centers |
 | `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 LR-oblique pairing / ranked UD phase 4 |
@@ -122,7 +126,7 @@ flowchart TD
 | 2 | `RubiksCube222` | solved | Tiny tables |
 | 3 | `RubiksCube333` | solved | kociemba |
 | 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1 and 2 |
-| 5 | `RubiksCube555` | 3x3 | Graph IDA: LR then FB staging (1+2 portfolio), EO, then a 4+5+6 portfolio that pairs edges and solves centers |
+| 5 | `RubiksCube555` | 3x3 | Ranked C IDA: LR then FB staging (1+2 portfolio), ranked EO (phase 3), then a graph 4+5+6 portfolio that pairs edges and solves centers |
 | 6 | `RubiksCube666` | 5x5 | Ranked center staging, three 70^5 inner-x-spine daisy tables, then fake-4x4 inside-edge pairing |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
 | even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
@@ -138,7 +142,7 @@ Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNE
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
 - 6x6: phase 1 uses the fixed-axis C(24,8) LR inner-x table only. Phase 2 uses the UD C(24,8) table while pairing LR obliques anywhere, with `unpaired_count_UD_inner_centers_666` as the default combined heuristic (`--unpaired-multiplier` is the bootstrap fallback). It preserves LR inner x by forbidding `3Uw`/`3Dw`/`3Fw`/`3Bw` quarters, retains `3Lw`/`3Rw` quarters to rebalance the oblique orbits, and owns **orbit1** OLL. Phase 3 stages LR through a fake 5x5, and ranked phase 4 owns **orbit0**. Phase 5 uses three 70^5 tables; each combines all three inner-x orbits with both obliques from one axis.
 - 7x7 phase 1 stages LR inner centers through a fake 5x5x5, then keeps the shortest solution with the most LR oblique pairs. Phase 2 uses `ida_search_777_centers_stage` (UD inner t/x plus LR obliques). Daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.
-- 5x5 phases 1+2 are a graph-IDA portfolio (default 64 phase-1 solutions). Phases 4+5+6 are another (phase-5 default 500). There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse 5x5 tables (`lt_LR_centers_stage`, `lt_FB_centers_stage`, `lt_LR_t_centers_stage_ida`).
+- 5x5 phases 1–5 are dedicated ranked-cost C searches. Phases 1+2 are a portfolio (default 64 phase-1 solutions); each takes the max of separate t- and x-center combination tables, and phase 2 searches all distinct phase-1 roots in each orbit-0 parity group. Phase 3 (`ida_search_555_phase3`) orients wings and midges while shrinking LR centers to 1-of-432, using a 70² LR table, a C(24,12) outer-EO table, and a 12-bit inner-EO table; `eo_edges` searches all 2048 even mappings. Phase 4 (`ida_search_555_phase4`) searches all 495 four-edge choices together against the C(12,4)³ table and returns every choice solved in fewer than three moves. Phase 5 (`ida_search_555_phase5`) searches the surviving roots against one 70⁴ center table and two 70²×1680×70 FB-center/edge/midge tables, returning up to 500 minimum-threshold solutions for phase 6. Phase 6 remains graph IDA. There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse `ida_search_555_phase1` / `ida_search_555_phase2` (including phase 1's t-center-only mode).
 
 ### 7x7 and NNNOdd centers
 

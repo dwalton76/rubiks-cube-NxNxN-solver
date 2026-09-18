@@ -190,7 +190,7 @@ class Ranked555PythonWiringTest(unittest.TestCase):
     def test_phase5_rank_and_wrapper_use_three_ranked_tables(self):
         self.assertEqual(
             self.cube.lt_phase5.ranks(("LB", "LF", "RB", "RF")),
-            (4899, 576219055, 576215065),
+            (4899, 576219055, 576215065, 1323),
         )
         completed = subprocess.CompletedProcess(
             [],
@@ -203,7 +203,7 @@ class Ranked555PythonWiringTest(unittest.TestCase):
             patch.object(cube555_module.subprocess, "run", return_value=completed) as run,
         ):
             solutions = self.cube.lt_phase5.solutions_via_c(
-                [(5, 6, 7), (3, 4, 5)],
+                [(5, 6, 7, 8), (3, 4, 5, 6)],
                 solution_count=500,
                 find_extra=True,
             )
@@ -214,7 +214,7 @@ class Ranked555PythonWiringTest(unittest.TestCase):
         self.assertIn("--high-combo-cost", command)
         self.assertIn("--low-combo-cost", command)
         self.assertIn("--find-extra", command)
-        self.assertEqual(solutions, [(("U2", "F2"), (5, 6, 7))])
+        self.assertEqual(solutions, [(("U2", "F2"), (5, 6, 7, 8))])
 
 
 @unittest.skipUnless(PHASE1.is_file() and PHASE2.is_file(), "5x5 ranked solvers have not been built")
@@ -519,12 +519,19 @@ class Ranked555Phase5Test(unittest.TestCase):
         sparse_cost_file(self.high_path, PHASE5_COMBO_UNIVERSE, high_ranks)
         sparse_cost_file(self.low_path, PHASE5_COMBO_UNIVERSE, low_ranks)
 
+    @staticmethod
+    def exact_goal_ranks():
+        midge_binary = multiset_rank("xxLLLLxx", "Lx", (4, 4))
+        high_wing = multiset_rank("xxBADCxx", "ABCDx", (1, 1, 1, 1, 4))
+        low_wing = multiset_rank("xxABCDxx", "ABCDx", (1, 1, 1, 1, 4))
+        return high_wing * 70 + midge_binary, low_wing * 70 + midge_binary, low_wing
+
     def test_phase5_rank_boundaries_and_legal_moves(self):
         centers_rank = PHASE5_CENTERS_UNIVERSE - 1
         combo_rank = PHASE5_COMBO_UNIVERSE - 1
         self.write_zero_costs([centers_rank], [combo_rank], [combo_rank])
         roots_path = self.directory / "boundary-roots.txt"
-        roots_path.write_text(f"boundary,{centers_rank},{combo_rank},{combo_rank}\n")
+        roots_path.write_text(f"boundary,{centers_rank},{combo_rank},{combo_rank},1679\n")
 
         result = subprocess.run(
             self.command(roots_path)
@@ -538,19 +545,22 @@ class Ranked555Phase5Test(unittest.TestCase):
             text=True,
         )
 
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn(
             f"ROOT boundary CENTERS_RANK {centers_rank} HIGH_RANK {combo_rank} " f"LOW_RANK {combo_rank} COST 0",
             result.stdout,
         )
         legal_line = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
         self.assertEqual(set(legal_line.split()[1:]), PHASE5_LEGAL)
-        self.assertIn("SOLUTION ROOT boundary (0 steps):", result.stdout)
+        self.assertNotIn("SOLUTION ROOT boundary", result.stdout)
 
     def test_phase5_find_extra_collects_roots_at_minimum_threshold(self):
-        self.write_zero_costs([0], [0], [0])
+        high_rank, low_rank, midge_rank = self.exact_goal_ranks()
+        self.write_zero_costs([0], [high_rank], [low_rank])
         roots_path = self.directory / "portfolio-roots.txt"
-        roots_path.write_text("first,0,0,0\nsecond,0,0,0\n")
+        roots_path.write_text(
+            f"first,0,{high_rank},{low_rank},{midge_rank}\n" f"second,0,{high_rank},{low_rank},{midge_rank}\n"
+        )
 
         result = subprocess.run(
             self.command(roots_path)
@@ -575,9 +585,12 @@ class Ranked555Phase5Test(unittest.TestCase):
         )
 
     def test_phase5_without_find_extra_stops_at_first_root(self):
-        self.write_zero_costs([0], [0], [0])
+        high_rank, low_rank, midge_rank = self.exact_goal_ranks()
+        self.write_zero_costs([0], [high_rank], [low_rank])
         roots_path = self.directory / "first-root.txt"
-        roots_path.write_text("first,0,0,0\nsecond,0,0,0\n")
+        roots_path.write_text(
+            f"first,0,{high_rank},{low_rank},{midge_rank}\n" f"second,0,{high_rank},{low_rank},{midge_rank}\n"
+        )
 
         result = subprocess.run(
             self.command(roots_path) + ["--max-ida-threshold", "0", "--solution-count", "2"],
@@ -591,7 +604,9 @@ class Ranked555Phase5Test(unittest.TestCase):
 
     def test_phase5_one_move_rank_transitions(self):
         binary_values = "LLLLxxxx"
-        wing_values = "ABCDxxxx"
+        high_goal = "xxBADCxx"
+        low_goal = "xxABCDxx"
+        midge_goal = "xxABCDxx"
         center_parts = [
             multiset_rank(
                 phase5_permuted_rank("F", squares, binary_values),
@@ -609,24 +624,30 @@ class Ranked555Phase5Test(unittest.TestCase):
             phase5_permuted_rank(
                 "F",
                 self.midge_squares,
-                binary_values,
+                "xxLLLLxx",
                 self.midge_partners,
             ),
             "Lx",
             (4, 4),
         )
 
-        def combo_rank(squares, partners):
+        def combo_rank(squares, partners, values):
             wing_rank = multiset_rank(
-                phase5_permuted_rank("F", squares, wing_values, partners),
+                phase5_permuted_rank("F", squares, values, partners),
                 "ABCDx",
                 (1, 1, 1, 1, 4),
             )
             return (((fb_parts[0] * 70) + fb_parts[1]) * 1680 + wing_rank) * 70 + midge_rank
 
-        high_rank = combo_rank(self.high_squares, self.high_partners)
-        low_rank = combo_rank(self.low_squares, self.low_partners)
-        self.write_zero_costs([0], [0], [0])
+        high_rank = combo_rank(self.high_squares, self.high_partners, high_goal)
+        low_rank = combo_rank(self.low_squares, self.low_partners, low_goal)
+        moved_midge_rank = multiset_rank(
+            phase5_permuted_rank("F", self.midge_squares, midge_goal, self.midge_partners),
+            "ABCDx",
+            (1, 1, 1, 1, 4),
+        )
+        goal_high_rank, goal_low_rank, _ = self.exact_goal_ranks()
+        self.write_zero_costs([0], [goal_high_rank], [goal_low_rank])
         if centers_rank:
             sparse_cost_file(self.centers_path, PHASE5_CENTERS_UNIVERSE, [centers_rank], encoded=2)
         if high_rank:
@@ -634,7 +655,7 @@ class Ranked555Phase5Test(unittest.TestCase):
         if low_rank:
             sparse_cost_file(self.low_path, PHASE5_COMBO_UNIVERSE, [low_rank], encoded=2)
         roots_path = self.directory / "one-move-root.txt"
-        roots_path.write_text(f"moved,{centers_rank},{high_rank},{low_rank}\n")
+        roots_path.write_text(f"moved,{centers_rank},{high_rank},{low_rank},{moved_midge_rank}\n")
 
         result = subprocess.run(
             self.command(roots_path) + ["--max-ida-threshold", "1", "--print-ranks"],

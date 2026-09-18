@@ -25,6 +25,30 @@
 #define CENTER_SOLVED_STATE 69
 #define DEFAULT_MAX_THRESHOLD 24
 #define MAX_THRESHOLD 40
+#define PHASE34_EDGE_MAX 12
+#define PHASE34_CENTER_MAX 5
+
+/*
+ * Combined heuristic matrix built by utils/build-444-heuristic-matrices.py from
+ * 200 random cubes. It is indexed by the edge pairing cost and the center cost.
+ * Cells above the largest index make the heuristic inadmissible but faster than
+ * taking the max of the two.
+ */
+static const unsigned char phase34_cost_matrix_444[PHASE34_EDGE_MAX + 1][PHASE34_CENTER_MAX + 1] = {
+    { 0,  1,  2,  3,  4,  5},  // edge cost 0
+    { 1,  1,  2,  3,  4,  5},  // edge cost 1
+    { 2,  2,  2,  3,  4,  5},  // edge cost 2
+    { 3,  3,  3,  3,  4,  5},  // edge cost 3
+    { 4,  4,  4,  4,  4,  5},  // edge cost 4
+    { 5,  5,  5,  5,  5,  5},  // edge cost 5
+    { 6,  6,  6,  6,  6,  6},  // edge cost 6
+    { 7,  7,  7,  7,  7,  7},  // edge cost 7
+    { 8,  8,  8,  8,  8,  8},  // edge cost 8
+    { 9,  9,  9,  9,  9,  9},  // edge cost 9
+    {10, 10, 10, 10, 10, 10},  // edge cost 10
+    {11, 11, 11, 11, 11, 11},  // edge cost 11
+    {12, 13, 13, 13, 13, 13},  // edge cost 12
+};
 
 void rotate_444(char *cube, char *cube_tmp, int array_size, move_type move);
 
@@ -64,6 +88,8 @@ static int avoid_pll;
 static atomic_uint found_solutions;
 static atomic_int stop_search;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
+static char summary_root_cube[CUBE_ARRAY_SIZE];
+static unsigned int summary_root_center_state;
 
 struct worker {
     char cube[CUBE_ARRAY_SIZE];
@@ -196,7 +222,14 @@ static unsigned char heuristic(const char cube[CUBE_ARRAY_SIZE], unsigned int ce
     if (center_distances[center_state] > centers) {
         centers = center_distances[center_state];
     }
-    return edge_cost > centers ? edge_cost : centers;
+    {
+        unsigned char i = edge_cost > PHASE34_EDGE_MAX ? PHASE34_EDGE_MAX : edge_cost;
+        unsigned char j = centers > PHASE34_CENTER_MAX ? PHASE34_CENTER_MAX : centers;
+        unsigned char floor = edge_cost > centers ? edge_cost : centers;
+        unsigned char cost = phase34_cost_matrix_444[i][j];
+
+        return cost > floor ? cost : floor;
+    }
 }
 
 static int move_is_allowed(move_type move)
@@ -339,6 +372,45 @@ static int reduction_has_pll_parity(const char cube[CUBE_ARRAY_SIZE])
            permutation_is_even(current_corners, target_corners, 8);
 }
 
+static void print_ida_summary(const move_type path[MAX_THRESHOLD + 1], unsigned int length)
+{
+    char cube[CUBE_ARRAY_SIZE];
+    char scratch[CUBE_ARRAY_SIZE];
+    unsigned int center_state = summary_root_center_state;
+
+    memcpy(cube, summary_root_cube, sizeof(cube));
+    printf("\n       EDGE  CTR  CTG  TRU  IDX\n");
+    printf("       ====  ===  ===  ===  ===\n");
+    for (unsigned int step = 0; step <= length; step++) {
+        uint64_t rank = edge_pairing_rank(cube);
+        unsigned char edge = rank < EDGE_PAIRING_UNIVERSE && edge_costs[rank]
+                           ? edge_costs[rank] - 1 : UINT8_MAX;
+        unsigned char centers = center_cost(cube);
+
+        if (center_state < CENTER_STATE_COUNT && center_distances[center_state] > centers) {
+            centers = center_distances[center_state];
+        }
+        if (step) {
+            printf("%5s ", move2str[path[step - 1]]);
+        } else {
+            printf(" INIT ");
+        }
+        printf(
+            " %4u  %3u  %3u  %3u  %3u\n",
+            edge,
+            centers,
+            edge > centers ? edge : centers,
+            length - step,
+            step
+        );
+        if (step < length) {
+            rotate_444(cube, scratch, CUBE_ARRAY_SIZE, path[step]);
+            center_state = center_next_state(center_state, path[step]);
+        }
+    }
+    printf("\n");
+}
+
 static int search(
     struct worker *worker,
     const char cube[CUBE_ARRAY_SIZE],
@@ -366,6 +438,7 @@ static int search(
             pthread_mutex_lock(&solution_lock);
             if (!atomic_load_explicit(&stop_search, memory_order_relaxed)) {
                 print_solution(worker->path, depth);
+                print_ida_summary(worker->path, depth);
                 if (atomic_fetch_add_explicit(&found_solutions, 1, memory_order_relaxed) + 1 >= requested_solutions) {
                     atomic_store_explicit(&stop_search, 1, memory_order_relaxed);
                 }
@@ -564,6 +637,8 @@ int main(int argc, char **argv)
         return 1;
     }
     map_center_graph(center_graph_filename);
+    memcpy(summary_root_cube, cube, sizeof(summary_root_cube));
+    summary_root_center_state = center_state;
     if (print_rank) {
         printf("EDGE_PAIRING_RANK %" PRIu64 "\n", edge_pairing_rank(cube));
         printf("CENTER_COST %u\n", center_cost(cube));
@@ -576,6 +651,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: cube is outside the all-edge pairing table\n");
         return 1;
     }
+    fprintf(stderr, "searching with combined heuristic matrix\n");
     if (!initial_cost) {
         move_type empty[MAX_THRESHOLD + 1] = {MOVE_NONE};
         print_solution(empty, 0);

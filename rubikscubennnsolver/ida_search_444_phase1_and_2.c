@@ -29,6 +29,7 @@
 #define DEFAULT_MAX_THRESHOLD 20
 #define MAX_THRESHOLD 40
 #define SEARCH_THREADS 22
+#define PHASE12_COST_MAX 12
 #define PARITY_EVEN 0
 #define PARITY_ODD 1
 /* Sentinel: the caller must pick even or odd, so a manual run cannot inherit a default. */
@@ -62,6 +63,217 @@ static const char *center_targets[] = {
     "UUUURRLLxxxxRRLLxxxxUUUU",
     "UUUURRRRxxxxLLLLxxxxUUUU",
 };
+
+/*
+ * Combined heuristic matrix built by utils/build-444-heuristic-matrices.py from
+ * 200 random cubes. It is indexed by the all-centers cost, the LR centers cost
+ * and the wing high/low cost. Some cells exceed the largest index, which makes
+ * the heuristic inadmissible but much faster than taking the max of the three.
+ */
+static const unsigned char phase12_cost_matrix_444[PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1] = {
+    {  // CTR 0
+        { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 3
+        { 4,  4,  4,  4,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 4
+        { 5,  5,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 5
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 1
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 3
+        { 4,  4,  4,  4,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 4
+        { 5,  5,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 5
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 2
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 3
+        { 4,  4,  4,  4,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 4
+        { 5,  5,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 5
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 3
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 3
+        { 4,  4,  4,  4,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 4
+        { 5,  5,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 5
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 4
+        { 4,  4,  4,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 4,  4,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 4,  4,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 4,  4,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 3
+        { 4,  4,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 4
+        { 5,  5,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 5
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 5
+        { 5,  5,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 5,  5,  5,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 5,  5,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 5,  5,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 3
+        { 5,  5,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 4
+        { 5,  5,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 5
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 6
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 6,  6,  6,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 6,  6,  6,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 3
+        { 6,  6,  6,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 4
+        { 6,  6,  6,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 5
+        { 6,  6,  6,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  8,  8,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 7
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 0
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 1
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12},  // LR 2
+        { 7,  7,  7,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 3
+        { 7,  7,  7,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 4
+        { 7,  7,  7,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 5
+        { 7,  7,  7,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 6
+        { 7,  7,  8,  8,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  8,  8,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 8
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 0
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 1
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 2
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 3
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12},  // LR 4
+        { 8,  8,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 5
+        { 8,  8,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 6
+        { 8,  8,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 7
+        { 8,  8,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 9
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 0
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 1
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 2
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12},  // LR 3
+        { 9,  9,  9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 4
+        { 9,  9,  9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 5
+        { 9,  9,  9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 6
+        { 9,  9,  9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 7
+        { 9,  9,  9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 8
+        { 9,  9,  9, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 10
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 0
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 1
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 2
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 3
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 4
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 5
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12},  // LR 6
+        {10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 7
+        {10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 8
+        {10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 9
+        {10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 11
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 0
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 1
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 2
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 3
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 4
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12},  // LR 5
+        {11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 6
+        {11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 7
+        {11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 8
+        {11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 9
+        {11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 10
+        {11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+    {  // CTR 12
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 0
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 2
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 3
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 4
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 5
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 6
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 7
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 8
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 9
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 10
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12},  // LR 12
+    },
+};
+
+/*
+ * Largest wing cost that wing_cost_min may stop at, per (all-centers cost, LR
+ * cost, remaining budget). See init_phase12_wing_floor().
+ */
+static unsigned char phase12_wing_floor[PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1][MAX_THRESHOLD + 1];
+static unsigned char phase12_wing_exact[PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1];
 
 struct cost_file {
     int fd;
@@ -356,26 +568,78 @@ static int centers_are_phase2_goal(const char cube[CUBE_ARRAY_SIZE])
     return 0;
 }
 
-static unsigned char heuristic(
-    const char cube[CUBE_ARRAY_SIZE],
-    const char highlow[CUBE_ARRAY_SIZE],
-    unsigned char parity)
+static unsigned char scale_cost(unsigned char cost)
 {
-    unsigned char ud = all_center_cost(cube);
-    unsigned char lr = decoded_cost(&lr_table, lr_center_rank(cube));
-    unsigned char cost;
-    unsigned char wing;
+    if (cost && cost_to_goal_multiplier) {
+        float scaled = roundf((float)cost * cost_to_goal_multiplier);
 
-    if (ud == UINT8_MAX || lr == UINT8_MAX) {
-        return UINT8_MAX;
+        if (scaled > MAX_THRESHOLD) {
+            return MAX_THRESHOLD + 1;
+        }
+        return (unsigned char)scaled;
     }
-    cost = ud > lr ? ud : lr;
-    wing = wing_cost_min(cube, highlow, cost);
-    if (wing == UINT8_MAX) {
-        return UINT8_MAX;
+    return cost;
+}
+
+/*
+ * wing_cost_min walks all 2048 mappings, so scanning it down to the exact
+ * minimum on every node costs an order of magnitude in nodes-per-sec. The
+ * matrix never shrinks as the wing cost grows, which gives two wing costs the
+ * scan may stop at:
+ *  - phase12_wing_exact is the last wing cost that still reads the same cell as
+ *    wing cost 0, so anything below it yields the exact heuristic
+ *  - phase12_wing_floor is the last wing cost that keeps the heuristic within
+ *    the budget left at this node, so anything below it yields the same
+ *    keep-or-prune answer
+ */
+static void init_phase12_wing_floor(void)
+{
+    for (unsigned int ud = 0; ud <= PHASE12_COST_MAX; ud++) {
+        for (unsigned int lr = 0; lr <= PHASE12_COST_MAX; lr++) {
+            unsigned char exact = 0;
+
+            while (exact < PHASE12_COST_MAX &&
+                   phase12_cost_matrix_444[ud][lr][exact + 1] == phase12_cost_matrix_444[ud][lr][0]) {
+                exact++;
+            }
+            phase12_wing_exact[ud][lr] = exact;
+            for (unsigned int budget = 0; budget <= MAX_THRESHOLD; budget++) {
+                unsigned char floor = exact;
+
+                for (unsigned char wing = 0; wing <= PHASE12_COST_MAX; wing++) {
+                    unsigned char cost = phase12_cost_matrix_444[ud][lr][wing];
+
+                    if (scale_cost(cost > wing ? cost : wing) > budget) {
+                        break;
+                    }
+                    if (wing > floor) {
+                        floor = wing;
+                    }
+                }
+                phase12_wing_floor[ud][lr][budget] = floor;
+            }
+        }
     }
-    if (wing > cost) {
-        cost = wing;
+}
+
+static unsigned char combined_cost(
+    const char cube[CUBE_ARRAY_SIZE],
+    unsigned char parity,
+    unsigned char ud,
+    unsigned char lr,
+    unsigned char wing)
+{
+    unsigned char floor = ud > lr ? ud : lr;
+    unsigned char cost;
+
+    if (wing > floor) {
+        floor = wing;
+    }
+    cost = phase12_cost_matrix_444[ud > PHASE12_COST_MAX ? PHASE12_COST_MAX : ud]
+                                  [lr > PHASE12_COST_MAX ? PHASE12_COST_MAX : lr]
+                                  [wing > PHASE12_COST_MAX ? PHASE12_COST_MAX : wing];
+    if (cost < floor) {
+        cost = floor;
     }
     if (!cost && !centers_are_phase2_goal(cube)) {
         cost = 1;
@@ -383,15 +647,73 @@ static unsigned char heuristic(
     if (!cost && parity != required_parity) {
         cost = 1;
     }
-    if (cost && cost_to_goal_multiplier) {
-        float scaled = roundf((float)cost * cost_to_goal_multiplier);
-        if (scaled > MAX_THRESHOLD) {
-            cost = MAX_THRESHOLD + 1;
-        } else {
-            cost = (unsigned char)scaled;
-        }
+    return scale_cost(cost);
+}
+
+/*
+ * The search only needs to know whether the node fits in the budget, so it can
+ * stop the wing scan early. Callers that report a cost want exact_heuristic().
+ */
+static unsigned char heuristic(
+    const char cube[CUBE_ARRAY_SIZE],
+    const char highlow[CUBE_ARRAY_SIZE],
+    unsigned char parity,
+    unsigned char budget)
+{
+    unsigned char ud = all_center_cost(cube);
+    unsigned char lr = decoded_cost(&lr_table, lr_center_rank(cube));
+    unsigned char ud_index;
+    unsigned char lr_index;
+    unsigned char cost;
+    unsigned char wing;
+
+    if (ud == UINT8_MAX || lr == UINT8_MAX) {
+        return UINT8_MAX;
     }
-    return cost;
+    ud_index = ud > PHASE12_COST_MAX ? PHASE12_COST_MAX : ud;
+    lr_index = lr > PHASE12_COST_MAX ? PHASE12_COST_MAX : lr;
+    cost = phase12_cost_matrix_444[ud_index][lr_index][0];
+    if (cost < ud) {
+        cost = ud;
+    }
+    if (cost < lr) {
+        cost = lr;
+    }
+    /* A wing-free lookup is a lower bound, so blowing the budget here prunes
+     * without paying for the mapping scan at all. */
+    cost = scale_cost(cost);
+    if (cost > budget) {
+        return cost;
+    }
+    wing = wing_cost_min(cube, highlow, phase12_wing_floor[ud_index][lr_index][budget]);
+    if (wing == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    return combined_cost(cube, parity, ud, lr, wing);
+}
+
+static unsigned char exact_heuristic(
+    const char cube[CUBE_ARRAY_SIZE],
+    const char highlow[CUBE_ARRAY_SIZE],
+    unsigned char parity)
+{
+    unsigned char ud = all_center_cost(cube);
+    unsigned char lr = decoded_cost(&lr_table, lr_center_rank(cube));
+    unsigned char wing;
+
+    if (ud == UINT8_MAX || lr == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    wing = wing_cost_min(
+        cube,
+        highlow,
+        phase12_wing_exact[ud > PHASE12_COST_MAX ? PHASE12_COST_MAX : ud]
+                          [lr > PHASE12_COST_MAX ? PHASE12_COST_MAX : lr]
+    );
+    if (wing == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    return combined_cost(cube, parity, ud, lr, wing);
 }
 
 static unsigned char parity_after_move(unsigned char parity, move_type move)
@@ -459,7 +781,7 @@ static int search(
     move_type previous,
     unsigned char parity)
 {
-    unsigned char cost = heuristic(cube, highlow, parity);
+    unsigned char cost = heuristic(cube, highlow, parity, (unsigned char)(worker->threshold - depth));
     char child_cube[CUBE_ARRAY_SIZE];
     char child_highlow[CUBE_ARRAY_SIZE];
     char scratch[CUBE_ARRAY_SIZE];
@@ -568,7 +890,7 @@ static uint64_t search_shallow_threshold(unsigned int threshold)
         rotate_444(cube, scratch, CUBE_ARRAY_SIZE, move);
         rotate_444(highlow, scratch, CUBE_ARRAY_SIZE, move);
         nodes++;
-        if (heuristic(cube, highlow, parity)) {
+        if (exact_heuristic(cube, highlow, parity)) {
             continue;
         }
         solution[0] = move;
@@ -701,7 +1023,7 @@ static void print_ida_summary(
             ud,
             lr,
             wing,
-            heuristic(cube_walk, highlow_walk, parity),
+            exact_heuristic(cube_walk, highlow_walk, parity),
             length - step,
             step
         );
@@ -871,7 +1193,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    initial_cost = heuristic(cube, highlow, 0);
+    init_phase12_wing_floor();
+    initial_cost = exact_heuristic(cube, highlow, 0);
     if (initial_cost == UINT8_MAX) {
         fprintf(stderr, "ERROR: initial state is outside a ranked table\n");
         return 1;
@@ -879,6 +1202,7 @@ int main(int argc, char **argv)
     if (cost_to_goal_multiplier) {
         LOG("searching with cost to goal multiplier %.2f\n", cost_to_goal_multiplier);
     }
+    LOG("searching with combined heuristic matrix\n");
     LOG(
         "initial cost %u, mappings %u, root tasks %u, threads %u, orbit0 wide turns %s\n",
         initial_cost,

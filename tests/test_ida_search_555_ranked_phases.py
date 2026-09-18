@@ -28,10 +28,13 @@ PHASE2 = ROOT / "ida_search_555_phase2"
 PHASE3 = ROOT / "ida_search_555_phase3"
 PHASE4 = ROOT / "ida_search_555_phase4"
 PHASE5 = ROOT / "ida_search_555_phase5"
+PHASE6 = ROOT / "ida_search_555_phase6"
 PHASE1_UNIVERSE = math.comb(24, 8)
 PHASE2_UNIVERSE = math.comb(16, 8)
 PHASE5_CENTERS_UNIVERSE = 70**4
 PHASE5_COMBO_UNIVERSE = 70 * 70 * 1680 * 70
+PHASE6_EDGE_UNIVERSE = 812_851_200
+PHASE6_CENTER_UNIVERSE = 176_400
 PHASE2_ILLEGAL = {"Uw", "Uw'", "Fw", "Fw'", "Bw", "Bw'", "Dw", "Dw'"}
 PHASE5_LEGAL = {
     "U2",
@@ -50,6 +53,22 @@ PHASE5_LEGAL = {
     "Bw2",
     "D2",
     "Dw2",
+}
+PHASE6_LEGAL = {
+    "U",
+    "U'",
+    "U2",
+    "L2",
+    "Lw2",
+    "F2",
+    "Fw2",
+    "R2",
+    "Rw2",
+    "B2",
+    "Bw2",
+    "D",
+    "D'",
+    "D2",
 }
 
 
@@ -215,6 +234,28 @@ class Ranked555PythonWiringTest(unittest.TestCase):
         self.assertIn("--low-combo-cost", command)
         self.assertIn("--find-extra", command)
         self.assertEqual(solutions, [(("U2", "F2"), (5, 6, 7, 8))])
+
+    def test_phase6_rank_and_wrapper_use_two_ranked_tables(self):
+        expected_root = self.cube.lt_phase6.ranks()
+        self.assertEqual(expected_root, (0, 29399))
+        completed = subprocess.CompletedProcess(
+            [],
+            0,
+            stdout="SOLUTION ROOT 0 (2 steps): U2 F2\n",
+            stderr="",
+        )
+        with (
+            patch.object(cube555_module, "download_file_if_needed"),
+            patch.object(cube555_module.subprocess, "run", return_value=completed) as run,
+        ):
+            solutions = self.cube.lt_phase6.solutions_via_c([expected_root])
+
+        command = run.call_args.args[0]
+        self.assertEqual(command[0], "./ida_search_555_phase6")
+        self.assertIn("--edge-cost", command)
+        self.assertIn("--center-cost", command)
+        self.assertNotIn("--prune-table-perfect-hash01", command)
+        self.assertEqual(solutions, [(("U2", "F2"), expected_root)])
 
 
 @unittest.skipUnless(PHASE1.is_file() and PHASE2.is_file(), "5x5 ranked solvers have not been built")
@@ -665,6 +706,136 @@ class Ranked555Phase5Test(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("SOLUTION ROOT moved (1 steps): F'", result.stdout)
+
+
+@unittest.skipUnless(PHASE6.is_file(), "5x5 phase-6 solver has not been built")
+class Ranked555Phase6Test(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.directory = Path(self.tempdir.name)
+        self.edge_path = self.directory / "phase6-edges.bin"
+        self.center_path = self.directory / "phase6-centers.bin"
+        self.cube = RubiksCube555(solved_555, "URFDLB")
+        with patch("rubikscubennnsolver.RubiksCube555.download_file_if_needed"):
+            self.cube.lt_init()
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def command(self, roots_path):
+        return [
+            str(PHASE6),
+            "--roots-file",
+            str(roots_path),
+            "--edge-cost",
+            str(self.edge_path),
+            "--center-cost",
+            str(self.center_path),
+        ]
+
+    def write_costs(self, edge_ranks, center_ranks, encoded=1):
+        sparse_cost_file(self.edge_path, PHASE6_EDGE_UNIVERSE, edge_ranks, encoded)
+        sparse_cost_file(self.center_path, PHASE6_CENTER_UNIVERSE, center_ranks, encoded)
+
+    def test_phase6_rank_boundaries_and_legal_moves(self):
+        edge_rank = PHASE6_EDGE_UNIVERSE - 1
+        center_rank = PHASE6_CENTER_UNIVERSE - 1
+        self.write_costs([edge_rank], [center_rank])
+        roots_path = self.directory / "boundary-roots.txt"
+        roots_path.write_text(f"boundary root,{edge_rank},{center_rank}\n")
+
+        result = subprocess.run(
+            self.command(roots_path) + ["--max-ida-threshold", "0", "--print-ranks", "--print-legal-moves"],
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            f"ROOT boundary root EDGE_RANK {edge_rank} CENTER_RANK {center_rank} COST 0",
+            result.stdout,
+        )
+        legal_line = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
+        self.assertEqual(set(legal_line.split()[1:]), PHASE6_LEGAL)
+        self.assertIn("SOLUTION ROOT boundary root (0 steps):", result.stdout)
+
+    def test_phase6_rejects_out_of_range_root(self):
+        self.write_costs([0], [0])
+        roots_path = self.directory / "invalid-root.txt"
+        roots_path.write_text(f"bad,{PHASE6_EDGE_UNIVERSE},0\n")
+
+        result = subprocess.run(self.command(roots_path), capture_output=True, text=True)
+
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("ID,EDGE_RANK,CENTER_RANK", result.stderr)
+
+    def test_phase6_portfolio_preserves_root_identity(self):
+        edge_rank, center_rank = self.cube.lt_phase6.ranks()
+        self.write_costs([edge_rank], [center_rank])
+        roots_path = self.directory / "portfolio-roots.txt"
+        roots_path.write_text(
+            f"first root,{edge_rank},{center_rank}\n" f"second-root,{edge_rank},{center_rank} # duplicate coordinate\n"
+        )
+
+        result = subprocess.run(
+            self.command(roots_path) + ["--max-ida-threshold", "0", "--solution-count", "2", "--find-extra"],
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            [line for line in result.stdout.splitlines() if line.startswith("SOLUTION ROOT")],
+            [
+                "SOLUTION ROOT first root (0 steps):",
+                "SOLUTION ROOT second-root (0 steps):",
+            ],
+        )
+
+    def test_phase6_one_move_rank_transitions(self):
+        high, _, low = self.cube.lt_phase6.edge_square_groups
+
+        def perturb(cube):
+            for first, second in ((high[0], high[1]), (low[0], low[1])):
+                first_partner = cube555_module.edges_partner_555[first]
+                second_partner = cube555_module.edges_partner_555[second]
+                cube.state[first], cube.state[second] = cube.state[second], cube.state[first]
+                cube.state[first_partner], cube.state[second_partner] = (
+                    cube.state[second_partner],
+                    cube.state[first_partner],
+                )
+            cube.state[32], cube.state[82] = cube.state[82], cube.state[32]
+
+        perturb(self.cube)
+        root_ranks = self.cube.lt_phase6.ranks()
+
+        target = RubiksCube555(solved_555, "URFDLB")
+        with patch("rubikscubennnsolver.RubiksCube555.download_file_if_needed"):
+            target.lt_init()
+        perturb(target)
+        target.rotate("F2")
+        target_ranks = target.lt_phase6.ranks()
+        self.assertNotEqual(root_ranks, target_ranks)
+        self.write_costs(target_ranks[:1], target_ranks[1:])
+        if root_ranks[0] != target_ranks[0]:
+            sparse_cost_file(self.edge_path, PHASE6_EDGE_UNIVERSE, root_ranks[:1], encoded=2)
+        if root_ranks[1] != target_ranks[1]:
+            sparse_cost_file(self.center_path, PHASE6_CENTER_UNIVERSE, root_ranks[1:], encoded=2)
+        roots_path = self.directory / "one-move-root.txt"
+        roots_path.write_text(f"moved,{root_ranks[0]},{root_ranks[1]}\n")
+
+        result = subprocess.run(
+            self.command(roots_path) + ["--max-ida-threshold", "1", "--print-ranks", "--print-transitions"],
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertIn(
+            f"TRANSITION ROOT moved MOVE F2 EDGE_RANK {target_ranks[0]} CENTER_RANK {target_ranks[1]}",
+            result.stdout,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("SOLUTION ROOT moved (1 steps): F2", result.stdout)
 
 
 if __name__ == "__main__":

@@ -26,8 +26,11 @@
  * Combined heuristic matrix rebuilt by utils/build-444-heuristic-matrices.py
  * from 200 random cubes after replacing the LFRB-only graph with the exact
  * all-center table (58,800 reachable states in a 70^3 ranked universe).
+ *
+ * Temporarily unused: the searcher uses max(edge, center) only. Several cells
+ * overestimate remaining length, so this table is not admissible.
  */
-static const unsigned char phase34_cost_matrix_444[PHASE34_EDGE_MAX + 1][PHASE34_CENTER_MAX + 1] = {
+static const unsigned char phase34_cost_matrix_444[PHASE34_EDGE_MAX + 1][PHASE34_CENTER_MAX + 1] __attribute__((unused)) = {
     { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 0
     { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 1
     { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 2
@@ -212,19 +215,12 @@ static unsigned char heuristic(const char cube[CUBE_ARRAY_SIZE])
 {
     unsigned char edge_cost = encoded_cost(edge_costs, edge_pairing_rank(cube), EDGE_PAIRING_UNIVERSE);
     unsigned char centers = encoded_cost(center_costs, center_rank(cube), CENTER_UNIVERSE);
-    unsigned char edge_index;
-    unsigned char center_index;
-    unsigned char floor;
-    unsigned char cost;
 
     if (edge_cost == UINT8_MAX || centers == UINT8_MAX) {
         return UINT8_MAX;
     }
-    edge_index = edge_cost > PHASE34_EDGE_MAX ? PHASE34_EDGE_MAX : edge_cost;
-    center_index = centers > PHASE34_CENTER_MAX ? PHASE34_CENTER_MAX : centers;
-    floor = edge_cost > centers ? edge_cost : centers;
-    cost = phase34_cost_matrix_444[edge_index][center_index];
-    return cost > floor ? cost : floor;
+    /* Matrix temporarily disabled; max of the two exact tables is admissible. */
+    return edge_cost > centers ? edge_cost : centers;
 }
 
 static int move_is_allowed(move_type move)
@@ -559,7 +555,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: cube is outside the phase 3+4 tables\n");
         return 1;
     }
-    fprintf(stderr, "searching with combined heuristic matrix\n");
+    fprintf(stderr, "searching with max(edge, center); matrix disabled\n");
     if (!initial_cost) {
         move_type empty[MAX_THRESHOLD + 1] = {MOVE_NONE};
         print_solution(empty, 0);

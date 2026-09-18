@@ -9,9 +9,7 @@ never keep unused lookup table code. If the table isn't used in the solver, it s
 
 ## What "used in the solver" means
 
-A table is used if production solve code downloads or mmaps it (`download_file_if_needed`, `--*-cost FILE`, `LookupTable`/`LookupTableIDAViaGraph` filename, perfect-hash flags). Tests that only exist to exercise a dead table do not count.
-
-**Exception:** a file that is only an input to building a solver-facing artifact (for example a combo `.txt` fed to `build-perfect-hash.py`) may live in **lookup-tables** as a build intermediate. It must not be loaded by the solver, and it must have a Makefile comment that names the solver file it produces.
+A table is used if production solve code downloads or mmaps it (`download_file_if_needed` or a `--*-cost FILE` flag). Tests that only exist to exercise a dead table do not count.
 
 ## When a table stops being used
 

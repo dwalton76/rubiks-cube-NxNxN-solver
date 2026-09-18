@@ -30,8 +30,9 @@ Phase 5/6 - stage UD outer x-centers and pair UD obliques
     also stages the remaining UD centers.
 
 Phase 7 - daisy-solve UD, LR, and FB centers
-    One ranked IDA over five C(8,4) orbits per axis, ignoring outer-x.
-    Perfect 70^5 tables are used; leave-one-out 70^4 tables remain as a fallback.
+    One ranked IDA over five C(8,4) orbits per axis, ignoring outer-x. The
+    production path is the perfect 70^5 table shared by all three axes; the
+    fifteen leave-one-out 70^4 tables remain a live fallback.
     The remaining puzzle is a 5x5x5.
 """
 
@@ -302,8 +303,60 @@ UD_INNER_CENTERS_STAGE_TABLE_777 = "lookup-tables/lookup-table-7x7x7-step20-UD-i
 
 class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
     """
-    Stage the UD inner t- and x-centers while pairing the LR obliques
-    anywhere. The center table has (16! / (8! * 8!))^2 = 165,636,900 states.
+    Phase 2: stage the UD inner t- and x-centers while pairing the LR obliques
+    anywhere.
+
+    One ranked table over the UFBD inner-t and inner-x coordinates.
+
+    (16! / (8! * 8!))^2 = 165,636,900 states
+
+                       . . . . . . .
+                       . . . . . . .
+                       . . U U U . .
+                       . . U . U . .
+                       . . U U U . .
+                       . . . . . . .
+                       . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . x x x . .  . . . . . . .  . . x x x . .
+    . . . . . . .  . . x . x . .  . . . . . . .  . . x . x . .
+    . . . . . . .  . . x x x . .  . . . . . . .  . . x x x . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                       . . . . . . .
+                       . . . . . . .
+                       . . U U U . .
+                       . . U . U . .
+                       . . U U U . .
+                       . . . . . . .
+                       . . . . . . .
+
+    lookup-table-7x7x7-step20-UD-inner-centers-stage.cost-only.bin
+    ==============================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 33 entries (0 percent, 16.50x previous step)
+    3 steps has 374 entries (0 percent, 11.33x previous step)
+    4 steps has 3,838 entries (0 percent, 10.26x previous step)
+    5 steps has 39,254 entries (0 percent, 10.23x previous step)
+    6 steps has 387,357 entries (0 percent, 9.87x previous step)
+    7 steps has 3,374,380 entries (2 percent, 8.71x previous step)
+    8 steps has 20,851,334 entries (12 percent, 6.18x previous step)
+    9 steps has 65,556,972 entries (39 percent, 3.14x previous step)
+    10 steps has 66,986,957 entries (40 percent, 1.02x previous step)
+    11 steps has 8,423,610 entries (5 percent, 0.13x previous step)
+    12 steps has 12,788 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.33 moves
+
+    The LR obliques have no table; ``ida_search_777_centers_stage`` combines this
+    table with an unpaired-oblique count over the left/middle/right triplets, and
+    the obliques only have to be paired, not land on LR. This is the last phase
+    with a 3Xw quarter turn available, so it owns orbit-1 OLL.
     """
 
     def __init__(self, parent):
@@ -405,10 +458,32 @@ UD_OBLIQUE_ONLY_TABLES_777 = tuple(
 
 class LookupTableIDA777UDObliquesOuterXStage:
     """
-    Stage the UD outer x-centers while pairing the UD left, middle, and
-    right obliques anywhere on U/F/D/B. Six pairwise ranked tables, each
-    (16! / (8! * 8!))^2 = 165,636,900 states. The middle obliques are the
-    outer t-centers, so this also finishes staging the remaining UD centers.
+    Combined phases 5/6 IDA: stage the UD outer x-centers while pairing the UD
+    left, middle, and right obliques anywhere on U/F/B/D.
+
+    Four UFBD coordinates - left oblique, middle oblique, right oblique, and
+    outer-x - taken two at a time give the six component tables listed in
+    ``UD_PHASE56_TABLES_777``:
+
+    | Flag                          | Coordinate pair        |
+    | ----------------------------- | ---------------------- |
+    | --left-middle-oblique-cost    | left   x middle        |
+    | --left-right-oblique-cost     | left   x right         |
+    | --left-oblique-outer-x-cost   | left   x outer-x       |
+    | --middle-right-oblique-cost   | middle x right         |
+    | --middle-oblique-outer-x-cost | middle x outer-x       |
+    | --right-oblique-outer-x-cost  | right  x outer-x       |
+
+    Each is a dense pairwise table of (16! / (8! * 8!))^2 = 165,636,900 entries.
+    Their individual diagrams and histograms belong to the builder classes in
+    ``rubikscubelookuptables/builder777.py`` and are not repeated here.
+
+    Every table is the exact joint distance for its pair, so
+    ``ida_search_777_UD_centers_stage`` takes the max of the six as an admissible
+    heuristic. ``UD_OBLIQUE_ONLY_TABLES_777`` is the three-table subset that drops
+    outer-x, which ``RubiksCubeNNNOdd`` uses for rings whose outer-x are painted
+    placeholders. The middle obliques are the outer t-centers, so a solution here
+    also finishes staging the remaining UD centers. This phase owns orbit-0 OLL.
     """
 
     def __init__(self, parent):
@@ -520,13 +595,46 @@ DAISY_CENTERS_ILLEGAL_MOVES_777 = tuple(
 
 class LookupTableIDA777DaisyCenters:
     """
-    Daisy-solve the remaining centers on all three axes. Fifteen leave-one-out
-    70^4 ranked tables, or one perfect 70^5 table shared by all three axes and
-    compacted onto its symmetry orbits, each C(8,4) per orbit.
+    Combined phases 7/8/9 IDA: daisy-solve the remaining centers on all three
+    axes. Each axis has five C(8,4) center orbits - left, middle, and right
+    obliques plus inner-t and inner-x - and outer-x is ignored.
 
-    ``solve_via_c(native_only=True)`` narrows the goal to the native orientation
-    and swaps in the perfect tables built to that same goal, which is what cubes
-    larger than 7x7x7 need for each center orbit.
+    Three sets of component tables, selected by ``use_perfect_tables`` and the
+    ``native_only`` argument to ``solve_via_c``:
+
+    | Set                             | Tables | Selected by                       |
+    | ------------------------------- | ------ | --------------------------------- |
+    | DAISY_PERFECT_TABLES_777        | 1 + index | use_perfect_tables=True (default in lt_init) |
+    | DAISY_LEAVE_ONE_OUT_TABLES_777  | 15     | use_perfect_tables=False          |
+    | NATIVE_SOLVE_PERFECT_TABLES_777 | 1 + index | solve_via_c(native_only=True)     |
+
+    The leave-one-out set is ``DAISY_ORBIT_SLUGS_777`` crossed with UD/LR/FB:
+    five tables per axis, each covering four of that axis's five orbits, so
+    70^4 = 24,010,000 entries apiece. It is a live fallback, not dead code - a
+    box without the perfect table and its index can still solve from it.
+
+    The perfect set replaces those with a single 70^5 cost function shared by
+    all three axes and compacted onto the orbits of the 16 axis-preserving cube
+    symmetries, 105,356,972 orbits behind a rank-select index. The searcher
+    rotates the state onto the UD coordinate and canonicalizes before probing.
+    ``native_only`` narrows the goal to the native orientation and swaps in the
+    twin built to that same goal; the daisy tables score 0 at either daisy
+    orientation, which leaves them blind on 9x9x9 and larger, where only the
+    native orientation is actually solved. It requires the perfect tables
+    because no leave-one-out set was built for that goal.
+
+    Per-table diagrams and histograms belong to the builder classes in
+    ``rubikscubelookuptables/builder777.py`` and are not repeated here.
+
+    An axis costs the most any of its loaded tables reports, so leave-one-out
+    mode maxes over five and perfect mode is a single probe. max(UD, LR, FB) is
+    too weak on its own, so ``ida_search_777_daisy_centers`` feeds the three
+    per-axis costs into the sampled ``daisy_axis_costs_777`` matrix, or
+    ``solve_axis_costs_777`` under ``--native-only``. Passing ``multiplier``
+    scales max(UD, LR, FB) instead; that is not admissible and exists to collect
+    the samples that rebuild those matrices, see
+    ``utils/build-777-daisy-cost-matrix.py`` and
+    ``utils/build-777-solve-cost-matrix.py``.
     """
 
     def __init__(self, parent, use_perfect_tables=False, multiplier=None):

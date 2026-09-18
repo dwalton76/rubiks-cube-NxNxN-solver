@@ -881,6 +881,19 @@ class LookupTable555LRXCenterStage(RankedCenterCoordinate555):
 
 
 class LookupTableIDA555LRCenterStage(LookupTableIDA555RankedCenters):
+    """
+    Phase-1 IDA (``ida_search_555_phase1``): stage the LR t-centers and x-centers onto L and R.
+
+    Component tables (diagrams and histograms live on the classes named below):
+        lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin - LookupTable555LRTCenterStage
+        lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.bin - LookupTable555LRXCenterStage
+
+    Heuristic is the max of the two component costs; a state is pruned when either table reports
+    an unreachable rank. The search always starts from the live cube (``--kociemba``) and rejects
+    pre-ranked roots. ``solution_count`` returns a portfolio of optimal LR-staging solutions
+    (``group_centers_phase1_and_2`` asks for 64) that phase 2 then searches from.
+    """
+
     def __init__(self, parent):
         self.parent = parent
         self.prune_tables = (parent.lt_LR_t_centers_stage, parent.lt_LR_x_centers_stage)
@@ -923,7 +936,16 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA555RankedCenters):
 
 
 class LookupTableIDA555LRTCenterStage(LookupTableIDA555RankedCenters):
-    """LR t-center staging IDA used by 7x7/NNNOdd after they have reduced to a 5x5x5."""
+    """
+    LR t-center staging IDA used by 7x7/NNNOdd after they have reduced to a 5x5x5.
+
+    Component table (diagram and histogram live on the class named below):
+        lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin - LookupTable555LRTCenterStage
+
+    Same ``ida_search_555_phase1`` binary as LookupTableIDA555LRCenterStage, run with
+    ``--t-centers-only`` so the x-center term contributes nothing and the heuristic is the
+    t-center cost alone. Pre-ranked roots are rejected; the search starts from the live cube.
+    """
 
     def __init__(self, parent):
         self.parent = parent
@@ -1065,6 +1087,22 @@ class LookupTable555FBXCenterStage(RankedCenterCoordinate555):
 
 
 class LookupTableIDA555FBCentersStage(LookupTableIDA555RankedCenters):
+    """
+    Phase-2 IDA (``ida_search_555_phase2``): stage FB centers onto F and B, which leaves the
+    remaining centers on U and D.
+
+    Component tables (diagrams and histograms live on the classes named below):
+        lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin - LookupTable555FBTCenterStage
+        lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin - LookupTable555FBXCenterStage
+
+    Heuristic is the max of the two component costs, floored by the orbit-0 parity requirement so
+    an already-staged state still pays for the wide turn it needs. Quarter-turn wide moves that
+    would unstage LR are illegal. ``avoid_oll = 0`` turns into ``--orbit0-need-even-w`` or
+    ``--orbit0-need-odd-w`` depending on whether the phase-1 endpoint already leads to OLL parity.
+    A portfolio of phase-1 endpoints is passed as ``pt_states`` and written to a roots file;
+    solutions come back sorted shortest first, each tagged with the root it came from.
+    """
+
     def __init__(self, parent):
         self.parent = parent
         self.prune_tables = (parent.lt_FB_t_centers_stage, parent.lt_FB_x_centers_stage)
@@ -1132,13 +1170,13 @@ class LookupTableIDA555FBCentersStage(LookupTableIDA555RankedCenters):
 # ==================================================
 class LookupTable555Phase3LRCenterStage:
     """
-       (8! / (4! * 4!))^2 = 4,900 states
+    (8! / (4! * 4!))^2 = 4,900 states
 
-                  . . . . .
-                  . . . . .
-                  . . . . .
-                  . . . . .
-                  . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
 
     . . . . .  . . . . .  . . . . .  . . . . .
     . L L L .  . . . . .  . R R R .  . . . . .
@@ -1146,23 +1184,23 @@ class LookupTable555Phase3LRCenterStage:
     . L L L .  . . . . .  . R R R .  . . . . .
     . . . . .  . . . . .  . . . . .  . . . . .
 
-                  . . . . .
-                  . . . . .
-                  . . . . .
-                  . . . . .
-                  . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
 
-       lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin
-       ========================================================
-       0 steps has 432 entries (8 percent, 0.00x previous step)
-       1 steps has 396 entries (8 percent, 0.92x previous step)
-       2 steps has 1,064 entries (21 percent, 2.69x previous step)
-       3 steps has 1,692 entries (34 percent, 1.59x previous step)
-       4 steps has 1,220 entries (24 percent, 0.72x previous step)
-       5 steps has 96 entries (1 percent, 0.08x previous step)
+    lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin
+    ========================================================
+    0 steps has 432 entries (8 percent, 0.00x previous step)
+    1 steps has 396 entries (8 percent, 0.92x previous step)
+    2 steps has 1,064 entries (21 percent, 2.69x previous step)
+    3 steps has 1,692 entries (34 percent, 1.59x previous step)
+    4 steps has 1,220 entries (24 percent, 0.72x previous step)
+    5 steps has 96 entries (1 percent, 0.08x previous step)
 
-       Total: 4,900 entries
-       Average: 2.64 moves
+    Total: 4,900 entries
+    Average: 2.64 moves
     """
 
     def __init__(self, parent, build_state_index=False):
@@ -1190,13 +1228,13 @@ class LookupTable555Phase3LRCenterStage:
 
 class LookupTable555EdgeOrientOuterOrbit:
     """
-       24! / (12! * 12!) = 2,704,156 states
+    24! / (12! * 12!) = 2,704,156 states
 
-                  . U . D .
-                  D . . . U
-                  . . . . .
-                  U . . . D
-                  . D . U .
+               . U . D .
+               D . . . U
+               . . . . .
+               U . . . D
+               . D . U .
 
     . D . U .  . D . U .  . D . U .  . D . U .
     D . . . U  U . . . D  D . . . U  U . . . D
@@ -1204,28 +1242,28 @@ class LookupTable555EdgeOrientOuterOrbit:
     U . . . D  D . . . U  U . . . D  D . . . U
     . U . D .  . U . D .  . U . D .  . U . D .
 
-                  . U . D .
-                  D . . . U
-                  . . . . .
-                  U . . . D
-                  . D . U .
+               . U . D .
+               D . . . U
+               . . . . .
+               U . . . D
+               . D . U .
 
-       lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin
-       ======================================================
-       0 steps has 1 entries (0 percent, 0.00x previous step)
-       1 steps has 2 entries (0 percent, 2.00x previous step)
-       2 steps has 29 entries (0 percent, 14.50x previous step)
-       3 steps has 278 entries (0 percent, 9.59x previous step)
-       4 steps has 1,934 entries (0 percent, 6.96x previous step)
-       5 steps has 15,640 entries (0 percent, 8.09x previous step)
-       6 steps has 124,249 entries (4 percent, 7.94x previous step)
-       7 steps has 609,241 entries (22 percent, 4.90x previous step)
-       8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
-       9 steps has 688,124 entries (25 percent, 0.56x previous step)
-       10 steps has 40,560 entries (1 percent, 0.06x previous step)
+    lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 278 entries (0 percent, 9.59x previous step)
+    4 steps has 1,934 entries (0 percent, 6.96x previous step)
+    5 steps has 15,640 entries (0 percent, 8.09x previous step)
+    6 steps has 124,249 entries (4 percent, 7.94x previous step)
+    7 steps has 609,241 entries (22 percent, 4.90x previous step)
+    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+    9 steps has 688,124 entries (25 percent, 0.56x previous step)
+    10 steps has 40,560 entries (1 percent, 0.06x previous step)
 
-       Total: 2,704,156 entries
-       Average: 7.95 moves
+    Total: 2,704,156 entries
+    Average: 7.95 moves
     """
 
     def __init__(self, parent, build_state_index=False):
@@ -1259,13 +1297,13 @@ class LookupTable555EdgeOrientOuterOrbit:
 
 class LookupTable555EdgeOrientInnerOrbit:
     """
-       2^12 = 4,096 dense ranks; 2,048 even-parity states are reachable
+    2^12 = 4,096 dense ranks; 2,048 even-parity states are reachable
 
-                  . . U . .
-                  . . . . .
-                  U . . . U
-                  . . . . .
-                  . . U . .
+               . . U . .
+               . . . . .
+               U . . . U
+               . . . . .
+               . . U . .
 
     . . U . .  . . U . .  . . U . .  . . U . .
     . . . . .  . . . . .  . . . . .  . . . . .
@@ -1273,25 +1311,25 @@ class LookupTable555EdgeOrientInnerOrbit:
     . . . . .  . . . . .  . . . . .  . . . . .
     . . U . .  . . U . .  . . U . .  . . U . .
 
-                  . . U . .
-                  . . . . .
-                  U . . . U
-                  . . . . .
-                  . . U . .
+               . . U . .
+               . . . . .
+               U . . . U
+               . . . . .
+               . . U . .
 
-       lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin
-       ======================================================
-       0 steps has 1 entries (0 percent, 0.00x previous step)
-       1 steps has 2 entries (0 percent, 2.00x previous step)
-       2 steps has 25 entries (1 percent, 12.50x previous step)
-       3 steps has 202 entries (9 percent, 8.08x previous step)
-       4 steps has 620 entries (30 percent, 3.07x previous step)
-       5 steps has 900 entries (43 percent, 1.45x previous step)
-       6 steps has 285 entries (13 percent, 0.32x previous step)
-       7 steps has 13 entries (0 percent, 0.05x previous step)
+    lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (1 percent, 12.50x previous step)
+    3 steps has 202 entries (9 percent, 8.08x previous step)
+    4 steps has 620 entries (30 percent, 3.07x previous step)
+    5 steps has 900 entries (43 percent, 1.45x previous step)
+    6 steps has 285 entries (13 percent, 0.32x previous step)
+    7 steps has 13 entries (0 percent, 0.05x previous step)
 
-       Total: 2,048 entries
-       Average: 4.61 moves
+    Total: 2,048 entries
+    Average: 4.61 moves
     """
 
     midge_states = {
@@ -1326,6 +1364,22 @@ class LookupTable555EdgeOrientInnerOrbit:
 
 
 class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA555RankedCenters):
+    """
+    Phase-3 IDA (``ida_search_555_phase3``): orient the 24 wings and 12 midges while reducing the
+    LR centers to one of 432 shapes.
+
+    Component tables (diagrams and histograms live on the classes named below):
+        lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin - LookupTable555Phase3LRCenterStage
+        lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin  - LookupTable555EdgeOrientOuterOrbit
+        lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin  - LookupTable555EdgeOrientInnerOrbit
+
+    Heuristic is the max of the three component costs; a state is pruned when any of them reports
+    an unreachable rank. Every search goes through a roots file: when the caller passes no
+    ``pt_states`` the current cube is ranked into a single root, and ``eo_edges`` instead hands in
+    one root per legal EO mapping so all 2048 even-parity mappings are searched together.
+    Solutions come back sorted shortest first, each tagged with the root it came from.
+    """
+
     def __init__(self, parent):
         self.parent = parent
         self.prune_tables = (
@@ -1402,6 +1456,10 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA555RankedCenters)
 # ==================================================
 class LookupTable555Phase4:
     """
+    Move one group of 4-edges out of the z-plane.
+
+    (12! / (4! * 8!))^3 = 121,287,375 states
+
                . x x x .
                x . . . x
                x . . . x
@@ -1433,6 +1491,11 @@ class LookupTable555Phase4:
 
     Total: 121,287,375 entries
     Average: 4.00 moves
+
+    This class is both the table descriptor and the driver for ``ida_search_555_phase4``. The cost
+    is a single table lookup over the C(12,4) high-wing, midge, and low-wing ranks packed in radix
+    495. One C invocation searches every four-edge choice written to the roots file; ``pair_edges``
+    only keeps the choices that finish in fewer than three moves.
     """
 
     def __init__(self, parent):
@@ -1533,7 +1596,29 @@ class LookupTable555Phase4:
 # pair those four edges; LR/FB centers to vertical bars
 # ==================================================
 class LookupTableIDA555Phase5:
-    """Dedicated ranked phase-5 portfolio search."""
+    """
+    Phase-5 IDA (``ida_search_555_phase5``): pair the four parked x-plane edges and put the LR and
+    FB centers into vertical bars.
+
+    Component tables (diagrams and histograms live with their builder classes in
+    ``rubiks-cube-lookup-tables``):
+        lookup-table-5x5x5-step51-phase5-centers.cost-only.bin
+            LR t/x and FB t/x occupancy. C(8,4)^4 = 24,010,000 dense ranks, of which phase-5 moves
+            reach 2,116,800. Builder: Build555Phase5Centers.
+        lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.cost-only.bin
+            FB t/x occupancy, the four labeled high wings among the eight x-union-y high slots, and
+            midge occupancy. C(8,4)^2 * P(8,4) * C(8,4) = 576,240,000 ranks.
+            Builder: Build555Phase5FBCentersHighEdgeMidge.
+        lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.cost-only.bin
+            Same coordinate against the low wings, also 576,240,000 ranks.
+            Builder: Build555Phase5FBCentersLowEdgeMidge.
+
+    Heuristic is the max of the three component costs; a state is pruned when any of them reports
+    an unreachable rank. Roots are the ``ranks()`` tuples of the phase-4 endpoints that survived,
+    deduplicated and written to a roots file. ``pair_edges`` asks for 500 solutions with
+    ``find_extra`` so phase 6 gets a wide portfolio; solutions come back sorted shortest first,
+    each tagged with the root it came from.
+    """
 
     centers_filename = "lookup-tables/lookup-table-5x5x5-step51-phase5-centers.cost-only.bin"
     high_filename = "lookup-tables/lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.cost-only.bin"
@@ -1682,7 +1767,28 @@ class LookupTableIDA555Phase5:
 # pair the last eight edges and solve the centers
 # ==================================================
 class LookupTableIDA555Phase6:
-    """Dedicated ranked phase-6 portfolio search."""
+    """
+    Phase-6 IDA (``ida_search_555_phase6``): pair the last eight edges and fully solve all 54
+    centers.
+
+    Component tables (diagrams and histograms live with their builder classes in
+    ``rubiks-cube-lookup-tables``):
+        lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin
+            Shared-parity edge coordinate: the high-wing permutation relative to the midges times
+            the even low-wing delta, (8!)^2 / 2 = 812,851,200 ranks.
+            Builder: Build555PairLastEightEdgesEdgesOnly.
+        lookup-table-5x5x5-step61-phase6-centers.cost-only.bin
+            Grouped centers: the LR x-center pair, the FB x-center pair, the UD x-centers, and the
+            UD t-centers packed in radix 6, 6, 70, 70 for 176,400 ranks.
+            Builder: Build555Phase6Centers.
+
+    Heuristic is the max of the edge cost and the center cost; a state is pruned when either
+    reports an unreachable rank. Roots are the ``ranks()`` tuples reached by each phase-4/phase-5
+    prefix, deduplicated and written to a roots file. Because the C search returns the first root
+    that solves at the minimum threshold and knows nothing about prefix cost, ``pair_edges`` groups
+    the roots by phase-4-plus-phase-5 length and searches each group separately so the total, not
+    just the phase-6 suffix, is minimized.
+    """
 
     edge_filename = "lookup-tables/lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin"
     center_filename = "lookup-tables/lookup-table-5x5x5-step61-phase6-centers.cost-only.bin"

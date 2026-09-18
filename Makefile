@@ -1,12 +1,11 @@
 clean-gcc:
-	rm -f ida_search_via_graph ida_search_444_phase1 ida_search_444_phase2 ida_search_555_phase1 ida_search_555_phase2 ida_search_555_phase3 ida_search_555_phase4 ida_search_555_phase5 ida_search_555_phase6 ida_search_666_centers_stage ida_search_666_daisy_centers ida_search_777_centers_stage ida_search_777_daisy_centers ida_search_777_UD_centers_stage my-pt-states.txt
+	rm -f ida_search_444_phase1 ida_search_444_phase2 ida_search_555_phase1 ida_search_555_phase2 ida_search_555_phase3 ida_search_555_phase4 ida_search_555_phase5 ida_search_555_phase6 ida_search_666_centers_stage ida_search_666_daisy_centers ida_search_777_centers_stage ida_search_777_daisy_centers ida_search_777_UD_centers_stage
 
 clean: clean-gcc
 	rm -rf build dist venv rubikscubennnsolver.egg-info cache
 	find . -name __pycache__ | xargs rm -rf
 
 gcc: clean-gcc
-	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_via_graph.c -lm
 	gcc -O3 -o ida_search_444_phase1 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase1.c -lm -lpthread
 	gcc -O3 -o ida_search_444_phase2 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase2.c -lm -lpthread
 	gcc -O3 -Wall -Wextra -o ida_search_555_phase1 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase1.c -lm

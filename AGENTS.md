@@ -7,7 +7,7 @@ Python reduction solver for any even/odd NxNxN cube, plus C IDA searchers. Sibli
 - Do **not** commit unless the user asks.
 - Do **not** start production lookup-table builds. Tables already live on S3; the solver wget/gunzips them on demand into `lookup-tables/`.
 - Do **not** force-push, amend pushed commits, or skip git hooks.
-- Prefer editing existing phase code over inventing a parallel Python IDA. New ranked searches belong in a dedicated `ida_search_*.c`, not another `LookupTableIDAViaGraph` wrapper, unless the prune-table graph path is genuinely the right tool.
+- Prefer editing existing phase code over inventing a parallel Python IDA. New ranked searches belong in a dedicated `ida_search_*.c`.
 - Run C compiles and tests from **this repo root**. Python `Popen`s `./ida_search_*`.
 - On the Windows workstation, compile and test inside WSL Ubuntu (`wsl -d Ubuntu-22.04`), not native PowerShell gcc.
 - Project skills in `.cursor/skills/`: never CRLF (always LF); never keep unused lookup-table code in either repo; if a phase is slow, sample a heuristic matrix instead of shipping `--multiplier`.
@@ -19,7 +19,6 @@ Python reduction solver for any even/odd NxNxN cube, plus C IDA searchers. Sibli
 | `rubiks-cube-solver.py` | CLI: `--state` kociemba string, default order `URFDLB` |
 | `rubikscubennnsolver/` | Cube classes, lookup-table loaders, C sources |
 | `rubikscubennnsolver/ida_search_*.c` | Dedicated ranked IDA binaries |
-| `rubikscubennnsolver/ida_search_via_graph.c` | Generic prune-table IDA (`./ida_search_via_graph`) |
 | `rubikscubennnsolver/rotate_xxx.c`, `ida_search_core.c` | Shared rotate + IDA helpers |
 | `lookup-tables/` | Downloaded (or locally copied) tables. Not built here. |
 | `tests/` | Unit tests; several skip if the matching binary is missing |
@@ -66,7 +65,6 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 
 | Binary | Source | Used for |
 | --- | --- | --- |
-| `ida_search_via_graph` | `ida_search_via_graph.c` | General graph prune-table IDA |
 | `ida_search_555_phase1` | `ida_search_555_phase1.c` | 5x5 LR t/x center staging |
 | `ida_search_555_phase2` | `ida_search_555_phase2.c` | 5x5 FB t/x center staging |
 | `ida_search_555_phase3` | `ida_search_555_phase3.c` | 5x5 EO + LR 1-of-432 |
@@ -81,7 +79,7 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 | `ida_search_777_UD_centers_stage` | `ida_search_777_UD_centers_stage.c` | 7x7 UD outer-x + obliques (6 tables) or `--obliques-only` (3 tables) |
 | `ida_search_777_daisy_centers` | `ida_search_777_daisy_centers.c` | 7x7 daisy, or `--native-only` for 9x9+ |
 
-Ranked searchers are pthread IDA. Graph searcher is the older prune-table stack. A `SOLUTION (N steps): …` line on stdout is the contract Python parses.
+Ranked searchers are pthread IDA. A `SOLUTION (N steps): …` line on stdout is the contract Python parses.
 
 ### Ranked `cost-only.bin`
 
@@ -128,7 +126,7 @@ flowchart TD
 | 2 | `RubiksCube222` | solved | Tiny tables |
 | 3 | `RubiksCube333` | solved | kociemba |
 | 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1 and 2 |
-| 5 | `RubiksCube555` | 3x3 | Ranked C IDA: LR then FB staging (1+2 portfolio), ranked EO (phase 3), then a graph 4+5+6 portfolio that pairs edges and solves centers |
+| 5 | `RubiksCube555` | 3x3 | Six ranked C phases stage centers, orient wings, pair edges, and solve centers |
 | 6 | `RubiksCube666` | 5x5 | Ranked center staging, three 70^5 inner-x-spine daisy tables, then fake-4x4 inside-edge pairing |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
 | even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
@@ -198,12 +196,10 @@ Optional leftover: partial LR/UD searches do not pass `--orbit0-need-*`. Staging
 
 | Suffix | Typical consumer |
 | --- | --- |
-| `.txt` / `.bin` + `.state_index` | Classic `LookupTable` binary search |
 | `.cost-only.bin` | Ranked C mmap |
 | `.cost-only.bin.json` | Builder metadata (rank groups, universe size) |
-| perfect-hash files | `ida_search_via_graph` combo heuristics |
 
-Python ranked drivers (`LookupTableIDA777UDObliquesOuterXStage`, daisy, 6x6 daisy, NNNOdd pairing) `Popen` the C binary with `--kociemba` plus `--*-cost FILE` flags. Graph drivers use `LookupTableIDAViaGraph`.
+Python ranked drivers (`LookupTableIDA777UDObliquesOuterXStage`, daisy, 6x6 daisy, NNNOdd pairing) `Popen` the C binary with `--kociemba` plus `--*-cost FILE` flags.
 
 ## Adding or changing a ranked phase
 

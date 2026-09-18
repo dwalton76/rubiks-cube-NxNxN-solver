@@ -3,7 +3,6 @@ import unittest
 from unittest.mock import patch
 
 # rubiks cube libraries
-from rubikscubennnsolver.LookupTableIDAViaGraph import LookupTableIDAViaGraph
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import (
     DAISY_INNER_X_SPINE_TABLES_666,
@@ -43,10 +42,6 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(cube.lt_FB_centers_stage.__class__.__name__, "LookupTableIDA555FBCentersStage")
         self.assertEqual(cube.lt_phase3.__class__.__name__, "LookupTableIDA555LRCenterStageEOBothOrbits")
         self.assertEqual(cube.lt_phase4.__class__.__name__, "LookupTable555Phase4")
-        self.assertNotIsInstance(cube.lt_LR_centers_stage, LookupTableIDAViaGraph)
-        self.assertNotIsInstance(cube.lt_FB_centers_stage, LookupTableIDAViaGraph)
-        self.assertNotIsInstance(cube.lt_phase3, LookupTableIDAViaGraph)
-        self.assertNotIsInstance(cube.lt_phase4, LookupTableIDAViaGraph)
 
     def test_666_uses_lr_then_combined_ud_oblique_and_ranked_ud(self):
         cube = RubiksCube666(solved_666, "URFDLB")
@@ -107,7 +102,6 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertFalse(hasattr(cube, "lt_LR_oblique_edge_pairing"))
         self.assertFalse(hasattr(cube, "lt_UD_oblique_edge_pairing"))
         self.assertEqual(combined.avoid_oll, 1)
-        self.assertNotIsInstance(combined, LookupTableIDAViaGraph)
         self.assertEqual(
             combined.filename,
             "lookup-tables/lookup-table-7x7x7-step20-UD-inner-centers-stage.cost-only.bin",
@@ -156,13 +150,11 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertIsInstance(fake_777, RubiksCube777ForNNNOdd)
         self.assertIs(RubiksCube777ForNNNOdd.stage_LR_centers, RubiksCube777.stage_LR_centers)
         self.assertEqual(fake_777.lt_LR_oblique_edges_UD_inner_centers_stage.avoid_oll, 1)
-        self.assertNotIsInstance(fake_777.lt_LR_oblique_edge_pairing, LookupTableIDAViaGraph)
         self.assertEqual(
             fake_777.lt_LR_oblique_edge_pairing.__class__.__name__,
             "LookupTableIDA777LRObliqueEdgePairing",
         )
         self.assertEqual(fake_777.lt_UD_obliques_outer_x_stage.avoid_oll, 0)
-        self.assertNotIsInstance(fake_777.lt_UD_oblique_edge_pairing, LookupTableIDAViaGraph)
         self.assertEqual(
             fake_777.lt_UD_oblique_edge_pairing.__class__.__name__,
             "LookupTableIDA777UDObliqueEdgePairing",
@@ -278,7 +270,6 @@ class CenterStagingTablesTest(unittest.TestCase):
         combined = cube.lt_UD_obliques_outer_x_stage
 
         self.assertEqual(combined.avoid_oll, 0)
-        self.assertNotIsInstance(combined, LookupTableIDAViaGraph)
         combined.recolor()
 
         tracked = UFBD_outer_x_centers_777 + UFBD_left_oblique_777 + UFBD_middle_oblique_777 + UFBD_right_oblique_777
@@ -291,7 +282,6 @@ class CenterStagingTablesTest(unittest.TestCase):
         cube.lt_init()
         daisy = cube.lt_daisy_centers
 
-        self.assertNotIsInstance(daisy, LookupTableIDAViaGraph)
         self.assertTrue(daisy.use_perfect_tables)
         self.assertEqual(len(DAISY_LEAVE_ONE_OUT_TABLES_777), 15)
         # One cost table plus its symmetry index, shared by all three axes.

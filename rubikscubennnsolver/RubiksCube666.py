@@ -322,7 +322,51 @@ LR_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step12-LR-inner-x
 
 
 class LookupTableIDA666LRInnerXCentersStage:
-    """Stage LR inner x-centers, keeping the endpoint with the most LR pairs."""
+    """
+    Stage the eight LR inner x-centers on a fixed axis.
+
+    C(24, 8) = 735,471 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . L L . .  . . x x . .  . . L L . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . x x . .
+                 . . x x . .
+                 . . . . . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step12-LR-inner-x-centers-stage-binary.cost-only.bin
+    =======================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+
+    The table alone is the heuristic. ``--solution-count 0`` collects every
+    solution at the shortest length and this class keeps the one leaving the
+    most LR oblique pairs, which gives phase 2 a head start.
+    """
 
     def __init__(self, parent):
         self.parent = parent
@@ -383,6 +427,54 @@ class LookupTableIDA666LRInnerXCentersStage:
 
 
 class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
+    """
+    Stage the eight UD inner x-centers while pairing all eight LR obliques.
+
+    C(24, 8) = 735,471 states
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . x x . .  . . x x . .  . . x x . .  . . x x . .
+    . . x x . .  . . x x . .  . . x x . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . . . . .
+                 . . U U . .
+                 . . U U . .
+                 . . . . . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step11-UD-inner-x-centers-stage-binary.cost-only.bin
+    =======================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
+
+    The obliques have no table of their own. ``ida_search_666_centers_stage``
+    combines this table's cost with the unpaired LR oblique count through the
+    sampled ``unpaired_count_UD_inner_centers_666`` matrix; ``--unpaired-multiplier``
+    falls back to max(table, ceil(unpaired * F)) and is how that matrix was
+    bootstrapped. This phase owns orbit-1 OLL.
+    """
+
     def __init__(self, parent):
         self.parent = parent
         download_file_if_needed(UD_INNER_X_STAGE_TABLE_666)
@@ -435,7 +527,14 @@ class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
 # stage UD left/right obliques and outer x-centers
 # ==================================================
 class LookupTable666RankedPhase4:
-    """Describe a dense pairwise ranked-cost table used by the phase-4 IDA."""
+    """
+    One dense pairwise ranked-cost table used by the phase-4 IDA.
+
+    Each subclass names a single table holding the exact joint distance for one
+    pair of the three phase-4 UD orbits, so its diagram and histogram below are
+    the whole story for that table. ``LookupTableIDA666UDCentersStage`` takes the
+    max over all three.
+    """
 
     def __init__(self, parent, filename):
         self.parent = parent
@@ -445,6 +544,8 @@ class LookupTable666RankedPhase4:
 
 class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase4):
     """
+    Rank the UD left and right oblique coordinates.
+
     (16! / (8! * 8!))^2 = 165,636,900 states
 
                  . . . . . .
@@ -467,6 +568,28 @@ class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase4):
                  . U . . U .
                  . . U U . .
                  . . . . . .
+
+    lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage.cost-only.bin
+    ===========================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 286 entries (0 percent, 9.86x previous step)
+    4 steps has 2,052 entries (0 percent, 7.17x previous step)
+    5 steps has 16,348 entries (0 percent, 7.97x previous step)
+    6 steps has 127,859 entries (0 percent, 7.82x previous step)
+    7 steps has 844,248 entries (0 percent, 6.60x previous step)
+    8 steps has 4,623,585 entries (2 percent, 5.48x previous step)
+    9 steps has 19,019,322 entries (11 percent, 4.11x previous step)
+    10 steps has 47,544,426 entries (28 percent, 2.50x previous step)
+    11 steps has 61,805,656 entries (37 percent, 1.30x previous step)
+    12 steps has 28,890,234 entries (17 percent, 0.47x previous step)
+    13 steps has 2,722,462 entries (1 percent, 0.09x previous step)
+    14 steps has 40,242 entries (0 percent, 0.01x previous step)
+    15 steps has 148 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 10.58 moves
     """
 
     def __init__(self, parent):
@@ -479,6 +602,8 @@ class LookupTable666UDLeftRightObliqueStage(LookupTable666RankedPhase4):
 
 class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase4):
     """
+    Rank the UD left oblique and outer-x coordinates.
+
     (16! / (8! * 8!))^2 = 165,636,900 states
 
                  . . . . . .
@@ -501,6 +626,25 @@ class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase4):
                  . U . . . .
                  . U . U U .
                  . . . . . .
+
+    lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage.cost-only.bin
+    =============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
     """
 
     def __init__(self, parent):
@@ -513,6 +657,8 @@ class LookupTable666UDLeftObliqueOuterXStage(LookupTable666RankedPhase4):
 
 class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase4):
     """
+    Rank the UD right oblique and outer-x coordinates.
+
     (16! / (8! * 8!))^2 = 165,636,900 states
 
                  . . . . . .
@@ -535,6 +681,25 @@ class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase4):
                  . . . . U .
                  . U U . U .
                  . . . . . .
+
+    lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage.cost-only.bin
+    ==============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
     """
 
     def __init__(self, parent):
@@ -546,6 +711,27 @@ class LookupTable666UDRightObliqueOuterXStage(LookupTable666RankedPhase4):
 
 
 class LookupTableIDA666UDCentersStage:
+    """
+    Phase-4 IDA: stage the UD left/right obliques and outer x-centers.
+
+    Component tables, each documented on its own class above:
+
+    | Flag                          | Class                                  |
+    | ----------------------------- | -------------------------------------- |
+    | --left-right-oblique-cost     | LookupTable666UDLeftRightObliqueStage  |
+    | --left-oblique-outer-x-cost   | LookupTable666UDLeftObliqueOuterXStage |
+    | --right-oblique-outer-x-cost  | LookupTable666UDRightObliqueOuterXStage|
+
+    Each table is the exact joint distance for one pair of the three orbits, so
+    ``ida_search_666_centers_stage`` uses the max of the three as an admissible
+    heuristic. Cost 0 means all three UD center orbits are staged.
+
+    ``solution_via_c`` accepts a portfolio of phase-3 roots via ``--kociemba-file``
+    and returns the root index that produced the shortest phase-4 solution, which
+    is how ``stage_LR_and_UD_centers`` picks the best phase-3/phase-4 pair. This
+    phase owns orbit-0 OLL; ``avoid_oll`` becomes the per-root parity requirement.
+    """
+
     def __init__(self, parent):
         self.parent = parent
         self.avoid_oll = None
@@ -634,10 +820,47 @@ DAISY_INNER_X_SPINE_TABLES_666 = tuple(
 
 class LookupTableIDA666DaisyCenters:
     """
-    Daisy-solve remaining centers with three 70^5 inner-x-spine ranked tables.
+    Phase-5 IDA: daisy-solve every remaining center.
 
-    Each table contains all three inner-x orbits and both oblique orbits from
-    one axis. The heuristic is daisy_spine_costs_666 unless --multiplier is set.
+    Three component tables, one per axis, named by
+    ``DAISY_INNER_X_SPINE_TABLES_666`` and passed as
+    ``--all-inner-x-plus-{ud,lr,fb}-obliques-cost``.
+
+    Each table spans five C(8,4) orbits: all three inner-x orbits plus both
+    oblique orbits from its own axis, so 70^5 = 1,680,700,000 entries. The three
+    are the same cost function under a relabelling of axes and therefore share
+    one histogram, recorded here once rather than three times. Each is built to
+    both the native and the obliques-swapped goal, so a cost of 0 means the
+    daisy is reached in either orientation.
+
+    lookup-table-6x6x6-daisy-all-inner-x-plus-{UD,LR,FB}-obliques-centers.cost-only.bin
+    ===================================================================================
+    0 steps has 2 entries (0 percent, 0.00x previous step)
+    1 steps has 20 entries (0 percent, 10.00x previous step)
+    2 steps has 292 entries (0 percent, 14.60x previous step)
+    3 steps has 3,614 entries (0 percent, 12.38x previous step)
+    4 steps has 35,016 entries (0 percent, 9.69x previous step)
+    5 steps has 262,910 entries (0 percent, 7.51x previous step)
+    6 steps has 1,678,254 entries (0 percent, 6.38x previous step)
+    7 steps has 9,314,920 entries (0 percent, 5.55x previous step)
+    8 steps has 42,467,206 entries (2 percent, 4.56x previous step)
+    9 steps has 142,043,698 entries (8 percent, 3.34x previous step)
+    10 steps has 310,836,418 entries (18 percent, 2.19x previous step)
+    11 steps has 436,034,242 entries (25 percent, 1.40x previous step)
+    12 steps has 404,658,064 entries (24 percent, 0.93x previous step)
+    13 steps has 242,558,432 entries (14 percent, 0.60x previous step)
+    14 steps has 83,622,720 entries (4 percent, 0.34x previous step)
+    15 steps has 7,153,472 entries (0 percent, 0.09x previous step)
+    16 steps has 30,720 entries (0 percent, 0.00x previous step)
+
+    Total: 1,680,700,000 entries
+    Average: 11.24 moves
+
+    max(UD, LR, FB) is too weak on its own, so ``ida_search_666_daisy_centers``
+    feeds the three per-axis costs into the sampled ``daisy_spine_costs_666``
+    matrix. Passing ``multiplier`` scales max(UD, LR, FB) instead; that is not
+    admissible and exists to collect the samples that rebuild the matrix, see
+    ``utils/build-666-daisy-cost-matrix.py``.
     """
 
     def __init__(self, parent, multiplier=None):

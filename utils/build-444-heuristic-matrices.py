@@ -25,6 +25,7 @@ from rubikscubennnsolver.RubiksCube444 import (
     PHASE12_HIGHLOW_EDGES_TABLE_444,
     PHASE12_HIGHLOW_TARGET_444,
     PHASE12_LR_CENTERS_TABLE_444,
+    PHASE34_CENTERS_TABLE_444,
     RubiksCube444,
     highlow_edge_mapping_combinations,
     moves_444,
@@ -77,17 +78,14 @@ def phase12_command(cube, cores):
 
 
 def phase34_command(cube, cores):
-    cube.lt_init()
     return cpu_prefix(cores) + [
         PHASE34_BINARY,
         "--kociemba",
         cube.get_kociemba_string(True),
         "--edge-pairing-cost",
         ALL_EDGES_PAIRED_TABLE_444,
-        "--center-graph",
-        cube.lt_phase34_centers.filename_bin,
-        "--center-state-index",
-        str(cube.lt_phase34_centers.state_index()),
+        "--center-cost",
+        PHASE34_CENTERS_TABLE_444,
         "--max-ida-threshold",
         "20",
         "--avoid-pll",

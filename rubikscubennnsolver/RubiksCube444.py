@@ -15,9 +15,9 @@ Phase 1+2 - stage all centers and EO the wings
 
 Phase 3+4 - pair all 12 edges and solve all centers
     ``ida_search_444_phase3_and_4`` over the phase-3 move set, using the dense
-    all-edge pairing table and the exact all-center graph. Combined solutions
-    that would cause PLL parity are skipped. When ``consider_solve_333`` is
-    set, PLL-free reductions are scored with the 3x3x3 solver and search stops
+    all-edge pairing table and the ranked all-center cost table (70^3). Combined
+    solutions that would cause PLL parity are skipped. When ``consider_solve_333``
+    is set, PLL-free reductions are scored with the 3x3x3 solver and search stops
     once a 20-move 3x3x3 appears, or after nine reductions.
 """
 
@@ -28,7 +28,7 @@ from typing import List, Tuple
 
 # rubiks cube libraries
 from rubikscubennnsolver import RubiksCube, wing_str_map
-from rubikscubennnsolver.LookupTable import LookupTable, download_file_if_needed
+from rubikscubennnsolver.LookupTable import download_file_if_needed
 from rubikscubennnsolver.misc import SolveError
 from rubikscubennnsolver.RubiksCube444Misc import highlow_edge_mapping_combinations
 from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_444
@@ -52,6 +52,7 @@ moves_444: Tuple[str] = (
 
 solved_444: str = "UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB"
 ALL_EDGES_PAIRED_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step33-all-edges-paired.cost-only.bin"
+PHASE34_CENTERS_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step31-all-centers.cost-only.bin"
 PHASE12_ALL_CENTERS_TABLE_444 = (
     "lookup-tables/lookup-table-4x4x4-step12-all-centers-stage-symmetry.cost-only.bin"
 )
@@ -210,84 +211,6 @@ def edges_recolor_pattern_444(state: List[int], only_colors: List[str] = None) -
     return "".join(state)
 
 
-# fmt: off
-PHASE34_ILLEGAL_MOVES = (
-    "Uw", "Uw'",
-    "Lw", "Lw'",
-    "Fw", "Fw'",
-    "Rw", "Rw'",
-    "Bw", "Bw'",
-    "Dw", "Dw'",
-    "L", "L'",
-    "R", "R'",
-)
-# fmt: on
-
-
-# ==================================================
-# phase 3+4 all-center graph (58,800 states)
-# ==================================================
-class LookupTable444Reduce333Centers(LookupTable):
-    """
-             . . . .
-             . U U .
-             . U U .
-             . . . .
-
-    . . . .  . . . .  . . . .  . . . .
-    . L L .  . F F .  . R R .  . B B .
-    . L L .  . F F .  . R R .  . B B .
-    . . . .  . . . .  . . . .  . . . .
-
-             . . . .
-             . D D .
-             . D D .
-             . . . .
-
-    lookup-table-4x4x4-step31-all-centers.txt
-    =========================================
-    0 steps has      1 entries ( 0 percent, 0.00x previous step)
-    1 steps has      6 entries ( 0 percent, 6.00x previous step)
-    2 steps has     83 entries ( 0 percent, 13.83x previous step)
-    3 steps has    724 entries ( 1 percent, 8.72x previous step)
-    4 steps has  3,851 entries ( 6 percent, 5.32x previous step)
-    5 steps has 10,426 entries (17 percent, 2.71x previous step)
-    6 steps has 16,693 entries (28 percent, 1.60x previous step)
-    7 steps has 16,616 entries (28 percent, 1.00x previous step)
-    8 steps has  8,928 entries (15 percent, 0.54x previous step)
-    9 steps has  1,472 entries ( 2 percent, 0.16x previous step)
-
-    Total: 58,800 entries
-    Average: 6.31 moves
-    """
-
-    state_targets = ("UUUULLLLFFFFRRRRBBBBDDDD",)
-
-    def __init__(self, parent, build_state_index: bool = False):
-        LookupTable.__init__(
-            self,
-            parent,
-            "lookup-table-4x4x4-step31-all-centers.txt",
-            self.state_targets,
-            linecount=58800,
-            max_depth=9,
-            all_moves=moves_444,
-            illegal_moves=PHASE34_ILLEGAL_MOVES,
-            use_state_index=True,
-            build_state_index=build_state_index,
-        )
-
-    def state(self):
-        parent_state = self.parent.state
-        return "".join(parent_state[x] for x in centers_444)
-
-    def populate_cube_from_state(self, state, cube, steps_to_solve):
-        state = list(state)
-
-        for pos, pos_state in zip(centers_444, state):
-            cube[pos] = pos_state
-
-
 class RubiksCube444(RubiksCube):
     reduce333_orient_edges_tuples = reduce333_orient_edges_tuples
 
@@ -362,8 +285,6 @@ class RubiksCube444(RubiksCube):
         if self.lt_init_called:
             return
         self.lt_init_called = True
-
-        self.lt_phase34_centers = LookupTable444Reduce333Centers(self)
 
     def phase1_and_2(self, multiplier: float = None) -> None:
         """Stage all centers and EO the wings with ``ida_search_444_phase1_and_2``."""
@@ -446,16 +367,15 @@ class RubiksCube444(RubiksCube):
         scored = 0
 
         download_file_if_needed(ALL_EDGES_PAIRED_TABLE_444)
+        download_file_if_needed(PHASE34_CENTERS_TABLE_444)
         cmd = [
             "./ida_search_444_phase3_and_4",
             "--kociemba",
             self.get_kociemba_string(True),
             "--edge-pairing-cost",
             ALL_EDGES_PAIRED_TABLE_444,
-            "--center-graph",
-            self.lt_phase34_centers.filename_bin,
-            "--center-state-index",
-            str(self.lt_phase34_centers.state_index()),
+            "--center-cost",
+            PHASE34_CENTERS_TABLE_444,
             "--max-ida-threshold",
             str(max_ida_threshold),
         ]

@@ -1,5 +1,3 @@
-#include <errno.h>
-#include <fcntl.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <pthread.h>
@@ -8,10 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include <sys/time.h>
-#include <unistd.h>
 
 #include "ida_search_core.h"
 
@@ -19,10 +14,9 @@
 #define CUBE_ARRAY_SIZE 97
 #define PAIR_COUNT 12
 #define EDGE_PAIRING_UNIVERSE UINT64_C(239500800)
-#define CENTER_STATE_COUNT 58800
-#define CENTER_LEGAL_MOVE_COUNT 20
-#define CENTER_ROW_SIZE (1 + (CENTER_LEGAL_MOVE_COUNT * 5))
-#define CENTER_SOLVED_STATE 58029
+#define CENTER_GROUP_SIZE 8
+#define CENTER_GROUP_UNIVERSE UINT64_C(70)
+#define CENTER_UNIVERSE UINT64_C(343000)
 #define DEFAULT_MAX_THRESHOLD 24
 #define MAX_THRESHOLD 40
 #define PHASE34_EDGE_MAX 12
@@ -31,7 +25,7 @@
 /*
  * Combined heuristic matrix rebuilt by utils/build-444-heuristic-matrices.py
  * from 200 random cubes after replacing the LFRB-only graph with the exact
- * 58,800-state all-center graph.
+ * all-center table (58,800 reachable states in a 70^3 ranked universe).
  */
 static const unsigned char phase34_cost_matrix_444[PHASE34_EDGE_MAX + 1][PHASE34_CENTER_MAX + 1] = {
     { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 0
@@ -65,12 +59,21 @@ static const unsigned int low_partners[PAIR_COUNT] = {
     34, 18, 66, 50, 79, 31, 47, 63, 41, 72, 73, 40,
 };
 
+/* Must match Build444Reduce333Centers ranked_cost_square_groups / dense-multiset-cost-v1. */
+static const unsigned int ud_center_squares[CENTER_GROUP_SIZE] = {
+    6, 7, 10, 11, 86, 87, 90, 91,
+};
+static const unsigned int lr_center_squares[CENTER_GROUP_SIZE] = {
+    22, 23, 26, 27, 54, 55, 58, 59,
+};
+static const unsigned int fb_center_squares[CENTER_GROUP_SIZE] = {
+    38, 39, 42, 43, 70, 71, 74, 75,
+};
+
 static unsigned char *edge_costs;
 static int edge_cost_fd = -1;
-static unsigned char *center_graph;
-static int center_graph_fd = -1;
-static unsigned char center_distances[CENTER_STATE_COUNT];
-static unsigned char move_column[MOVE_MAX];
+static unsigned char *center_costs;
+static int center_cost_fd = -1;
 static unsigned int requested_solutions = 1;
 static unsigned int min_threshold;
 static unsigned int max_threshold = DEFAULT_MAX_THRESHOLD;
@@ -79,11 +82,9 @@ static atomic_uint found_solutions;
 static atomic_int stop_search;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
 static char summary_root_cube[CUBE_ARRAY_SIZE];
-static unsigned int summary_root_center_state;
 
 struct worker {
     char cube[CUBE_ARRAY_SIZE];
-    unsigned int center_state;
     unsigned int threshold;
     uint64_t nodes;
     move_type path[MAX_THRESHOLD + 1];
@@ -93,7 +94,7 @@ static void usage(const char *program)
 {
     printf(
         "usage: %s --kociemba STATE --edge-pairing-cost FILE "
-        "--center-graph FILE --center-state-index N "
+        "--center-cost FILE "
         "[--solution-count N] [--min-ida-threshold N] "
         "[--max-ida-threshold N] [--avoid-pll] [--print-rank]\n",
         program
@@ -180,32 +181,50 @@ static uint64_t edge_pairing_rank(const char cube[CUBE_ARRAY_SIZE])
     return even_permutation_rank(permutation);
 }
 
-static unsigned char heuristic(const char cube[CUBE_ARRAY_SIZE], unsigned int center_state)
+static uint64_t center_rank(const char cube[CUBE_ARRAY_SIZE])
 {
-    uint64_t rank = edge_pairing_rank(cube);
-    unsigned char edge_cost;
-    unsigned char centers;
+    uint64_t ranks[3];
 
-    if (rank >= EDGE_PAIRING_UNIVERSE) {
-        return UINT8_MAX;
-    }
-    edge_cost = edge_costs[rank];
-    if (!edge_cost) {
-        return UINT8_MAX;
-    }
-    edge_cost--;
-    if (center_state >= CENTER_STATE_COUNT) {
-        return UINT8_MAX;
-    }
-    centers = center_distances[center_state];
-    {
-        unsigned char edge_index = edge_cost > PHASE34_EDGE_MAX ? PHASE34_EDGE_MAX : edge_cost;
-        unsigned char center_index = centers > PHASE34_CENTER_MAX ? PHASE34_CENTER_MAX : centers;
-        unsigned char floor = edge_cost > centers ? edge_cost : centers;
-        unsigned char cost = phase34_cost_matrix_444[edge_index][center_index];
+    ranks[0] = ida_combination_rank_pair(
+        cube, ud_center_squares, CENTER_GROUP_SIZE, 4, CENTER_GROUP_UNIVERSE, 'D', 'U');
+    ranks[1] = ida_combination_rank_pair(
+        cube, lr_center_squares, CENTER_GROUP_SIZE, 4, CENTER_GROUP_UNIVERSE, 'L', 'R');
+    ranks[2] = ida_combination_rank_pair(
+        cube, fb_center_squares, CENTER_GROUP_SIZE, 4, CENTER_GROUP_UNIVERSE, 'B', 'F');
+    return ida_mixed_radix_rank(ranks, 3, CENTER_GROUP_UNIVERSE);
+}
 
-        return cost > floor ? cost : floor;
+static unsigned char encoded_cost(const unsigned char *table, uint64_t rank, uint64_t universe)
+{
+    unsigned char encoded;
+
+    if (rank >= universe) {
+        return UINT8_MAX;
     }
+    encoded = table[rank];
+    if (!encoded) {
+        return UINT8_MAX;
+    }
+    return encoded - 1;
+}
+
+static unsigned char heuristic(const char cube[CUBE_ARRAY_SIZE])
+{
+    unsigned char edge_cost = encoded_cost(edge_costs, edge_pairing_rank(cube), EDGE_PAIRING_UNIVERSE);
+    unsigned char centers = encoded_cost(center_costs, center_rank(cube), CENTER_UNIVERSE);
+    unsigned char edge_index;
+    unsigned char center_index;
+    unsigned char floor;
+    unsigned char cost;
+
+    if (edge_cost == UINT8_MAX || centers == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    edge_index = edge_cost > PHASE34_EDGE_MAX ? PHASE34_EDGE_MAX : edge_cost;
+    center_index = centers > PHASE34_CENTER_MAX ? PHASE34_CENTER_MAX : centers;
+    floor = edge_cost > centers ? edge_cost : centers;
+    cost = phase34_cost_matrix_444[edge_index][center_index];
+    return cost > floor ? cost : floor;
 }
 
 static int move_is_allowed(move_type move)
@@ -241,19 +260,6 @@ static int move_follows(move_type previous, move_type move)
     return !steps_on_same_face_and_layer(previous, move) &&
            steps_on_same_face_in_order(previous, move) &&
            steps_on_opposite_faces_in_order(previous, move);
-}
-
-static unsigned int center_next_state(unsigned int state, move_type move)
-{
-    typedef uint32_t unaligned_u32 __attribute__((aligned(1), may_alias));
-    unsigned char column = move_column[move];
-    size_t offset;
-
-    if (state >= CENTER_STATE_COUNT || column >= CENTER_LEGAL_MOVE_COUNT) {
-        return UINT_MAX;
-    }
-    offset = ((size_t)state * CENTER_ROW_SIZE) + 1 + ((size_t)column * 5);
-    return *(const unaligned_u32 *)(center_graph + offset);
 }
 
 static void print_solution(const move_type path[MAX_THRESHOLD + 1], unsigned int depth)
@@ -352,17 +358,13 @@ static void print_ida_summary(const move_type path[MAX_THRESHOLD + 1], unsigned 
 {
     char cube[CUBE_ARRAY_SIZE];
     char scratch[CUBE_ARRAY_SIZE];
-    unsigned int center_state = summary_root_center_state;
 
     memcpy(cube, summary_root_cube, sizeof(cube));
     printf("\n       EDGE  CTR  CTG  TRU  IDX\n");
     printf("       ====  ===  ===  ===  ===\n");
     for (unsigned int step = 0; step <= length; step++) {
-        uint64_t rank = edge_pairing_rank(cube);
-        unsigned char edge = rank < EDGE_PAIRING_UNIVERSE && edge_costs[rank]
-                           ? edge_costs[rank] - 1 : UINT8_MAX;
-        unsigned char centers = center_state < CENTER_STATE_COUNT
-                              ? center_distances[center_state] : UINT8_MAX;
+        unsigned char edge = encoded_cost(edge_costs, edge_pairing_rank(cube), EDGE_PAIRING_UNIVERSE);
+        unsigned char centers = encoded_cost(center_costs, center_rank(cube), CENTER_UNIVERSE);
         if (step) {
             printf("%5s ", move2str[path[step - 1]]);
         } else {
@@ -378,7 +380,6 @@ static void print_ida_summary(const move_type path[MAX_THRESHOLD + 1], unsigned 
         );
         if (step < length) {
             rotate_444(cube, scratch, CUBE_ARRAY_SIZE, path[step]);
-            center_state = center_next_state(center_state, path[step]);
         }
     }
     printf("\n");
@@ -387,12 +388,11 @@ static void print_ida_summary(const move_type path[MAX_THRESHOLD + 1], unsigned 
 static int search(
     struct worker *worker,
     const char cube[CUBE_ARRAY_SIZE],
-    unsigned int center_state,
     unsigned int depth,
     unsigned int threshold,
     move_type previous)
 {
-    unsigned char cost = heuristic(cube, center_state);
+    unsigned char cost = heuristic(cube);
     char child[CUBE_ARRAY_SIZE];
     char scratch[CUBE_ARRAY_SIZE];
 
@@ -432,7 +432,7 @@ static int search(
         memcpy(child, cube, sizeof(child));
         rotate_444(child, scratch, CUBE_ARRAY_SIZE, move);
         worker->path[depth] = move;
-        if (search(worker, child, center_next_state(center_state, move), depth + 1, threshold, move)) {
+        if (search(worker, child, depth + 1, threshold, move)) {
             return 1;
         }
     }
@@ -442,7 +442,7 @@ static int search(
 static void *search_worker(void *argument)
 {
     struct worker *worker = argument;
-    search(worker, worker->cube, worker->center_state, 1, worker->threshold, worker->path[0]);
+    search(worker, worker->cube, 1, worker->threshold, worker->path[0]);
     return NULL;
 }
 
@@ -453,7 +453,6 @@ static double elapsed_seconds(const struct timeval *start, const struct timeval 
 
 static uint64_t search_threshold(
     const char cube[CUBE_ARRAY_SIZE],
-    unsigned int center_state,
     unsigned int threshold)
 {
     pthread_t threads[MOVE_COUNT_444];
@@ -476,7 +475,6 @@ static uint64_t search_threshold(
         memset(worker, 0, sizeof(*worker));
         memcpy(worker->cube, cube, CUBE_ARRAY_SIZE);
         rotate_444(worker->cube, scratch, CUBE_ARRAY_SIZE, move);
-        worker->center_state = center_next_state(center_state, move);
         worker->threshold = threshold;
         worker->path[0] = move;
         if (pthread_create(&threads[thread_count], NULL, search_worker, worker) != 0) {
@@ -497,67 +495,19 @@ static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
     ida_init_cube(cube, CUBE_SIZE, kociemba);
 }
 
-static void map_cost_file(const char *filename)
+static void map_cost_file(const char *filename, uint64_t universe, int *fd, unsigned char **costs)
 {
-    struct mapped_cost_file mapped = ida_map_cost_file(filename, EDGE_PAIRING_UNIVERSE);
+    struct mapped_cost_file mapped = ida_map_cost_file(filename, universe);
 
-    edge_cost_fd = mapped.fd;
-    edge_costs = mapped.costs;
-}
-
-static void map_center_graph(const char *filename)
-{
-    struct stat file_stat;
-    unsigned int queue[CENTER_STATE_COUNT];
-    unsigned int queue_start = 0;
-    unsigned int queue_end = 0;
-
-    center_graph_fd = open(filename, O_RDONLY);
-    if (center_graph_fd < 0 || fstat(center_graph_fd, &file_stat) != 0) {
-        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-    if ((size_t)file_stat.st_size != CENTER_STATE_COUNT * CENTER_ROW_SIZE) {
-        fprintf(stderr, "ERROR: center graph has unexpected size %jd\n", (intmax_t)file_stat.st_size);
-        exit(1);
-    }
-    center_graph = mmap(NULL, file_stat.st_size, PROT_READ, MAP_SHARED, center_graph_fd, 0);
-    if (center_graph == MAP_FAILED) {
-        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
-        exit(1);
-    }
-
-    memset(center_distances, 0xff, sizeof(center_distances));
-    center_distances[CENTER_SOLVED_STATE] = 0;
-    queue[queue_end++] = CENTER_SOLVED_STATE;
-    while (queue_start < queue_end) {
-        unsigned int state = queue[queue_start++];
-        for (unsigned int column = 0; column < CENTER_LEGAL_MOVE_COUNT; column++) {
-            typedef uint32_t unaligned_u32 __attribute__((aligned(1), may_alias));
-            size_t offset = ((size_t)state * CENTER_ROW_SIZE) + 1 + ((size_t)column * 5);
-            unsigned int child = *(const unaligned_u32 *)(center_graph + offset);
-            if (child >= CENTER_STATE_COUNT) {
-                fprintf(stderr, "ERROR: center graph points outside its state space\n");
-                exit(1);
-            }
-            if (center_distances[child] == UINT8_MAX) {
-                center_distances[child] = center_distances[state] + 1;
-                queue[queue_end++] = child;
-            }
-        }
-    }
-    if (queue_end != CENTER_STATE_COUNT) {
-        fprintf(stderr, "ERROR: center graph reached only %u of %u states\n", queue_end, CENTER_STATE_COUNT);
-        exit(1);
-    }
+    *fd = mapped.fd;
+    *costs = mapped.costs;
 }
 
 int main(int argc, char **argv)
 {
     const char *kociemba = NULL;
     const char *cost_filename = NULL;
-    const char *center_graph_filename = NULL;
-    unsigned int center_state = UINT_MAX;
+    const char *center_cost_filename = NULL;
     int print_rank = 0;
     char cube[CUBE_ARRAY_SIZE];
 
@@ -566,10 +516,8 @@ int main(int argc, char **argv)
             kociemba = argv[++index];
         } else if (!strcmp(argv[index], "--edge-pairing-cost") && index + 1 < argc) {
             cost_filename = argv[++index];
-        } else if (!strcmp(argv[index], "--center-graph") && index + 1 < argc) {
-            center_graph_filename = argv[++index];
-        } else if (!strcmp(argv[index], "--center-state-index") && index + 1 < argc) {
-            center_state = (unsigned int)strtoul(argv[++index], NULL, 10);
+        } else if (!strcmp(argv[index], "--center-cost") && index + 1 < argc) {
+            center_cost_filename = argv[++index];
         } else if (!strcmp(argv[index], "--solution-count") && index + 1 < argc) {
             requested_solutions = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--min-ida-threshold") && index + 1 < argc) {
@@ -589,38 +537,26 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    if (!kociemba || !cost_filename || !center_graph_filename ||
-        center_state >= CENTER_STATE_COUNT || !requested_solutions ||
-        max_threshold > MAX_THRESHOLD) {
+    if (!kociemba || !cost_filename || !center_cost_filename ||
+        !requested_solutions || max_threshold > MAX_THRESHOLD) {
         usage(argv[0]);
         return 1;
     }
 
     init_cube(cube, kociemba);
-    map_cost_file(cost_filename);
-    unsigned char column = 0;
-    memset(move_column, 0xff, sizeof(move_column));
-    for (unsigned int index = 0; index < MOVE_COUNT_444; index++) {
-        if (move_is_allowed(moves_444[index])) {
-            move_column[moves_444[index]] = column++;
-        }
-    }
-    if (column != CENTER_LEGAL_MOVE_COUNT) {
-        fprintf(stderr, "ERROR: expected %u legal center moves, found %u\n", CENTER_LEGAL_MOVE_COUNT, column);
-        return 1;
-    }
-    map_center_graph(center_graph_filename);
+    map_cost_file(cost_filename, EDGE_PAIRING_UNIVERSE, &edge_cost_fd, &edge_costs);
+    map_cost_file(center_cost_filename, CENTER_UNIVERSE, &center_cost_fd, &center_costs);
     memcpy(summary_root_cube, cube, sizeof(summary_root_cube));
-    summary_root_center_state = center_state;
     if (print_rank) {
         printf("EDGE_PAIRING_RANK %" PRIu64 "\n", edge_pairing_rank(cube));
-        printf("CENTER_EXACT_COST %u\n", center_distances[center_state]);
-        printf("HEURISTIC %u\n", heuristic(cube, center_state));
+        printf("CENTER_RANK %" PRIu64 "\n", center_rank(cube));
+        printf("CENTER_EXACT_COST %u\n", encoded_cost(center_costs, center_rank(cube), CENTER_UNIVERSE));
+        printf("HEURISTIC %u\n", heuristic(cube));
     }
 
-    unsigned char initial_cost = heuristic(cube, center_state);
+    unsigned char initial_cost = heuristic(cube);
     if (initial_cost == UINT8_MAX) {
-        fprintf(stderr, "ERROR: cube is outside the all-edge pairing table\n");
+        fprintf(stderr, "ERROR: cube is outside the phase 3+4 tables\n");
         return 1;
     }
     fprintf(stderr, "searching with combined heuristic matrix\n");
@@ -638,7 +574,7 @@ int main(int argc, char **argv)
         uint64_t nodes_per_sec;
 
         gettimeofday(&start, NULL);
-        nodes = search_threshold(cube, center_state, threshold);
+        nodes = search_threshold(cube, threshold);
         gettimeofday(&end, NULL);
         seconds = elapsed_seconds(&start, &end);
         nodes_per_sec = seconds > 0.0 ? (uint64_t)(nodes / seconds) : 0;
@@ -656,7 +592,6 @@ int main(int argc, char **argv)
     }
 
     ida_unmap_cost_file(edge_cost_fd, edge_costs, EDGE_PAIRING_UNIVERSE);
-    munmap(center_graph, CENTER_STATE_COUNT * CENTER_ROW_SIZE);
-    close(center_graph_fd);
+    ida_unmap_cost_file(center_cost_fd, center_costs, CENTER_UNIVERSE);
     return atomic_load(&found_solutions) ? 0 : 1;
 }

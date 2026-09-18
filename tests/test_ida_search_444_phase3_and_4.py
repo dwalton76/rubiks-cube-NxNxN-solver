@@ -4,13 +4,12 @@ import unittest
 from pathlib import Path
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube444 import PHASE34_CENTERS_TABLE_444, RubiksCube444, solved_444
 
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = ROOT / "ida_search_444_phase3_and_4"
 EDGE_TABLE = ROOT / "lookup-tables" / "lookup-table-4x4x4-step33-all-edges-paired.cost-only.bin"
-CENTER_GRAPH = ROOT / "lookup-tables" / "lookup-table-4x4x4-step31-all-centers.bin"
-CENTER_SOLVED_STATE = 58029
+CENTER_TABLE = ROOT / PHASE34_CENTERS_TABLE_444
 PLACEHOLDER = "/dev/null"
 
 
@@ -19,17 +18,15 @@ class Phase34Search444Test(unittest.TestCase):
     def setUp(self):
         self.cube = RubiksCube444(solved_444, "URFDLB")
 
-    def command(self, *extra, edge=PLACEHOLDER, graph=PLACEHOLDER, center_state=CENTER_SOLVED_STATE):
+    def command(self, *extra, edge=PLACEHOLDER, centers=PLACEHOLDER):
         return [
             str(BINARY),
             "--kociemba",
             self.cube.get_kociemba_string(True),
             "--edge-pairing-cost",
             str(edge),
-            "--center-graph",
-            str(graph),
-            "--center-state-index",
-            str(center_state),
+            "--center-cost",
+            str(centers),
             *extra,
         ]
 
@@ -45,19 +42,14 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("invalid argument --ud-cost", result.stderr)
 
-    def test_center_state_index_must_be_in_range(self):
-        result = subprocess.run(self.command(center_state=58800), capture_output=True, text=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("usage:", result.stdout)
-
-    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_GRAPH.is_file(), "phase 3+4 tables are not present")
+    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 3+4 tables are not present")
     def test_solved_cube_is_a_zero_move_goal(self):
         result = subprocess.run(
             self.command(
                 "--max-ida-threshold",
                 "0",
                 edge=EDGE_TABLE,
-                graph=CENTER_GRAPH,
+                centers=CENTER_TABLE,
             ),
             capture_output=True,
             text=True,
@@ -65,10 +57,10 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("SOLUTION (0 steps)", result.stdout)
 
-    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_GRAPH.is_file(), "phase 3+4 tables are not present")
+    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 3+4 tables are not present")
     def test_print_rank_on_solved_cube(self):
         result = subprocess.run(
-            self.command("--print-rank", "--max-ida-threshold", "0", edge=EDGE_TABLE, graph=CENTER_GRAPH),
+            self.command("--print-rank", "--max-ida-threshold", "0", edge=EDGE_TABLE, centers=CENTER_TABLE),
             capture_output=True,
             text=True,
         )
@@ -77,13 +69,12 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertIn("CENTER_EXACT_COST 0", result.stdout)
         self.assertIn("HEURISTIC 0", result.stdout)
 
-    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_GRAPH.is_file(), "phase 3+4 tables are not present")
+    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 3+4 tables are not present")
     def test_avoid_pll_returns_first_pll_free_reduction(self):
         cube = RubiksCube444(
             "DLLUUUUULUURUDDBDFFRLLLDURRBLLBLFBRRFBBDFFFRLUFBFLDDFDDFDDDUFDUU" "FRBLLRRRBLLURBLDBBDRFFFURBBRBBRU",
             "URFDLB",
         )
-        cube.lt_init()
         result = subprocess.run(
             [
                 str(BINARY),
@@ -91,10 +82,8 @@ class Phase34Search444Test(unittest.TestCase):
                 cube.get_kociemba_string(True),
                 "--edge-pairing-cost",
                 str(EDGE_TABLE),
-                "--center-graph",
-                str(CENTER_GRAPH),
-                "--center-state-index",
-                str(cube.lt_phase34_centers.state_index()),
+                "--center-cost",
+                str(CENTER_TABLE),
                 "--avoid-pll",
                 "--max-ida-threshold",
                 "20",

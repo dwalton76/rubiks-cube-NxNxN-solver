@@ -9,8 +9,8 @@ from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = ROOT / "ida_search_444_phase3_and_4"
 EDGE_TABLE = ROOT / "lookup-tables" / "lookup-table-4x4x4-step33-all-edges-paired.cost-only.bin"
-CENTER_GRAPH = ROOT / "lookup-tables" / "lookup-table-4x4x4-step31-centers.bin"
-CENTER_SOLVED_STATE = 69
+CENTER_GRAPH = ROOT / "lookup-tables" / "lookup-table-4x4x4-step31-all-centers.bin"
+CENTER_SOLVED_STATE = 58029
 PLACEHOLDER = "/dev/null"
 
 
@@ -46,7 +46,7 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertIn("invalid argument --ud-cost", result.stderr)
 
     def test_center_state_index_must_be_in_range(self):
-        result = subprocess.run(self.command(center_state=840), capture_output=True, text=True)
+        result = subprocess.run(self.command(center_state=58800), capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("usage:", result.stdout)
 
@@ -74,7 +74,6 @@ class Phase34Search444Test(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("EDGE_PAIRING_RANK 0", result.stdout)
-        self.assertIn("CENTER_COST 0", result.stdout)
         self.assertIn("CENTER_EXACT_COST 0", result.stdout)
         self.assertIn("HEURISTIC 0", result.stdout)
 
@@ -84,6 +83,7 @@ class Phase34Search444Test(unittest.TestCase):
             "DLLUUUUULUURUDDBDFFRLLLDURRBLLBLFBRRFBBDFFFRLUFBFLDDFDDFDDDUFDUU" "FRBLLRRRBLLURBLDBBDRFFFURBBRBBRU",
             "URFDLB",
         )
+        cube.lt_init()
         result = subprocess.run(
             [
                 str(BINARY),
@@ -94,7 +94,7 @@ class Phase34Search444Test(unittest.TestCase):
                 "--center-graph",
                 str(CENTER_GRAPH),
                 "--center-state-index",
-                "653",
+                str(cube.lt_phase34_centers.state_index()),
                 "--avoid-pll",
                 "--max-ida-threshold",
                 "20",

@@ -13,9 +13,9 @@ Phase 1+2 - stage all centers and EO the wings
     is required via ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w``. The
     winning ``edge_mapping`` is recovered from the staged high/low state.
 
-Phase 3+4 - pair all 12 edges and solve the centers
+Phase 3+4 - pair all 12 edges and solve all centers
     ``ida_search_444_phase3_and_4`` over the phase-3 move set, using the dense
-    all-edge pairing table and the exact LFRB-center graph. Combined solutions
+    all-edge pairing table and the exact all-center graph. Combined solutions
     that would cause PLL parity are skipped. When ``consider_solve_333`` is
     set, PLL-free reductions are scored with the 3x3x3 solver and search stops
     once a 20-move 3x3x3 appears, or after nine reductions.
@@ -69,13 +69,6 @@ centers_444: Tuple[int] = (
     54, 55, 58, 59,  # Right
     70, 71, 74, 75,  # Back
     86, 87, 90, 91,  # Down
-)
-
-LFRB_centers_444: Tuple[int] = (
-    22, 23, 26, 27,  # Left
-    38, 39, 42, 43,  # Front
-    54, 55, 58, 59,  # Right
-    70, 71, 74, 75,  # Back
 )
 
 corners_444: Tuple[int] = (
@@ -233,13 +226,13 @@ PHASE34_ILLEGAL_MOVES = (
 
 
 # ==================================================
-# phase 3+4 LFRB-center graph (840 states)
+# phase 3+4 all-center graph (58,800 states)
 # ==================================================
-class LookupTable444Reduce333LFRBCenters(LookupTable):
+class LookupTable444Reduce333Centers(LookupTable):
     """
              . . . .
-             . . . .
-             . . . .
+             . U U .
+             . U U .
              . . . .
 
     . . . .  . . . .  . . . .  . . . .
@@ -248,70 +241,42 @@ class LookupTable444Reduce333LFRBCenters(LookupTable):
     . . . .  . . . .  . . . .  . . . .
 
              . . . .
-             . . . .
-             . . . .
+             . D D .
+             . D D .
              . . . .
 
-    lookup-table-4x4x4-step31-centers.txt
+    lookup-table-4x4x4-step31-all-centers.txt
     =====================================
-    0 steps has 36 entries (4 percent, 0.00x previous step)
-    1 steps has 80 entries (9 percent, 2.22x previous step)
-    2 steps has 212 entries (25 percent, 2.65x previous step)
-    3 steps has 288 entries (34 percent, 1.36x previous step)
-    4 steps has 192 entries (22 percent, 0.67x previous step)
-    5 steps has 32 entries (3 percent, 0.17x previous step)
+    The graph contains every center state reachable from solved after phase 1+2
+    under the phase-3 move set. Unlike the old LFRB-only graph, its single goal
+    includes the U/D centers, so a zero graph cost means all 24 centers are
+    solved.
 
-    Total: 840 entries
-    Average: 2.73 moves
+    0 steps has      1 entries ( 0 percent, 0.00x previous step)
+    1 steps has      6 entries ( 0 percent, 6.00x previous step)
+    2 steps has     83 entries ( 0 percent, 13.83x previous step)
+    3 steps has    724 entries ( 1 percent, 8.72x previous step)
+    4 steps has  3,851 entries ( 6 percent, 5.32x previous step)
+    5 steps has 10,426 entries (17 percent, 2.71x previous step)
+    6 steps has 16,693 entries (28 percent, 1.60x previous step)
+    7 steps has 16,616 entries (28 percent, 1.00x previous step)
+    8 steps has  8,928 entries (15 percent, 0.54x previous step)
+    9 steps has  1,472 entries ( 2 percent, 0.16x previous step)
+
+    Total: 58,800 entries
+    Average: 6.31 moves
     """
 
-    state_targets = (
-        "LLLLBBBBRRRRFFFF",
-        "LLLLBFBFRRRRBFBF",
-        "LLLLBFBFRRRRFBFB",
-        "LLLLFBFBRRRRBFBF",
-        "LLLLFBFBRRRRFBFB",
-        "LLLLFFFFRRRRBBBB",
-        "LRLRBBBBLRLRFFFF",
-        "LRLRBBBBRLRLFFFF",
-        "LRLRBFBFLRLRBFBF",
-        "LRLRBFBFLRLRFBFB",
-        "LRLRBFBFRLRLBFBF",
-        "LRLRBFBFRLRLFBFB",
-        "LRLRFBFBLRLRBFBF",
-        "LRLRFBFBLRLRFBFB",
-        "LRLRFBFBRLRLBFBF",
-        "LRLRFBFBRLRLFBFB",
-        "LRLRFFFFLRLRBBBB",
-        "LRLRFFFFRLRLBBBB",
-        "RLRLBBBBLRLRFFFF",
-        "RLRLBBBBRLRLFFFF",
-        "RLRLBFBFLRLRBFBF",
-        "RLRLBFBFLRLRFBFB",
-        "RLRLBFBFRLRLBFBF",
-        "RLRLBFBFRLRLFBFB",
-        "RLRLFBFBLRLRBFBF",
-        "RLRLFBFBLRLRFBFB",
-        "RLRLFBFBRLRLBFBF",
-        "RLRLFBFBRLRLFBFB",
-        "RLRLFFFFLRLRBBBB",
-        "RLRLFFFFRLRLBBBB",
-        "RRRRBBBBLLLLFFFF",
-        "RRRRBFBFLLLLBFBF",
-        "RRRRBFBFLLLLFBFB",
-        "RRRRFBFBLLLLBFBF",
-        "RRRRFBFBLLLLFBFB",
-        "RRRRFFFFLLLLBBBB",
-    )
+    state_targets = ("UUUULLLLFFFFRRRRBBBBDDDD",)
 
     def __init__(self, parent, build_state_index: bool = False):
         LookupTable.__init__(
             self,
             parent,
-            "lookup-table-4x4x4-step31-centers.txt",
+            "lookup-table-4x4x4-step31-all-centers.txt",
             self.state_targets,
-            linecount=840,
-            max_depth=5,
+            linecount=58800,
+            max_depth=9,
             all_moves=moves_444,
             illegal_moves=PHASE34_ILLEGAL_MOVES,
             use_state_index=True,
@@ -320,12 +285,12 @@ class LookupTable444Reduce333LFRBCenters(LookupTable):
 
     def state(self):
         parent_state = self.parent.state
-        return "".join([parent_state[x] for x in LFRB_centers_444])
+        return "".join(parent_state[x] for x in centers_444)
 
     def populate_cube_from_state(self, state, cube, steps_to_solve):
         state = list(state)
 
-        for pos, pos_state in zip(LFRB_centers_444, state):
+        for pos, pos_state in zip(centers_444, state):
             cube[pos] = pos_state
 
 
@@ -404,7 +369,7 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-        self.lt_lfrb_centers = LookupTable444Reduce333LFRBCenters(self)
+        self.lt_phase34_centers = LookupTable444Reduce333Centers(self)
 
     def phase1_and_2(self, multiplier: float = None) -> None:
         """Stage all centers and EO the wings with ``ida_search_444_phase1_and_2``."""
@@ -494,9 +459,9 @@ class RubiksCube444(RubiksCube):
             "--edge-pairing-cost",
             ALL_EDGES_PAIRED_TABLE_444,
             "--center-graph",
-            self.lt_lfrb_centers.filename_bin,
+            self.lt_phase34_centers.filename_bin,
             "--center-state-index",
-            str(self.lt_lfrb_centers.state_index()),
+            str(self.lt_phase34_centers.state_index()),
             "--max-ida-threshold",
             str(max_ida_threshold),
         ]

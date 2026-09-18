@@ -476,16 +476,16 @@ class InnerXFake444MappingTest(unittest.TestCase):
 
 class PhaseThreeFourCombined444Test(unittest.TestCase):
     class FakeCenters:
-        filename_bin = "lookup-tables/lookup-table-4x4x4-step31-centers.bin"
+        filename_bin = "lookup-tables/lookup-table-4x4x4-step31-all-centers.bin"
 
         def state_index(self):
-            return 69
+            return 58029
 
     class FakeCube:
         def __init__(self):
             self.state = ["start"]
             self.solution = []
-            self.lt_lfrb_centers = PhaseThreeFourCombined444Test.FakeCenters()
+            self.lt_phase34_centers = PhaseThreeFourCombined444Test.FakeCenters()
             self.solve_via_c_output = ""
 
         def get_kociemba_string(self, _all_squares):

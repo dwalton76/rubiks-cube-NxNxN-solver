@@ -40,7 +40,7 @@ PHASE34_SAMPLES = Path("utils/444-phase34-samples.jsonl")
 # dimensions makes repeated sampling runs produce drop-in-compatible C arrays.
 PHASE12_COST_MAX = 12
 PHASE34_EDGE_MAX = 12
-PHASE34_CENTER_MAX = 5
+PHASE34_CENTER_MAX = 9
 
 
 def highlow_string(cube):
@@ -85,9 +85,9 @@ def phase34_command(cube, cores):
         "--edge-pairing-cost",
         ALL_EDGES_PAIRED_TABLE_444,
         "--center-graph",
-        cube.lt_lfrb_centers.filename_bin,
+        cube.lt_phase34_centers.filename_bin,
         "--center-state-index",
-        str(cube.lt_lfrb_centers.state_index()),
+        str(cube.lt_phase34_centers.state_index()),
         "--max-ida-threshold",
         "20",
         "--avoid-pll",

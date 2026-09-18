@@ -19,35 +19,34 @@
 #define CUBE_ARRAY_SIZE 97
 #define PAIR_COUNT 12
 #define EDGE_PAIRING_UNIVERSE UINT64_C(239500800)
-#define CENTER_STATE_COUNT 840
+#define CENTER_STATE_COUNT 58800
 #define CENTER_LEGAL_MOVE_COUNT 20
 #define CENTER_ROW_SIZE (1 + (CENTER_LEGAL_MOVE_COUNT * 5))
-#define CENTER_SOLVED_STATE 69
+#define CENTER_SOLVED_STATE 58029
 #define DEFAULT_MAX_THRESHOLD 24
 #define MAX_THRESHOLD 40
 #define PHASE34_EDGE_MAX 12
-#define PHASE34_CENTER_MAX 5
+#define PHASE34_CENTER_MAX 9
 
 /*
- * Combined heuristic matrix built by utils/build-444-heuristic-matrices.py from
- * 200 random cubes. It is indexed by the edge pairing cost and the center cost.
- * Cells above the largest index make the heuristic inadmissible but faster than
- * taking the max of the two.
+ * Combined heuristic matrix rebuilt by utils/build-444-heuristic-matrices.py
+ * from 200 random cubes after replacing the LFRB-only graph with the exact
+ * 58,800-state all-center graph.
  */
 static const unsigned char phase34_cost_matrix_444[PHASE34_EDGE_MAX + 1][PHASE34_CENTER_MAX + 1] = {
-    { 0,  1,  2,  3,  4,  5},  // edge cost 0
-    { 1,  1,  2,  3,  4,  5},  // edge cost 1
-    { 2,  2,  2,  3,  4,  5},  // edge cost 2
-    { 3,  3,  3,  3,  4,  5},  // edge cost 3
-    { 4,  4,  4,  4,  4,  5},  // edge cost 4
-    { 5,  5,  5,  5,  5,  5},  // edge cost 5
-    { 6,  6,  6,  6,  6,  6},  // edge cost 6
-    { 7,  7,  7,  7,  7,  7},  // edge cost 7
-    { 8,  8,  8,  8,  8,  8},  // edge cost 8
-    { 9,  9,  9,  9,  9,  9},  // edge cost 9
-    {10, 10, 10, 10, 10, 10},  // edge cost 10
-    {11, 11, 11, 11, 11, 11},  // edge cost 11
-    {12, 13, 13, 13, 13, 13},  // edge cost 12
+    { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 0
+    { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 1
+    { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 2
+    { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9},  // edge cost 3
+    { 4,  4,  4,  4,  4,  5,  6,  7,  8,  9},  // edge cost 4
+    { 5,  5,  5,  5,  5,  5,  6,  7,  8,  9},  // edge cost 5
+    { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9},  // edge cost 6
+    { 7,  7,  7,  8,  8,  8,  8,  8, 12, 12},  // edge cost 7
+    { 8,  8,  8,  8,  8,  8,  8,  8, 12, 12},  // edge cost 8
+    { 9,  9,  9,  9,  9,  9,  9,  9, 12, 12},  // edge cost 9
+    {10, 10, 10, 11, 11, 11, 11, 11, 12, 12},  // edge cost 10
+    {11, 11, 11, 12, 12, 12, 12, 12, 12, 12},  // edge cost 11
+    {12, 12, 13, 14, 14, 14, 14, 14, 14, 14},  // edge cost 12
 };
 
 void rotate_444(char *cube, char *cube_tmp, int array_size, move_type move);
@@ -64,15 +63,6 @@ static const unsigned int high_partners[PAIR_COUNT] = {
 };
 static const unsigned int low_partners[PAIR_COUNT] = {
     34, 18, 66, 50, 79, 31, 47, 63, 41, 72, 73, 40,
-};
-
-static const unsigned int center_squares[24] = {
-    6, 7, 10, 11, 22, 23, 26, 27, 38, 39, 42, 43,
-    54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91,
-};
-static const char center_targets[24] = {
-    'U', 'U', 'U', 'U', 'L', 'L', 'L', 'L', 'F', 'F', 'F', 'F',
-    'R', 'R', 'R', 'R', 'B', 'B', 'B', 'B', 'D', 'D', 'D', 'D',
 };
 
 static unsigned char *edge_costs;
@@ -190,17 +180,6 @@ static uint64_t edge_pairing_rank(const char cube[CUBE_ARRAY_SIZE])
     return even_permutation_rank(permutation);
 }
 
-static unsigned char center_cost(const char cube[CUBE_ARRAY_SIZE])
-{
-    unsigned int misplaced = 0;
-    for (unsigned int index = 0; index < 24; index++) {
-        if (cube[center_squares[index]] != center_targets[index]) {
-            misplaced++;
-        }
-    }
-    return (unsigned char)((misplaced + 7) / 8);
-}
-
 static unsigned char heuristic(const char cube[CUBE_ARRAY_SIZE], unsigned int center_state)
 {
     uint64_t rank = edge_pairing_rank(cube);
@@ -215,18 +194,15 @@ static unsigned char heuristic(const char cube[CUBE_ARRAY_SIZE], unsigned int ce
         return UINT8_MAX;
     }
     edge_cost--;
-    centers = center_cost(cube);
     if (center_state >= CENTER_STATE_COUNT) {
         return UINT8_MAX;
     }
-    if (center_distances[center_state] > centers) {
-        centers = center_distances[center_state];
-    }
+    centers = center_distances[center_state];
     {
-        unsigned char i = edge_cost > PHASE34_EDGE_MAX ? PHASE34_EDGE_MAX : edge_cost;
-        unsigned char j = centers > PHASE34_CENTER_MAX ? PHASE34_CENTER_MAX : centers;
+        unsigned char edge_index = edge_cost > PHASE34_EDGE_MAX ? PHASE34_EDGE_MAX : edge_cost;
+        unsigned char center_index = centers > PHASE34_CENTER_MAX ? PHASE34_CENTER_MAX : centers;
         unsigned char floor = edge_cost > centers ? edge_cost : centers;
-        unsigned char cost = phase34_cost_matrix_444[i][j];
+        unsigned char cost = phase34_cost_matrix_444[edge_index][center_index];
 
         return cost > floor ? cost : floor;
     }
@@ -385,11 +361,8 @@ static void print_ida_summary(const move_type path[MAX_THRESHOLD + 1], unsigned 
         uint64_t rank = edge_pairing_rank(cube);
         unsigned char edge = rank < EDGE_PAIRING_UNIVERSE && edge_costs[rank]
                            ? edge_costs[rank] - 1 : UINT8_MAX;
-        unsigned char centers = center_cost(cube);
-
-        if (center_state < CENTER_STATE_COUNT && center_distances[center_state] > centers) {
-            centers = center_distances[center_state];
-        }
+        unsigned char centers = center_state < CENTER_STATE_COUNT
+                              ? center_distances[center_state] : UINT8_MAX;
         if (step) {
             printf("%5s ", move2str[path[step - 1]]);
         } else {
@@ -641,7 +614,6 @@ int main(int argc, char **argv)
     summary_root_center_state = center_state;
     if (print_rank) {
         printf("EDGE_PAIRING_RANK %" PRIu64 "\n", edge_pairing_rank(cube));
-        printf("CENTER_COST %u\n", center_cost(cube));
         printf("CENTER_EXACT_COST %u\n", center_distances[center_state]);
         printf("HEURISTIC %u\n", heuristic(cube, center_state));
     }

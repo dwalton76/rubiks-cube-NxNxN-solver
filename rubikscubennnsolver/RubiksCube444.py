@@ -221,7 +221,6 @@ PHASE34_ILLEGAL_MOVES = (
     "L", "L'",
     "R", "R'",
 )
-
 # fmt: on
 
 
@@ -246,12 +245,7 @@ class LookupTable444Reduce333Centers(LookupTable):
              . . . .
 
     lookup-table-4x4x4-step31-all-centers.txt
-    =====================================
-    The graph contains every center state reachable from solved after phase 1+2
-    under the phase-3 move set. Unlike the old LFRB-only graph, its single goal
-    includes the U/D centers, so a zero graph cost means all 24 centers are
-    solved.
-
+    =========================================
     0 steps has      1 entries ( 0 percent, 0.00x previous step)
     1 steps has      6 entries ( 0 percent, 6.00x previous step)
     2 steps has     83 entries ( 0 percent, 13.83x previous step)

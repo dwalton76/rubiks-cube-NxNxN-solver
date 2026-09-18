@@ -1,5 +1,5 @@
 clean-gcc:
-	rm -f ida_search_via_graph ida_search_444_phase1_and_2 ida_search_444_phase3_and_4 ida_search_666_centers_stage ida_search_666_daisy_centers ida_search_777_centers_stage ida_search_777_daisy_centers ida_search_777_UD_centers_stage my-pt-states.txt
+	rm -f ida_search_via_graph ida_search_444_phase1 ida_search_444_phase2 ida_search_666_centers_stage ida_search_666_daisy_centers ida_search_777_centers_stage ida_search_777_daisy_centers ida_search_777_UD_centers_stage my-pt-states.txt
 
 clean: clean-gcc
 	rm -rf build dist venv rubikscubennnsolver.egg-info cache
@@ -7,8 +7,8 @@ clean: clean-gcc
 
 gcc: clean-gcc
 	gcc -O3 -o ida_search_via_graph rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_via_graph.c -lm
-	gcc -O3 -o ida_search_444_phase1_and_2 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase1_and_2.c -lm -lpthread
-	gcc -O3 -o ida_search_444_phase3_and_4 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase3_and_4.c -lm -lpthread
+	gcc -O3 -o ida_search_444_phase1 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase1.c -lm -lpthread
+	gcc -O3 -o ida_search_444_phase2 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase2.c -lm -lpthread
 	gcc -O3 -o ida_search_666_centers_stage rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666_centers_stage.c -lm -lpthread
 	gcc -O3 -o ida_search_666_daisy_centers rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666_daisy_centers.c -lm -lpthread
 	gcc -O3 -o ida_search_777_centers_stage rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_777_centers_stage.c -lm -lpthread

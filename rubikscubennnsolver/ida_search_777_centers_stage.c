@@ -57,7 +57,7 @@ static const unsigned int inner_x_centers[GROUP_SIZE] = {
 
 /*
  * Matching left/middle/right positions for all 24 oblique triplets. Eight
- * triplets contain L/R centers once the obliques are fully paired.
+ * triplets contain LR centers once the obliques are fully paired.
  */
 static const unsigned int left_obliques[OBLIQUE_COUNT] = {
     10, 30, 20, 40, 59, 79, 69, 89, 108, 128, 118, 138,
@@ -73,11 +73,11 @@ static const unsigned int right_obliques[OBLIQUE_COUNT] = {
 };
 
 /*
- * Combined heuristic for staging the U/D inner t/x centers while pairing the
- * L/R obliques. Rows are the unpaired oblique count (0..16), columns are the
+ * Combined heuristic for staging the UD inner t/x centers while pairing the
+ * LR obliques. Rows are the unpaired oblique count (0..16), columns are the
  * exact ranked table cost (0..12, the table's completed depth).
  *
- * The table only sees the U/D inner centers and one move pairs at most four
+ * The table only sees the UD inner centers and one move pairs at most four
  * obliques, so max(table, ceil(unpaired/4)) is admissible yet far below the
  * real remaining distance, which makes the search crawl.
  *
@@ -148,7 +148,7 @@ static void usage(const char *program)
         program
     );
     printf(
-        "  --obliques-only          pair L/R obliques only; ignore the U/D inner-center table\n"
+        "  --obliques-only          pair LR obliques only; ignore the UD inner-center table\n"
         "  --multiplier F           scale the cost to goal by F to trade solution length for\n"
         "                           search speed, used to bootstrap the matrix samples\n"
         "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
@@ -684,7 +684,7 @@ int main(int argc, char **argv)
         return 1;
     }
     if (obliques_only) {
-        LOG("searching L/R obliques only, prune pairing regressions\n");
+        LOG("searching LR obliques only, prune pairing regressions\n");
     } else if (use_unpaired_multiplier) {
         LOG("searching with unpaired multiplier %.2f, prune pairing regressions\n", unpaired_multiplier);
     } else {

@@ -4,17 +4,17 @@ import unittest
 from pathlib import Path
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube444 import PHASE34_CENTERS_TABLE_444, RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube444 import PHASE2_CENTERS_TABLE_444, RubiksCube444, solved_444
 
 ROOT = Path(__file__).resolve().parents[1]
-BINARY = ROOT / "ida_search_444_phase3_and_4"
+BINARY = ROOT / "ida_search_444_phase2"
 EDGE_TABLE = ROOT / "lookup-tables" / "lookup-table-4x4x4-step33-all-edges-paired.cost-only.bin"
-CENTER_TABLE = ROOT / PHASE34_CENTERS_TABLE_444
+CENTER_TABLE = ROOT / PHASE2_CENTERS_TABLE_444
 PLACEHOLDER = "/dev/null"
 
 
-@unittest.skipUnless(BINARY.is_file(), "ida_search_444_phase3_and_4 has not been built")
-class Phase34Search444Test(unittest.TestCase):
+@unittest.skipUnless(BINARY.is_file(), "ida_search_444_phase2 has not been built")
+class Phase2Search444Test(unittest.TestCase):
     def setUp(self):
         self.cube = RubiksCube444(solved_444, "URFDLB")
 
@@ -42,7 +42,7 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("invalid argument --ud-cost", result.stderr)
 
-    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 3+4 tables are not present")
+    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 2 tables are not present")
     def test_solved_cube_is_a_zero_move_goal(self):
         result = subprocess.run(
             self.command(
@@ -57,7 +57,7 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("SOLUTION (0 steps)", result.stdout)
 
-    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 3+4 tables are not present")
+    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 2 tables are not present")
     def test_print_rank_on_solved_cube(self):
         result = subprocess.run(
             self.command("--print-rank", "--max-ida-threshold", "0", edge=EDGE_TABLE, centers=CENTER_TABLE),
@@ -69,7 +69,7 @@ class Phase34Search444Test(unittest.TestCase):
         self.assertIn("CENTER_EXACT_COST 0", result.stdout)
         self.assertIn("HEURISTIC 0", result.stdout)
 
-    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 3+4 tables are not present")
+    @unittest.skipUnless(EDGE_TABLE.is_file() and CENTER_TABLE.is_file(), "phase 2 tables are not present")
     def test_avoid_pll_returns_first_pll_free_reduction(self):
         cube = RubiksCube444(
             "DLLUUUUULUURUDDBDFFRLLLDURRBLLBLFBRRFBBDFFFRLUFBFLDDFDDFDDDUFDUU" "FRBLLRRRBLLURBLDBBDRFFFURBBRBBRU",

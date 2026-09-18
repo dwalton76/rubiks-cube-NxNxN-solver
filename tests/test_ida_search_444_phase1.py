@@ -6,10 +6,10 @@ import unittest
 from pathlib import Path
 
 # rubiks cube libraries
-from rubikscubennnsolver.RubiksCube444 import PHASE12_HIGHLOW_TARGET_444, RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube444 import PHASE1_HIGHLOW_TARGET_444, RubiksCube444, solved_444
 
 ROOT = Path(__file__).resolve().parents[1]
-BINARY = ROOT / "ida_search_444_phase1_and_2"
+BINARY = ROOT / "ida_search_444_phase1"
 ALL_CENTER = ROOT / "lookup-tables" / "lookup-table-4x4x4-step12-all-centers-stage-symmetry.cost-only.bin"
 ALL_CENTER_INDEX = Path(f"{ALL_CENTER}.symmetry-index.bin")
 LR_UNIVERSE = 51482970
@@ -29,11 +29,11 @@ def highlow_string(cube):
     return "".join(highlow[1:])
 
 
-@unittest.skipUnless(BINARY.is_file(), "ida_search_444_phase1_and_2 has not been built")
-class Phase12Search444Test(unittest.TestCase):
+@unittest.skipUnless(BINARY.is_file(), "ida_search_444_phase1 has not been built")
+class Phase1Search444Test(unittest.TestCase):
     def setUp(self):
         self.cube = RubiksCube444(solved_444, "URFDLB")
-        self.assertEqual(self.cube.highlow_edges_state(None), PHASE12_HIGHLOW_TARGET_444)
+        self.assertEqual(self.cube.highlow_edges_state(None), PHASE1_HIGHLOW_TARGET_444)
 
     def command(self, *extra, all_center=PLACEHOLDER, all_center_index=PLACEHOLDER, lr=PLACEHOLDER, wing=PLACEHOLDER):
         return [

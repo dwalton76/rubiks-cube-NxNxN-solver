@@ -67,8 +67,8 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 | Binary | Source | Used for |
 | --- | --- | --- |
 | `ida_search_via_graph` | `ida_search_via_graph.c` | Graph prune-table IDA (5x5) |
-| `ida_search_444_phase1_and_2` | `ida_search_444_phase1_and_2.c` | 4x4 combined center staging + EO |
-| `ida_search_444_phase3_and_4` | `ida_search_444_phase3_and_4.c` | 4x4 combined edge pairing + centers |
+| `ida_search_444_phase1` | `ida_search_444_phase1.c` | 4x4 combined center staging + EO |
+| `ida_search_444_phase2` | `ida_search_444_phase2.c` | 4x4 combined edge pairing + centers |
 | `ida_search_666_centers_stage` | `ida_search_666_centers_stage.c` | 6x6 LR-oblique pairing / ranked UD phase 4 |
 | `ida_search_666_daisy_centers` | `ida_search_666_daisy_centers.c` | 6x6 daisy |
 | `ida_search_777_centers_stage` | `ida_search_777_centers_stage.c` | 7x7 LR phase 2 (UD inner + LR obliques); `--obliques-only` for NNNOdd partial rings |
@@ -121,7 +121,7 @@ flowchart TD
 | --- | --- | --- | --- |
 | 2 | `RubiksCube222` | solved | Tiny tables |
 | 3 | `RubiksCube333` | solved | kociemba |
-| 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1+2 and 3+4 |
+| 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1 and 2 |
 | 5 | `RubiksCube555` | 3x3 | Graph IDA: LR then FB staging (1+2 portfolio), EO, then a 4+5+6 portfolio that pairs edges and solves centers |
 | 6 | `RubiksCube666` | 5x5 | Ranked center staging, three 70^5 inner-x-spine daisy tables, then fake-4x4 inside-edge pairing |
 | 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
@@ -133,12 +133,12 @@ Module docstrings on `RubiksCube444.py`, `555`, `666`, `777`, `NNNOdd.py`, `NNNE
 ### 4x4 combined searches, 5x5 portfolios, and parity
 
 - `--solution-count` is passed from Python when it is not 1. `0` means every solution at the shortest length. C default is 1.
-- 4x4 phases 1 and 2 are one ranked IDA (``ida_search_444_phase1_and_2``) over the full move set. Heuristic is max of the 48-symmetry all-center table, the 51M LR-center table, and the high/low wing table (min over all 2048 even edge mappings). One of ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w`` is required. Last-ply pruning skips a rotate if the next ply cannot meet that parity.
-- 4x4 phases 3 and 4 are one ranked IDA (``ida_search_444_phase3_and_4``). When ``consider_solve_333`` is set, `--solution-count 1000000` is passed and PLL-free reductions are scored with kociemba until a 20-move 3x3x3 appears or ``PHASE34_SOLUTIONS_TO_EVALUATE`` have been tried. The fake 4x4 used to pair a 6x6/even inside orbit (`consider_solve_333=False`) uses `--avoid-pll` with the C default solution count of 1, so the search stops at its first PLL-free reduction.
+- 4x4 phase 1 is one ranked IDA (``ida_search_444_phase1``) over the full move set. Heuristic is max of the 48-symmetry all-center table, the 51M LR-center table, and the high/low wing table (min over all 2048 even edge mappings). One of ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w`` is required. Last-ply pruning skips a rotate if the next ply cannot meet that parity.
+- 4x4 phase 2 is one ranked IDA (``ida_search_444_phase2``). When ``consider_solve_333`` is set, `--solution-count 1000000` is passed and PLL-free reductions are scored with kociemba until a 20-move 3x3x3 appears or ``PHASE2_SOLUTIONS_TO_EVALUATE`` have been tried. The fake 4x4 used to pair a 6x6/even inside orbit (`consider_solve_333=False`) uses `--avoid-pll` with the C default solution count of 1, so the search stops at its first PLL-free reduction.
 - `avoid_oll` on a lookup object becomes `--orbit0-need-odd-w` / `--orbit0-need-even-w` (and orbit1 when used). Last-ply pruning in C skips a rotate if the next ply cannot meet that parity.
 - 6x6: phase 1 uses the fixed-axis C(24,8) LR inner-x table only. Phase 2 uses the UD C(24,8) table while pairing LR obliques anywhere, with `unpaired_count_UD_inner_centers_666` as the default combined heuristic (`--unpaired-multiplier` is the bootstrap fallback). It preserves LR inner x by forbidding `3Uw`/`3Dw`/`3Fw`/`3Bw` quarters, retains `3Lw`/`3Rw` quarters to rebalance the oblique orbits, and owns **orbit1** OLL. Phase 3 stages LR through a fake 5x5, and ranked phase 4 owns **orbit0**. Phase 5 uses three 70^5 tables; each combines all three inner-x orbits with both obliques from one axis.
-- 7x7 phase 1 stages LR inner centers through a fake 5x5x5, then keeps the shortest solution with the most L/R oblique pairs. Phase 2 uses `ida_search_777_centers_stage` (UD inner t/x plus LR obliques). Daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.
-- 5x5 phases 1+2 are a graph-IDA portfolio (default 64 phase-1 solutions). Phases 4+5+6 are another (phase-5 default 500). There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse 5x5 LR/FB staging (`group_centers_stage_LR` / `group_centers_stage_FB` and `lt_LR_t_centers_stage_ida`).
+- 7x7 phase 1 stages LR inner centers through a fake 5x5x5, then keeps the shortest solution with the most LR oblique pairs. Phase 2 uses `ida_search_777_centers_stage` (UD inner t/x plus LR obliques). Daisy forbids wide quarters, so it **cannot** flip OLL. Fix parity while staging.
+- 5x5 phases 1+2 are a graph-IDA portfolio (default 64 phase-1 solutions). Phases 4+5+6 are another (phase-5 default 500). There is no separate 5x5 "solve staged centers" IDA; 6x6/7x7 daisy-solve remaining centers after they reuse 5x5 tables (`lt_LR_centers_stage`, `lt_FB_centers_stage`, `lt_LR_t_centers_stage_ida`).
 
 ### 7x7 and NNNOdd centers
 

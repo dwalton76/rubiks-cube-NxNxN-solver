@@ -76,7 +76,7 @@ def combination_rank(values):
         elif remaining:
             rank += math.comb(15 - position, remaining - 1)
     if remaining:
-        raise ValueError("coordinate does not contain eight U/D stickers")
+        raise ValueError("coordinate does not contain eight UD stickers")
     return rank
 
 

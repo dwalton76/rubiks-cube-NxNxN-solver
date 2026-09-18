@@ -19,8 +19,8 @@
 #define CENTER_UNIVERSE UINT64_C(343000)
 #define DEFAULT_MAX_THRESHOLD 24
 #define MAX_THRESHOLD 40
-#define PHASE34_EDGE_MAX 12
-#define PHASE34_CENTER_MAX 9
+#define PHASE2_EDGE_MAX 12
+#define PHASE2_CENTER_MAX 9
 
 /*
  * Combined heuristic matrix rebuilt by utils/build-444-heuristic-matrices.py
@@ -30,7 +30,7 @@
  * Temporarily unused: the searcher uses max(edge, center) only. Several cells
  * overestimate remaining length, so this table is not admissible.
  */
-static const unsigned char phase34_cost_matrix_444[PHASE34_EDGE_MAX + 1][PHASE34_CENTER_MAX + 1] __attribute__((unused)) = {
+static const unsigned char phase2_cost_matrix_444[PHASE2_EDGE_MAX + 1][PHASE2_CENTER_MAX + 1] __attribute__((unused)) = {
     { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 0
     { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 1
     { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9},  // edge cost 2
@@ -552,7 +552,7 @@ int main(int argc, char **argv)
 
     unsigned char initial_cost = heuristic(cube);
     if (initial_cost == UINT8_MAX) {
-        fprintf(stderr, "ERROR: cube is outside the phase 3+4 tables\n");
+        fprintf(stderr, "ERROR: cube is outside the phase 2 tables\n");
         return 1;
     }
     fprintf(stderr, "searching with max(edge, center); matrix disabled\n");

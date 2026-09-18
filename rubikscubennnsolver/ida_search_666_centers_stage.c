@@ -38,7 +38,7 @@
 #define PARITY_EVEN 2
 
 /*
- * The staged U/D centers are a single point in the ranked coordinate, so any
+ * The staged UD centers are a single point in the ranked coordinate, so any
  * maneuver that both starts and ends staged is a stabilizer element and the
  * shortest one that flips a given wide-turn parity is the same from every
  * staged state.  Exhaustive IDA from the staged state gives these minima:
@@ -100,11 +100,11 @@ static const unsigned int *orbit_squares[ORBIT_COUNT] = {
 };
 
 /*
- * Combined heuristic for staging the U/D inner x-centers while pairing the
- * L/R obliques. Rows are the unpaired oblique count (0..8), columns are the
+ * Combined heuristic for staging the UD inner x-centers while pairing the
+ * LR obliques. Rows are the unpaired oblique count (0..8), columns are the
  * exact ranked table cost (0..8, the table's completed depth).
  *
- * The table only sees the U/D inner x-centers and one move pairs at most four
+ * The table only sees the UD inner x-centers and one move pairs at most four
  * obliques, so max(table, ceil(unpaired/4)) is admissible yet far below the
  * real remaining distance.
  *
@@ -130,7 +130,7 @@ static const unsigned char unpaired_count_UD_inner_centers_666[MATRIX_UNPAIRED_M
 /*
  * Each table holds the exact joint distance for one pair of orbits, so the
  * heuristic is the max over all three pairings of the remaining phase-4
- * orbits. A cost of 0 therefore means all three U/D center orbits are staged.
+ * orbits. A cost of 0 therefore means all three UD center orbits are staged.
  */
 static struct ranked_table {
     const char *flag;
@@ -241,7 +241,7 @@ static void usage(const char *program)
     );
 }
 
-/* Eight of the 24 oblique pairs hold the L/R obliques once they are all paired. */
+/* Eight of the 24 oblique pairs hold the LR obliques once they are all paired. */
 static unsigned char unpaired_lr_oblique_count(const char *cube)
 {
     unsigned char unpaired = 8;
@@ -258,7 +258,7 @@ static unsigned char unpaired_lr_oblique_count(const char *cube)
 }
 
 /*
- * Phase 2 experiment: a move that raises the unpaired L/R oblique count is
+ * Phase 2 experiment: a move that raises the unpaired LR oblique count is
  * never expanded. This is incomplete — some shortest paths unpair for a ply —
  * but it keeps the search on monotonically non-worsening pairing progress.
  */
@@ -296,7 +296,7 @@ static uint64_t combination_rank_axis(
 }
 
 /*
- * One move pairs at most four of the eight L/R oblique pairs, so a multiplier
+ * One move pairs at most four of the eight LR oblique pairs, so a multiplier
  * of 0.25 is admissible. ceilf is required: integer ceil(unpaired / 4)
  * truncates first and would treat UNPR 1..3 as solved.
  */
@@ -699,8 +699,8 @@ static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
     }
 
     /*
-     * The inner-x phases score inner x-centers and L/R obliques only, so the
-     * outer x-centers carry no information and every oblique that is not L/R
+     * The inner-x phases score inner x-centers and LR obliques only, so the
+     * outer x-centers carry no information and every oblique that is not LR
      * is interchangeable. Blanking both keeps the printed cube honest about
      * what the heuristic actually sees.
      */
@@ -1579,15 +1579,15 @@ int main(int argc, char **argv)
         LOG("loaded %u starting states from %s\n", root_count, kociemba_filename);
     }
     if (stage_lr_inner_x) {
-        LOG("staging L/R inner x-centers\n");
+        LOG("staging LR inner x-centers\n");
     } else if (stage_ud_inner_x_pair_lr_obliques) {
         if (use_unpaired_multiplier) {
             LOG(
-                "staging U/D inner x-centers while pairing L/R obliques anywhere, unpaired multiplier %.2f, prune pairing regressions\n",
+                "staging UD inner x-centers while pairing LR obliques anywhere, unpaired multiplier %.2f, prune pairing regressions\n",
                 unpaired_multiplier
             );
         } else {
-            LOG("staging U/D inner x-centers while pairing L/R obliques anywhere, combined heuristic matrix, prune pairing regressions\n");
+            LOG("staging UD inner x-centers while pairing LR obliques anywhere, combined heuristic matrix, prune pairing regressions\n");
         }
     }
     LOG("searching with %u threads over %u ranked tables\n", thread_count, loaded_table_count);

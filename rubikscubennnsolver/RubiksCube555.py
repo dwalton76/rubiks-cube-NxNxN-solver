@@ -13,15 +13,15 @@ solved from those endpoints, and the shortest combined path is kept. Phases
 4+5+6 do the same.
 
 Phase 1 - stage LR centers
-    Put all eight L/R t-centers and eight L/R x-centers onto the L and R faces
+    Put all eight LR t-centers and eight LR x-centers onto the L and R faces
     (they need not be solved). ``group_centers_phase1_and_2`` takes a portfolio
     of optimal LR-staging solutions (default 64). Endpoints are grouped by
     whether orbit-0 wide turns would cause OLL parity, because phase 2 must use
     a matching even/odd constraint.
 
 Phase 2 - stage FB (and UD) centers
-    Stage the F/B t-centers and x-centers onto F/B, which also puts the
-    remaining centers onto U/D. Quarter-turn wide moves that would unstage LR
+    Stage the FB t-centers and x-centers onto FB, which also puts the
+    remaining centers onto UD. Quarter-turn wide moves that would unstage LR
     are illegal. Orbit-0 OLL is avoided so the later 3x3x3 solve is not left
     with that parity. The search keeps the shortest phase-1 plus phase-2 pair.
 
@@ -36,7 +36,7 @@ Phases 4 and 5 - pair four edges on the x-plane; LR/FB centers to vertical bars
     Phase 4 is a short lookup that parks four edges on the equator;
     ``pair_edges`` only keeps wing-string combinations that finish in fewer
     than three moves. Phase 5 then pairs the x-plane high wings, low wings, and
-    midges and puts the L/R and F/B centers into vertical bars, using
+    midges and puts the LR and FB centers into vertical bars, using
     perfect-hash tables that cover FB-centers combined with high-edge-and-midge
     (and the same for low). A large portfolio of phase-5 solutions (default
     500) is passed to phase 6.
@@ -50,7 +50,7 @@ Phase 6 - pair the last eight edges and solve the centers
     phase-6 suffix.
 
 Larger cubes that have already reduced to a 5x5x5 reuse the phase-1 and
-phase-2 staging objects (``group_centers_stage_LR``, ``group_centers_stage_FB``,
+phase-2 lookup tables (``lt_LR_centers_stage``, ``lt_FB_centers_stage``,
 and ``lt_LR_t_centers_stage_ida``) without going through this six-phase
 reduction. Their remaining centers are solved by the 6x6/7x7 daisy searches,
 not by a separate 5x5 center-solve IDA.
@@ -2698,34 +2698,6 @@ class RubiksCube555(RubiksCube):
             result.append(wing_str)
 
         return set(result)
-
-    def group_centers_stage_LR(self):
-        """
-        Stage LR centers.
-
-        Used by 6x6/7x7/NNNOdd after they have reduced to a 5x5x5.
-        ``reduce_333`` uses ``group_centers_phase1_and_2`` instead.
-        """
-
-        if not self.LR_centers_staged():
-            tmp_solution_len = len(self.solution)
-            self.lt_LR_centers_stage.solve_via_c()
-            self.print_cube_add_comment("LR centers staged", tmp_solution_len)
-
-    def group_centers_stage_FB(self, max_ida_threshold: int = None):
-        """
-        Stage FB (and therefore UD) centers.
-
-        Used by 6x6/7x7/NNNOdd after they have reduced to a 5x5x5.
-        ``reduce_333`` uses ``group_centers_phase1_and_2`` instead.
-        """
-        if self.FB_centers_staged():
-            if self.edge_swaps_odd(False, 0, False):
-                self.prevent_OLL()
-        else:
-            tmp_solution_len = len(self.solution)
-            self.lt_FB_centers_stage.solve_via_c(max_ida_threshold=max_ida_threshold)
-            self.print_cube_add_comment("UD FB centers staged", tmp_solution_len)
 
     def eo_edges(self):
         """

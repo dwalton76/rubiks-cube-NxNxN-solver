@@ -49,7 +49,7 @@ solved_171717 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
 
 
 class LookupTableIDA777LRObliqueEdgePairing:
-    """Pair L/R obliques on a fake 7x7 orbit without staging U/D inner centers."""
+    """Pair LR obliques on a fake 7x7 orbit without staging UD inner centers."""
 
     def __init__(self, parent):
         self.parent = parent
@@ -98,7 +98,7 @@ class LookupTableIDA777LRObliqueEdgePairing:
 
 
 class LookupTableIDA777UDObliqueEdgePairing:
-    """Pair U/D obliques (and therefore outer t-centers) without using outer-x tables."""
+    """Pair UD obliques (and therefore outer t-centers) without using outer-x tables."""
 
     def __init__(self, parent):
         self.parent = parent
@@ -190,9 +190,16 @@ class RubiksCube777ForNNNOdd(RubiksCube777):
             return
 
         self.create_fake_555_from_inside_centers()
-        self.fake_555.group_centers_stage_FB()
+        fake_555 = self.fake_555
+        if fake_555.FB_centers_staged():
+            if fake_555.edge_swaps_odd(False, 0, False):
+                fake_555.prevent_OLL()
+        else:
+            tmp_555_len = len(fake_555.solution)
+            fake_555.lt_FB_centers_stage.solve_via_c()
+            fake_555.print_cube_add_comment("UD FB centers staged", tmp_555_len)
 
-        for step in self.fake_555.solution:
+        for step in fake_555.solution:
             if not step.startswith("COMMENT"):
                 if step.startswith("5"):
                     step = "7" + step[1:]

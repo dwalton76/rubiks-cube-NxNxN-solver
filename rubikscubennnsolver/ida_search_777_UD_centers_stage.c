@@ -40,7 +40,7 @@
 
 /*
  * Exact UFBD tuples from RubiksCube777.py. Every coordinate contains eight
- * U/D stickers and eight F/B stickers and is ranked as C(16, 8).
+ * UD stickers and eight FB stickers and is ranked as C(16, 8).
  */
 enum orbit_index {
     ORBIT_OUTER_X,
@@ -129,7 +129,7 @@ static void usage(const char *program)
         program
     );
     printf(
-        "  --obliques-only  pair U/D left/middle/right obliques; do not load outer-x tables\n"
+        "  --obliques-only  pair UD left/middle/right obliques; do not load outer-x tables\n"
     );
 }
 

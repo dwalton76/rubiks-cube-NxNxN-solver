@@ -93,7 +93,7 @@ def combination_rank(state):
         elif u_remaining:
             rank += math.comb(positions_after, u_remaining - 1)
     if u_remaining:
-        raise ValueError(f"expected eight U/D stickers, found {8 - u_remaining}")
+        raise ValueError(f"expected eight UD stickers, found {8 - u_remaining}")
     return rank
 
 

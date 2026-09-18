@@ -29,7 +29,7 @@
 #define DEFAULT_MAX_THRESHOLD 20
 #define MAX_THRESHOLD 40
 #define SEARCH_THREADS 22
-#define PHASE12_COST_MAX 12
+#define PHASE1_COST_MAX 12
 #define PARITY_EVEN 0
 #define PARITY_ODD 1
 /* Sentinel: the caller must pick even or odd, so a manual run cannot inherit a default. */
@@ -70,7 +70,7 @@ static const char *center_targets[] = {
  * and the wing high/low cost. Some cells exceed the largest index, which makes
  * the heuristic inadmissible but much faster than taking the max of the three.
  */
-static const unsigned char phase12_cost_matrix_444[PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1] = {
+static const unsigned char phase1_cost_matrix_444[PHASE1_COST_MAX + 1][PHASE1_COST_MAX + 1][PHASE1_COST_MAX + 1] = {
     {  // CTR 0
         { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 0
         { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // LR 1
@@ -270,10 +270,10 @@ static const unsigned char phase12_cost_matrix_444[PHASE12_COST_MAX + 1][PHASE12
 
 /*
  * Largest wing cost that wing_cost_min may stop at, per (all-centers cost, LR
- * cost, remaining budget). See init_phase12_wing_floor().
+ * cost, remaining budget). See init_phase1_wing_floor().
  */
-static unsigned char phase12_wing_floor[PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1][MAX_THRESHOLD + 1];
-static unsigned char phase12_wing_exact[PHASE12_COST_MAX + 1][PHASE12_COST_MAX + 1];
+static unsigned char phase1_wing_floor[PHASE1_COST_MAX + 1][PHASE1_COST_MAX + 1][MAX_THRESHOLD + 1];
+static unsigned char phase1_wing_exact[PHASE1_COST_MAX + 1][PHASE1_COST_MAX + 1];
 
 struct cost_file {
     int fd;
@@ -586,28 +586,28 @@ static unsigned char scale_cost(unsigned char cost)
  * minimum on every node costs an order of magnitude in nodes-per-sec. The
  * matrix never shrinks as the wing cost grows, which gives two wing costs the
  * scan may stop at:
- *  - phase12_wing_exact is the last wing cost that still reads the same cell as
+ *  - phase1_wing_exact is the last wing cost that still reads the same cell as
  *    wing cost 0, so anything below it yields the exact heuristic
- *  - phase12_wing_floor is the last wing cost that keeps the heuristic within
+ *  - phase1_wing_floor is the last wing cost that keeps the heuristic within
  *    the budget left at this node, so anything below it yields the same
  *    keep-or-prune answer
  */
-static void init_phase12_wing_floor(void)
+static void init_phase1_wing_floor(void)
 {
-    for (unsigned int ud = 0; ud <= PHASE12_COST_MAX; ud++) {
-        for (unsigned int lr = 0; lr <= PHASE12_COST_MAX; lr++) {
+    for (unsigned int ud = 0; ud <= PHASE1_COST_MAX; ud++) {
+        for (unsigned int lr = 0; lr <= PHASE1_COST_MAX; lr++) {
             unsigned char exact = 0;
 
-            while (exact < PHASE12_COST_MAX &&
-                   phase12_cost_matrix_444[ud][lr][exact + 1] == phase12_cost_matrix_444[ud][lr][0]) {
+            while (exact < PHASE1_COST_MAX &&
+                   phase1_cost_matrix_444[ud][lr][exact + 1] == phase1_cost_matrix_444[ud][lr][0]) {
                 exact++;
             }
-            phase12_wing_exact[ud][lr] = exact;
+            phase1_wing_exact[ud][lr] = exact;
             for (unsigned int budget = 0; budget <= MAX_THRESHOLD; budget++) {
                 unsigned char floor = exact;
 
-                for (unsigned char wing = 0; wing <= PHASE12_COST_MAX; wing++) {
-                    unsigned char cost = phase12_cost_matrix_444[ud][lr][wing];
+                for (unsigned char wing = 0; wing <= PHASE1_COST_MAX; wing++) {
+                    unsigned char cost = phase1_cost_matrix_444[ud][lr][wing];
 
                     if (scale_cost(cost > wing ? cost : wing) > budget) {
                         break;
@@ -616,7 +616,7 @@ static void init_phase12_wing_floor(void)
                         floor = wing;
                     }
                 }
-                phase12_wing_floor[ud][lr][budget] = floor;
+                phase1_wing_floor[ud][lr][budget] = floor;
             }
         }
     }
@@ -635,9 +635,9 @@ static unsigned char combined_cost(
     if (wing > floor) {
         floor = wing;
     }
-    cost = phase12_cost_matrix_444[ud > PHASE12_COST_MAX ? PHASE12_COST_MAX : ud]
-                                  [lr > PHASE12_COST_MAX ? PHASE12_COST_MAX : lr]
-                                  [wing > PHASE12_COST_MAX ? PHASE12_COST_MAX : wing];
+    cost = phase1_cost_matrix_444[ud > PHASE1_COST_MAX ? PHASE1_COST_MAX : ud]
+                                  [lr > PHASE1_COST_MAX ? PHASE1_COST_MAX : lr]
+                                  [wing > PHASE1_COST_MAX ? PHASE1_COST_MAX : wing];
     if (cost < floor) {
         cost = floor;
     }
@@ -670,9 +670,9 @@ static unsigned char heuristic(
     if (ud == UINT8_MAX || lr == UINT8_MAX) {
         return UINT8_MAX;
     }
-    ud_index = ud > PHASE12_COST_MAX ? PHASE12_COST_MAX : ud;
-    lr_index = lr > PHASE12_COST_MAX ? PHASE12_COST_MAX : lr;
-    cost = phase12_cost_matrix_444[ud_index][lr_index][0];
+    ud_index = ud > PHASE1_COST_MAX ? PHASE1_COST_MAX : ud;
+    lr_index = lr > PHASE1_COST_MAX ? PHASE1_COST_MAX : lr;
+    cost = phase1_cost_matrix_444[ud_index][lr_index][0];
     if (cost < ud) {
         cost = ud;
     }
@@ -685,7 +685,7 @@ static unsigned char heuristic(
     if (cost > budget) {
         return cost;
     }
-    wing = wing_cost_min(cube, highlow, phase12_wing_floor[ud_index][lr_index][budget]);
+    wing = wing_cost_min(cube, highlow, phase1_wing_floor[ud_index][lr_index][budget]);
     if (wing == UINT8_MAX) {
         return UINT8_MAX;
     }
@@ -707,8 +707,8 @@ static unsigned char exact_heuristic(
     wing = wing_cost_min(
         cube,
         highlow,
-        phase12_wing_exact[ud > PHASE12_COST_MAX ? PHASE12_COST_MAX : ud]
-                          [lr > PHASE12_COST_MAX ? PHASE12_COST_MAX : lr]
+        phase1_wing_exact[ud > PHASE1_COST_MAX ? PHASE1_COST_MAX : ud]
+                          [lr > PHASE1_COST_MAX ? PHASE1_COST_MAX : lr]
     );
     if (wing == UINT8_MAX) {
         return UINT8_MAX;
@@ -1065,7 +1065,7 @@ static char remap_center(char color)
     }
 }
 
-static void print_phase12_cube(const char cube[CUBE_ARRAY_SIZE], const char highlow[CUBE_ARRAY_SIZE])
+static void print_phase1_cube(const char cube[CUBE_ARRAY_SIZE], const char highlow[CUBE_ARRAY_SIZE])
 {
     char display[CUBE_ARRAY_SIZE];
 
@@ -1180,7 +1180,7 @@ int main(int argc, char **argv)
     map_cost_file(&lr_table, lr_filename);
     map_cost_file(&wing_table, wing_filename);
     printf("START\n");
-    print_phase12_cube(cube, highlow);
+    print_phase1_cube(cube, highlow);
 
     unsigned char initial_cost;
     uint64_t total_nodes = 0;
@@ -1193,7 +1193,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    init_phase12_wing_floor();
+    init_phase1_wing_floor();
     initial_cost = exact_heuristic(cube, highlow, 0);
     if (initial_cost == UINT8_MAX) {
         fprintf(stderr, "ERROR: initial state is outside a ranked table\n");
@@ -1252,7 +1252,7 @@ int main(int argc, char **argv)
             rotate_444(display_highlow, scratch, CUBE_ARRAY_SIZE, solution[index]);
         }
         printf("END\n");
-        print_phase12_cube(cube, display_highlow);
+        print_phase1_cube(cube, display_highlow);
         fflush(stdout);
         LOG(
             "total explored %" PRIu64 " nodes, took %.3fs, %" PRIu64 " nodes-per-sec\n",

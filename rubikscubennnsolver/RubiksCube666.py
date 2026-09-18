@@ -13,13 +13,13 @@ portfolio: many solutions of the earlier phase are collected, later phases
 are solved from those endpoints, and the shortest combined path is kept.
 
 Phase 1 - stage LR inner x-centers
-    One fixed-axis C(24,8) table stages the eight L/R inner x-centers. No
+    One fixed-axis C(24,8) table stages the eight LR inner x-centers. No
     oblique occupancy restriction is needed because phase 2 can still use
     3Lw/3Rw quarter turns.
 
 Phase 2 - pair LR obliques and stage UD inner x-centers
-    A second C(24,8) table stages U/D inner x-centers while the same search
-    pairs all eight L/R obliques anywhere. It preserves phase 1 by forbidding
+    A second C(24,8) table stages UD inner x-centers while the same search
+    pairs all eight LR obliques anywhere. It preserves phase 1 by forbidding
     3Uw/3Dw/3Fw/3Bw quarter turns, while 3Lw/3Rw quarters remain available to
     rebalance the oblique orbits. This phase owns orbit-1 OLL.
 
@@ -31,7 +31,7 @@ Phase 3 - stage the remaining LR centers
 
 Phase 4 - stage UD left/right obliques and outer x-centers
     Ranked pairwise tables move the UD left/right obliques and outer x-centers
-    onto U/D. This phase owns orbit-0 OLL. The search keeps the shortest
+    onto UD. This phase owns orbit-0 OLL. The search keeps the shortest
     phase-3 plus phase-4 pair.
 
 Phase 5 - daisy-solve all centers
@@ -322,7 +322,7 @@ LR_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step12-LR-inner-x
 
 
 class LookupTableIDA666LRInnerXCentersStage:
-    """Stage L/R inner x-centers, keeping the endpoint with the most L/R pairs."""
+    """Stage LR inner x-centers, keeping the endpoint with the most LR pairs."""
 
     def __init__(self, parent):
         self.parent = parent
@@ -369,7 +369,7 @@ class LookupTableIDA666LRInnerXCentersStage:
         for step in best_steps:
             self.parent.rotate(step)
         logger.info(
-            "%s: chose 1 of %d shortest solutions with %d/8 L/R oblique pairs",
+            "%s: chose 1 of %d shortest solutions with %d/8 LR oblique pairs",
             self.__class__.__name__,
             len(solutions),
             best_paired,
@@ -814,7 +814,7 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         return True
 
     def LR_inner_x_centers_staged(self) -> bool:
-        """Return whether all eight L/R inner x-centers are on L/R."""
+        """Return whether all eight LR inner x-centers are on LR."""
         return all(
             self.state[square] in ("L", "R")
             for face in (1, 3)
@@ -822,33 +822,33 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
         )
 
     def LR_oblique_pair_count(self) -> int:
-        """Return how many of the eight L/R oblique pairs occupy matching slots."""
+        """Return how many of the eight LR oblique pairs occupy matching slots."""
         return sum(
             self.state[left] in ("L", "R") and self.state[right] in ("L", "R")
             for left, right in zip(left_oblique_edges_666, right_oblique_edges_666)
         )
 
     def LR_obliques_paired(self) -> bool:
-        """Return whether the eight L/R oblique pairs occupy matching slots."""
+        """Return whether the eight LR oblique pairs occupy matching slots."""
         return self.LR_oblique_pair_count() == 8
 
     def stage_LR_inner_x_centers(self) -> None:
-        """Stage only the L/R inner x-centers."""
+        """Stage only the LR inner x-centers."""
         if self.LR_inner_x_centers_staged():
             return
         self.lt_LR_inner_x_centers_stage.solve_via_c()
         if not self.LR_inner_x_centers_staged():
-            raise SolveError("phase 1 did not stage the L/R inner x-centers")
+            raise SolveError("phase 1 did not stage the LR inner x-centers")
 
     def stage_UD_inner_x_centers_and_pair_LR_obliques(self) -> None:
-        """Finish inner-x staging while pairing the L/R obliques."""
+        """Finish inner-x staging while pairing the LR obliques."""
         if self.inner_x_centers_staged() and self.LR_obliques_paired():
             return
         self.lt_UD_inner_x_centers_stage_LR_oblique_pairing.solve_via_c()
         if not self.inner_x_centers_staged():
             raise SolveError("phase 2 did not finish staging the inner x-centers")
         if not self.LR_obliques_paired():
-            raise SolveError("phase 2 did not pair the L/R obliques")
+            raise SolveError("phase 2 did not pair the LR obliques")
         if 1 in self.center_solution_leads_to_oll_parity():
             raise SolveError("phase 2 did not clear orbit-1 OLL parity")
 
@@ -894,10 +894,10 @@ class RubiksCube666(RubiksCubeNNNEvenEdges):
             return
         self.lt_init_called = True
 
-        # phase 1 - stage L/R inner x-centers
+        # phase 1 - stage LR inner x-centers
         self.lt_LR_inner_x_centers_stage = LookupTableIDA666LRInnerXCentersStage(self)
 
-        # phase 2 - stage U/D inner x-centers and pair L/R obliques anywhere
+        # phase 2 - stage UD inner x-centers and pair LR obliques anywhere
         self.lt_UD_inner_x_centers_stage_LR_oblique_pairing = LookupTableIDA666UDInnerXCentersStageLRObliquePairing(
             self
         )

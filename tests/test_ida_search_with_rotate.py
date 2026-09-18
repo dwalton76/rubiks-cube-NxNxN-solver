@@ -430,19 +430,19 @@ class PhaseOnePortfolioTest(unittest.TestCase):
         )
 
 
-class PhaseOneTwoCombined444Test(unittest.TestCase):
-    def test_reduce_333_runs_phase1_and_2_then_phase3_and_4(self):
+class PhaseOne444Test(unittest.TestCase):
+    def test_reduce_333_runs_phase1_then_phase2(self):
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
 
         cube = RubiksCube444(solved_444, "URFDLB")
         calls = []
         with (
             patch.object(cube, "reduced_to_333", return_value=False),
-            patch.object(cube, "phase1_and_2", side_effect=lambda: calls.append("12")),
-            patch.object(cube, "phase3_and_4", side_effect=lambda **_kwargs: calls.append("34")),
+            patch.object(cube, "phase1", side_effect=lambda: calls.append("1")),
+            patch.object(cube, "phase2", side_effect=lambda **_kwargs: calls.append("2")),
         ):
             cube.reduce_333()
-        self.assertEqual(calls, ["12", "34"])
+        self.assertEqual(calls, ["1", "2"])
 
 
 class InnerXFake444MappingTest(unittest.TestCase):
@@ -474,7 +474,7 @@ class InnerXFake444MappingTest(unittest.TestCase):
         self.assertTrue(cube.LR_obliques_paired())
 
 
-class PhaseThreeFourCombined444Test(unittest.TestCase):
+class PhaseTwo444Test(unittest.TestCase):
     class FakeCube:
         def __init__(self):
             self.state = ["start"]
@@ -497,7 +497,7 @@ class PhaseThreeFourCombined444Test(unittest.TestCase):
         def print_cube_add_comment(self, comment, start):
             self.solution.append(f"COMMENT_{comment}")
 
-    def test_fake_444_phase3_and_4_requests_one_pll_free_solution(self):
+    def test_fake_444_phase2_requests_one_pll_free_solution(self):
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444
 
         cube = self.FakeCube()
@@ -522,7 +522,7 @@ class PhaseThreeFourCombined444Test(unittest.TestCase):
             patch("rubikscubennnsolver.RubiksCube444.download_file_if_needed"),
             patch("rubikscubennnsolver.RubiksCube444.subprocess.Popen", return_value=FakeProc()) as popen,
         ):
-            RubiksCube444.phase3_and_4(cube, consider_solve_333=False)
+            RubiksCube444.phase2(cube, consider_solve_333=False)
 
         command = popen.call_args.args[0]
         self.assertIn("--avoid-pll", command)

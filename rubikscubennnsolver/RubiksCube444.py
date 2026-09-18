@@ -6,15 +6,15 @@ corners. Reduction pairs each wing with its partner and solves the centers so
 the remaining puzzle is a 3x3x3. ``RubiksCube444.reduce_333`` runs two combined
 C IDA searches; ``solve_333`` then solves the paired cube.
 
-Phase 1+2 - stage all centers and EO the wings
-    ``ida_search_444_phase1_and_2`` over the full 4x4x4 move set. Heuristic is
+Phase 1 - stage all centers and EO the wings
+    ``ida_search_444_phase1`` over the full 4x4x4 move set. Heuristic is
     the max of the 48-symmetry all-center table, the 51M LR-center table, and
     the high/low wing table (min over all 2048 even edge mappings). Orbit-0 OLL
     is required via ``--orbit0-need-even-w`` / ``--orbit0-need-odd-w``. The
     winning ``edge_mapping`` is recovered from the staged high/low state.
 
-Phase 3+4 - pair all 12 edges and solve all centers
-    ``ida_search_444_phase3_and_4`` over the phase-3 move set, using the dense
+Phase 2 - pair all 12 edges and solve all centers
+    ``ida_search_444_phase2`` over the phase-2 move set, using the dense
     all-edge pairing table and the ranked all-center cost table (70^3). Combined
     solutions that would cause PLL parity are skipped. When ``consider_solve_333``
     is set, PLL-free reductions are scored with the 3x3x3 solver and search stops
@@ -52,15 +52,15 @@ moves_444: Tuple[str] = (
 
 solved_444: str = "UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB"
 ALL_EDGES_PAIRED_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step33-all-edges-paired.cost-only.bin"
-PHASE34_CENTERS_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step31-all-centers.cost-only.bin"
-PHASE12_ALL_CENTERS_TABLE_444 = (
+PHASE2_CENTERS_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step31-all-centers.cost-only.bin"
+PHASE1_ALL_CENTERS_TABLE_444 = (
     "lookup-tables/lookup-table-4x4x4-step12-all-centers-stage-symmetry.cost-only.bin"
 )
-PHASE12_ALL_CENTERS_INDEX_444 = f"{PHASE12_ALL_CENTERS_TABLE_444}.symmetry-index.bin"
-PHASE12_LR_CENTERS_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step14-LR-centers-stage.cost-only.bin"
-PHASE12_HIGHLOW_EDGES_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step23-highlow-edges-edges.cost-only.bin"
-PHASE12_HIGHLOW_TARGET_444 = "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU"
-PHASE34_SOLUTIONS_TO_EVALUATE = 9
+PHASE1_ALL_CENTERS_INDEX_444 = f"{PHASE1_ALL_CENTERS_TABLE_444}.symmetry-index.bin"
+PHASE1_LR_CENTERS_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step14-LR-centers-stage.cost-only.bin"
+PHASE1_HIGHLOW_EDGES_TABLE_444 = "lookup-tables/lookup-table-4x4x4-step23-highlow-edges-edges.cost-only.bin"
+PHASE1_HIGHLOW_TARGET_444 = "UDDUUDDUDUDUUDUDDUUDDUUDDUDUUDUDDUUDDUUDUDDUUDDU"
+PHASE2_SOLUTIONS_TO_EVALUATE = 9
 SOLVE_333_GOOD_ENOUGH = 20
 
 centers_444: Tuple[int] = (
@@ -286,14 +286,14 @@ class RubiksCube444(RubiksCube):
             return
         self.lt_init_called = True
 
-    def phase1_and_2(self, multiplier: float = None) -> None:
-        """Stage all centers and EO the wings with ``ida_search_444_phase1_and_2``."""
+    def phase1(self, multiplier: float = None) -> None:
+        """Stage all centers and EO the wings with ``ida_search_444_phase1``."""
         tmp_solution_len = len(self.solution)
         for filename in (
-            PHASE12_ALL_CENTERS_TABLE_444,
-            PHASE12_ALL_CENTERS_INDEX_444,
-            PHASE12_LR_CENTERS_TABLE_444,
-            PHASE12_HIGHLOW_EDGES_TABLE_444,
+            PHASE1_ALL_CENTERS_TABLE_444,
+            PHASE1_ALL_CENTERS_INDEX_444,
+            PHASE1_LR_CENTERS_TABLE_444,
+            PHASE1_HIGHLOW_EDGES_TABLE_444,
         ):
             download_file_if_needed(filename)
 
@@ -304,19 +304,19 @@ class RubiksCube444(RubiksCube):
         ):
             highlow[square] = value
         cmd = [
-            "./ida_search_444_phase1_and_2",
+            "./ida_search_444_phase1",
             "--kociemba",
             self.get_kociemba_string(True),
             "--highlow",
             "".join(highlow[1:]),
             "--all-center-cost",
-            PHASE12_ALL_CENTERS_TABLE_444,
+            PHASE1_ALL_CENTERS_TABLE_444,
             "--all-center-index",
-            PHASE12_ALL_CENTERS_INDEX_444,
+            PHASE1_ALL_CENTERS_INDEX_444,
             "--lr-cost",
-            PHASE12_LR_CENTERS_TABLE_444,
+            PHASE1_LR_CENTERS_TABLE_444,
             "--wing-cost",
-            PHASE12_HIGHLOW_EDGES_TABLE_444,
+            PHASE1_HIGHLOW_EDGES_TABLE_444,
             "--max-ida-threshold",
             "20",
         ]
@@ -335,7 +335,7 @@ class RubiksCube444(RubiksCube):
             if line.startswith("SOLUTION") and solution is None:
                 solution = tuple(line.split(":", 1)[1].strip().split())
         if solution is None:
-            raise SolveError(f"ida_search_444_phase1_and_2 returned no solution\n{output}")
+            raise SolveError(f"ida_search_444_phase1 returned no solution\n{output}")
         for step in solution:
             self.rotate(step)
 
@@ -344,38 +344,38 @@ class RubiksCube444(RubiksCube):
         for mapping_groups in highlow_edge_mapping_combinations.values():
             mappings.extend(mapping_groups)
         for mapping in mappings:
-            if self.highlow_edges_state(mapping) == PHASE12_HIGHLOW_TARGET_444:
+            if self.highlow_edges_state(mapping) == PHASE1_HIGHLOW_TARGET_444:
                 self.edge_mapping = mapping or []
                 break
         if self.edge_mapping is None:
             raise SolveError(
-                "combined phase 1+2 solution did not produce a valid high/low edge mapping: "
+                "phase 1 solution did not produce a valid high/low edge mapping: "
                 f"{solution}, {self.highlow_edges_state(None)}\n{output}"
             )
         if 0 in self.center_solution_leads_to_oll_parity():
-            raise SolveError("combined phase 1+2 solution left orbit-0 OLL parity")
+            raise SolveError("phase 1 solution left orbit-0 OLL parity")
         self.highlow_edges_print()
         self.print_cube_add_comment("centers staged, edges EOed into high/low groups", tmp_solution_len)
 
-    def phase3_and_4(self, consider_solve_333: bool, max_ida_threshold: int = 20) -> None:
-        """Pair all 12 edges and solve the centers with ``ida_search_444_phase3_and_4``."""
+    def phase2(self, consider_solve_333: bool, max_ida_threshold: int = 20) -> None:
+        """Pair all 12 edges and solve the centers with ``ida_search_444_phase2``."""
         original_state = self.state[:]
         original_solution = self.solution[:]
-        want = PHASE34_SOLUTIONS_TO_EVALUATE if consider_solve_333 else 1
+        want = PHASE2_SOLUTIONS_TO_EVALUATE if consider_solve_333 else 1
         chosen = None
         best_total = None
         scored = 0
 
         download_file_if_needed(ALL_EDGES_PAIRED_TABLE_444)
-        download_file_if_needed(PHASE34_CENTERS_TABLE_444)
+        download_file_if_needed(PHASE2_CENTERS_TABLE_444)
         cmd = [
-            "./ida_search_444_phase3_and_4",
+            "./ida_search_444_phase2",
             "--kociemba",
             self.get_kociemba_string(True),
             "--edge-pairing-cost",
             ALL_EDGES_PAIRED_TABLE_444,
             "--center-cost",
-            PHASE34_CENTERS_TABLE_444,
+            PHASE2_CENTERS_TABLE_444,
             "--max-ida-threshold",
             str(max_ida_threshold),
         ]
@@ -405,7 +405,7 @@ class RubiksCube444(RubiksCube):
                 if not self.reduced_to_333():
                     proc.terminate()
                     proc.wait()
-                    raise SolveError(f"ida_search_444_phase3_and_4 did not reduce to 3x3x3: {solution}")
+                    raise SolveError(f"ida_search_444_phase2 did not reduce to 3x3x3: {solution}")
                 if self.edge_solution_leads_to_pll_parity():
                     continue
                 if not consider_solve_333:
@@ -417,7 +417,7 @@ class RubiksCube444(RubiksCube):
                 self.solve_333(log_cube=False)
                 length_333 = len(self.solution[tmp_solution_len:]) - 1
                 total = len(solution) + length_333
-                desc = f"phase 3+4 is {len(solution)} steps, solve 333 in {length_333} steps, total {total}"
+                desc = f"phase 2 is {len(solution)} steps, solve 333 in {length_333} steps, total {total}"
                 if best_total is None or total < best_total:
                     logger.info("%s (NEW MIN)", desc)
                     best_total = total
@@ -432,11 +432,11 @@ class RubiksCube444(RubiksCube):
             else:
                 returncode = proc.wait()
                 if chosen is None:
-                    raise SolveError(f"ida_search_444_phase3_and_4 failed with exit {returncode}\n{''.join(lines)}")
+                    raise SolveError(f"ida_search_444_phase2 failed with exit {returncode}\n{''.join(lines)}")
 
         self.solve_via_c_output = "".join(lines)
         if chosen is None:
-            raise SolveError(f"ida_search_444_phase3_and_4 returned no PLL-free solution\n{''.join(lines)}")
+            raise SolveError(f"ida_search_444_phase2 returned no PLL-free solution\n{''.join(lines)}")
 
         self.state = original_state[:]
         self.solution = original_solution[:]
@@ -460,8 +460,8 @@ class RubiksCube444(RubiksCube):
         if self.reduced_to_333():
             return
 
-        self.phase1_and_2()
-        self.phase3_and_4(consider_solve_333=consider_solve_333)
+        self.phase1()
+        self.phase2(consider_solve_333=consider_solve_333)
 
 
 def rotate_444(cube: List[str], step: str) -> List[str]:

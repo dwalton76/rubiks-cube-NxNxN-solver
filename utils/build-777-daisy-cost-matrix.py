@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Build the combined heuristic matrix for the 7x7x7 daisy search, which daisies the
-U/D, L/R, and F/B centers on all three axes at once.
+UD, LR, and FB centers on all three axes at once.
 
 Each perfect table only knows about one axis and tops out at depth 15, while a
 combined daisy is 19 or more moves away, so max(UD, LR, FB) is admissible but can

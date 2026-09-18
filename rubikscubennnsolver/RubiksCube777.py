@@ -14,12 +14,12 @@ an unpaired-count heuristic.
 Phase 1 - stage LR inner centers
     Map the inner 3x3 of each face onto a fake 5x5x5 and stage its LR centers.
     ``--solution-count 0`` collects every shortest fake-5x5x5 solution; the
-    7x7 keeps the one that leaves the most L/R oblique edges paired.
+    7x7 keeps the one that leaves the most LR oblique edges paired.
 
 Phase 2 - stage UD inner centers and pair LR oblique edges
-    Stage the U/D inner t- and x-centers with a ranked table while pairing
-    every L/R oblique orbit anywhere. The obliques use an unpaired-count
-    heuristic and do not need to land on L/R.
+    Stage the UD inner t- and x-centers with a ranked table while pairing
+    every LR oblique orbit anywhere. The obliques use an unpaired-count
+    heuristic and do not need to land on LR.
 
 Phase 3 - stage the remaining LR centers
     Map the outer 5x5 of each face onto a fake 5x5x5 and stage its LR centers.
@@ -302,7 +302,7 @@ UD_INNER_CENTERS_STAGE_TABLE_777 = "lookup-tables/lookup-table-7x7x7-step20-UD-i
 
 class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
     """
-    Stage the U/D inner t- and x-centers while pairing the L/R obliques
+    Stage the UD inner t- and x-centers while pairing the LR obliques
     anywhere. The center table has (16! / (8! * 8!))^2 = 165,636,900 states.
     """
 
@@ -405,10 +405,10 @@ UD_OBLIQUE_ONLY_TABLES_777 = tuple(
 
 class LookupTableIDA777UDObliquesOuterXStage:
     """
-    Stage the U/D outer x-centers while pairing the U/D left, middle, and
+    Stage the UD outer x-centers while pairing the UD left, middle, and
     right obliques anywhere on U/F/D/B. Six pairwise ranked tables, each
     (16! / (8! * 8!))^2 = 165,636,900 states. The middle obliques are the
-    outer t-centers, so this also finishes staging the remaining U/D centers.
+    outer t-centers, so this also finishes staging the remaining UD centers.
     """
 
     def __init__(self, parent):
@@ -634,7 +634,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
-        # phase 2 - stage U/D inner centers and pair L/R obliques
+        # phase 2 - stage UD inner centers and pair LR obliques
         self.lt_LR_oblique_edges_UD_inner_centers_stage = LookupTableIDA777LRObliqueEdgesUDInnerCentersStage(self)
 
         # Phase 3 and everything after it only turns the outer orbit, so no
@@ -643,7 +643,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # oblique phase that replaced fake 5x5x5 FB staging.
         self.lt_LR_oblique_edges_UD_inner_centers_stage.avoid_oll = 1
 
-        # phase 5/6 - stage U/D outer x-centers and pair U/D obliques
+        # phase 5/6 - stage UD outer x-centers and pair UD obliques
         self.lt_UD_obliques_outer_x_stage = LookupTableIDA777UDObliquesOuterXStage(self)
         self.lt_UD_obliques_outer_x_stage.avoid_oll = 0
 
@@ -750,7 +750,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         return True
 
     def LR_oblique_pair_count(self) -> int:
-        """Return how many L/R oblique slots are paired, matching the C unpaired count."""
+        """Return how many LR oblique slots are paired, matching the C unpaired count."""
         paired = 0
         for left, middle, right in zip(LR_LEFT_OBLIQUES_777, LR_MIDDLE_OBLIQUES_777, LR_RIGHT_OBLIQUES_777):
             if self.state[middle] in ("L", "R"):
@@ -800,7 +800,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         for step in best_steps:
             self.rotate(step)
         logger.info(
-            "group_inside_LR_centers: chose 1 of %d shortest solutions with %d/16 L/R oblique pairs",
+            "group_inside_LR_centers: chose 1 of %d shortest solutions with %d/16 LR oblique pairs",
             len(solutions),
             best_paired,
         )
@@ -808,7 +808,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     def stage_LR_centers(self):
         """
         phase 1 - use 5x5x5 solver to stage the LR inner centers; keep the
-        shortest solution that pairs the most L/R obliques
+        shortest solution that pairs the most LR obliques
         phase 2 - stage UD inner centers and pair LR oblique edges
         phase 3 - use 5x5x5 solver to stage the LR centers (10 moves)
         """
@@ -828,9 +828,13 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         # phase 3 - use 5x5x5 solver to stage the LR centers
         tmp_solution_len = len(self.solution)
         self.create_fake_555_from_outside_centers()
-        self.fake_555.group_centers_stage_LR()
+        fake_555 = self.fake_555
+        if not fake_555.LR_centers_staged():
+            tmp_555_len = len(fake_555.solution)
+            fake_555.lt_LR_centers_stage.solve_via_c()
+            fake_555.print_cube_add_comment("LR centers staged", tmp_555_len)
 
-        for step in self.fake_555.solution:
+        for step in fake_555.solution:
             if step.startswith("COMMENT"):
                 pass
             else:

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Build the combined heuristic matrix for 7x7x7 phase 2, which stages the U/D
-inner t/x centers while pairing the L/R obliques.
+Build the combined heuristic matrix for 7x7x7 phase 2, which stages the UD
+inner t/x centers while pairing the LR obliques.
 
-The ranked table only knows about the U/D inner centers and one move pairs at
+The ranked table only knows about the UD inner centers and one move pairs at
 most four obliques, so max(table, ceil(unpaired/4)) is admissible but tops out
 near 12 while real phase-2 solutions run 15 to 17 moves. With a branching
 factor near 40 that gap is hopeless to search, so the samples come from a

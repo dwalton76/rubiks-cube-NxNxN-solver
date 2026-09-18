@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Build the combined heuristic matrix for 6x6x6 phase 2, which stages the U/D
-inner x-centers while pairing the L/R obliques.
+Build the combined heuristic matrix for 6x6x6 phase 2, which stages the UD
+inner x-centers while pairing the LR obliques.
 
-The ranked table only knows about the U/D inner x-centers and one move pairs at
-most four of the eight L/R oblique pairs, so max(table, ceil(unpaired/4)) is
+The ranked table only knows about the UD inner x-centers and one move pairs at
+most four of the eight LR oblique pairs, so max(table, ceil(unpaired/4)) is
 admissible but weak. Samples come from --unpaired-multiplier 0.25, which is
 that same admissible pairing bound with a working ceiling.
 

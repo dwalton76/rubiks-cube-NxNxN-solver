@@ -62,6 +62,10 @@ static int high_fd = -1;
 static int low_fd = -1;
 static uint8_t binary_transition[BINARY_GROUPS + 1][BINARY_UNIVERSE][MOVE_COUNT_555];
 static uint16_t wing_transition[3][WING_UNIVERSE][MOVE_COUNT_555];
+static uint8_t wing_state_table[WING_UNIVERSE][GROUP_SIZE];
+static uint8_t midge_occupancy_rank[WING_UNIVERSE];
+static uint8_t wing_is_parked[WING_UNIVERSE];
+static uint16_t relative_wing_table[WING_UNIVERSE][WING_UNIVERSE];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][IDA_MOVE_INDEX_MAX];
 static move_type inverse_move[MOVE_MAX];
@@ -238,6 +242,63 @@ static int wing_unrank(uint64_t rank, uint8_t state[GROUP_SIZE])
     return 1;
 }
 
+/*
+ * The searcher touches these per node, so unranking on the fly (multiset_count
+ * recomputes factorials for every symbol at every slot) dominated the cost of
+ * the three table probes it exists to serve.
+ */
+static void init_wing_tables(void)
+{
+    for (unsigned int rank = 0; rank < WING_UNIVERSE; rank++) {
+        uint8_t *state = wing_state_table[rank];
+        uint8_t mask = 0;
+        int parked = 1;
+
+        wing_unrank(rank, state);
+        for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+            int occupied = state[position] != 4;
+
+            if (occupied) {
+                mask |= (uint8_t)(1U << position);
+            }
+            if (occupied != (position >= 2 && position <= 5)) {
+                parked = 0;
+            }
+        }
+        midge_occupancy_rank[rank] = binary_rank(mask);
+        wing_is_parked[rank] = (uint8_t)parked;
+    }
+    for (unsigned int midge = 0; midge < WING_UNIVERSE; midge++) {
+        const uint8_t *midges = wing_state_table[midge];
+        uint8_t map[5] = {255, 255, 255, 255, 4};
+        uint8_t next = 0;
+
+        for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+            uint8_t label = midges[position];
+
+            if (label < 4 && map[label] == 255) {
+                map[label] = next++;
+            }
+        }
+        for (unsigned int wing = 0; wing < WING_UNIVERSE; wing++) {
+            const uint8_t *wings = wing_state_table[wing];
+            uint8_t child[GROUP_SIZE];
+            int ok = next == 4;
+
+            for (unsigned int position = 0; ok && position < GROUP_SIZE; position++) {
+                uint8_t mapped = map[wings[position]];
+
+                if (mapped == 255) {
+                    ok = 0;
+                    break;
+                }
+                child[position] = mapped;
+            }
+            relative_wing_table[wing][midge] = ok ? wing_rank(child) : UINT16_MAX;
+        }
+    }
+}
+
 static uint8_t permute_mask(uint8_t mask, const uint8_t permutation[GROUP_SIZE])
 {
     uint8_t result = 0;
@@ -335,9 +396,8 @@ static void init_edge_transitions(void)
     init_edge_permutation(midge_squares, midge_partners, permutations[2], "midge group");
     for (unsigned int orbit = 0; orbit < 3; orbit++) {
         for (unsigned int rank = 0; rank < WING_UNIVERSE; rank++) {
-            uint8_t state[GROUP_SIZE];
+            const uint8_t *state = wing_state_table[rank];
 
-            wing_unrank(rank, state);
             for (unsigned int move_index = 0; move_index < MOVE_COUNT_555; move_index++) {
                 uint8_t child[GROUP_SIZE];
 
@@ -412,31 +472,23 @@ static unsigned char table_cost(const unsigned char *costs, uint64_t rank)
 
 static unsigned char heuristic(const struct coordinate *coordinate)
 {
-    uint8_t midge_state[GROUP_SIZE];
-    uint8_t midge_mask = 0;
-    uint8_t midge_rank;
     unsigned char center = table_cost(centers_costs, centers_rank(coordinate));
+    uint8_t midge_rank = midge_occupancy_rank[coordinate->midge];
+    uint16_t high_wing = relative_wing_table[coordinate->high_wing][coordinate->midge];
+    uint16_t low_wing = relative_wing_table[coordinate->low_wing][coordinate->midge];
+    unsigned char high;
+    unsigned char low;
+    unsigned char result;
 
-    wing_unrank(coordinate->midge, midge_state);
-    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
-        if (midge_state[position] != 4) {
-            midge_mask |= (uint8_t)(1U << position);
-        }
-    }
-    midge_rank = binary_rank(midge_mask);
-    unsigned char high = table_cost(
-        high_costs,
-        combo_rank(coordinate->high_fb, coordinate->high_wing, midge_rank)
-    );
-    unsigned char low = table_cost(
-        low_costs,
-        combo_rank(coordinate->low_fb, coordinate->low_wing, midge_rank)
-    );
-    unsigned char result = center;
-
-    if (center == UINT8_MAX || high == UINT8_MAX || low == UINT8_MAX) {
+    if (center == UINT8_MAX || high_wing == UINT16_MAX || low_wing == UINT16_MAX) {
         return UINT8_MAX;
     }
+    high = table_cost(high_costs, combo_rank(coordinate->high_fb, high_wing, midge_rank));
+    low = table_cost(low_costs, combo_rank(coordinate->low_fb, low_wing, midge_rank));
+    if (high == UINT8_MAX || low == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    result = center;
     if (high > result) {
         result = high;
     }
@@ -448,23 +500,19 @@ static unsigned char heuristic(const struct coordinate *coordinate)
 
 static int exact_goal(const struct coordinate *coordinate)
 {
-    uint8_t high[GROUP_SIZE];
-    uint8_t low[GROUP_SIZE];
-    uint8_t midge[GROUP_SIZE];
+    const uint8_t *high;
+    const uint8_t *low;
+    const uint8_t *midge;
 
-    wing_unrank(coordinate->high_wing, high);
-    wing_unrank(coordinate->low_wing, low);
-    wing_unrank(coordinate->midge, midge);
-
-    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
-        int parked = position >= 2 && position <= 5;
-
-        if ((midge[position] != 4) != parked ||
-                (high[position] != 4) != parked ||
-                (low[position] != 4) != parked) {
-            return 0;
-        }
+    if (!wing_is_parked[coordinate->high_wing] ||
+            !wing_is_parked[coordinate->low_wing] ||
+            !wing_is_parked[coordinate->midge]) {
+        return 0;
     }
+    high = wing_state_table[coordinate->high_wing];
+    low = wing_state_table[coordinate->low_wing];
+    midge = wing_state_table[coordinate->midge];
+
     return high[2] == midge[3] &&
            high[3] == midge[2] &&
            high[4] == midge[5] &&
@@ -679,6 +727,7 @@ int main(int argc, char **argv)
     }
 
     init_binom();
+    init_wing_tables();
     ida_init_move_tables(
         moves_555, MOVE_COUNT_555, move_is_allowed,
         legal_move_count, legal_move_index, inverse_move
@@ -727,25 +776,13 @@ int main(int argc, char **argv)
                     centers_rank(&roots[index].coordinate),
                     combo_rank(
                         roots[index].coordinate.high_fb,
-                        roots[index].coordinate.high_wing,
-                        binary_rank(
-                            ({ uint8_t state[GROUP_SIZE], mask = 0;
-                               wing_unrank(roots[index].coordinate.midge, state);
-                               for (unsigned int p = 0; p < GROUP_SIZE; p++)
-                                   if (state[p] != 4) mask |= (uint8_t)(1U << p);
-                               mask; })
-                        )
+                        relative_wing_table[roots[index].coordinate.high_wing][roots[index].coordinate.midge],
+                        midge_occupancy_rank[roots[index].coordinate.midge]
                     ),
                     combo_rank(
                         roots[index].coordinate.low_fb,
-                        roots[index].coordinate.low_wing,
-                        binary_rank(
-                            ({ uint8_t state[GROUP_SIZE], mask = 0;
-                               wing_unrank(roots[index].coordinate.midge, state);
-                               for (unsigned int p = 0; p < GROUP_SIZE; p++)
-                                   if (state[p] != 4) mask |= (uint8_t)(1U << p);
-                               mask; })
-                        )
+                        relative_wing_table[roots[index].coordinate.low_wing][roots[index].coordinate.midge],
+                        midge_occupancy_rank[roots[index].coordinate.midge]
                     ),
                     roots[index].initial_cost
                 );

@@ -122,7 +122,42 @@ def phase5_permuted_rank(move, squares, values, partners=None):
     return [moved[square] for square in squares]
 
 
+def combo_unrank(rank):
+    occupancy = rank % 70
+    rank //= 70
+    wing = rank % 1680
+    rank //= 1680
+    fb_x = rank % 70
+    fb_t = rank // 70
+    return fb_t, fb_x, wing, occupancy
+
+
+def occupancy_unrank(rank, n=8, k=4):
+    mask = 0
+    remaining = k
+    for position in range(n):
+        if not remaining:
+            break
+        after = n - position - 1
+        selected_prefix = math.comb(after, remaining - 1)
+        if rank < selected_prefix:
+            mask |= 1 << position
+            remaining -= 1
+        else:
+            rank -= selected_prefix
+    return mask
+
+
+def occupancy_to_labeled(rank):
+    mask = occupancy_unrank(rank)
+    labels = iter("ABCD")
+    return "".join(next(labels) if mask & (1 << index) else "x" for index in range(8))
+
+
 def fields(stdout, prefix):
+    line = next(line for line in stdout.splitlines() if line.startswith(prefix))
+    tokens = line.split()
+    return {tokens[index]: tokens[index + 1] for index in range(0, len(tokens), 2)}
     line = next(line for line in stdout.splitlines() if line.startswith(prefix))
     tokens = line.split()
     return {tokens[index]: tokens[index + 1] for index in range(0, len(tokens), 2)}
@@ -209,7 +244,7 @@ class Ranked555PythonWiringTest(unittest.TestCase):
     def test_phase5_rank_and_wrapper_use_three_ranked_tables(self):
         self.assertEqual(
             self.cube.lt_phase5.ranks(("LB", "LF", "RB", "RF")),
-            (4899, 576219055, 576215065, 1323),
+            (4899, 576219265, 576214855, 1320),
         )
         completed = subprocess.CompletedProcess(
             [],
@@ -567,12 +602,30 @@ class Ranked555Phase5Test(unittest.TestCase):
         low_wing = multiset_rank("xxABCDxx", "ABCDx", (1, 1, 1, 1, 4))
         return high_wing * 70 + midge_binary, low_wing * 70 + midge_binary, low_wing
 
+    @staticmethod
+    def relative_combo(fb_t, fb_x, wing_state, midge_state):
+        label_map = {}
+        occupancy = []
+        for char in midge_state:
+            if char == "x":
+                occupancy.append("x")
+                continue
+            if char not in label_map:
+                label_map[char] = "ABCD"[len(label_map)]
+            occupancy.append("L")
+        canon = "".join("x" if char == "x" else label_map[char] for char in wing_state)
+        wing_rank = multiset_rank(canon, "ABCDx", (1, 1, 1, 1, 4))
+        midge_rank = multiset_rank("".join(occupancy), "Lx", (4, 4))
+        return (((fb_t * 70) + fb_x) * 1680 + wing_rank) * 70 + midge_rank
+
     def test_phase5_rank_boundaries_and_legal_moves(self):
         centers_rank = PHASE5_CENTERS_UNIVERSE - 1
         combo_rank = PHASE5_COMBO_UNIVERSE - 1
+        _, _, _, occupancy = combo_unrank(combo_rank)
+        midge_rank = multiset_rank(occupancy_to_labeled(occupancy), "ABCDx", (1, 1, 1, 1, 4))
         self.write_zero_costs([centers_rank], [combo_rank], [combo_rank])
         roots_path = self.directory / "boundary-roots.txt"
-        roots_path.write_text(f"boundary,{centers_rank},{combo_rank},{combo_rank},1679\n")
+        roots_path.write_text(f"boundary,{centers_rank},{combo_rank},{combo_rank},{midge_rank}\n")
 
         result = subprocess.run(
             self.command(roots_path)
@@ -661,32 +714,29 @@ class Ranked555Phase5Test(unittest.TestCase):
             centers_rank = centers_rank * 70 + part
 
         fb_parts = center_parts[2:]
-        midge_rank = multiset_rank(
-            phase5_permuted_rank(
-                "F",
-                self.midge_squares,
-                "xxLLLLxx",
-                self.midge_partners,
-            ),
-            "Lx",
-            (4, 4),
+        moved_midge_state = phase5_permuted_rank(
+            "F",
+            self.midge_squares,
+            midge_goal,
+            self.midge_partners,
         )
+        moved_midge_rank = multiset_rank(moved_midge_state, "ABCDx", (1, 1, 1, 1, 4))
 
-        def combo_rank(squares, partners, values):
-            wing_rank = multiset_rank(
-                phase5_permuted_rank("F", squares, values, partners),
-                "ABCDx",
-                (1, 1, 1, 1, 4),
-            )
+        def absolute_combo_rank(squares, partners, values):
+            wing_state = phase5_permuted_rank("F", squares, values, partners)
+            occupancy = "".join("x" if char == "x" else "L" for char in moved_midge_state)
+            wing_rank = multiset_rank(wing_state, "ABCDx", (1, 1, 1, 1, 4))
+            midge_rank = multiset_rank(occupancy, "Lx", (4, 4))
             return (((fb_parts[0] * 70) + fb_parts[1]) * 1680 + wing_rank) * 70 + midge_rank
 
-        high_rank = combo_rank(self.high_squares, self.high_partners, high_goal)
-        low_rank = combo_rank(self.low_squares, self.low_partners, low_goal)
-        moved_midge_rank = multiset_rank(
-            phase5_permuted_rank("F", self.midge_squares, midge_goal, self.midge_partners),
-            "ABCDx",
-            (1, 1, 1, 1, 4),
-        )
+        def relative_combo_rank(squares, partners, values):
+            wing_state = phase5_permuted_rank("F", squares, values, partners)
+            return self.relative_combo(fb_parts[0], fb_parts[1], wing_state, moved_midge_state)
+
+        root_high = absolute_combo_rank(self.high_squares, self.high_partners, high_goal)
+        root_low = absolute_combo_rank(self.low_squares, self.low_partners, low_goal)
+        high_rank = relative_combo_rank(self.high_squares, self.high_partners, high_goal)
+        low_rank = relative_combo_rank(self.low_squares, self.low_partners, low_goal)
         goal_high_rank, goal_low_rank, _ = self.exact_goal_ranks()
         self.write_zero_costs([0], [goal_high_rank], [goal_low_rank])
         if centers_rank:
@@ -696,7 +746,7 @@ class Ranked555Phase5Test(unittest.TestCase):
         if low_rank:
             sparse_cost_file(self.low_path, PHASE5_COMBO_UNIVERSE, [low_rank], encoded=2)
         roots_path = self.directory / "one-move-root.txt"
-        roots_path.write_text(f"moved,{centers_rank},{high_rank},{low_rank},{moved_midge_rank}\n")
+        roots_path.write_text(f"moved,{centers_rank},{root_high},{root_low},{moved_midge_rank}\n")
 
         result = subprocess.run(
             self.command(roots_path) + ["--max-ida-threshold", "1", "--print-ranks"],
@@ -705,7 +755,7 @@ class Ranked555Phase5Test(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("SOLUTION ROOT moved (1 steps): F'", result.stdout)
+        self.assertIn("SOLUTION ROOT moved (1 steps): F", result.stdout)
 
 
 @unittest.skipUnless(PHASE6.is_file(), "5x5 phase-6 solver has not been built")

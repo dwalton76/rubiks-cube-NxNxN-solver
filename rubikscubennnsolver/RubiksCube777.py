@@ -552,15 +552,6 @@ DAISY_ORBIT_SLUGS_777 = (
     "without-inner-x",
 )
 
-DAISY_LEAVE_ONE_OUT_TABLES_777 = tuple(
-    (
-        f"--{axis.lower()}-{slug}-cost",
-        f"lookup-tables/lookup-table-7x7x7-daisy-{axis}-{slug}-centers.cost-only.bin",
-    )
-    for axis in ("UD", "LR", "FB")
-    for slug in DAISY_ORBIT_SLUGS_777
-)
-
 # One table covers all three axes. Any cube rotation taking one axis onto another
 # carries that axis's tracked stickers along with it, so the three 70^5 coordinates
 # index a single cost function, and each is constant on the orbits of the 16
@@ -599,13 +590,11 @@ class LookupTableIDA777DaisyCenters:
     axes. Each axis has five C(8,4) center orbits - left, middle, and right
     obliques plus inner-t and inner-x - and outer-x is ignored.
 
-    Three sets of component tables, selected by ``use_perfect_tables`` and the
-    ``native_only`` argument to ``solve_via_c``:
+    Two sets of component tables
 
     | Set                             | Tables | Selected by                       |
     | ------------------------------- | ------ | --------------------------------- |
     | DAISY_PERFECT_TABLES_777        | 1 + index | use_perfect_tables=True (default in lt_init) |
-    | DAISY_LEAVE_ONE_OUT_TABLES_777  | 15     | use_perfect_tables=False          |
     | NATIVE_SOLVE_PERFECT_TABLES_777 | 1 + index | solve_via_c(native_only=True)     |
 
     The leave-one-out set is ``DAISY_ORBIT_SLUGS_777`` crossed with UD/LR/FB:
@@ -637,21 +626,18 @@ class LookupTableIDA777DaisyCenters:
     ``utils/build-777-solve-cost-matrix.py``.
     """
 
-    def __init__(self, parent, use_perfect_tables=False, multiplier=None):
+    def __init__(self, parent, multiplier=None):
         self.parent = parent
         self.avoid_oll = None
-        self.use_perfect_tables = use_perfect_tables
         # Without a multiplier the C searcher uses its sampled per-axis cost matrix,
         # which is what utils/build-777-daisy-cost-matrix.py exists to rebuild.
         self.multiplier = multiplier
 
     def solve_via_c(self, native_only=False, **_kwargs):
         if native_only:
-            if not self.use_perfect_tables:
-                raise SolveError("--native-only has no leave-one-out tables, it needs the perfect solve tables")
             tables = NATIVE_SOLVE_PERFECT_TABLES_777
         else:
-            tables = DAISY_PERFECT_TABLES_777 if self.use_perfect_tables else DAISY_LEAVE_ONE_OUT_TABLES_777
+            tables = DAISY_PERFECT_TABLES_777
         cmd = ["./ida_search_777_daisy_centers", "--kociemba", self.parent.get_kociemba_string(True)]
         for flag, filename in tables:
             download_file_if_needed(filename)
@@ -756,7 +742,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_obliques_outer_x_stage.avoid_oll = 0
 
         # phase 7 - daisy-solve remaining centers on all three axes
-        self.lt_daisy_centers = LookupTableIDA777DaisyCenters(self, use_perfect_tables=True)
+        self.lt_daisy_centers = LookupTableIDA777DaisyCenters(self)
 
     def create_fake_555_from_inside_centers(self):
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers

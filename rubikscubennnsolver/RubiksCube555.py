@@ -1606,8 +1606,8 @@ class LookupTableIDA555Phase5:
             LR t/x and FB t/x occupancy. C(8,4)^4 = 24,010,000 dense ranks, of which phase-5 moves
             reach 2,116,800. Builder: Build555Phase5Centers.
         lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.cost-only.bin
-            FB t/x occupancy, the four labeled high wings among the eight x-union-y high slots, and
-            midge occupancy. C(8,4)^2 * P(8,4) * C(8,4) = 576,240,000 ranks.
+            FB t/x occupancy, the four high wings labeled relative to the occupied
+            midges in slot order, and midge occupancy. C(8,4)^2 * P(8,4) * C(8,4) = 576,240,000 ranks.
             Builder: Build555Phase5FBCentersHighEdgeMidge.
         lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.cost-only.bin
             Same coordinate against the low wings, also 576,240,000 ranks.
@@ -1615,9 +1615,13 @@ class LookupTableIDA555Phase5:
 
     Heuristic is the max of the three component costs; a state is pruned when any of them reports
     an unreachable rank. Roots are the ``ranks()`` tuples of the phase-4 endpoints that survived,
-    deduplicated and written to a roots file. ``pair_edges`` asks for 500 solutions with
-    ``find_extra`` so phase 6 gets a wide portfolio; solutions come back sorted shortest first,
-    each tagged with the root it came from.
+    deduplicated and written to a roots file.
+
+    Every solution the searcher emits is exactly ``threshold`` moves long, so a portfolio buys
+    phase 6 a choice of landing states rather than a choice of phase-5 lengths. ``pair_edges``
+    asks for 10 with ``find_extra``, which measured the same move counts as asking for 500 while
+    letting the searcher stop sweeping the threshold level early on cubes where solutions are
+    plentiful. Solutions come back sorted shortest first, each tagged with the root it came from.
     """
 
     centers_filename = "lookup-tables/lookup-table-5x5x5-step51-phase5-centers.cost-only.bin"
@@ -1665,17 +1669,26 @@ class LookupTableIDA555Phase5:
             self._binary_rank(FB_x_centers_555, {"B"}),
         )
 
-    def _combo_rank(self, wing_strs, wing_squares):
+    def _label_by_midge(self, wing_strs):
         selected = tuple(sorted(wing_strs))
         if len(selected) != 4 or len(set(selected)) != 4:
             raise SolveError(f"phase 5 needs four distinct edges, found {len(set(selected))}")
-
-        label_by_edge = {edge: chr(ord("A") + index) for index, edge in enumerate(selected)}
 
         def edge_at(square):
             partner = edges_partner_555[square]
             return wing_str_map[self.parent.state[square] + self.parent.state[partner]]
 
+        label_by_edge = {}
+        for square in PHASE5_XY_MIDGE_SQUARES_555:
+            edge = edge_at(square)
+            if edge in selected and edge not in label_by_edge:
+                label_by_edge[edge] = chr(ord("A") + len(label_by_edge))
+        if len(label_by_edge) != 4:
+            raise SolveError("phase 5 could not label the four selected midges")
+        return label_by_edge, edge_at
+
+    def _combo_rank(self, wing_strs, wing_squares):
+        label_by_edge, edge_at = self._label_by_midge(wing_strs)
         wing_state = "".join(label_by_edge.get(edge_at(square), "x") for square in wing_squares)
         midge_state = "".join(
             "L" if edge_at(square) in label_by_edge else "x" for square in PHASE5_XY_MIDGE_SQUARES_555
@@ -1686,13 +1699,8 @@ class LookupTableIDA555Phase5:
         return (((fb_t_rank * 70) + fb_x_rank) * 1680 + wing_rank) * 70 + midge_rank
 
     def _midge_rank(self, wing_strs):
-        selected = tuple(sorted(wing_strs))
-        label_by_edge = {edge: chr(ord("A") + index) for index, edge in enumerate(selected)}
-        state = []
-        for square in PHASE5_XY_MIDGE_SQUARES_555:
-            partner = edges_partner_555[square]
-            edge = wing_str_map[self.parent.state[square] + self.parent.state[partner]]
-            state.append(label_by_edge.get(edge, "x"))
+        label_by_edge, edge_at = self._label_by_midge(wing_strs)
+        state = "".join(label_by_edge.get(edge_at(square), "x") for square in PHASE5_XY_MIDGE_SQUARES_555)
         return self._multiset_rank(state, "ABCDx", (1, 1, 1, 1, 4))
 
     def ranks(self, wing_strs):
@@ -2388,7 +2396,7 @@ class RubiksCube555(RubiksCube):
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=phase5_roots, solution_count=500, find_extra=True)
+        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=phase5_roots, solution_count=10, find_extra=True)
 
         # phase 6
         phase6_pt_state_indexes_to_prefix = {}

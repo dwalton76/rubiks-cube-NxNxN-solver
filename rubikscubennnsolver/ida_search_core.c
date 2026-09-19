@@ -111,7 +111,6 @@ unsigned long max(unsigned long a, unsigned long b) { return (a > b ? a : b); }
 
 void print_cube(char *cube, int size) {
     int squares_per_side = size * size;
-    int square_count = squares_per_side * 6;
     int rows = size * 3;
     printf("\n");
 

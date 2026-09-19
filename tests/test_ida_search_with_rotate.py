@@ -11,7 +11,6 @@ from rubikscubennnsolver.RubiksCube666 import (
     solved_666,
 )
 from rubikscubennnsolver.RubiksCube777 import (
-    DAISY_LEAVE_ONE_OUT_TABLES_777,
     DAISY_PERFECT_TABLES_777,
     NATIVE_SOLVE_PERFECT_TABLES_777,
     RubiksCube777,
@@ -283,7 +282,6 @@ class CenterStagingTablesTest(unittest.TestCase):
         daisy = cube.lt_daisy_centers
 
         self.assertTrue(daisy.use_perfect_tables)
-        self.assertEqual(len(DAISY_LEAVE_ONE_OUT_TABLES_777), 15)
         # One cost table plus its symmetry index, shared by all three axes.
         self.assertEqual(len(DAISY_PERFECT_TABLES_777), 2)
 

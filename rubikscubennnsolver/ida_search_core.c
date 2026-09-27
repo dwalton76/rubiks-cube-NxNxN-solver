@@ -109,6 +109,37 @@ unsigned long hex_to_int(char value) {
 
 unsigned long max(unsigned long a, unsigned long b) { return (a > b ? a : b); }
 
+static void print_cube_sticker(char sticker) {
+    int color = 0;
+
+    switch (sticker) {
+        case 'U':
+            color = 97;  // white
+            break;
+        case 'L':
+            color = 90;  // orange
+            break;
+        case 'F':
+            color = 92;  // green
+            break;
+        case 'R':
+            color = 91;  // red
+            break;
+        case 'B':
+            color = 94;  // blue
+            break;
+        case 'D':
+            color = 93;  // yellow
+            break;
+    }
+
+    if (color) {
+        printf("\033[%dm%c\033[0m ", color, sticker);
+    } else {
+        printf("%c ", sticker);
+    }
+}
+
 void print_cube(char *cube, int size) {
     int squares_per_side = size * size;
     int rows = size * 3;
@@ -125,7 +156,7 @@ void print_cube(char *cube, int size) {
             }
 
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             printf("\n");
@@ -148,7 +179,7 @@ void print_cube(char *cube, int size) {
             }
 
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
             printf("\n");
 
@@ -159,28 +190,28 @@ void print_cube(char *cube, int size) {
             int i_end = i_start + size - 1;
             int i = i_start;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             // F
             i = i_start + squares_per_side;
             i_end = i + size - 1;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             // R
             i = i_start + (squares_per_side * 2);
             i_end = i + size - 1;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             // B
             i = i_start + (squares_per_side * 3);
             i_end = i + size - 1;
             for (; i <= i_end; i++) {
-                printf("%c ", cube[i]);
+                print_cube_sticker(cube[i]);
             }
 
             printf("\n");

@@ -480,21 +480,27 @@ class LookupTableIDA777UDObliquesOuterXStage:
 
     Every table is the exact joint distance for its pair, so
     ``ida_search_777_UD_centers_stage`` takes the max of the six as an admissible
-    heuristic. ``UD_OBLIQUE_ONLY_TABLES_777`` is the three-table subset that drops
-    outer-x, which ``RubiksCubeNNNOdd`` uses for rings whose outer-x are painted
-    placeholders. The middle obliques are the outer t-centers, so a solution here
-    also finishes staging the remaining UD centers. This phase owns orbit-0 OLL.
+    heuristic. That max is often several moves short of the true distance (11 vs
+    17 is typical), so the solver passes ``--multiplier 1.3`` by default: not
+    admissible, but it keeps IDA from exploding. ``UD_OBLIQUE_ONLY_TABLES_777`` is
+    the three-table subset that drops outer-x, which ``RubiksCubeNNNOdd`` uses for
+    rings whose outer-x are painted placeholders. The middle obliques are the
+    outer t-centers, so a solution here also finishes staging the remaining UD
+    centers. This phase owns orbit-0 OLL.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, multiplier=1.3):
         self.parent = parent
         self.avoid_oll = None
+        self.multiplier = multiplier
 
     def solve_via_c(self, **_kwargs):
         cmd = ["./ida_search_777_UD_centers_stage", "--kociemba", self.parent.get_kociemba_string(True)]
         for flag, filename in UD_PHASE56_TABLES_777:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
+        if self.multiplier:
+            cmd.extend(("--multiplier", str(self.multiplier)))
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()

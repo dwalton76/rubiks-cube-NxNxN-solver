@@ -15,6 +15,7 @@ from rubikscubennnsolver.RubiksCube777 import (
     NATIVE_SOLVE_PERFECT_TABLES_777,
     RubiksCube777,
     UD_OBLIQUE_ONLY_TABLES_777,
+    UD_PHASE56_TABLES_777,
     UFBD_inner_t_centers_777,
     UFBD_inner_x_centers_777,
     UFBD_left_oblique_777,
@@ -256,12 +257,48 @@ class CenterStagingTablesTest(unittest.TestCase):
 
         self.assertEqual(captured["cmd"][0], "./ida_search_777_UD_centers_stage")
         self.assertIn("--obliques-only", captured["cmd"])
+        self.assertEqual(captured["cmd"][captured["cmd"].index("--multiplier") + 1], "1.3")
         self.assertNotIn("--left-oblique-outer-x-cost", captured["cmd"])
         self.assertEqual(len(UD_OBLIQUE_ONLY_TABLES_777), 3)
         for flag, filename in UD_OBLIQUE_ONLY_TABLES_777:
             self.assertIn(flag, captured["cmd"])
             self.assertIn(filename, captured["cmd"])
             self.assertNotIn("outer-x", flag)
+
+    def test_777_combined_ud_phase_passes_heuristic_multiplier(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        captured = {}
+
+        class FakeProc:
+            def __init__(self):
+                self.stdout = iter(["SOLUTION (0 steps):\n"])
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def wait(self):
+                return 0
+
+        def fake_popen(cmd, **_kwargs):
+            captured["cmd"] = cmd
+            return FakeProc()
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
+        ):
+            cube.lt_UD_obliques_outer_x_stage.solve_via_c()
+
+        self.assertEqual(captured["cmd"][0], "./ida_search_777_UD_centers_stage")
+        self.assertNotIn("--obliques-only", captured["cmd"])
+        self.assertEqual(captured["cmd"][captured["cmd"].index("--multiplier") + 1], "1.3")
+        for flag, filename in UD_PHASE56_TABLES_777:
+            self.assertIn(flag, captured["cmd"])
+            self.assertIn(filename, captured["cmd"])
 
     def test_777_combined_ud_phase_recolors_four_coordinates(self):
         cube = RubiksCube777(solved_777, "URFDLB")

@@ -99,8 +99,8 @@ class Phase1Search444Test(unittest.TestCase):
             self.assertEqual(even.returncode, 0, even.stdout + even.stderr)
             self.assertIn("SOLUTION (0 steps)", even.stdout)
             self.assertIn(" INIT    0    0    0    0    0    0", even.stdout)
-            self.assertIn("D L L U", even.stdout)
-            self.assertIn("D R R U", even.stdout)
+            self.assertIn("\033[93mD\033[0m \033[90mL\033[0m \033[90mL\033[0m \033[97mU\033[0m", even.stdout)
+            self.assertIn("\033[93mD\033[0m \033[91mR\033[0m \033[91mR\033[0m \033[97mU\033[0m", even.stdout)
 
             odd = subprocess.run(
                 self.command(

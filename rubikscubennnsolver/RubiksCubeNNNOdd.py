@@ -100,8 +100,9 @@ class LookupTableIDA777LRObliqueEdgePairing:
 class LookupTableIDA777UDObliqueEdgePairing:
     """Pair UD obliques (and therefore outer t-centers) without using outer-x tables."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, multiplier=1.3):
         self.parent = parent
+        self.multiplier = multiplier
 
     def solve_via_c(self, **_kwargs):
         cmd = [
@@ -113,6 +114,8 @@ class LookupTableIDA777UDObliqueEdgePairing:
         for flag, filename in UD_OBLIQUE_ONLY_TABLES_777:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
+        if self.multiplier:
+            cmd.extend(("--multiplier", str(self.multiplier)))
 
         logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
         lines = []

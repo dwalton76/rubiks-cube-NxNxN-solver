@@ -130,6 +130,7 @@ static void usage(const char *program)
     );
     printf(
         "  --obliques-only  pair UD left/middle/right obliques; do not load outer-x tables\n"
+        "  --multiplier F   scale max(pair tables) by F; not admissible, default unused\n"
     );
 }
 
@@ -679,6 +680,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: initial center state is absent from a ranked cost table\n");
         unmap_ranked_tables();
         return 1;
+    }
+    if (cost_to_goal_multiplier) {
+        LOG("searching with cost to goal multiplier %.2f\n", cost_to_goal_multiplier);
     }
     LOG("initial cost %u, threads %u, ranked tables %s\n",
         initial_cost, thread_count, obliques_only ? "3 (obliques only)" : "6");

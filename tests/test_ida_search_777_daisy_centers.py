@@ -78,8 +78,7 @@ LEAVE_ONE_OUT_TABLES = tuple(
 PERFECT_LABELS = tuple(f"{axis}_PERFECT" for axis, _, _ in AXES)
 # One real table and index serve all three axes, and a fake is impractical: the
 # index has to name the canonical rank of each of the 105,356,972 symmetry
-# orbits, which is the compactor's whole job. tests/test_center_symmetry_777.c
-# in rubiks-cube-lookup-tables checks the compaction itself.
+# orbits.
 PERFECT_COST = Path("lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin")
 PERFECT_INDEX = Path(f"{PERFECT_COST}.symmetry-index.bin")
 SPINE_COST = Path("lookup-tables/lookup-table-7x7x7-daisy-inner-x-spine-centers.cost-only.bin")

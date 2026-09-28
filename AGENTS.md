@@ -175,9 +175,7 @@ Dispatch is `RubiksCubeNNNOdd.stage_or_solve_inside_777`. Outer-x of the fake 7x
 | Intermediate cycle | `ida_search_777_centers_stage --obliques-only` (unpaired-count heuristic, no tables) | 3 ranked oblique tables, **no** outer-x |
 | Last dummy cycle | Pair obliques, then fake-5x5 `lt_LR_t_centers_stage_ida` | Same 3-table search (middle obliques **are** outer t-centers) |
 
-NNNOdd center **solve** runs phase 7, then phase 8 with `native_only=True` and the `lookup-table-7x7x7-solve-perfect-centers.cost-only.bin` table. Daisy tables score 0 at the swapped orientation, which is unsolved on 9x9+. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
-
-That one table covers all three axes. The UD, LR and FB perfect tables held the same cost function under three square orderings, and the costs are constant on each orbit of the 16 axis-preserving cube symmetries, so `--perfect-cost` / `--perfect-index` name a single 314 MiB pair that the searcher probes by rotating the state onto the UD coordinate and canonicalizing. This replaced six 1.6 GiB tables.
+NNNOdd center **solve** runs phase 7, then phase 8 with `native_only=True`. Phase 8 has no cost table yet. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
 
 Walk orbits **inside-out**. On 9x9, inner-orbit `w` rewrites as `3w` and would smash an already-solved outer ring.
 

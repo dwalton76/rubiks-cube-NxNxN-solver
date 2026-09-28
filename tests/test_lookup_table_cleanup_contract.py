@@ -210,24 +210,27 @@ def test_local_lookup_artifacts_are_all_referenced_by_production():
     assert not orphan_sidecars, "lookup-table metadata has no local binary:\n" + "\n".join(orphan_sidecars)
 
 
-def test_live_777_leave_one_out_fallback_set_is_preserved():
-    expected = {
-        f"lookup-table-7x7x7-daisy-{axis}-without-{orbit}-centers.cost-only.bin"
-        for axis in ("UD", "LR", "FB")
-        for orbit in ("left-oblique", "middle-oblique", "right-oblique", "inner-t", "inner-x")
-    }
-    allowed = _production_artifact_basenames()
+def test_retired_777_all_centers_daisy_tables_are_absent():
     local = {path.name for path in LOOKUP_DIR.iterdir() if path.is_file()}
-    assert expected <= allowed
-    assert expected <= local
+    retired = sorted(
+        name
+        for name in local
+        if "daisy-" in name and "without-" in name
+        or name.startswith("lookup-table-7x7x7-solve-perfect-centers")
+        or name.startswith("lookup-table-7x7x7-daisy-perfect-centers")
+        or "daisy-inner-x-spine" in name
+        or "daisy-inner-x-plus-two-inner-t" in name
+        or "daisy-inner-t-plus-two-inner-x" in name
+        or "daisy-middle-plus-two-inner-t" in name
+        or "daisy-oblique-weave" in name
+    )
+    assert not retired, "retired 7x7 daisy tables are still on disk:\n" + "\n".join(retired)
 
 
 def test_symmetry_indexes_and_required_metadata_are_allowed():
     allowed = _production_artifact_basenames()
     required_indexes = {
         "lookup-table-4x4x4-step12-all-centers-stage-symmetry.cost-only.bin.symmetry-index.bin",
-        "lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin.symmetry-index.bin",
-        "lookup-table-7x7x7-solve-perfect-centers.cost-only.bin.symmetry-index.bin",
     }
     assert required_indexes <= allowed
     for path in LOOKUP_DIR.glob("*.bin.json"):

@@ -29,10 +29,13 @@ Phase 5/6 - stage UD outer x-centers and pair UD obliques
     oblique coordinates. The middle obliques are the outer t-centers, so this
     also stages the remaining UD centers.
 
-Phase 7 - daisy-solve UD, LR, and FB centers
-    One ranked IDA over five C(8,4) orbits per axis, ignoring outer-x. The
-    production path is the perfect 70^5 table shared by all three axes; the
-    fifteen leave-one-out 70^4 tables remain a live fallback.
+Phase 7 - solve the LR inner centers and pair the LR oblique bars
+    LR inner-t and inner-x must be native. The eight oblique bars on L and R
+    must be one color; their slot does not matter. Cost is the LR inner table
+    maxed with ceil(unpaired LR wings / 4).
+
+Phase 8 - daisy-solve all six sides, keeping the phase 7 state
+    Outer turns, the six 2-wide half turns, and 3Lw2 / 3Rw2. No cost table yet.
     The remaining puzzle is a 5x5x5.
 """
 
@@ -652,37 +655,14 @@ class LookupTableIDA777DaisyCenters:
     state. Those L/R turns let phase 8 pair UD/FB obliques. The U/D/F/B 3-wide
     half turns split an LR bar and move LR inners between L and R, so phase 8
     rejects them.
-    ``native_only`` applies to phase 8.
+    ``native_only`` applies to phase 8. Phase 8 does not load a cost table yet,
+    so its heuristic is 0 on a daisy and 1 otherwise.
 
     Component tables
 
-    | Set                             | Tables | Selected by                       |
-    | ------------------------------- | ------ | --------------------------------- |
-    | DAISY_PERFECT_TABLES_777        | 1 + index | phase 8                            |
-    | NATIVE_SOLVE_PERFECT_TABLES_777 | 1 + index | phase 8 with native_only           |
-    | DAISY_INNER_X_SPINE_TABLE_777   | 1         | phase 8, both goals                |
-    | DAISY_MIXED_TABLES_777          | 4         | phase 8, both goals                |
-    | DAISY_LR_INNER_TABLE_777        | 1         | phase 7                            |
-
-    The perfect set is a single 70^5 cost function shared by
-    all three axes and compacted onto the orbits of the 16 axis-preserving cube
-    symmetries, 105,356,972 orbits behind a rank-select index. The searcher
-    rotates the state onto the UD coordinate and canonicalizes before probing.
-    ``native_only`` narrows the goal to the native orientation and swaps in the
-    twin built to that same goal; the daisy tables score 0 at either daisy
-    orientation, which leaves them blind on 9x9x9 and larger, where only the
-    native orientation is actually solved. It requires the perfect tables
-    because no leave-one-out set was built for that goal.
-
-    Per-table diagrams and histograms belong to the builder classes in
-    ``rubikscubelookuptables/builder777.py`` and are not repeated here.
-
-    An axis costs the most any of its loaded tables reports, so leave-one-out
-    mode maxes over five and perfect mode is a single probe. Phase 8's heuristic
-    is the max of those axis costs, the three probes of
-    ``DAISY_INNER_X_SPINE_TABLE_777``, and the three probes of each table in
-    ``DAISY_MIXED_TABLES_777``. ``multiplier`` scales that max; a factor
-    below 1.0 is rejected.
+    | Set                      | Tables | Selected by |
+    | ------------------------ | ------ | ----------- |
+    | DAISY_LR_INNER_TABLE_777 | 1      | phase 7     |
     """
 
     def __init__(self, parent, multiplier=None):
@@ -711,19 +691,6 @@ class LookupTableIDA777DaisyCenters:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
         if phase == 8:
-            if native_only:
-                tables = NATIVE_SOLVE_PERFECT_TABLES_777
-            else:
-                tables = DAISY_PERFECT_TABLES_777
-            for flag, filename in tables:
-                download_file_if_needed(filename)
-                cmd.extend((flag, filename))
-            flag, filename = DAISY_INNER_X_SPINE_TABLE_777
-            download_file_if_needed(filename)
-            cmd.extend((flag, filename))
-            for flag, filename in DAISY_MIXED_TABLES_777:
-                download_file_if_needed(filename)
-                cmd.extend((flag, filename))
             if self.multiplier:
                 cmd.extend(("--multiplier", str(self.multiplier)))
             if native_only:

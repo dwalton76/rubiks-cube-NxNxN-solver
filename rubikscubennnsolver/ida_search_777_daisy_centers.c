@@ -62,8 +62,7 @@ static const char *orbit_name[ORBIT_COUNT] = {
  * then the UD left and right obliques. LR and FB probes rewrite each group
  * rank through a cube rotation onto that square order (z' y' and x y'). The
  * rewrite is the small/large bit carried along by the rotation, so a solved
- * cube probes a depth-0 rank on every axis. utils/spine-rank-maps.py
- * regenerates the tables.
+ * cube probes a depth-0 rank on every axis.
  */
 #define SPINE_UNIVERSE UINT64_C(1680700000)
 #define SPINE_PROBE_COUNT 3

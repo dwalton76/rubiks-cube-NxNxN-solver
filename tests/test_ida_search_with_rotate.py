@@ -348,7 +348,7 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertFalse(hasattr(fake_777, f"lt_step{step}"))
         self.assertIsNotNone(fake_777.lt_daisy_centers)
 
-    def test_native_only_daisy_uses_its_own_perfect_tables(self):
+    def test_phase8_starts_without_old_center_tables(self):
         cube = RubiksCube777(solved_777, "URFDLB")
         cube.lt_init()
         daisy = cube.lt_daisy_centers
@@ -366,30 +366,26 @@ class CenterStagingTablesTest(unittest.TestCase):
             daisy.solve_via_c()
 
         self.assertEqual(len(commands), 4)
-        self.assertEqual(len(NATIVE_SOLVE_PERFECT_TABLES_777), 2)
+        retired = [filename for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777 + DAISY_PERFECT_TABLES_777]
+        retired.append(DAISY_INNER_X_SPINE_TABLE_777[1])
+        retired.extend(filename for _, filename in DAISY_MIXED_TABLES_777)
         for index in (0, 2):
             self.assertIn("--phase7", commands[index])
             self.assertNotIn("--phase8", commands[index])
             self.assertNotIn("--native-only", commands[index])
-            self.assertNotIn("--perfect-cost", commands[index])
-            self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[index])
             self.assertIn(DAISY_LR_INNER_TABLE_777[1], commands[index])
             self.assertIn("--lr-inner-cost", commands[index])
         self.assertIn("--phase8", commands[1])
         self.assertIn("--native-only", commands[1])
         self.assertIn("--phase8", commands[3])
         self.assertNotIn("--native-only", commands[3])
-        for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777:
-            self.assertIn(filename, commands[1])
-            self.assertNotIn(filename, commands[3])
-        for _, filename in DAISY_PERFECT_TABLES_777:
-            self.assertIn(filename, commands[3])
+        for filename in retired:
             self.assertNotIn(filename, commands[1])
-        self.assertIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[1])
-        self.assertIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[3])
-        for _, filename in DAISY_MIXED_TABLES_777:
-            self.assertIn(filename, commands[1])
-            self.assertIn(filename, commands[3])
+            self.assertNotIn(filename, commands[3])
+            self.assertNotIn("--perfect-cost", commands[1])
+            self.assertNotIn("--perfect-cost", commands[3])
+            self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[0], commands[1])
+            self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[0], commands[3])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

@@ -77,6 +77,39 @@ PERFECT_LABELS = tuple(f"{axis}_PERFECT" for axis, _, _ in AXES)
 # in rubiks-cube-lookup-tables checks the compaction itself.
 PERFECT_COST = Path("lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin")
 PERFECT_INDEX = Path(f"{PERFECT_COST}.symmetry-index.bin")
+SPINE_COST = Path("lookup-tables/lookup-table-7x7x7-daisy-inner-x-spine-centers.cost-only.bin")
+# Identity-probe group order, then the same groups after every oblique swaps.
+# UD and FB solved ranks are 69; LR solved ranks are 0. A color swap sends r to 69-r.
+MIXED_COST_FILES = (
+    (
+        "--inner-x-plus-two-inner-t-cost",
+        "IX2IT_OMIT",
+        Path("lookup-tables/lookup-table-7x7x7-daisy-inner-x-plus-two-inner-t-centers.cost-only.bin"),
+        (69, 0, 69, 69, 0),
+        (69, 0, 69, 69, 0),
+    ),
+    (
+        "--inner-t-plus-two-inner-x-cost",
+        "IT2IX_OMIT",
+        Path("lookup-tables/lookup-table-7x7x7-daisy-inner-t-plus-two-inner-x-centers.cost-only.bin"),
+        (69, 0, 69, 69, 0),
+        (69, 0, 69, 69, 0),
+    ),
+    (
+        "--middle-plus-two-inner-t-cost",
+        "MID2IT_OMIT",
+        Path("lookup-tables/lookup-table-7x7x7-daisy-middle-plus-two-inner-t-centers.cost-only.bin"),
+        (69, 0, 69, 69, 0),
+        (0, 69, 0, 69, 0),
+    ),
+    (
+        "--oblique-weave-cost",
+        "WEAVE_MIDDLE",
+        Path("lookup-tables/lookup-table-7x7x7-daisy-oblique-weave-centers.cost-only.bin"),
+        (69, 69, 0, 0, 69),
+        (0, 0, 69, 69, 0),
+    ),
+)
 PERFECT_ORBIT_COUNT = 105_356_972
 ILLEGAL_MOVES = frozenset(DAISY_CENTERS_ILLEGAL_MOVES_777)
 
@@ -250,14 +283,14 @@ class DaisyCenters777Test(unittest.TestCase):
         self.assertEqual(actual["COST"], 15)
         self.assertEqual(actual["DAISY"], 0)
 
-        # The sampled matrix is the default and never reports less than that max.
+        # With no multiplier and no spine file, the heuristic is that same max.
         result = subprocess.run(
             self.command(self.solved, "--apply-move", "Uw2", "--print-ranks"),
             capture_output=True,
             text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertGreaterEqual(parse_ranks(result.stdout)["COST"], 15)
+        self.assertEqual(parse_ranks(result.stdout)["COST"], 15)
 
         # Inflating the max by 2 doubles it, and F below 1.0 is rejected.
         result = subprocess.run(
@@ -385,6 +418,69 @@ class DaisyCenters777Test(unittest.TestCase):
         self.assertEqual(actual["DAISY"], 0)
         self.assertGreater(max(actual[f"{label}_COST"] for label in PERFECT_LABELS), 0)
         self.assertGreater(actual["COST"], 0)
+
+    @unittest.skipUnless(PERFECT_INDEX.is_file() and SPINE_COST.is_file(), "the 7x7x7 spine table has not been built")
+    def test_solved_spine_probes_are_depth_zero(self):
+        swapped = RubiksCube777(solved_777, "URFDLB")
+        set_orbit_orientation(swapped, "LR", True)
+        native_rank = 1_657_032_999
+        swapped_rank = 1_657_028_100
+
+        for cube, lr_rank in ((self.solved, native_rank), (swapped, swapped_rank)):
+            with self.subTest(lr_rank=lr_rank):
+                result = subprocess.run(
+                    self.command(
+                        cube,
+                        "--inner-x-spine-cost",
+                        str(SPINE_COST),
+                        "--print-ranks",
+                        mode="perfect",
+                    ),
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                actual = parse_ranks(result.stdout)
+                self.assertEqual(actual["SPINE_UD_RANK"], native_rank)
+                self.assertEqual(actual["SPINE_FB_RANK"], native_rank)
+                self.assertEqual(actual["SPINE_LR_RANK"], lr_rank)
+                for probe in ("UD", "LR", "FB"):
+                    self.assertEqual(actual[f"SPINE_{probe}_COST"], 0)
+                self.assertEqual(actual["COST"], 0)
+                self.assertEqual(actual["DAISY"], 1)
+
+    @unittest.skipUnless(
+        PERFECT_INDEX.is_file() and all(path.is_file() for _, _, path, _, _ in MIXED_COST_FILES),
+        "the 7x7x7 mixed-axis tables have not been built",
+    )
+    def test_solved_mixed_probes_are_depth_zero(self):
+        swapped = RubiksCube777(solved_777, "URFDLB")
+        for axis, _, _ in AXES:
+            set_orbit_orientation(swapped, axis, True)
+        extra = []
+        for flag, _, path, _, _ in MIXED_COST_FILES:
+            extra.extend((flag, str(path)))
+
+        for cube in (self.solved, swapped):
+            with self.subTest(swapped=cube is swapped):
+                result = subprocess.run(
+                    self.command(cube, *extra, "--print-ranks", mode="perfect"),
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                actual = parse_ranks(result.stdout)
+                for _, prefix, _, native_groups, swapped_groups in MIXED_COST_FILES:
+                    groups = swapped_groups if cube is swapped else native_groups
+                    rank = 0
+                    for group in groups:
+                        rank = rank * GROUP_UNIVERSE + group
+                    self.assertEqual(actual[f"{prefix}_FB_RANK"], rank)
+                    for probe in ("FB", "UD", "LR"):
+                        self.assertEqual(actual[f"{prefix}_{probe}_RANK"], rank)
+                        self.assertEqual(actual[f"{prefix}_{probe}_COST"], 0)
+                self.assertEqual(actual["COST"], 0)
+                self.assertEqual(actual["DAISY"], 1)
 
 
 if __name__ == "__main__":

@@ -550,14 +550,6 @@ class LookupTableIDA777UDObliquesOuterXStage:
 # combined phases 7/8/9
 # daisy-solve UD, LR, and FB centers
 # ==================================================
-DAISY_ORBIT_SLUGS_777 = (
-    "without-left-oblique",
-    "without-middle-oblique",
-    "without-right-oblique",
-    "without-inner-t",
-    "without-inner-x",
-)
-
 # One table covers all three axes. Any cube rotation taking one axis onto another
 # carries that axis's tracked stickers along with it, so the three 70^5 coordinates
 # index a single cost function, and each is constant on the orbits of the 16
@@ -582,6 +574,37 @@ NATIVE_SOLVE_PERFECT_TABLES_777 = (
     ),
 )
 
+# One raw 70^5 file: the three inner-x orbits plus the UD left and right
+# obliques. The searcher rewrites the LR and FB group ranks onto that square
+# order, so this single table supplies all three spine probes. It is a lower
+# bound for both the daisy and the native-only goal.
+DAISY_INNER_X_SPINE_TABLE_777 = (
+    "--inner-x-spine-cost",
+    "lookup-tables/lookup-table-7x7x7-daisy-inner-x-spine-centers.cost-only.bin",
+)
+
+# Four more raw 70^5 files. Each file is the identity probe; the searcher
+# rotates by x y and by z' y' to cover the other two. Inner-only coordinates have
+# one goal. Coordinates that include an oblique have both daisy orientations.
+DAISY_MIXED_TABLES_777 = (
+    (
+        "--inner-x-plus-two-inner-t-cost",
+        "lookup-tables/lookup-table-7x7x7-daisy-inner-x-plus-two-inner-t-centers.cost-only.bin",
+    ),
+    (
+        "--inner-t-plus-two-inner-x-cost",
+        "lookup-tables/lookup-table-7x7x7-daisy-inner-t-plus-two-inner-x-centers.cost-only.bin",
+    ),
+    (
+        "--middle-plus-two-inner-t-cost",
+        "lookup-tables/lookup-table-7x7x7-daisy-middle-plus-two-inner-t-centers.cost-only.bin",
+    ),
+    (
+        "--oblique-weave-cost",
+        "lookup-tables/lookup-table-7x7x7-daisy-oblique-weave-centers.cost-only.bin",
+    ),
+)
+
 # A wide quarter turn would move centers out of their orbit, so the daisy keeps the
 # outer turns and the 2- and 3-wide half turns. This must match move_is_allowed() in
 # ida_search_777_daisy_centers.c
@@ -596,19 +619,16 @@ class LookupTableIDA777DaisyCenters:
     axes. Each axis has five C(8,4) center orbits - left, middle, and right
     obliques plus inner-t and inner-x - and outer-x is ignored.
 
-    Two sets of component tables
+    Component tables
 
     | Set                             | Tables | Selected by                       |
     | ------------------------------- | ------ | --------------------------------- |
-    | DAISY_PERFECT_TABLES_777        | 1 + index | use_perfect_tables=True (default in lt_init) |
+    | DAISY_PERFECT_TABLES_777        | 1 + index | solve_via_c()                      |
     | NATIVE_SOLVE_PERFECT_TABLES_777 | 1 + index | solve_via_c(native_only=True)     |
+    | DAISY_INNER_X_SPINE_TABLE_777   | 1         | always, both goals                 |
+    | DAISY_MIXED_TABLES_777          | 4         | always, both goals                 |
 
-    The leave-one-out set is ``DAISY_ORBIT_SLUGS_777`` crossed with UD/LR/FB:
-    five tables per axis, each covering four of that axis's five orbits, so
-    70^4 = 24,010,000 entries apiece. It is a live fallback, not dead code - a
-    box without the perfect table and its index can still solve from it.
-
-    The perfect set replaces those with a single 70^5 cost function shared by
+    The perfect set is a single 70^5 cost function shared by
     all three axes and compacted onto the orbits of the 16 axis-preserving cube
     symmetries, 105,356,972 orbits behind a rank-select index. The searcher
     rotates the state onto the UD coordinate and canonicalizes before probing.
@@ -622,21 +642,16 @@ class LookupTableIDA777DaisyCenters:
     ``rubikscubelookuptables/builder777.py`` and are not repeated here.
 
     An axis costs the most any of its loaded tables reports, so leave-one-out
-    mode maxes over five and perfect mode is a single probe. max(UD, LR, FB) is
-    too weak on its own, so ``ida_search_777_daisy_centers`` feeds the three
-    per-axis costs into the sampled ``daisy_axis_costs_777`` matrix, or
-    ``solve_axis_costs_777`` under ``--native-only``. Passing ``multiplier``
-    scales max(UD, LR, FB) instead; that is not admissible and exists to collect
-    the samples that rebuild those matrices, see
-    ``utils/build-777-daisy-cost-matrix.py`` and
-    ``utils/build-777-solve-cost-matrix.py``.
+    mode maxes over five and perfect mode is a single probe. The heuristic is
+    the max of those axis costs, the three probes of
+    ``DAISY_INNER_X_SPINE_TABLE_777``, and the three probes of each table in
+    ``DAISY_MIXED_TABLES_777``. ``multiplier`` scales that max; a factor
+    below 1.0 is rejected.
     """
 
     def __init__(self, parent, multiplier=None):
         self.parent = parent
         self.avoid_oll = None
-        # Without a multiplier the C searcher uses its sampled per-axis cost matrix,
-        # which is what utils/build-777-daisy-cost-matrix.py exists to rebuild.
         self.multiplier = multiplier
 
     def solve_via_c(self, native_only=False, **_kwargs):
@@ -646,6 +661,12 @@ class LookupTableIDA777DaisyCenters:
             tables = DAISY_PERFECT_TABLES_777
         cmd = ["./ida_search_777_daisy_centers", "--kociemba", self.parent.get_kociemba_string(True)]
         for flag, filename in tables:
+            download_file_if_needed(filename)
+            cmd.extend((flag, filename))
+        flag, filename = DAISY_INNER_X_SPINE_TABLE_777
+        download_file_if_needed(filename)
+        cmd.extend((flag, filename))
+        for flag, filename in DAISY_MIXED_TABLES_777:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
         if self.multiplier:

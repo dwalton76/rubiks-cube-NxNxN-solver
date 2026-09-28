@@ -11,6 +11,8 @@ from rubikscubennnsolver.RubiksCube666 import (
     solved_666,
 )
 from rubikscubennnsolver.RubiksCube777 import (
+    DAISY_INNER_X_SPINE_TABLE_777,
+    DAISY_MIXED_TABLES_777,
     DAISY_PERFECT_TABLES_777,
     NATIVE_SOLVE_PERFECT_TABLES_777,
     RubiksCube777,
@@ -318,13 +320,11 @@ class CenterStagingTablesTest(unittest.TestCase):
         cube.lt_init()
         daisy = cube.lt_daisy_centers
 
-        self.assertTrue(daisy.use_perfect_tables)
-        # One cost table plus its symmetry index, shared by all three axes.
+        # One cost table plus its symmetry index, shared by all three axes,
+        # plus the inner-x spine and the four mixed-axis 70^5 tables.
         self.assertEqual(len(DAISY_PERFECT_TABLES_777), 2)
-
-        # A per-axis table tops out at depth 15 while the combined daisy is 19+ moves
-        # away, so the C searcher leans on its sampled cost matrix rather than a
-        # multiplier over the admissible max.
+        self.assertEqual(DAISY_INNER_X_SPINE_TABLE_777[0], "--inner-x-spine-cost")
+        self.assertEqual(len(DAISY_MIXED_TABLES_777), 4)
         self.assertIsNone(daisy.multiplier)
 
     def test_larger_odd_cubes_use_native_only_daisy_without_step_tables(self):
@@ -373,6 +373,11 @@ class CenterStagingTablesTest(unittest.TestCase):
         for _, filename in DAISY_PERFECT_TABLES_777:
             self.assertIn(filename, commands[1])
             self.assertNotIn(filename, commands[0])
+        self.assertIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[0])
+        self.assertIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[1])
+        for _, filename in DAISY_MIXED_TABLES_777:
+            self.assertIn(filename, commands[0])
+            self.assertIn(filename, commands[1])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

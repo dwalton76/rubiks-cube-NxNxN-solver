@@ -547,7 +547,7 @@ class LookupTableIDA777UDObliquesOuterXStage:
 
 
 # ==================================================
-# combined phases 7/8/9
+# phases 7 and 8
 # daisy-solve UD, LR, and FB centers
 # ==================================================
 # One table covers all three axes. Any cube rotation taking one axis onto another
@@ -583,6 +583,13 @@ DAISY_INNER_X_SPINE_TABLE_777 = (
     "lookup-tables/lookup-table-7x7x7-daisy-inner-x-spine-centers.cost-only.bin",
 )
 
+# Phase 7. LR inner-t then LR inner-x, 70^2, one native goal. The two orbits are
+# closed under the daisy moves, so the byte is the exact inner distance.
+DAISY_LR_INNER_TABLE_777 = (
+    "--lr-inner-cost",
+    "lookup-tables/lookup-table-7x7x7-daisy-lr-inner-centers.cost-only.bin",
+)
+
 # Four more raw 70^5 files. Each file is the identity probe; the searcher
 # rotates by x y and by z' y' to cover the other two. Inner-only coordinates have
 # one goal. Coordinates that include an oblique have both daisy orientations.
@@ -612,21 +619,50 @@ DAISY_CENTERS_ILLEGAL_MOVES_777 = tuple(
     f"{prefix}{face}{suffix}" for prefix in ("", "3") for face in "ULFRBD" for suffix in ("w", "w'")
 )
 
+# Phase 8 drops the U/D/F/B 3-wide half turns because they split an LR bar and
+# move LR inners between L and R. The L/R 3-wide half turns preserve phase 7
+# and remain available to solve the UD/FB obliques.
+PHASE8_PRESERVE_ILLEGAL_MOVES_777 = (
+    "3Uw2",
+    "3Fw2",
+    "3Bw2",
+    "3Dw2",
+)
+
 
 class LookupTableIDA777DaisyCenters:
     """
-    Combined phases 7/8/9 IDA: daisy-solve the remaining centers on all three
-    axes. Each axis has five C(8,4) center orbits - left, middle, and right
-    obliques plus inner-t and inner-x - and outer-x is ignored.
+    Phase 7 then phase 8. Each axis has five C(8,4) center orbits - left,
+    middle, and right obliques plus inner-t and inner-x - and outer-x is ignored.
+
+    Phase 7 solves LR inner-t and inner-x in the native pattern and pairs the
+    left/middle/right oblique bars on L and R. The slot of an LR oblique bar
+    does not matter.
+    LR centers are already staged, and no move still legal after that carries an
+    LR oblique off L or R. Phase 7 uses the daisy move set. Its cost is
+    ``DAISY_LR_INNER_TABLE_777``, which is exact for the two LR inner orbits.
+    An LR oblique wing on L or R that does not match its bar's middle is unpaired.
+    A move pairs at most four of those, so ceil(unpaired / 4) is a lower bound.
+    Phase 7's cost is the max of that and the inner-table cost. The full
+    daisy tables measure distance to a daisy, which can exceed the distance to
+    this goal, so phase 7 does not probe them.
+
+    Phase 8 daisy-solves all six sides. Its moves are the outer turns, the
+    2-wide half turns, and the L/R 3-wide half turns, which keep the phase 7
+    state. Those L/R turns let phase 8 pair UD/FB obliques. The U/D/F/B 3-wide
+    half turns split an LR bar and move LR inners between L and R, so phase 8
+    rejects them.
+    ``native_only`` applies to phase 8.
 
     Component tables
 
     | Set                             | Tables | Selected by                       |
     | ------------------------------- | ------ | --------------------------------- |
-    | DAISY_PERFECT_TABLES_777        | 1 + index | solve_via_c()                      |
-    | NATIVE_SOLVE_PERFECT_TABLES_777 | 1 + index | solve_via_c(native_only=True)     |
-    | DAISY_INNER_X_SPINE_TABLE_777   | 1         | always, both goals                 |
-    | DAISY_MIXED_TABLES_777          | 4         | always, both goals                 |
+    | DAISY_PERFECT_TABLES_777        | 1 + index | phase 8                            |
+    | NATIVE_SOLVE_PERFECT_TABLES_777 | 1 + index | phase 8 with native_only           |
+    | DAISY_INNER_X_SPINE_TABLE_777   | 1         | phase 8, both goals                |
+    | DAISY_MIXED_TABLES_777          | 4         | phase 8, both goals                |
+    | DAISY_LR_INNER_TABLE_777        | 1         | phase 7                            |
 
     The perfect set is a single 70^5 cost function shared by
     all three axes and compacted onto the orbits of the 16 axis-preserving cube
@@ -642,8 +678,8 @@ class LookupTableIDA777DaisyCenters:
     ``rubikscubelookuptables/builder777.py`` and are not repeated here.
 
     An axis costs the most any of its loaded tables reports, so leave-one-out
-    mode maxes over five and perfect mode is a single probe. The heuristic is
-    the max of those axis costs, the three probes of
+    mode maxes over five and perfect mode is a single probe. Phase 8's heuristic
+    is the max of those axis costs, the three probes of
     ``DAISY_INNER_X_SPINE_TABLE_777``, and the three probes of each table in
     ``DAISY_MIXED_TABLES_777``. ``multiplier`` scales that max; a factor
     below 1.0 is rejected.
@@ -655,24 +691,43 @@ class LookupTableIDA777DaisyCenters:
         self.multiplier = multiplier
 
     def solve_via_c(self, native_only=False, **_kwargs):
-        if native_only:
-            tables = NATIVE_SOLVE_PERFECT_TABLES_777
-        else:
-            tables = DAISY_PERFECT_TABLES_777
-        cmd = ["./ida_search_777_daisy_centers", "--kociemba", self.parent.get_kociemba_string(True)]
-        for flag, filename in tables:
+        parent = self.parent
+        tmp_solution_len = len(parent.solution)
+        self._solve_phase(7, native_only=False)
+        parent.print_cube_add_comment("LR inners solved, LR obliques paired", tmp_solution_len)
+        tmp_solution_len = len(parent.solution)
+        self._solve_phase(8, native_only=native_only)
+        parent.print_cube_add_comment("centers daisy solved", tmp_solution_len)
+
+    def _solve_phase(self, phase, native_only):
+        cmd = [
+            "./ida_search_777_daisy_centers",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            f"--phase{phase}",
+        ]
+        if phase == 7:
+            flag, filename = DAISY_LR_INNER_TABLE_777
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
-        flag, filename = DAISY_INNER_X_SPINE_TABLE_777
-        download_file_if_needed(filename)
-        cmd.extend((flag, filename))
-        for flag, filename in DAISY_MIXED_TABLES_777:
+        if phase == 8:
+            if native_only:
+                tables = NATIVE_SOLVE_PERFECT_TABLES_777
+            else:
+                tables = DAISY_PERFECT_TABLES_777
+            for flag, filename in tables:
+                download_file_if_needed(filename)
+                cmd.extend((flag, filename))
+            flag, filename = DAISY_INNER_X_SPINE_TABLE_777
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
-        if self.multiplier:
-            cmd.extend(("--multiplier", str(self.multiplier)))
-        if native_only:
-            cmd.append("--native-only")
+            for flag, filename in DAISY_MIXED_TABLES_777:
+                download_file_if_needed(filename)
+                cmd.extend((flag, filename))
+            if self.multiplier:
+                cmd.extend(("--multiplier", str(self.multiplier)))
+            if native_only:
+                cmd.append("--native-only")
 
         output = self._run(cmd)
         self.parent.solve_via_c_output = output
@@ -718,9 +773,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     - LR oblique edges...use the same strategy as UD oblique edges
     - stage the rest of the LR centers via 5x5x5
 
-    - solve the UD centers...this is (8!/(4!*4!))^6 or 117 billion so use IDA
-    - solve the LR centers
-    - solve the LR and FB centers
+    - phase 7 solves LR inner-t and inner-x and pairs the LR oblique bars
+    - phase 8 daisy-solves all six sides while keeping the phase 7 state
 
     For 7x7x7 edges
     - pair the middle 3 wings for each side via 5x5x5
@@ -768,7 +822,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_obliques_outer_x_stage = LookupTableIDA777UDObliquesOuterXStage(self)
         self.lt_UD_obliques_outer_x_stage.avoid_oll = 0
 
-        # phase 7 - daisy-solve remaining centers on all three axes
+        # phase 7 pairs LR oblique bars and solves the LR inners; phase 8
+        # daisy-solves all six sides while keeping that
         self.lt_daisy_centers = LookupTableIDA777DaisyCenters(self)
 
     def create_fake_555_from_inside_centers(self):
@@ -986,9 +1041,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.print_cube_add_comment("UD centers staged", tmp_solution_len)
 
     def centers_combined_daisy_solve(self, native_only=False):
-        tmp_solution_len = len(self.solution)
         self.lt_daisy_centers.solve_via_c(native_only=native_only)
-        self.print_cube_add_comment("centers daisy solved", tmp_solution_len)
 
     def reduce_555(self):
         self.lt_init()

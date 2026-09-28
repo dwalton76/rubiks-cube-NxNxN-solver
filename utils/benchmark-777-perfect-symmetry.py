@@ -75,7 +75,7 @@ def solve(binary, tables, kociemba):
     which dominates a short search, while the per-threshold timings the searcher
     logs cover only the search and so isolate the cost of a probe.
     """
-    command = [binary, "--kociemba", kociemba, *tables, *native_only, "--threads", str(args.threads)]
+    command = [binary, "--phase8", "--kociemba", kociemba, *tables, *native_only, "--threads", str(args.threads)]
     start = time.monotonic()
     result = subprocess.run(command, capture_output=True, text=True)
     wall = time.monotonic() - start

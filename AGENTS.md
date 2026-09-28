@@ -77,7 +77,7 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 | `ida_search_666_daisy_centers` | `ida_search_666_daisy_centers.c` | 6x6 daisy |
 | `ida_search_777_centers_stage` | `ida_search_777_centers_stage.c` | 7x7 LR phase 2 (UD inner + LR obliques); `--obliques-only` for NNNOdd partial rings |
 | `ida_search_777_UD_centers_stage` | `ida_search_777_UD_centers_stage.c` | 7x7 UD outer-x + obliques (6 tables) or `--obliques-only` (3 tables) |
-| `ida_search_777_daisy_centers` | `ida_search_777_daisy_centers.c` | 7x7 daisy, or `--native-only` for 9x9+ |
+| `ida_search_777_daisy_centers` | `ida_search_777_daisy_centers.c` | 7x7 daisy: phase 7 then phase 8. `--native-only` applies to phase 8 for 9x9+ |
 
 Ranked searchers are pthread IDA. A `SOLUTION (N steps): …` line on stdout is the contract Python parses.
 
@@ -96,8 +96,6 @@ Sampled **cost matrices** (when max-of-axis is too weak) live as C arrays in the
 
 - `utils/build-666-daisy-cost-matrix.py`
 - `utils/build-777-UD-inner-centers-oblique-matrix.py`
-- `utils/build-777-daisy-cost-matrix.py`
-- `utils/build-777-solve-cost-matrix.py`
 
 Do not start those jobs unless asked; they sample long IDA runs.
 
@@ -128,7 +126,7 @@ flowchart TD
 | 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1 and 2 |
 | 5 | `RubiksCube555` | 3x3 | Six ranked C phases stage centers, orient wings, pair edges, and solve centers |
 | 6 | `RubiksCube666` | 5x5 | Ranked center staging, three 70^5 inner-x-spine daisy tables, then fake-4x4 inside-edge pairing |
-| 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, daisy (either orientation) |
+| 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, then phase 7 and phase 8 |
 | even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
 | odd ≥9 | `RubiksCubeNNNOdd` | 5x5 | Fake 7x7 per center orbit/cycle, then 5x5 edges |
 
@@ -159,7 +157,7 @@ flowchart LR
     UDt["last dummy cycle: inner UD if needed + 3-table search"]
   end
   subgraph sol [Solve]
-    native["every orbit: daisy --native-only"]
+    native["phase 7, then phase 8 --native-only"]
   end
   LRfull --> UDfull
   LRpair --> UDpair
@@ -177,7 +175,7 @@ Dispatch is `RubiksCubeNNNOdd.stage_or_solve_inside_777`. Outer-x of the fake 7x
 | Intermediate cycle | `ida_search_777_centers_stage --obliques-only` (unpaired-count heuristic, no tables) | 3 ranked oblique tables, **no** outer-x |
 | Last dummy cycle | Pair obliques, then fake-5x5 `lt_LR_t_centers_stage_ida` | Same 3-table search (middle obliques **are** outer t-centers) |
 
-NNNOdd center **solve** always passes `native_only=True` and the `lookup-table-7x7x7-solve-perfect-centers.cost-only.bin` table. Daisy tables score 0 at the swapped orientation, which is unsolved on 9x9+. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
+NNNOdd center **solve** runs phase 7, then phase 8 with `native_only=True` and the `lookup-table-7x7x7-solve-perfect-centers.cost-only.bin` table. Daisy tables score 0 at the swapped orientation, which is unsolved on 9x9+. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
 
 That one table covers all three axes. The UD, LR and FB perfect tables held the same cost function under three square orderings, and the costs are constant on each orbit of the 16 axis-preserving cube symmetries, so `--perfect-cost` / `--perfect-index` name a single 314 MiB pair that the searcher probes by rotating the state onto the UD coordinate and canonicalizing. This replaced six 1.6 GiB tables.
 
@@ -187,7 +185,7 @@ Do not:
 
 - Run the 6-table UD search on dummy outer-x (placeholders are painted as the face color).
 - Collapse LR t-center staging into `--obliques-only` (LR t-centers are not LR obliques).
-- Use daisy (either orientation) on NNNOdd rings.
+- Let phase 8 accept the swapped daisy orientation on NNNOdd rings.
 - Interleave LR and UD per orbit (tried; keep all-LR then all-UD then all-solve).
 
 Optional leftover: partial LR/UD searches do not pass `--orbit0-need-*`. Staging OLL on those rings can dump parity onto the matching wings.

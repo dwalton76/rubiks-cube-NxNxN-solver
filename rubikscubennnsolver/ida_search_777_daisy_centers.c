@@ -166,10 +166,22 @@ static unsigned int loaded_table_count;
 static unsigned int loaded_tables[TABLE_COUNT];
 static float cost_to_goal_multiplier;
 static int native_only;
+
+/* Phase 7 pairs the LR inners and the LR oblique bars. Phase 8 daisy-solves
+ * every axis using only moves that keep that state. */
+enum search_phase { PHASE_UNSET, PHASE_7, PHASE_8 };
+static enum search_phase search_phase;
 static const char *perfect_index_filename;
 static const char *spine_filename;
 static unsigned char *spine_costs;
 static int spine_fd = -1;
+
+/* Phase 7: LR inner-t then LR inner-x, each C(8, 4) = 70. One native goal. */
+#define LR_INNER_GROUP UINT64_C(70)
+#define LR_INNER_UNIVERSE (LR_INNER_GROUP * LR_INNER_GROUP)
+static const char *lr_inner_filename;
+static unsigned char *lr_inner_costs;
+static int lr_inner_fd = -1;
 
 struct mixed_cost_table {
     const char *flag;
@@ -225,6 +237,11 @@ struct heuristic_result {
     unsigned char mixed_cost[MIXED_TABLE_COUNT][MIXED_PROBE_COUNT];
     unsigned char cost;
     unsigned char daisy;
+    unsigned char goal;
+    uint64_t lr_inner_rank;
+    unsigned char lr_inner_cost;
+    unsigned char unpaired_obliques;
+    unsigned char oblique_cost;
 };
 
 struct worker {
@@ -241,10 +258,10 @@ struct child {
 static void usage(const char *program)
 {
     printf(
-        "usage: %s --kociemba STATE "
+        "usage: %s --kociemba STATE (--phase7 | --phase8) "
         "(all 15 --{ud,lr,fb}-without-{left-oblique,middle-oblique,right-oblique,inner-t,inner-x}-cost FILE "
         "| --perfect-cost FILE --perfect-index FILE) "
-        "[--inner-x-spine-cost FILE] "
+        "[--inner-x-spine-cost FILE] [--lr-inner-cost FILE] "
         "[--inner-x-plus-two-inner-t-cost FILE] [--inner-t-plus-two-inner-x-cost FILE] "
         "[--middle-plus-two-inner-t-cost FILE] [--oblique-weave-cost FILE] "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] [--multiplier F] [--native-only] "
@@ -267,6 +284,15 @@ static void usage(const char *program)
         "                          not admissible.\n"
         "  --native-only           require every tracked orbit to use its native face\n"
         "                          orientation\n"
+        "  --lr-inner-cost F       70^2 table: LR inner-t then LR inner-x. Exact for\n"
+        "                          those two orbits. Phase 7 uses it as its cost.\n"
+        "  --phase7                LR inner-t and inner-x native, and every oblique bar\n"
+        "                          on L and R one color. LR obliques stay on L/R under every move\n"
+        "                          still legal after LR staging. The full daisy tables\n"
+        "                          are not a lower bound on this goal.\n"
+        "  --phase8                daisy-solve all six sides. Moves are the outer turns,\n"
+        "                          2-wide half turns, and L/R 3-wide half turns, which keep the phase 7\n"
+        "                          state. The start state has to already be a phase 7 state.\n"
     );
 }
 
@@ -401,6 +427,76 @@ static uint64_t mixed_probe_rank(const struct mixed_cost_table *table, const str
     return rank;
 }
 
+/* Same left/middle/right triplets as LR_LEFT/MIDDLE/RIGHT_OBLIQUES_777. */
+#define OBLIQUE_BAR_COUNT 24
+static const unsigned int oblique_bar_777[OBLIQUE_BAR_COUNT][3] = {
+    {10, 11, 12}, {30, 23, 16}, {20, 27, 34}, {40, 39, 38},
+    {59, 60, 61}, {79, 72, 65}, {69, 76, 83}, {89, 88, 87},
+    {108, 109, 110}, {128, 121, 114}, {118, 125, 132}, {138, 137, 136},
+    {157, 158, 159}, {177, 170, 163}, {167, 174, 181}, {187, 186, 185},
+    {206, 207, 208}, {226, 219, 212}, {216, 223, 230}, {236, 235, 234},
+    {255, 256, 257}, {275, 268, 261}, {265, 272, 279}, {285, 284, 283},
+};
+
+static int square_on_lr_face(unsigned int square)
+{
+    return (square >= 50 && square <= 98) || (square >= 148 && square <= 196);
+}
+
+static int lr_oblique_bars_paired(const char *cube)
+{
+    for (unsigned int bar = 0; bar < OBLIQUE_BAR_COUNT; bar++) {
+        char color = cube[oblique_bar_777[bar][0]];
+
+        if (!square_on_lr_face(oblique_bar_777[bar][1])) {
+            continue;
+        }
+        if (cube[oblique_bar_777[bar][1]] != color || cube[oblique_bar_777[bar][2]] != color) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* L is squares 50-98 and R is 148-196. Phase 7 only prices the oblique bars
+ * on those faces. One move pairs at most four of their wings, so
+ * ceil(unpaired / 4) is a lower bound. */
+static unsigned char unpaired_oblique_wings(const char *cube)
+{
+    unsigned char unpaired = 0;
+
+    for (unsigned int bar = 0; bar < OBLIQUE_BAR_COUNT; bar++) {
+        char middle;
+
+        if (!square_on_lr_face(oblique_bar_777[bar][1])) {
+            continue;
+        }
+        middle = cube[oblique_bar_777[bar][1]];
+        unpaired += cube[oblique_bar_777[bar][0]] != middle;
+        unpaired += cube[oblique_bar_777[bar][2]] != middle;
+    }
+    return unpaired;
+}
+
+static unsigned char oblique_wing_cost(unsigned char unpaired)
+{
+    return unpaired ? (unsigned char)((unpaired + 3) / 4) : 0;
+}
+
+static int lr_inners_native(const char *cube)
+{
+    return orbit_has_colors(cube, daisy_orbit_squares_777[AXIS_LR][ORBIT_INNER_T], 'L', 'R') &&
+        orbit_has_colors(cube, daisy_orbit_squares_777[AXIS_LR][ORBIT_INNER_X], 'L', 'R');
+}
+
+/* LR centers are staged before this search, and every later legal move keeps
+ * an LR oblique on L or R. Phase 7 only has to solve the LR inners and pair
+ * the bars. The inners do not swap, so they have to be native. */
+static int phase7_reached(const char *cube)
+{
+    return lr_inners_native(cube) && lr_oblique_bars_paired(cube);
+}
+
 static void take_cost(struct heuristic_result *result, unsigned char decoded)
 {
     if (decoded == UINT8_MAX) {
@@ -426,6 +522,37 @@ static struct heuristic_result heuristic(const char *cube)
                 valid = 0;
             }
         }
+    }
+    /* A full-daisy cost can exceed the distance to this weaker goal, so phase 7
+     * probes only the LR inner-t x inner-x table. That pair is closed, so the
+     * byte is exact for the inners. The oblique term is admissible on its own,
+     * and a move can reduce both, so the cost is the max of the two. */
+    if (search_phase == PHASE_7) {
+        uint64_t t_rank = result.orbit_rank[AXIS_LR][ORBIT_INNER_T];
+        uint64_t x_rank = result.orbit_rank[AXIS_LR][ORBIT_INNER_X];
+        unsigned char inner_cost = 1;
+
+        result.unpaired_obliques = unpaired_oblique_wings(cube);
+        result.oblique_cost = oblique_wing_cost(result.unpaired_obliques);
+        result.goal = phase7_reached(cube) ? 1 : 0;
+        result.lr_inner_rank = UINT64_MAX;
+        if (lr_inner_costs && t_rank < LR_INNER_GROUP && x_rank < LR_INNER_GROUP) {
+            result.lr_inner_rank = t_rank * LR_INNER_GROUP + x_rank;
+            inner_cost = decode_cost(lr_inner_costs[result.lr_inner_rank]);
+        } else if (lr_inner_costs) {
+            inner_cost = UINT8_MAX;
+        }
+        result.lr_inner_cost = inner_cost;
+        if (result.goal) {
+            result.cost = 0;
+        } else if (inner_cost == UINT8_MAX) {
+            result.cost = UINT8_MAX;
+        } else if (inner_cost > result.oblique_cost) {
+            result.cost = inner_cost;
+        } else {
+            result.cost = result.oblique_cost;
+        }
+        return result;
     }
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
         unsigned int index = loaded_tables[loaded];
@@ -507,6 +634,7 @@ static struct heuristic_result heuristic(const char *cube)
     } else if (result.cost == 0) {
         result.cost = 1;
     }
+    result.goal = result.daisy;
     return result;
 }
 
@@ -539,8 +667,50 @@ static int move_is_allowed(move_type move)
         case threeDw_PRIME:
             return 0;
         default:
-            return 1;
+            break;
     }
+
+    if (search_phase == PHASE_7) {
+        switch (move) {
+            // none of these moves modify sides L or R and we are only interested
+            // in sides L and R for phase 7
+            case U:
+            case U_PRIME:
+            case U2:
+            case D:
+            case D_PRIME:
+            case D2:
+            case F:
+            case F_PRIME:
+            case F2:
+            case B:
+            case B_PRIME:
+            case B2:
+            case Lw2:
+            case threeLw2:
+            case Rw2:
+            case threeRw2:
+                return 0;
+            default:
+                break;
+        }
+
+    /* A 2-wide half turn swaps opposite faces, so an LR oblique stays on L or R
+     * and each bar's three squares move together. The U/D/F/B 3-wide half turns
+     * split an LR bar and move an LR inner between L and R. The L/R 3-wide half
+     * turns preserve the LR state and remain available to solve UD/FB. */
+    } else if (search_phase == PHASE_8) {
+        switch (move) {
+            case threeUw2:
+            case threeFw2:
+            case threeBw2:
+            case threeDw2:
+                return 0;
+            default:
+                break;
+        }
+    }
+    return 1;
 }
 
 static void init_move_tables(void)
@@ -598,6 +768,12 @@ static void map_ranked_tables(void)
         spine_fd = file.fd;
         spine_costs = file.costs;
     }
+    if (lr_inner_filename) {
+        struct mapped_cost_file file = ida_map_cost_file(lr_inner_filename, LR_INNER_UNIVERSE);
+
+        lr_inner_fd = file.fd;
+        lr_inner_costs = file.costs;
+    }
     for (unsigned int table_index = 0; table_index < MIXED_TABLE_COUNT; table_index++) {
         struct mixed_cost_table *table = &mixed_tables[table_index];
 
@@ -629,6 +805,11 @@ static void unmap_ranked_tables(void)
         ida_unmap_cost_file(spine_fd, spine_costs, (size_t)SPINE_UNIVERSE);
         spine_costs = NULL;
         spine_fd = -1;
+    }
+    if (lr_inner_costs) {
+        ida_unmap_cost_file(lr_inner_fd, lr_inner_costs, (size_t)LR_INNER_UNIVERSE);
+        lr_inner_costs = NULL;
+        lr_inner_fd = -1;
     }
     for (unsigned int table_index = 0; table_index < MIXED_TABLE_COUNT; table_index++) {
         struct mixed_cost_table *table = &mixed_tables[table_index];
@@ -700,7 +881,7 @@ static int ida_search(
         if (h.cost == UINT8_MAX || next_depth + h.cost > threshold) {
             continue;
         }
-        if (h.daisy) {
+        if (h.goal) {
             worker->solution[depth] = move;
             worker->solution[next_depth] = MOVE_NONE;
             return 1;
@@ -765,7 +946,7 @@ static void *search_root_moves(void *argument)
             continue;
         }
         worker->solution[0] = first;
-        if (h.daisy) {
+        if (h.goal) {
             worker->solution[1] = MOVE_NONE;
             found = 1;
         } else if (search_threshold <= 1) {
@@ -901,7 +1082,19 @@ static void print_ranks(const struct heuristic_result *initial)
             );
         }
     }
-    printf(" COST %u DAISY %u\n", initial->cost, initial->daisy);
+    if (search_phase == PHASE_7) {
+        printf(
+            " UNPAIRED %u OBLIQUE_COST %u",
+            initial->unpaired_obliques, initial->oblique_cost
+        );
+        if (lr_inner_costs) {
+            printf(
+                " LR_INNER_RANK %" PRIu64 " LR_INNER_COST %u",
+                initial->lr_inner_rank, initial->lr_inner_cost
+            );
+        }
+    }
+    printf(" COST %u DAISY %u GOAL %u\n", initial->cost, initial->daisy, initial->goal);
 }
 
 static int configure_loaded_tables(void)
@@ -920,6 +1113,20 @@ static int configure_loaded_tables(void)
             leave_one_out++;
         }
         loaded_tables[loaded_table_count++] = index;
+    }
+    /* Phase 7 ignores the daisy tables. Phase 8 may run with them or, for a
+     * short search, with the 0/1 fallback that the missing-table path already uses. */
+    if (leave_one_out == 0 && perfect == 0 && !perfect_index_filename) {
+        int mixed_named = 0;
+
+        for (unsigned int table_index = 0; table_index < MIXED_TABLE_COUNT; table_index++) {
+            if (mixed_tables[table_index].filename) {
+                mixed_named = 1;
+            }
+        }
+        if (!spine_filename && !mixed_named) {
+            return 1;
+        }
     }
     if (leave_one_out == LEAVE_ONE_OUT_TABLE_COUNT && perfect == 0 && !perfect_index_filename) {
         return 1;
@@ -985,6 +1192,8 @@ int main(int argc, char **argv)
             perfect_index_filename = argv[++index];
         } else if (!strcmp(argv[index], "--inner-x-spine-cost") && index + 1 < argc) {
             spine_filename = argv[++index];
+        } else if (!strcmp(argv[index], "--lr-inner-cost") && index + 1 < argc) {
+            lr_inner_filename = argv[++index];
         } else if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
         } else if (!strcmp(argv[index], "--min-ida-threshold") && index + 1 < argc) {
@@ -998,6 +1207,14 @@ int main(int argc, char **argv)
             cost_to_goal_multiplier = (float)atof(argv[++index]);
         } else if (!strcmp(argv[index], "--native-only")) {
             native_only = 1;
+        } else if (!strcmp(argv[index], "--phase7") || !strcmp(argv[index], "--phase8")) {
+            enum search_phase requested = !strcmp(argv[index], "--phase7") ? PHASE_7 : PHASE_8;
+
+            if (search_phase != PHASE_UNSET) {
+                fprintf(stderr, "ERROR: --phase7 and --phase8 are mutually exclusive\n");
+                return 2;
+            }
+            search_phase = requested;
         } else if (!strcmp(argv[index], "--apply-move") && index + 1 < argc) {
             apply_move_string = argv[++index];
         } else if (!strcmp(argv[index], "--print-rank") || !strcmp(argv[index], "--print-ranks")) {
@@ -1023,7 +1240,7 @@ int main(int argc, char **argv)
 
         max_threshold = scaled > MAX_IDA_THRESHOLD ? MAX_IDA_THRESHOLD : (unsigned char)scaled;
     }
-    if (!kociemba || !thread_count || thread_count > MAX_THREADS ||
+    if (search_phase == PHASE_UNSET || !kociemba || !thread_count || thread_count > MAX_THREADS ||
         min_threshold > max_threshold || max_threshold > MAX_IDA_THRESHOLD ||
         !configure_loaded_tables()) {
         usage(argv[0]);
@@ -1060,6 +1277,14 @@ int main(int argc, char **argv)
         unmap_ranked_tables();
         return initial.cost == UINT8_MAX;
     }
+    if (search_phase == PHASE_8 && !phase7_reached(cube)) {
+        fprintf(
+            stderr,
+            "ERROR: phase 8 start does not have LR inners solved and LR oblique bars paired\n"
+        );
+        unmap_ranked_tables();
+        return 2;
+    }
 
     printf("START\n");
     print_cube(cube, CUBE_SIZE);
@@ -1076,25 +1301,33 @@ int main(int argc, char **argv)
             mixed_loaded++;
         }
     }
-    if (spine_costs && mixed_loaded) {
+    if (search_phase == PHASE_7) {
         LOG(
-            "searching with max of the per-axis tables, the inner-x spine, and %u mixed-axis tables\n",
-            mixed_loaded
+            "searching phase 7: LR inners native, LR oblique bars paired%s\n",
+            lr_inner_costs ? ", LR inner-t x inner-x cost table" : ""
         );
-    } else if (spine_costs) {
-        LOG("searching with max of the per-axis tables and the inner-x spine\n");
-    } else if (mixed_loaded) {
-        LOG("searching with max of the per-axis tables and %u mixed-axis tables\n", mixed_loaded);
     } else {
-        LOG("searching with max of the per-axis tables\n");
+        LOG("searching phase 8: daisy solve, keeping the phase 7 state\n");
+        if (spine_costs && mixed_loaded) {
+            LOG(
+                "searching with max of the per-axis tables, the inner-x spine, and %u mixed-axis tables\n",
+                mixed_loaded
+            );
+        } else if (spine_costs) {
+            LOG("searching with max of the per-axis tables and the inner-x spine\n");
+        } else if (mixed_loaded) {
+            LOG("searching with max of the per-axis tables and %u mixed-axis tables\n", mixed_loaded);
+        } else {
+            LOG("searching with max of the per-axis tables\n");
+        }
     }
     if (cost_to_goal_multiplier) {
         LOG("searching with cost to goal multiplier %.2f\n", cost_to_goal_multiplier);
     }
     LOG(
-        "initial cost %u, axis costs %u/%u/%u, daisy %u, threads %u, ranked tables %u\n",
+        "initial cost %u, axis costs %u/%u/%u, daisy %u, goal %u, threads %u, ranked tables %u\n",
         initial.cost, initial.axis_cost[AXIS_UD], initial.axis_cost[AXIS_LR], initial.axis_cost[AXIS_FB],
-        initial.daisy, thread_count, loaded_table_count
+        initial.daisy, initial.goal, thread_count, loaded_table_count
     );
     if (spine_costs) {
         LOG(
@@ -1124,7 +1357,7 @@ int main(int argc, char **argv)
         uint64_t threshold_nodes = 1;
 
         gettimeofday(&start, NULL);
-        int found = initial.daisy || search_at_threshold(cube, threshold, thread_count, &threshold_nodes);
+        int found = initial.goal || search_at_threshold(cube, threshold, thread_count, &threshold_nodes);
         gettimeofday(&end, NULL);
         {
             double seconds = elapsed_seconds(&start, &end);

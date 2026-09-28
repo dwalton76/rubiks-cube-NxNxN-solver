@@ -12,6 +12,7 @@ from rubikscubennnsolver.RubiksCube666 import (
 )
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_INNER_X_SPINE_TABLE_777,
+    DAISY_LR_INNER_TABLE_777,
     DAISY_MIXED_TABLES_777,
     DAISY_PERFECT_TABLES_777,
     NATIVE_SOLVE_PERFECT_TABLES_777,
@@ -364,20 +365,31 @@ class CenterStagingTablesTest(unittest.TestCase):
             daisy.solve_via_c(native_only=True)
             daisy.solve_via_c()
 
+        self.assertEqual(len(commands), 4)
         self.assertEqual(len(NATIVE_SOLVE_PERFECT_TABLES_777), 2)
-        self.assertIn("--native-only", commands[0])
-        self.assertNotIn("--native-only", commands[1])
+        for index in (0, 2):
+            self.assertIn("--phase7", commands[index])
+            self.assertNotIn("--phase8", commands[index])
+            self.assertNotIn("--native-only", commands[index])
+            self.assertNotIn("--perfect-cost", commands[index])
+            self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[index])
+            self.assertIn(DAISY_LR_INNER_TABLE_777[1], commands[index])
+            self.assertIn("--lr-inner-cost", commands[index])
+        self.assertIn("--phase8", commands[1])
+        self.assertIn("--native-only", commands[1])
+        self.assertIn("--phase8", commands[3])
+        self.assertNotIn("--native-only", commands[3])
         for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777:
-            self.assertIn(filename, commands[0])
-            self.assertNotIn(filename, commands[1])
+            self.assertIn(filename, commands[1])
+            self.assertNotIn(filename, commands[3])
         for _, filename in DAISY_PERFECT_TABLES_777:
-            self.assertIn(filename, commands[1])
-            self.assertNotIn(filename, commands[0])
-        self.assertIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[0])
+            self.assertIn(filename, commands[3])
+            self.assertNotIn(filename, commands[1])
         self.assertIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[1])
+        self.assertIn(DAISY_INNER_X_SPINE_TABLE_777[1], commands[3])
         for _, filename in DAISY_MIXED_TABLES_777:
-            self.assertIn(filename, commands[0])
             self.assertIn(filename, commands[1])
+            self.assertIn(filename, commands[3])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

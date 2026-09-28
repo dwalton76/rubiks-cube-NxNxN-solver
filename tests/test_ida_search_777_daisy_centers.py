@@ -7,6 +7,11 @@ from pathlib import Path
 # rubiks cube libraries
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_CENTERS_ILLEGAL_MOVES_777,
+    DAISY_LR_INNER_TABLE_777,
+    LR_LEFT_OBLIQUES_777,
+    LR_MIDDLE_OBLIQUES_777,
+    LR_RIGHT_OBLIQUES_777,
+    PHASE8_PRESERVE_ILLEGAL_MOVES_777,
     RubiksCube777,
     inner_t_centers_777,
     inner_x_centers_777,
@@ -171,6 +176,57 @@ def parse_ranks(stdout):
     return {tokens[index]: int(tokens[index + 1]) for index in range(0, len(tokens), 2)}
 
 
+def phase7_reached(cube):
+    state = cube.state
+    for left, middle, right in zip(LR_LEFT_OBLIQUES_777, LR_MIDDLE_OBLIQUES_777, LR_RIGHT_OBLIQUES_777):
+        if not (50 <= middle <= 98 or 148 <= middle <= 196):
+            continue
+        if state[left] != state[middle] or state[middle] != state[right]:
+            return False
+    _, orbits = axis_orbits("LR")
+    for orbit in ("inner-t", "inner-x"):
+        squares = orbits[orbit]
+        if any(state[square] != "L" for square in squares[:4]):
+            return False
+        if any(state[square] != "R" for square in squares[4:]):
+            return False
+    return True
+
+
+def orbit_matches(cube, squares, first, second):
+    return all(cube.state[square] == first for square in squares[:4]) and all(
+        cube.state[square] == second for square in squares[4:]
+    )
+
+
+def cube_is_daisy(cube, native_only=False):
+    faces = {"UD": ("U", "D"), "LR": ("L", "R"), "FB": ("F", "B")}
+    for axis_name, (primary, opposite) in faces.items():
+        _, orbits = axis_orbits(axis_name)
+        native = all(orbit_matches(cube, squares, primary, opposite) for squares in orbits.values())
+        swapped = all(
+            orbit_matches(
+                cube,
+                squares,
+                opposite if orbit in OBLIQUE_ORBITS else primary,
+                primary if orbit in OBLIQUE_ORBITS else opposite,
+            )
+            for orbit, squares in orbits.items()
+        )
+        if native_only and not native:
+            return False
+        if not native and not swapped:
+            return False
+    return True
+
+
+def solution_steps(stdout):
+    for line in stdout.splitlines():
+        if line.startswith("SOLUTION"):
+            return line.split(":", 1)[1].strip().split()
+    return None
+
+
 def set_orbit_orientation(cube, axis_name, swapped):
     _, orbits = axis_orbits(axis_name)
     primary, opposite = {"UD": ("U", "D"), "LR": ("L", "R"), "FB": ("F", "B")}[axis_name]
@@ -195,7 +251,7 @@ class DaisyCenters777Test(unittest.TestCase):
         self.tempdir.cleanup()
 
     def command(self, cube, *extra, mode="leave-one-out", labels=None):
-        command = [str(BINARY), "--kociemba", cube.get_kociemba_string(True)]
+        command = [str(BINARY), "--phase8", "--kociemba", cube.get_kociemba_string(True)]
         if mode == "leave-one-out":
             selected = labels or {label for label, _, _, _ in LEAVE_ONE_OUT_TABLES}
             for label, flag, _, _ in LEAVE_ONE_OUT_TABLES:
@@ -318,7 +374,10 @@ class DaisyCenters777Test(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         line = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
-        self.assertEqual(line.split()[1:], [move for move in moves_777 if move not in ILLEGAL_MOVES])
+        phase8_legal = [
+            move for move in moves_777 if move not in ILLEGAL_MOVES and move not in PHASE8_PRESERVE_ILLEGAL_MOVES_777
+        ]
+        self.assertEqual(line.split()[1:], phase8_legal)
 
         result = subprocess.run(
             self.command(self.solved, "--print-ranks", labels={"UD_WITHOUT_LEFT_OBLIQUE"}),
@@ -339,7 +398,7 @@ class DaisyCenters777Test(unittest.TestCase):
 
     def test_zero_cost_goal_and_one_move_search(self):
         scrambled = RubiksCube777(solved_777, "URFDLB")
-        scrambled.rotate("Uw2")
+        scrambled.rotate("Lw2")
         self.write_leave_one_out(
             [self.solved, scrambled],
             {label: 1 for label, _, _, _ in LEAVE_ONE_OUT_TABLES},
@@ -355,12 +414,12 @@ class DaisyCenters777Test(unittest.TestCase):
         self.assertIn("explored 1 nodes", solved.stdout)
 
         search = subprocess.run(
-            self.command(self.solved, "--apply-move", "Uw2", "--threads", "2", "--max-ida-threshold", "1"),
+            self.command(self.solved, "--apply-move", "Lw2", "--threads", "2", "--max-ida-threshold", "1"),
             capture_output=True,
             text=True,
         )
         self.assertEqual(search.returncode, 0, search.stdout + search.stderr)
-        self.assertRegex(search.stdout, r"SOLUTION \(1 steps\): Uw2")
+        self.assertRegex(search.stdout, r"SOLUTION \(1 steps\): Lw2")
         self.assertRegex(search.stdout, r"explored [1-9][0-9]* nodes")
 
     @unittest.skipUnless(PERFECT_INDEX.is_file(), "the optional 7x7x7 perfect tables have not been built")
@@ -481,6 +540,162 @@ class DaisyCenters777Test(unittest.TestCase):
                         self.assertEqual(actual[f"{prefix}_{probe}_COST"], 0)
                 self.assertEqual(actual["COST"], 0)
                 self.assertEqual(actual["DAISY"], 1)
+
+    def phase_command(self, cube, phase, *extra):
+        return [str(BINARY), "--kociemba", cube.get_kociemba_string(True), f"--phase{phase}", "--threads", "1", *extra]
+
+    def test_phase7_goal_and_phase8_preserve_moves(self):
+        daisy_legal = [move for move in moves_777 if move not in ILLEGAL_MOVES]
+        phase7_skip = {
+            "U",
+            "U'",
+            "U2",
+            "D",
+            "D'",
+            "D2",
+            "F",
+            "F'",
+            "F2",
+            "B",
+            "B'",
+            "B2",
+            "Lw2",
+            "3Lw2",
+            "Rw2",
+            "3Rw2",
+        }
+        phase7_legal = [move for move in daisy_legal if move not in phase7_skip]
+        phase8_legal = [move for move in daisy_legal if move not in PHASE8_PRESERVE_ILLEGAL_MOVES_777]
+        self.assertEqual(len(phase8_legal), 26)
+
+        for phase, expected in ((7, phase7_legal), (8, phase8_legal)):
+            result = subprocess.run(
+                self.phase_command(self.solved, phase, "--print-legal-moves", "--print-ranks"),
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            printed = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
+            self.assertEqual(printed.split()[1:], expected)
+            actual = parse_ranks(result.stdout)
+            self.assertEqual(actual["COST"], 0)
+            self.assertEqual(actual["GOAL"], 1)
+            self.assertEqual(actual["DAISY"], 1)
+
+        split = RubiksCube777(solved_777, "URFDLB")
+        split.rotate("3Lw2")
+        self.assertTrue(phase7_reached(split))
+        result = subprocess.run(
+            self.phase_command(split, 7, "--print-ranks"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        actual = parse_ranks(result.stdout)
+        self.assertEqual(actual["UNPAIRED"], 0)
+        self.assertEqual(actual["OBLIQUE_COST"], 0)
+        self.assertEqual(actual["COST"], 0)
+        self.assertEqual(actual["GOAL"], 1)
+        self.assertEqual(actual["DAISY"], 0)
+
+        opposite = RubiksCube777(solved_777, "URFDLB")
+        opposite.rotate("3Uw2")
+        result = subprocess.run(
+            self.phase_command(opposite, 7, "--print-ranks"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        actual = parse_ranks(result.stdout)
+        self.assertEqual(actual["UNPAIRED"], 4)
+        self.assertEqual(actual["OBLIQUE_COST"], 1)
+        self.assertEqual(actual["COST"], 1)
+        self.assertEqual(actual["GOAL"], 0)
+
+        for move in ("3Uw2",):
+            with self.subTest(phase7=move):
+                cube = RubiksCube777(solved_777, "URFDLB")
+                cube.rotate(move)
+                result = subprocess.run(
+                    self.phase_command(cube, 7, "--max-ida-threshold", "4"),
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                steps = solution_steps(result.stdout)
+                self.assertEqual(steps, [move])
+                for step in steps:
+                    cube.rotate(step)
+                self.assertTrue(phase7_reached(cube))
+                self.assertTrue(cube_is_daisy(cube))
+
+        preserved = RubiksCube777(solved_777, "URFDLB")
+        preserved.rotate("Lw2")
+        self.assertTrue(phase7_reached(preserved))
+        self.assertFalse(cube_is_daisy(preserved))
+        result = subprocess.run(
+            self.phase_command(preserved, 8, "--max-ida-threshold", "4"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        steps = solution_steps(result.stdout)
+        self.assertEqual(steps, ["Lw2"])
+        for step in steps:
+            preserved.rotate(step)
+        self.assertTrue(phase7_reached(preserved))
+        self.assertTrue(cube_is_daisy(preserved))
+
+        result = subprocess.run(
+            self.phase_command(split, 8, "--max-ida-threshold", "2"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(solution_steps(result.stdout), ["3Lw2"])
+
+        result = subprocess.run(
+            self.phase_command(opposite, 8, "--max-ida-threshold", "2"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("phase 8 start", result.stderr)
+
+    @unittest.skipUnless(Path(DAISY_LR_INNER_TABLE_777[1]).is_file(), "the LR inner table has not been built")
+    def test_phase7_lr_inner_table_matches_its_file(self):
+        path = Path(DAISY_LR_INNER_TABLE_777[1])
+        self.assertEqual(path.stat().st_size, 70 * 70)
+        costs = path.read_bytes()
+
+        def expect(cube):
+            ranks = orbit_ranks(cube)
+            rank = ranks[("LR", "inner-t")] * GROUP_UNIVERSE + ranks[("LR", "inner-x")]
+            encoded = costs[rank]
+            self.assertGreater(encoded, 0)
+            return rank, encoded - 1
+
+        solved_rank, solved_cost = expect(self.solved)
+        self.assertEqual(solved_rank, 0)
+        self.assertEqual(solved_cost, 0)
+        moved = RubiksCube777(solved_777, "URFDLB")
+        moved.rotate("3Uw2")
+        moved_rank, moved_cost = expect(moved)
+        self.assertEqual(moved_cost, 1)
+
+        for cube, rank, cost in ((self.solved, solved_rank, solved_cost), (moved, moved_rank, moved_cost)):
+            result = subprocess.run(
+                self.phase_command(cube, 7, "--lr-inner-cost", str(path), "--print-ranks"),
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            actual = parse_ranks(result.stdout)
+            self.assertEqual(actual["LR_INNER_RANK"], rank)
+            self.assertEqual(actual["LR_INNER_COST"], cost)
+            self.assertEqual(actual["OBLIQUE_COST"], 0 if cube is self.solved else 1)
+            self.assertEqual(actual["COST"], max(cost, actual["OBLIQUE_COST"]))
+            self.assertEqual(actual["GOAL"], 1 if cost == 0 else 0)
 
 
 if __name__ == "__main__":

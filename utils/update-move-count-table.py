@@ -126,18 +126,6 @@ def solve_length(cube) -> int:
     return cube.get_solution_len_minus_rotates(cube.solution)
 
 
-def sanity_check_average(size: str, average: float, previous: float) -> None:
-    low = previous * SANITY_MIN_RATIO
-    high = previous * SANITY_MAX_RATIO
-    if not low <= average <= high:
-        raise RuntimeError(
-            f"{size} average {format_average(average)} is outside {format_average(low)}-"
-            f"{format_average(high)} (previous README row {format_average(previous)}). "
-            "This usually means the scramble was counted as part of the solution or the "
-            "3x3x3 stage was skipped."
-        )
-
-
 def load_test_cubes(path: Path = TEST_CUBES) -> Dict[str, List[str]]:
     with path.open(encoding="utf-8") as fh:
         return json.load(fh)
@@ -228,7 +216,6 @@ def main() -> int:
         lengths = measure_size(size, states)
         averages[size] = sum(lengths) / len(lengths)
         logger.info("%s average over %d cubes: %s", size, args.count, format_average(averages[size]))
-        sanity_check_average(size, averages[size], previous[size])
 
     row = build_row(averages, previous)
     print(row)

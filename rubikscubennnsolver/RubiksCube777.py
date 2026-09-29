@@ -35,7 +35,8 @@ Phase 7 - solve the LR inner centers and pair the LR oblique bars
     maxed with ceil(unpaired LR wings / 4).
 
 Phase 8 - daisy-solve all six sides, keeping the phase 7 state
-    Outer turns, the six 2-wide half turns, and 3Lw2 / 3Rw2. No cost table yet.
+    Outer turns, the six 2-wide half turns, and 3Lw2 / 3Rw2. Cost is the max
+    of the eight phase 8 center tables.
     The remaining puzzle is a 5x5x5.
 """
 
@@ -615,6 +616,35 @@ DAISY_MIXED_TABLES_777 = (
     ),
 )
 
+# Phase 8. The heuristic is the max of these tables. Oblique coordinates
+# have both daisy goals, so a swapped orientation costs 0 there; --native-only
+# still rejects that orientation and the searcher lifts a 0 cost to 1.
+PHASE8_TABLES_777 = (
+    ("--ud-axis-cost", "lookup-tables/lookup-table-7x7x7-phase8-ud-axis-centers.cost-only.bin"),
+    ("--fb-axis-cost", "lookup-tables/lookup-table-7x7x7-phase8-fb-axis-centers.cost-only.bin"),
+    ("--lr-oblique-cost", "lookup-tables/lookup-table-7x7x7-phase8-lr-oblique-centers.cost-only.bin"),
+    (
+        "--inner-interaction-cost",
+        "lookup-tables/lookup-table-7x7x7-phase8-inner-interaction-centers.cost-only.bin",
+    ),
+    (
+        "--middle-interaction-cost",
+        "lookup-tables/lookup-table-7x7x7-phase8-middle-interaction-centers.cost-only.bin",
+    ),
+    (
+        "--ud-obliques-fb-edges-cost",
+        "lookup-tables/lookup-table-7x7x7-phase8-ud-obliques-fb-edges-centers.cost-only.bin",
+    ),
+    (
+        "--fb-obliques-ud-edges-cost",
+        "lookup-tables/lookup-table-7x7x7-phase8-fb-obliques-ud-edges-centers.cost-only.bin",
+    ),
+    (
+        "--ud-obliques-fb-inner-t-cost",
+        "lookup-tables/lookup-table-7x7x7-phase8-ud-obliques-fb-inner-t-centers.cost-only.bin",
+    ),
+)
+
 # A wide quarter turn would move centers out of their orbit, so the daisy keeps the
 # outer turns and the 2- and 3-wide half turns. This must match move_is_allowed() in
 # ida_search_777_daisy_centers.c
@@ -655,14 +685,17 @@ class LookupTableIDA777DaisyCenters:
     state. Those L/R turns let phase 8 pair UD/FB obliques. The U/D/F/B 3-wide
     half turns split an LR bar and move LR inners between L and R, so phase 8
     rejects them.
-    ``native_only`` applies to phase 8. Phase 8 does not load a cost table yet,
-    so its heuristic is 0 on a daisy and 1 otherwise.
+    ``native_only`` applies to phase 8. Phase 8's cost is the max of
+    ``PHASE8_TABLES_777``. Tables that include an oblique cost 0 at either
+    daisy orientation; when ``native_only`` rejects the swapped orientation,
+    a table cost of 0 is lifted to 1.
 
     Component tables
 
     | Set                      | Tables | Selected by |
     | ------------------------ | ------ | ----------- |
     | DAISY_LR_INNER_TABLE_777 | 1      | phase 7     |
+    | PHASE8_TABLES_777        | 8      | phase 8     |
     """
 
     def __init__(self, parent, multiplier=None):
@@ -691,6 +724,9 @@ class LookupTableIDA777DaisyCenters:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
         if phase == 8:
+            for flag, filename in PHASE8_TABLES_777:
+                download_file_if_needed(filename)
+                cmd.extend((flag, filename))
             if self.multiplier:
                 cmd.extend(("--multiplier", str(self.multiplier)))
             if native_only:

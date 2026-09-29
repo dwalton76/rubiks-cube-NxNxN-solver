@@ -13,6 +13,7 @@ from rubikscubennnsolver.RubiksCube666 import (
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_INNER_X_SPINE_TABLE_777,
     DAISY_LR_INNER_TABLE_777,
+    PHASE8_TABLES_777,
     DAISY_MIXED_TABLES_777,
     DAISY_PERFECT_TABLES_777,
     NATIVE_SOLVE_PERFECT_TABLES_777,
@@ -379,6 +380,11 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertIn("--native-only", commands[1])
         self.assertIn("--phase8", commands[3])
         self.assertNotIn("--native-only", commands[3])
+        for flag, filename in PHASE8_TABLES_777:
+            self.assertIn(flag, commands[1])
+            self.assertIn(filename, commands[1])
+            self.assertIn(flag, commands[3])
+            self.assertIn(filename, commands[3])
         for filename in retired:
             self.assertNotIn(filename, commands[1])
             self.assertNotIn(filename, commands[3])

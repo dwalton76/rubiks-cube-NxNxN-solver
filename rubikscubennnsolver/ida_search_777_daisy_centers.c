@@ -182,6 +182,59 @@ static const char *lr_inner_filename;
 static unsigned char *lr_inner_costs;
 static int lr_inner_fd = -1;
 
+/* Phase 8 tables. Ranks are the mixed radix of orbit ranks already computed
+ * for the daisy, in the builder's square-group order. */
+#define PHASE8_TABLE_COUNT 8
+#define PHASE8_AXIS_UNIVERSE UINT64_C(1680700000)
+#define PHASE8_QUARTIC_UNIVERSE UINT64_C(24010000)
+struct phase8_cost_table {
+    const char *flag;
+    const char *label;
+    const char *filename;
+    unsigned char *costs;
+    int fd;
+    uint64_t universe;
+    unsigned int group_count;
+    unsigned char axis[5];
+    unsigned char orbit[5];
+};
+static struct phase8_cost_table phase8_tables[PHASE8_TABLE_COUNT] = {
+    {"--ud-axis-cost", "UD_AXIS", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
+     {AXIS_UD, AXIS_UD, AXIS_UD, AXIS_UD, AXIS_UD},
+     {ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE, ORBIT_INNER_T, ORBIT_INNER_X}},
+    {"--fb-axis-cost", "FB_AXIS", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
+     {AXIS_FB, AXIS_FB, AXIS_FB, AXIS_FB, AXIS_FB},
+     {ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE, ORBIT_INNER_T, ORBIT_INNER_X}},
+    {"--lr-oblique-cost", "LR_OBLIQUE", NULL, NULL, -1, GROUP_UNIVERSE, 1,
+     {AXIS_LR, 0, 0, 0, 0},
+     {ORBIT_LEFT_OBLIQUE, 0, 0, 0, 0}},
+    {"--inner-interaction-cost", "INNER_INTERACTION", NULL, NULL, -1, PHASE8_QUARTIC_UNIVERSE, 4,
+     {AXIS_UD, AXIS_UD, AXIS_FB, AXIS_FB, 0},
+     {ORBIT_INNER_T, ORBIT_INNER_X, ORBIT_INNER_T, ORBIT_INNER_X, 0}},
+    {"--middle-interaction-cost", "MIDDLE_INTERACTION", NULL, NULL, -1, PHASE8_QUARTIC_UNIVERSE, 4,
+     {AXIS_UD, AXIS_FB, AXIS_UD, AXIS_FB, 0},
+     {ORBIT_INNER_X, ORBIT_INNER_X, ORBIT_MIDDLE_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, 0}},
+    {"--ud-obliques-fb-edges-cost", "UD_OBLIQUES_FB_EDGES", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
+     {AXIS_UD, AXIS_UD, AXIS_UD, AXIS_FB, AXIS_FB},
+     {ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE, ORBIT_LEFT_OBLIQUE, ORBIT_RIGHT_OBLIQUE}},
+    {"--fb-obliques-ud-edges-cost", "FB_OBLIQUES_UD_EDGES", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
+     {AXIS_UD, AXIS_UD, AXIS_FB, AXIS_FB, AXIS_FB},
+     {ORBIT_LEFT_OBLIQUE, ORBIT_RIGHT_OBLIQUE, ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE}},
+    {"--ud-obliques-fb-inner-t-cost", "UD_OBLIQUES_FB_INNER_T", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
+     {AXIS_UD, AXIS_UD, AXIS_UD, AXIS_UD, AXIS_FB},
+     {ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE, ORBIT_INNER_T, ORBIT_INNER_T}},
+};
+
+/* Search probes in this order and stops once one cost already exceeds the
+ * remaining moves. UD comes first, then the UD-oblique/FB-inner-t table, then
+ * FB. The other two 1.68 GiB tables come last. */
+static const unsigned char phase8_probe_order[PHASE8_TABLE_COUNT] = {
+    0, 7, 1, 3, 4, 2, 5, 6
+};
+static const char *const phase8_short_label[PHASE8_TABLE_COUNT] = {
+    "UD", "FB", "LR", "INNER", "MIDDLE", "UD_OBL", "FB_OBL", "UD_IT"
+};
+
 struct mixed_cost_table {
     const char *flag;
     const char *filename;
@@ -241,13 +294,31 @@ struct heuristic_result {
     unsigned char lr_inner_cost;
     unsigned char unpaired_obliques;
     unsigned char oblique_cost;
+    uint64_t phase8_rank[PHASE8_TABLE_COUNT];
+    unsigned char phase8_cost[PHASE8_TABLE_COUNT];
+    /* PHASE8_TABLE_COUNT when no phase 8 table proved this node is over budget. */
+    unsigned char prune_table;
 };
 
 struct worker {
     const char *root_cube;
     uint64_t ida_count;
+    unsigned int profile_slot;
     move_type solution[MAX_IDA_THRESHOLD + 1];
 };
+
+/* event[][PHASE8_TABLE_COUNT] counts nodes the heuristic kept. pair_ud[table]
+ * is the UD-axis cost against that table's cost, for kept nodes only. */
+struct prune_profile {
+    uint64_t event[32][PHASE8_TABLE_COUNT + 1];
+    uint64_t survivor_cost[PHASE8_TABLE_COUNT][24];
+    uint64_t survivor_slack[24];
+    uint64_t survivor_binding[PHASE8_TABLE_COUNT];
+    uint64_t pair_ud[PHASE8_TABLE_COUNT][18][18];
+};
+
+static struct prune_profile prune_profiles[MAX_THREADS];
+static int profile_prunes;
 
 struct child {
     move_type move;
@@ -263,8 +334,12 @@ static void usage(const char *program)
         "[--inner-x-spine-cost FILE] [--lr-inner-cost FILE] "
         "[--inner-x-plus-two-inner-t-cost FILE] [--inner-t-plus-two-inner-x-cost FILE] "
         "[--middle-plus-two-inner-t-cost FILE] [--oblique-weave-cost FILE] "
+        "[--ud-axis-cost FILE] [--fb-axis-cost FILE] [--lr-oblique-cost FILE] "
+        "[--inner-interaction-cost FILE] [--middle-interaction-cost FILE] "
+        "[--ud-obliques-fb-edges-cost FILE] [--fb-obliques-ud-edges-cost FILE] "
+        "[--ud-obliques-fb-inner-t-cost FILE] "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] [--multiplier F] [--native-only] "
-        "[--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
+        "[--profile-prunes] [--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
         program
     );
     printf(
@@ -285,6 +360,19 @@ static void usage(const char *program)
         "                          orientation\n"
         "  --lr-inner-cost F       70^2 table: LR inner-t then LR inner-x. Exact for\n"
         "                          those two orbits. Phase 7 uses it as its cost.\n"
+        "  --ud-axis-cost F        phase 8 raw 70^5 UD axis, two daisy goals\n"
+        "  --fb-axis-cost F        phase 8 raw 70^5 FB axis, two daisy goals\n"
+        "  --lr-oblique-cost F     phase 8 paired LR bar placement, 70 states\n"
+        "  --inner-interaction-cost F\n"
+        "                          phase 8 UD/FB inners, 70^4, one goal\n"
+        "  --middle-interaction-cost F\n"
+        "                          phase 8 UD/FB inner-x and middles, 70^4\n"
+        "  --ud-obliques-fb-edges-cost F\n"
+        "                          phase 8 UD obliques plus FB edge obliques, 70^5\n"
+        "  --fb-obliques-ud-edges-cost F\n"
+        "                          phase 8 FB obliques plus UD edge obliques, 70^5\n"
+        "  --ud-obliques-fb-inner-t-cost F\n"
+        "                          phase 8 UD obliques, UD inner-t, FB inner-t, 70^5\n"
         "  --phase7                LR inner-t and inner-x native, and every oblique bar\n"
         "                          on L and R one color. LR obliques stay on L/R under every move\n"
         "                          still legal after LR staging. The full daisy tables\n"
@@ -408,6 +496,21 @@ static uint64_t spine_probe_rank(const struct heuristic_result *result, unsigned
     return rank;
 }
 
+static uint64_t phase8_table_rank(const struct phase8_cost_table *table, const struct heuristic_result *result)
+{
+    uint64_t rank = 0;
+
+    for (unsigned int group = 0; group < table->group_count; group++) {
+        uint64_t group_rank = result->orbit_rank[table->axis[group]][table->orbit[group]];
+
+        if (group_rank >= GROUP_UNIVERSE) {
+            return UINT64_MAX;
+        }
+        rank = rank * GROUP_UNIVERSE + group_rank;
+    }
+    return rank;
+}
+
 static uint64_t mixed_probe_rank(const struct mixed_cost_table *table, const struct heuristic_result *result, unsigned int probe)
 {
     uint64_t rank = 0;
@@ -505,31 +608,90 @@ static void take_cost(struct heuristic_result *result, unsigned char decoded)
     }
 }
 
-static struct heuristic_result heuristic(const char *cube)
+static void rank_one_orbit(
+    struct heuristic_result *result,
+    const char *cube,
+    uint16_t *ready,
+    int *valid,
+    unsigned int axis,
+    unsigned int orbit
+)
+{
+    unsigned int bit = axis * ORBIT_COUNT + orbit;
+
+    if (*ready & (1u << bit)) {
+        return;
+    }
+    *ready |= (uint16_t)(1u << bit);
+    result->orbit_rank[axis][orbit] = combination_rank(
+        cube, daisy_orbit_squares_777[axis][orbit],
+        daisy_axis_small_777[axis], daisy_axis_large_777[axis]);
+    if (result->orbit_rank[axis][orbit] == UINT64_MAX) {
+        *valid = 0;
+    }
+}
+
+static void rank_every_orbit(
+    struct heuristic_result *result,
+    const char *cube,
+    uint16_t *ready,
+    int *valid
+)
+{
+    for (unsigned int axis = 0; axis < AXIS_COUNT; axis++) {
+        for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+            rank_one_orbit(result, cube, ready, valid, axis, orbit);
+        }
+    }
+}
+
+static int legacy_cost_tables_loaded(void)
+{
+    if (loaded_table_count || spine_costs) {
+        return 1;
+    }
+    for (unsigned int index = 0; index < MIXED_TABLE_COUNT; index++) {
+        if (mixed_tables[index].costs) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* A finite budget is the moves still allowed. UINT8_MAX prices every table,
+ * which print-ranks and the initial check need. */
+static int cost_proves_prune(unsigned char cost, unsigned char budget)
+{
+    return budget != UINT8_MAX && (cost == UINT8_MAX || cost > budget);
+}
+
+static struct heuristic_result heuristic(const char *cube, unsigned char budget)
 {
     struct heuristic_result result;
+    uint16_t ready = 0;
     int valid = 1;
 
     memset(&result, 0, sizeof(result));
-    result.daisy = cube_is_daisy(cube) ? 1 : 0;
-    for (unsigned int axis = 0; axis < AXIS_COUNT; axis++) {
-        for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
-            result.orbit_rank[axis][orbit] = combination_rank(
-                cube, daisy_orbit_squares_777[axis][orbit],
-                daisy_axis_small_777[axis], daisy_axis_large_777[axis]);
-            if (result.orbit_rank[axis][orbit] == UINT64_MAX) {
-                valid = 0;
-            }
-        }
+    result.prune_table = PHASE8_TABLE_COUNT;
+    /* Leave-one-out, spine, and mixed probes read every orbit. Print-ranks
+     * does too. The search path ranks an orbit only when a table needs it. */
+    if (budget == UINT8_MAX || legacy_cost_tables_loaded()) {
+        rank_every_orbit(&result, cube, &ready, &valid);
     }
     /* A full-daisy cost can exceed the distance to this weaker goal, so phase 7
      * probes only the LR inner-t x inner-x table. That pair is closed, so the
      * byte is exact for the inners. The oblique term is admissible on its own,
      * and a move can reduce both, so the cost is the max of the two. */
     if (search_phase == PHASE_7) {
-        uint64_t t_rank = result.orbit_rank[AXIS_LR][ORBIT_INNER_T];
-        uint64_t x_rank = result.orbit_rank[AXIS_LR][ORBIT_INNER_X];
+        uint64_t t_rank;
+        uint64_t x_rank;
         unsigned char inner_cost = 1;
+
+        result.daisy = cube_is_daisy(cube) ? 1 : 0;
+        rank_one_orbit(&result, cube, &ready, &valid, AXIS_LR, ORBIT_INNER_T);
+        rank_one_orbit(&result, cube, &ready, &valid, AXIS_LR, ORBIT_INNER_X);
+        t_rank = result.orbit_rank[AXIS_LR][ORBIT_INNER_T];
+        x_rank = result.orbit_rank[AXIS_LR][ORBIT_INNER_X];
 
         result.unpaired_obliques = unpaired_oblique_wings(cube);
         result.oblique_cost = oblique_wing_cost(result.unpaired_obliques);
@@ -619,6 +781,36 @@ static struct heuristic_result heuristic(const char *cube)
             take_cost(&result, decoded);
         }
     }
+    for (unsigned int probe = 0; probe < PHASE8_TABLE_COUNT && !cost_proves_prune(result.cost, budget); probe++) {
+        unsigned int table_index = phase8_probe_order[probe];
+        struct phase8_cost_table *table = &phase8_tables[table_index];
+        uint64_t rank = UINT64_MAX;
+        unsigned char decoded = UINT8_MAX;
+
+        if (!table->costs) {
+            continue;
+        }
+        for (unsigned int group = 0; group < table->group_count; group++) {
+            rank_one_orbit(&result, cube, &ready, &valid, table->axis[group], table->orbit[group]);
+        }
+        if (valid) {
+            rank = phase8_table_rank(table, &result);
+        }
+        result.phase8_rank[table_index] = rank;
+        if (rank < table->universe) {
+            decoded = decode_cost(table->costs[rank]);
+        }
+        result.phase8_cost[table_index] = decoded;
+        take_cost(&result, decoded);
+        if (cost_proves_prune(result.cost, budget)) {
+            result.prune_table = (unsigned char)table_index;
+        }
+    }
+    /* A cost that already exceeds the budget can only go up, so the pruned
+     * node set matches a full probe. Survivors fall through and take the max. */
+    if (cost_proves_prune(result.cost, budget)) {
+        return result;
+    }
     if (result.cost != UINT8_MAX && cost_to_goal_multiplier) {
         float scaled = roundf(result.cost * cost_to_goal_multiplier);
 
@@ -628,6 +820,7 @@ static struct heuristic_result heuristic(const char *cube)
             result.cost = scaled > MAX_IDA_THRESHOLD ? MAX_IDA_THRESHOLD + 1 : (unsigned char)scaled;
         }
     }
+    result.daisy = cube_is_daisy(cube) ? 1 : 0;
     if (result.daisy) {
         result.cost = 0;
     } else if (result.cost == 0) {
@@ -784,6 +977,17 @@ static void map_ranked_tables(void)
         table->fd = file.fd;
         table->costs = file.costs;
     }
+    for (unsigned int table_index = 0; table_index < PHASE8_TABLE_COUNT; table_index++) {
+        struct phase8_cost_table *table = &phase8_tables[table_index];
+
+        if (!table->filename) {
+            continue;
+        }
+        struct mapped_cost_file file = ida_map_cost_file(table->filename, table->universe);
+
+        table->fd = file.fd;
+        table->costs = file.costs;
+    }
 }
 
 static void unmap_ranked_tables(void)
@@ -815,6 +1019,15 @@ static void unmap_ranked_tables(void)
 
         if (table->costs) {
             ida_unmap_cost_file(table->fd, table->costs, (size_t)SPINE_UNIVERSE);
+            table->costs = NULL;
+            table->fd = -1;
+        }
+    }
+    for (unsigned int table_index = 0; table_index < PHASE8_TABLE_COUNT; table_index++) {
+        struct phase8_cost_table *table = &phase8_tables[table_index];
+
+        if (table->costs) {
+            ida_unmap_cost_file(table->fd, table->costs, (size_t)table->universe);
             table->costs = NULL;
             table->fd = -1;
         }
@@ -852,6 +1065,193 @@ static move_type parse_move(const char *move_string)
     return ida_parse_move(move_string, moves_777, MOVE_COUNT_777);
 }
 
+static void note_prune_profile(
+    struct worker *worker,
+    unsigned char depth,
+    const struct heuristic_result *h,
+    unsigned char budget
+)
+{
+    struct prune_profile *profile;
+    unsigned char slot;
+    unsigned char table;
+    unsigned char ud;
+    unsigned char slack;
+
+    if (!profile_prunes || worker->profile_slot >= MAX_THREADS) {
+        return;
+    }
+    profile = &prune_profiles[worker->profile_slot];
+    slot = depth < 31 ? depth : 31;
+    if (h->cost == UINT8_MAX || h->cost > budget) {
+        table = h->prune_table <= PHASE8_TABLE_COUNT ? h->prune_table : PHASE8_TABLE_COUNT;
+        profile->event[slot][table]++;
+        return;
+    }
+    profile->event[slot][PHASE8_TABLE_COUNT]++;
+    ud = h->phase8_cost[0] > 17 ? 17 : h->phase8_cost[0];
+    for (table = 0; table < PHASE8_TABLE_COUNT; table++) {
+        unsigned char cost = h->phase8_cost[table];
+        unsigned char capped = cost > 17 ? 17 : cost;
+
+        if (cost > 23) {
+            cost = 23;
+        }
+        profile->survivor_cost[table][cost]++;
+        if (cost == h->cost) {
+            profile->survivor_binding[table]++;
+        }
+        profile->pair_ud[table][ud][capped]++;
+    }
+    slack = budget >= h->cost ? (unsigned char)(budget - h->cost) : 0;
+    if (slack > 23) {
+        slack = 23;
+    }
+    profile->survivor_slack[slack]++;
+}
+
+static void print_prune_profile(unsigned int worker_count)
+{
+    uint64_t event[32][PHASE8_TABLE_COUNT + 1];
+    uint64_t total_event[PHASE8_TABLE_COUNT + 1];
+    uint64_t cost_hist[PHASE8_TABLE_COUNT][24];
+    uint64_t slack_hist[24];
+    uint64_t binding[PHASE8_TABLE_COUNT];
+    uint64_t pair[PHASE8_TABLE_COUNT][18][18];
+    uint64_t kept = 0;
+    uint64_t slack_sum = 0;
+
+    memset(event, 0, sizeof(event));
+    memset(total_event, 0, sizeof(total_event));
+    memset(cost_hist, 0, sizeof(cost_hist));
+    memset(slack_hist, 0, sizeof(slack_hist));
+    memset(binding, 0, sizeof(binding));
+    memset(pair, 0, sizeof(pair));
+    for (unsigned int worker = 0; worker < worker_count && worker < MAX_THREADS; worker++) {
+        struct prune_profile *profile = &prune_profiles[worker];
+
+        for (unsigned int depth = 0; depth < 32; depth++) {
+            for (unsigned int table = 0; table < PHASE8_TABLE_COUNT + 1; table++) {
+                event[depth][table] += profile->event[depth][table];
+                total_event[table] += profile->event[depth][table];
+            }
+        }
+        for (unsigned int table = 0; table < PHASE8_TABLE_COUNT; table++) {
+            binding[table] += profile->survivor_binding[table];
+            for (unsigned int cost = 0; cost < 24; cost++) {
+                cost_hist[table][cost] += profile->survivor_cost[table][cost];
+            }
+            for (unsigned int ud = 0; ud < 18; ud++) {
+                for (unsigned int other = 0; other < 18; other++) {
+                    pair[table][ud][other] += profile->pair_ud[table][ud][other];
+                }
+            }
+        }
+        for (unsigned int slack = 0; slack < 24; slack++) {
+            slack_hist[slack] += profile->survivor_slack[slack];
+            slack_sum += (uint64_t)slack * profile->survivor_slack[slack];
+            kept += profile->survivor_slack[slack];
+        }
+    }
+
+    printf("\nprune profile: first table over the remaining budget, in probe order\n");
+    printf("%5s %13s", "depth", "nodes");
+    for (unsigned int probe = 0; probe < PHASE8_TABLE_COUNT; probe++) {
+        printf(" %10s", phase8_short_label[phase8_probe_order[probe]]);
+    }
+    printf(" %10s\n", "kept");
+    for (unsigned int depth = 0; depth < 32; depth++) {
+        uint64_t nodes = 0;
+
+        for (unsigned int table = 0; table < PHASE8_TABLE_COUNT + 1; table++) {
+            nodes += event[depth][table];
+        }
+        if (!nodes) {
+            continue;
+        }
+        printf("%5u %13" PRIu64, depth, nodes);
+        for (unsigned int probe = 0; probe < PHASE8_TABLE_COUNT; probe++) {
+            printf(" %10" PRIu64, event[depth][phase8_probe_order[probe]]);
+        }
+        printf(" %10" PRIu64 "\n", event[depth][PHASE8_TABLE_COUNT]);
+    }
+    {
+        uint64_t nodes = 0;
+        uint64_t reached = 0;
+
+        for (unsigned int table = 0; table < PHASE8_TABLE_COUNT + 1; table++) {
+            nodes += total_event[table];
+        }
+        printf("total %13" PRIu64, nodes);
+        for (unsigned int probe = 0; probe < PHASE8_TABLE_COUNT; probe++) {
+            printf(" %10" PRIu64, total_event[phase8_probe_order[probe]]);
+        }
+        printf(" %10" PRIu64 "\n", total_event[PHASE8_TABLE_COUNT]);
+        reached = nodes;
+        printf("share of nodes that reached each table and were pruned by it:\n");
+        for (unsigned int probe = 0; probe < PHASE8_TABLE_COUNT; probe++) {
+            unsigned int table = phase8_probe_order[probe];
+            uint64_t pruned = total_event[table];
+            double share = reached ? (100.0 * (double)pruned / (double)reached) : 0.0;
+
+            printf(
+                "  %-24s reached %13" PRIu64 ", pruned %13" PRIu64 " (%5.1f%%)\n",
+                phase8_tables[table].label, reached, pruned, share
+            );
+            reached -= pruned;
+        }
+        printf("  %-24s kept    %13" PRIu64 "\n", "heuristic", total_event[PHASE8_TABLE_COUNT]);
+    }
+
+    printf("\nkept nodes: %" PRIu64 ", average slack %.2f\n", kept, kept ? (double)slack_sum / (double)kept : 0.0);
+    printf("slack:");
+    for (unsigned int slack = 0; slack < 24; slack++) {
+        if (slack_hist[slack]) {
+            printf(" %u:%" PRIu64, slack, slack_hist[slack]);
+        }
+    }
+    printf("\n");
+    for (unsigned int table = 0; table < PHASE8_TABLE_COUNT; table++) {
+        uint64_t count = 0;
+        uint64_t sum = 0;
+        uint64_t above_ud = 0;
+        uint64_t within_one = 0;
+
+        for (unsigned int cost = 0; cost < 24; cost++) {
+            count += cost_hist[table][cost];
+            sum += (uint64_t)cost * cost_hist[table][cost];
+        }
+        for (unsigned int ud = 0; ud < 18; ud++) {
+            for (unsigned int other = 0; other < 18; other++) {
+                uint64_t n = pair[table][ud][other];
+
+                if (other > ud) {
+                    above_ud += n;
+                }
+                if (other + 1 >= ud) {
+                    within_one += n;
+                }
+            }
+        }
+        printf(
+            "  %-24s avg %5.2f, binding %13" PRIu64 ", above UD %13" PRIu64 ", within 1 of UD %13" PRIu64 "\n",
+            phase8_tables[table].label,
+            count ? (double)sum / (double)count : 0.0,
+            binding[table],
+            above_ud,
+            within_one
+        );
+        printf("    cost");
+        for (unsigned int cost = 0; cost < 24; cost++) {
+            if (cost_hist[table][cost]) {
+                printf(" %u:%" PRIu64, cost, cost_hist[table][cost]);
+            }
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 static int ida_search(
     struct worker *worker,
     char cube[CUBE_ARRAY_SIZE],
@@ -871,11 +1271,13 @@ static int ida_search(
     for (unsigned int index = 0; index < legal_move_count[previous_move]; index++) {
         move_type move = moves_777[legal_move_index[previous_move][index]];
         struct heuristic_result h;
+        unsigned char budget = threshold > next_depth ? (unsigned char)(threshold - next_depth) : 0;
 
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-        h = heuristic(cube);
+        h = heuristic(cube, budget);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         worker->ida_count++;
+        note_prune_profile(worker, next_depth, &h, budget);
 
         if (h.cost == UINT8_MAX || next_depth + h.cost > threshold) {
             continue;
@@ -930,6 +1332,7 @@ static void *search_root_moves(void *argument)
         char rotate_tmp[CUBE_ARRAY_SIZE];
         move_type first;
         struct heuristic_result h;
+        unsigned char budget = search_threshold > 0 ? (unsigned char)(search_threshold - 1) : 0;
         int found;
 
         if (task >= legal_move_count[MOVE_NONE] || atomic_load(&solution_task) != NO_TASK) {
@@ -939,7 +1342,8 @@ static void *search_root_moves(void *argument)
         memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
         worker->ida_count++;
-        h = heuristic(cube);
+        h = heuristic(cube, budget);
+        note_prune_profile(worker, 1, &h, budget);
 
         if (h.cost == UINT8_MAX || 1 + h.cost > search_threshold) {
             continue;
@@ -985,7 +1389,9 @@ static int search_at_threshold(
     atomic_store(&solution_task, NO_TASK);
     for (unsigned int index = 0; index < worker_count; index++) {
         memset(&workers[index], 0, sizeof(workers[index]));
+        memset(&prune_profiles[index], 0, sizeof(prune_profiles[index]));
         workers[index].root_cube = cube;
+        workers[index].profile_slot = index;
         if (pthread_create(&threads[index], NULL, search_root_moves, &workers[index]) != 0) {
             fprintf(stderr, "ERROR: could not create search thread %u\n", index);
             exit(1);
@@ -994,6 +1400,9 @@ static int search_at_threshold(
     for (unsigned int index = 0; index < worker_count; index++) {
         pthread_join(threads[index], NULL);
         *nodes += workers[index].ida_count;
+    }
+    if (profile_prunes) {
+        print_prune_profile(worker_count);
     }
     return atomic_load(&solution_task) != NO_TASK;
 }
@@ -1019,7 +1428,7 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
     }
     printf("  ===  ===  ===  ===\n");
     for (unsigned int step = 0; step <= length; step++) {
-        struct heuristic_result h = heuristic(walk);
+        struct heuristic_result h = heuristic(walk, UINT8_MAX);
 
         if (step) {
             printf("%5s ", move2str[solution[step - 1]]);
@@ -1092,6 +1501,18 @@ static void print_ranks(const struct heuristic_result *initial)
                 initial->lr_inner_rank, initial->lr_inner_cost
             );
         }
+    }
+    for (unsigned int table_index = 0; table_index < PHASE8_TABLE_COUNT; table_index++) {
+        const struct phase8_cost_table *table = &phase8_tables[table_index];
+
+        if (!table->costs) {
+            continue;
+        }
+        printf(
+            " %s_RANK %" PRIu64 " %s_COST %u",
+            table->label, initial->phase8_rank[table_index],
+            table->label, initial->phase8_cost[table_index]
+        );
     }
     printf(" COST %u DAISY %u GOAL %u\n", initial->cost, initial->daisy, initial->goal);
 }
@@ -1176,6 +1597,15 @@ int main(int argc, char **argv)
                 }
             }
         }
+        if (!matched_table && index + 1 < argc) {
+            for (unsigned int table_index = 0; table_index < PHASE8_TABLE_COUNT; table_index++) {
+                if (!strcmp(argv[index], phase8_tables[table_index].flag)) {
+                    phase8_tables[table_index].filename = argv[++index];
+                    matched_table = 1;
+                    break;
+                }
+            }
+        }
         if (matched_table) {
             continue;
         }
@@ -1218,6 +1648,8 @@ int main(int argc, char **argv)
             apply_move_string = argv[++index];
         } else if (!strcmp(argv[index], "--print-rank") || !strcmp(argv[index], "--print-ranks")) {
             print_ranks_flag = 1;
+        } else if (!strcmp(argv[index], "--profile-prunes")) {
+            profile_prunes = 1;
         } else if (!strcmp(argv[index], "--print-legal-moves")) {
             print_legal_moves = 1;
         } else if (!strcmp(argv[index], "--print-ida-summary")) {
@@ -1263,7 +1695,7 @@ int main(int argc, char **argv)
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
     }
 
-    struct heuristic_result initial = heuristic(cube);
+    struct heuristic_result initial = heuristic(cube, UINT8_MAX);
     if (print_legal_moves) {
         printf("LEGAL_MOVES");
         for (unsigned int index = 0; index < legal_move_count[MOVE_NONE]; index++) {

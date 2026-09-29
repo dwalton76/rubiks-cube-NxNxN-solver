@@ -36,7 +36,7 @@ Phase 7 - solve the LR inner centers and pair the LR oblique bars
 
 Phase 8 - daisy-solve all six sides, keeping the phase 7 state
     Outer turns, the six 2-wide half turns, and 3Lw2 / 3Rw2. Cost is the max
-    of the eight phase 8 center tables.
+    of the eight phase 8 center tables, scaled by ``--multiplier 1.3``.
     The remaining puzzle is a 5x5x5.
 """
 
@@ -688,7 +688,9 @@ class LookupTableIDA777DaisyCenters:
     ``native_only`` applies to phase 8. Phase 8's cost is the max of
     ``PHASE8_TABLES_777``. Tables that include an oblique cost 0 at either
     daisy orientation; when ``native_only`` rejects the swapped orientation,
-    a table cost of 0 is lifted to 1.
+    a table cost of 0 is lifted to 1. That max is several moves short of the
+    true distance, so phase 8 passes ``--multiplier 1.3`` by default. The
+    multiplier is not admissible. Phase 7 does not use it.
 
     Component tables
 
@@ -698,7 +700,7 @@ class LookupTableIDA777DaisyCenters:
     | PHASE8_TABLES_777        | 8      | phase 8     |
     """
 
-    def __init__(self, parent, multiplier=None):
+    def __init__(self, parent, multiplier=1.3):
         self.parent = parent
         self.avoid_oll = None
         self.multiplier = multiplier

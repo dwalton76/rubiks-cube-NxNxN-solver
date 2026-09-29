@@ -175,7 +175,7 @@ Dispatch is `RubiksCubeNNNOdd.stage_or_solve_inside_777`. Outer-x of the fake 7x
 | Intermediate cycle | `ida_search_777_centers_stage --obliques-only` (unpaired-count heuristic, no tables) | 3 ranked oblique tables, **no** outer-x |
 | Last dummy cycle | Pair obliques, then fake-5x5 `lt_LR_t_centers_stage_ida` | Same 3-table search (middle obliques **are** outer t-centers) |
 
-NNNOdd center **solve** runs phase 7, then phase 8 with `native_only=True`. Phase 8 costs the max of the eight `PHASE8_TABLES_777` files. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
+NNNOdd center **solve** runs phase 7, then phase 8 with `native_only=True`. Phase 8 costs the max of the eight `PHASE8_TABLES_777` files, scaled by `--multiplier 1.3`. Phase 7 stays admissible. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
 
 Walk orbits **inside-out**. On 9x9, inner-orbit `w` rewrites as `3w` and would smash an already-solved outer ring.
 

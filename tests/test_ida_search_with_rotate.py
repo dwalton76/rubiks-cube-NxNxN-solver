@@ -327,7 +327,7 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(len(DAISY_PERFECT_TABLES_777), 2)
         self.assertEqual(DAISY_INNER_X_SPINE_TABLE_777[0], "--inner-x-spine-cost")
         self.assertEqual(len(DAISY_MIXED_TABLES_777), 4)
-        self.assertIsNone(daisy.multiplier)
+        self.assertEqual(daisy.multiplier, 1.3)
 
     def test_larger_odd_cubes_use_native_only_daisy_without_step_tables(self):
         cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
@@ -376,7 +376,10 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertNotIn("--native-only", commands[index])
             self.assertIn(DAISY_LR_INNER_TABLE_777[1], commands[index])
             self.assertIn("--lr-inner-cost", commands[index])
+            self.assertNotIn("--multiplier", commands[index])
         self.assertIn("--phase8", commands[1])
+        self.assertEqual(commands[1][commands[1].index("--multiplier") + 1], "1.3")
+        self.assertEqual(commands[3][commands[3].index("--multiplier") + 1], "1.3")
         self.assertIn("--native-only", commands[1])
         self.assertIn("--phase8", commands[3])
         self.assertNotIn("--native-only", commands[3])

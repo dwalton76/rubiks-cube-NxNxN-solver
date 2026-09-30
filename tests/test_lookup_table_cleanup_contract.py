@@ -215,7 +215,8 @@ def test_retired_777_all_centers_daisy_tables_are_absent():
     retired = sorted(
         name
         for name in local
-        if "daisy-" in name and "without-" in name
+        if "daisy-" in name
+        and "without-" in name
         or name.startswith("lookup-table-7x7x7-solve-perfect-centers")
         or name.startswith("lookup-table-7x7x7-daisy-perfect-centers")
         or "daisy-inner-x-spine" in name

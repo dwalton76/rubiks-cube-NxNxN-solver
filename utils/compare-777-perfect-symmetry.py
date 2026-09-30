@@ -66,7 +66,7 @@ def parse_ranks(stdout):
 
 
 def run(binary, tables, kociemba):
-    command = [binary, "--phase8", "--kociemba", kociemba, *tables, *native_only, "--print-ranks"]
+    command = [binary, "--phase9", "--kociemba", kociemba, *tables, *native_only, "--print-ranks"]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode:
         sys.exit(f"{binary} failed\n{' '.join(command)}\n{result.stdout}{result.stderr}")

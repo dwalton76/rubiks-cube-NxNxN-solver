@@ -12,6 +12,7 @@ from rubikscubennnsolver.RubiksCube777 import (
     LR_MIDDLE_OBLIQUES_777,
     LR_RIGHT_OBLIQUES_777,
     PHASE8_PRESERVE_ILLEGAL_MOVES_777,
+    PHASE9_ILLEGAL_MOVES_777,
     RubiksCube777,
     inner_t_centers_777,
     inner_x_centers_777,
@@ -250,7 +251,7 @@ class DaisyCenters777Test(unittest.TestCase):
         self.tempdir.cleanup()
 
     def command(self, cube, *extra, mode="leave-one-out", labels=None):
-        command = [str(BINARY), "--phase8", "--kociemba", cube.get_kociemba_string(True)]
+        command = [str(BINARY), "--phase9", "--kociemba", cube.get_kociemba_string(True)]
         if mode == "leave-one-out":
             selected = labels or {label for label, _, _, _ in LEAVE_ONE_OUT_TABLES}
             for label, flag, _, _ in LEAVE_ONE_OUT_TABLES:
@@ -373,10 +374,10 @@ class DaisyCenters777Test(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         line = next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES"))
-        phase8_legal = [
-            move for move in moves_777 if move not in ILLEGAL_MOVES and move not in PHASE8_PRESERVE_ILLEGAL_MOVES_777
+        phase9_legal = [
+            move for move in moves_777 if move not in ILLEGAL_MOVES and move not in PHASE9_ILLEGAL_MOVES_777
         ]
-        self.assertEqual(line.split()[1:], phase8_legal)
+        self.assertEqual(line.split()[1:], phase9_legal)
 
         result = subprocess.run(
             self.command(self.solved, "--print-ranks", labels={"UD_WITHOUT_LEFT_OBLIQUE"}),
@@ -564,10 +565,17 @@ class DaisyCenters777Test(unittest.TestCase):
             "3Rw2",
         }
         phase7_legal = [move for move in daisy_legal if move not in phase7_skip]
-        phase8_legal = [move for move in daisy_legal if move not in PHASE8_PRESERVE_ILLEGAL_MOVES_777]
-        self.assertEqual(len(phase8_legal), 26)
+        phase8_face_skip = {"L", "L'", "L2", "R", "R'", "R2"}
+        phase8_legal = [
+            move
+            for move in daisy_legal
+            if move not in PHASE8_PRESERVE_ILLEGAL_MOVES_777 and move not in phase8_face_skip
+        ]
+        phase9_legal = [move for move in daisy_legal if move not in PHASE9_ILLEGAL_MOVES_777]
+        self.assertEqual(len(phase8_legal), 20)
+        self.assertEqual(len(phase9_legal), 24)
 
-        for phase, expected in ((7, phase7_legal), (8, phase8_legal)):
+        for phase, expected in ((7, phase7_legal), (8, phase8_legal), (9, phase9_legal)):
             result = subprocess.run(
                 self.phase_command(self.solved, phase, "--print-legal-moves", "--print-ranks"),
                 capture_output=True,
@@ -633,7 +641,7 @@ class DaisyCenters777Test(unittest.TestCase):
         self.assertTrue(phase7_reached(preserved))
         self.assertFalse(cube_is_daisy(preserved))
         result = subprocess.run(
-            self.phase_command(preserved, 8, "--max-ida-threshold", "4"),
+            self.phase_command(preserved, 9, "--max-ida-threshold", "1"),
             capture_output=True,
             text=True,
         )
@@ -646,12 +654,37 @@ class DaisyCenters777Test(unittest.TestCase):
         self.assertTrue(cube_is_daisy(preserved))
 
         result = subprocess.run(
-            self.phase_command(split, 8, "--max-ida-threshold", "2"),
+            self.phase_command(split, 8, "--print-ranks"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        actual = parse_ranks(result.stdout)
+        self.assertEqual(actual["GOAL"], 0)
+        self.assertEqual(actual["COST"], 1)
+        result = subprocess.run(
+            self.phase_command(split, 8, "--max-ida-threshold", "1"),
             capture_output=True,
             text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(solution_steps(result.stdout), ["3Lw2"])
+
+        result = subprocess.run(
+            self.phase_command(split, 9, "--max-ida-threshold", "1"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("phase 9 start", result.stderr)
+
+        result = subprocess.run(
+            self.phase_command(self.solved, 9, "--apply-move", "3Lw2"),
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("invalid --apply-move", result.stderr)
 
         result = subprocess.run(
             self.phase_command(opposite, 8, "--max-ida-threshold", "2"),

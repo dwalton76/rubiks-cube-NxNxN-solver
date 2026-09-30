@@ -77,7 +77,7 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 | `ida_search_666_daisy_centers` | `ida_search_666_daisy_centers.c` | 6x6 daisy |
 | `ida_search_777_centers_stage` | `ida_search_777_centers_stage.c` | 7x7 LR phase 2 (UD inner + LR obliques); `--obliques-only` for NNNOdd partial rings |
 | `ida_search_777_UD_centers_stage` | `ida_search_777_UD_centers_stage.c` | 7x7 UD outer-x + obliques (6 tables) or `--obliques-only` (3 tables) |
-| `ida_search_777_daisy_centers` | `ida_search_777_daisy_centers.c` | 7x7 daisy: phase 7 then phase 8. `--native-only` applies to phase 8 for 9x9+ |
+| `ida_search_777_daisy_centers` | `ida_search_777_daisy_centers.c` | 7x7: phase 7 LR, phase 8 UD/FB pairing, phase 9 daisy. `--native-only` applies to phase 9 for 9x9+ |
 
 Ranked searchers are pthread IDA. A `SOLUTION (N steps): …` line on stdout is the contract Python parses.
 
@@ -126,7 +126,7 @@ flowchart TD
 | 4 | `RubiksCube444` | 3x3 | Combined ranked-cost C IDA for phases 1 and 2 |
 | 5 | `RubiksCube555` | 3x3 | Six ranked C phases stage centers, orient wings, pair edges, and solve centers |
 | 6 | `RubiksCube666` | 5x5 | Ranked center staging, three 70^5 inner-x-spine daisy tables, then fake-4x4 inside-edge pairing |
-| 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, then phase 7 and phase 8 |
+| 7 | `RubiksCube777` | 5x5 | Combined LR phase 2, 6-table UD, then phases 7, 8, and 9 |
 | even ≥8 | `RubiksCubeNNNEven` | odd N−1 | Plus-sign via fake 6x6, pair inner wings via fake 4x4, then odd solver |
 | odd ≥9 | `RubiksCubeNNNOdd` | 5x5 | Fake 7x7 per center orbit/cycle, then 5x5 edges |
 
@@ -157,7 +157,7 @@ flowchart LR
     UDt["last dummy cycle: inner UD if needed + 3-table search"]
   end
   subgraph sol [Solve]
-    native["phase 7, then phase 8 --native-only"]
+    native["phase 7, phase 8, then phase 9 --native-only"]
   end
   LRfull --> UDfull
   LRpair --> UDpair
@@ -175,7 +175,7 @@ Dispatch is `RubiksCubeNNNOdd.stage_or_solve_inside_777`. Outer-x of the fake 7x
 | Intermediate cycle | `ida_search_777_centers_stage --obliques-only` (unpaired-count heuristic, no tables) | 3 ranked oblique tables, **no** outer-x |
 | Last dummy cycle | Pair obliques, then fake-5x5 `lt_LR_t_centers_stage_ida` | Same 3-table search (middle obliques **are** outer t-centers) |
 
-NNNOdd center **solve** runs phase 7, then phase 8 with `native_only=True`. Phase 8 costs the max of the eight `PHASE8_TABLES_777` files, scaled by `--multiplier 1.3`. Phase 7 stays admissible. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
+NNNOdd center **solve** runs phase 7, then phase 8, then phase 9 with `native_only=True`. Phase 8 solves the UD/FB inners and pairs the UD/FB bars, keeping LR. Its cost is the max of the two `PHASE8_PAIRED_TABLES_777` files: each is 70^5 with 70 paired-bar goals. Phase 9 daisy-solves with no 3-wide move. It costs the max of the eight `PHASE8_TABLES_777` files, scaled by `--multiplier 1.3`. Those tables were built with 3Lw2 and 3Rw2, so they are a lower bound on the phase 9 move set. Phase 7 stays admissible. The C daisy blanks outer-x to `.`, so dummy painted outer-x do not constrain the search.
 
 Walk orbits **inside-out**. On 9x9, inner-orbit `w` rewrites as `3w` and would smash an already-solved outer ring.
 
@@ -183,7 +183,7 @@ Do not:
 
 - Run the 6-table UD search on dummy outer-x (placeholders are painted as the face color).
 - Collapse LR t-center staging into `--obliques-only` (LR t-centers are not LR obliques).
-- Let phase 8 accept the swapped daisy orientation on NNNOdd rings.
+- Let phase 9 accept the swapped daisy orientation on NNNOdd rings.
 - Interleave LR and UD per orbit (tried; keep all-LR then all-UD then all-solve).
 
 Optional leftover: partial LR/UD searches do not pass `--orbit0-need-*`. Staging OLL on those rings can dump parity onto the matching wings.

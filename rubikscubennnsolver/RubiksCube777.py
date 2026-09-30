@@ -34,10 +34,15 @@ Phase 7 - solve the LR inner centers and pair the LR oblique bars
     must be one color; their slot does not matter. Cost is the LR inner table
     maxed with ceil(unpaired LR wings / 4).
 
-Phase 8 - daisy-solve all six sides, keeping the phase 7 state
-    Outer turns, the six 2-wide half turns, and 3Lw2 / 3Rw2. Cost is the max
-    of the eight phase 8 center tables, scaled by ``--multiplier 1.3``.
-    The remaining puzzle is a 5x5x5.
+Phase 8 - solve the UD and FB inners and pair the UD and FB oblique bars
+    A bar may sit on either face of its axis. Moves keep the phase 7 LR
+    state. Cost is the max of the UD and FB paired-bar tables. Each is 70^5
+    with 70 goals, one per way to place the bars.
+
+Phase 9 - daisy-solve all six sides with no 3-wide move
+    Outer turns and the six 2-wide half turns. Cost is the max of the eight
+    center tables, scaled by ``--multiplier 1.3``. The remaining puzzle is a
+    5x5x5.
 """
 
 # standard libraries
@@ -616,17 +621,26 @@ DAISY_MIXED_TABLES_777 = (
     ),
 )
 
-# Phase 8. The heuristic is the max of these tables. Oblique coordinates
-# have both daisy goals, so a swapped orientation costs 0 there; --native-only
-# still rejects that orientation and the searcher lifts a 0 cost to 1.
+# Phase 8 takes the max of the paired-bar tables. Phase 9 takes the max of
+# PHASE8_TABLES_777. Oblique coordinates in that tuple have both daisy goals,
+# so a swapped orientation costs 0 there; --native-only still rejects that
+# orientation and the searcher lifts a 0 cost to 1.
+# Each paired-bar file is one axis: left, middle, and right obliques plus the
+# two inner orbits. The 70 goals are the C(8, 4) paired-bar placements, with
+# the inners native. The slot of a bar does not matter.
+PHASE8_PAIRED_TABLES_777 = (
+    ("--ud-paired-cost", "lookup-tables/lookup-table-7x7x7-phase8-ud-paired-centers.cost-only.bin"),
+    ("--fb-paired-cost", "lookup-tables/lookup-table-7x7x7-phase8-fb-paired-centers.cost-only.bin"),
+)
+PHASE8_INNER_INTERACTION_TABLE_777 = (
+    "--inner-interaction-cost",
+    "lookup-tables/lookup-table-7x7x7-phase8-inner-interaction-centers.cost-only.bin",
+)
 PHASE8_TABLES_777 = (
     ("--ud-axis-cost", "lookup-tables/lookup-table-7x7x7-phase8-ud-axis-centers.cost-only.bin"),
     ("--fb-axis-cost", "lookup-tables/lookup-table-7x7x7-phase8-fb-axis-centers.cost-only.bin"),
     ("--lr-oblique-cost", "lookup-tables/lookup-table-7x7x7-phase8-lr-oblique-centers.cost-only.bin"),
-    (
-        "--inner-interaction-cost",
-        "lookup-tables/lookup-table-7x7x7-phase8-inner-interaction-centers.cost-only.bin",
-    ),
+    PHASE8_INNER_INTERACTION_TABLE_777,
     (
         "--middle-interaction-cost",
         "lookup-tables/lookup-table-7x7x7-phase8-middle-interaction-centers.cost-only.bin",
@@ -654,7 +668,7 @@ DAISY_CENTERS_ILLEGAL_MOVES_777 = tuple(
 
 # Phase 8 drops the U/D/F/B 3-wide half turns because they split an LR bar and
 # move LR inners between L and R. The L/R 3-wide half turns preserve phase 7
-# and remain available to solve the UD/FB obliques.
+# and remain available to solve the UD/FB inners and pair those bars.
 PHASE8_PRESERVE_ILLEGAL_MOVES_777 = (
     "3Uw2",
     "3Fw2",
@@ -662,11 +676,19 @@ PHASE8_PRESERVE_ILLEGAL_MOVES_777 = (
     "3Dw2",
 )
 
+# Phase 9 drops the L/R 3-wide half turns as well. No 3-wide move remains, so
+# the phase 8 inners and paired bars stay put.
+PHASE9_ILLEGAL_MOVES_777 = PHASE8_PRESERVE_ILLEGAL_MOVES_777 + (
+    "3Lw2",
+    "3Rw2",
+)
+
 
 class LookupTableIDA777DaisyCenters:
     """
-    Phase 7 then phase 8. Each axis has five C(8,4) center orbits - left,
-    middle, and right obliques plus inner-t and inner-x - and outer-x is ignored.
+    Phase 7, phase 8, then phase 9. Each axis has five C(8,4) center orbits -
+    left, middle, and right obliques plus inner-t and inner-x - and outer-x is
+    ignored.
 
     Phase 7 solves LR inner-t and inner-x in the native pattern and pairs the
     left/middle/right oblique bars on L and R. The slot of an LR oblique bar
@@ -680,24 +702,32 @@ class LookupTableIDA777DaisyCenters:
     daisy tables measure distance to a daisy, which can exceed the distance to
     this goal, so phase 7 does not probe them.
 
-    Phase 8 daisy-solves all six sides. Its moves are the outer turns, the
-    2-wide half turns, and the L/R 3-wide half turns, which keep the phase 7
-    state. Those L/R turns let phase 8 pair UD/FB obliques. The U/D/F/B 3-wide
-    half turns split an LR bar and move LR inners between L and R, so phase 8
-    rejects them.
-    ``native_only`` applies to phase 8. Phase 8's cost is the max of
-    ``PHASE8_TABLES_777``. Tables that include an oblique cost 0 at either
-    daisy orientation; when ``native_only`` rejects the swapped orientation,
-    a table cost of 0 is lifted to 1. That max is several moves short of the
-    true distance, so phase 8 passes ``--multiplier 1.3`` by default. The
-    multiplier is not admissible. Phase 7 does not use it.
+    Phase 8 solves the UD and FB inners and pairs the UD and FB oblique bars.
+    A bar may sit on either face of its axis. Its moves are the outer turns,
+    the 2-wide half turns, and the L/R 3-wide half turns, which keep the phase 7
+    state. Cost is the max of ``PHASE8_PAIRED_TABLES_777``. Each table is the
+    five orbits of one axis, and its 70 goals are the ways to choose which four
+    bars are the primary color, with both inner orbits native. With those files
+    absent, 3Lw2 repairs eight wings of one axis, so ceil(unpaired / 8) is a
+    lower bound. Phase 8 does not use ``--multiplier`` or ``native_only``.
+
+    Phase 9 daisy-solves all six sides. It drops every 3-wide move, so the
+    phase 8 inners stay solved and the bars stay paired. ``native_only`` applies
+    here. Its cost is the max of ``PHASE8_TABLES_777``. Those files were built
+    with 3Lw2 and 3Rw2 legal, so their costs are a lower bound on this smaller
+    move set. Tables that include an oblique cost 0 at either daisy orientation;
+    when ``native_only`` rejects the swapped orientation, a table cost of 0 is
+    lifted to 1. That max is several moves short of the true distance, so
+    phase 9 passes ``--multiplier 1.3`` by default. The multiplier is not
+    admissible. Phases 7 and 8 do not use it.
 
     Component tables
 
-    | Set                      | Tables | Selected by |
-    | ------------------------ | ------ | ----------- |
-    | DAISY_LR_INNER_TABLE_777 | 1      | phase 7     |
-    | PHASE8_TABLES_777        | 8      | phase 8     |
+    | Set                                  | Tables | Selected by |
+    | ------------------------------------ | ------ | ----------- |
+    | DAISY_LR_INNER_TABLE_777             | 1      | phase 7     |
+    | PHASE8_PAIRED_TABLES_777             | 2      | phase 8     |
+    | PHASE8_TABLES_777                    | 8      | phase 9     |
     """
 
     def __init__(self, parent, multiplier=1.3):
@@ -711,7 +741,10 @@ class LookupTableIDA777DaisyCenters:
         self._solve_phase(7, native_only=False)
         parent.print_cube_add_comment("LR inners solved, LR obliques paired", tmp_solution_len)
         tmp_solution_len = len(parent.solution)
-        self._solve_phase(8, native_only=native_only)
+        self._solve_phase(8, native_only=False)
+        parent.print_cube_add_comment("UD/FB inners solved, UD/FB obliques paired", tmp_solution_len)
+        tmp_solution_len = len(parent.solution)
+        self._solve_phase(9, native_only=native_only)
         parent.print_cube_add_comment("centers daisy solved", tmp_solution_len)
 
     def _solve_phase(self, phase, native_only):
@@ -725,7 +758,11 @@ class LookupTableIDA777DaisyCenters:
             flag, filename = DAISY_LR_INNER_TABLE_777
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
-        if phase == 8:
+        elif phase == 8:
+            for flag, filename in PHASE8_PAIRED_TABLES_777:
+                download_file_if_needed(filename)
+                cmd.extend((flag, filename))
+        elif phase == 9:
             for flag, filename in PHASE8_TABLES_777:
                 download_file_if_needed(filename)
                 cmd.extend((flag, filename))
@@ -779,7 +816,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
     - stage the rest of the LR centers via 5x5x5
 
     - phase 7 solves LR inner-t and inner-x and pairs the LR oblique bars
-    - phase 8 daisy-solves all six sides while keeping the phase 7 state
+    - phase 8 solves the UD and FB inners and pairs the UD and FB oblique bars
+    - phase 9 daisy-solves all six sides with no 3-wide move
 
     For 7x7x7 edges
     - pair the middle 3 wings for each side via 5x5x5
@@ -827,8 +865,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         self.lt_UD_obliques_outer_x_stage = LookupTableIDA777UDObliquesOuterXStage(self)
         self.lt_UD_obliques_outer_x_stage.avoid_oll = 0
 
-        # phase 7 pairs LR oblique bars and solves the LR inners; phase 8
-        # daisy-solves all six sides while keeping that
+        # phase 7 pairs LR bars and solves the LR inners; phase 8 does the same
+        # for UD and FB; phase 9 daisy-solves with no 3-wide move
         self.lt_daisy_centers = LookupTableIDA777DaisyCenters(self)
 
     def create_fake_555_from_inside_centers(self):

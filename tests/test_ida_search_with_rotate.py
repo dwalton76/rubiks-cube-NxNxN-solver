@@ -13,6 +13,7 @@ from rubikscubennnsolver.RubiksCube666 import (
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_INNER_X_SPINE_TABLE_777,
     DAISY_LR_INNER_TABLE_777,
+    PHASE8_PAIRED_TABLES_777,
     PHASE8_TABLES_777,
     DAISY_MIXED_TABLES_777,
     DAISY_PERFECT_TABLES_777,
@@ -366,35 +367,48 @@ class CenterStagingTablesTest(unittest.TestCase):
             daisy.solve_via_c(native_only=True)
             daisy.solve_via_c()
 
-        self.assertEqual(len(commands), 4)
+        self.assertEqual(len(commands), 6)
         retired = [filename for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777 + DAISY_PERFECT_TABLES_777]
         retired.append(DAISY_INNER_X_SPINE_TABLE_777[1])
         retired.extend(filename for _, filename in DAISY_MIXED_TABLES_777)
-        for index in (0, 2):
+        for index in (0, 3):
             self.assertIn("--phase7", commands[index])
             self.assertNotIn("--phase8", commands[index])
+            self.assertNotIn("--phase9", commands[index])
             self.assertNotIn("--native-only", commands[index])
             self.assertIn(DAISY_LR_INNER_TABLE_777[1], commands[index])
             self.assertIn("--lr-inner-cost", commands[index])
             self.assertNotIn("--multiplier", commands[index])
-        self.assertIn("--phase8", commands[1])
-        self.assertEqual(commands[1][commands[1].index("--multiplier") + 1], "1.3")
-        self.assertEqual(commands[3][commands[3].index("--multiplier") + 1], "1.3")
-        self.assertIn("--native-only", commands[1])
-        self.assertIn("--phase8", commands[3])
-        self.assertNotIn("--native-only", commands[3])
+        for index in (1, 4):
+            self.assertIn("--phase8", commands[index])
+            self.assertNotIn("--phase9", commands[index])
+            self.assertNotIn("--native-only", commands[index])
+            self.assertNotIn("--multiplier", commands[index])
+            for flag, filename in PHASE8_PAIRED_TABLES_777:
+                self.assertIn(flag, commands[index])
+                self.assertIn(filename, commands[index])
+            self.assertNotIn("--inner-interaction-cost", commands[index])
+            for flag, filename in PHASE8_TABLES_777:
+                if flag == "--inner-interaction-cost":
+                    continue
+                self.assertNotIn(flag, commands[index])
+                self.assertNotIn(filename, commands[index])
+        self.assertIn("--phase9", commands[2])
+        self.assertIn("--phase9", commands[5])
+        self.assertEqual(commands[2][commands[2].index("--multiplier") + 1], "1.3")
+        self.assertEqual(commands[5][commands[5].index("--multiplier") + 1], "1.3")
+        self.assertIn("--native-only", commands[2])
+        self.assertNotIn("--native-only", commands[5])
         for flag, filename in PHASE8_TABLES_777:
-            self.assertIn(flag, commands[1])
-            self.assertIn(filename, commands[1])
-            self.assertIn(flag, commands[3])
-            self.assertIn(filename, commands[3])
+            self.assertIn(flag, commands[2])
+            self.assertIn(filename, commands[2])
+            self.assertIn(flag, commands[5])
+            self.assertIn(filename, commands[5])
         for filename in retired:
-            self.assertNotIn(filename, commands[1])
-            self.assertNotIn(filename, commands[3])
-            self.assertNotIn("--perfect-cost", commands[1])
-            self.assertNotIn("--perfect-cost", commands[3])
-            self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[0], commands[1])
-            self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[0], commands[3])
+            for index in (1, 2, 4, 5):
+                self.assertNotIn(filename, commands[index])
+                self.assertNotIn("--perfect-cost", commands[index])
+                self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[0], commands[index])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

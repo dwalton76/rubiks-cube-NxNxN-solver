@@ -109,6 +109,12 @@ static const unsigned char unpaired_count_UD_inner_centers_777[MATRIX_UNPAIRED_M
 
 static unsigned char *ranked_costs;
 static int ranked_cost_fd = -1;
+static const char *inner_even_filename;
+static const char *inner_odd_filename;
+static unsigned char *inner_even_costs;
+static unsigned char *inner_odd_costs;
+static int inner_even_fd = -1;
+static int inner_odd_fd = -1;
 static move_type inverse_move[MOVE_MAX];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_777];
@@ -144,7 +150,8 @@ static void usage(const char *program)
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
         "[--multiplier F] [--unpaired-multiplier F] [--print-ida-summary] "
         "[--orbit0-need-odd-w] [--orbit0-need-even-w] "
-        "[--orbit1-need-odd-w] [--orbit1-need-even-w]\n",
+        "[--orbit1-need-odd-w] [--orbit1-need-even-w] "
+        "[--ud-inner-even-cost FILE --ud-inner-odd-cost FILE]\n",
         program
     );
     printf(
@@ -192,17 +199,55 @@ static unsigned char unpaired_cost(unsigned char unpaired)
     return unpaired && !cost ? 1 : cost;
 }
 
-static unsigned char centers_table_cost(const char *cube)
+static uint64_t inner_centers_rank(const char *cube)
 {
     uint64_t t_rank = combination_rank(cube, inner_t_centers);
     uint64_t x_rank = combination_rank(cube, inner_x_centers);
-    unsigned char encoded;
 
     if (t_rank == UINT64_MAX || x_rank == UINT64_MAX) {
+        return UINT64_MAX;
+    }
+    return (t_rank * GROUP_UNIVERSE) + x_rank;
+}
+
+static unsigned char decode_product_cost(const unsigned char *costs, uint64_t rank)
+{
+    unsigned char encoded;
+
+    if (!costs || rank >= PRODUCT_UNIVERSE) {
         return UINT8_MAX;
     }
-    encoded = ranked_costs[(t_rank * GROUP_UNIVERSE) + x_rank];
-    return encoded ? encoded - 1 : UINT8_MAX;
+    encoded = costs[rank];
+    return encoded ? (unsigned char)(encoded - 1) : UINT8_MAX;
+}
+
+static unsigned char centers_table_cost(const char *cube)
+{
+    return decode_product_cost(ranked_costs, inner_centers_rank(cube));
+}
+
+/* Remaining orbit-1 parity selects the file. PARITY_ANY keeps the cheaper one. */
+static unsigned char inner_orbit1_cost(uint64_t rank, unsigned char parity)
+{
+    unsigned char current_odd = (parity >> 1) & 1;
+    unsigned char even_cost = decode_product_cost(inner_even_costs, rank);
+    unsigned char odd_cost = decode_product_cost(inner_odd_costs, rank);
+    int need_odd;
+
+    if (!inner_even_costs) {
+        return 0;
+    }
+    if (orbit1_requirement != PARITY_ODD && orbit1_requirement != PARITY_EVEN) {
+        if (even_cost == UINT8_MAX) {
+            return odd_cost;
+        }
+        if (odd_cost == UINT8_MAX) {
+            return even_cost;
+        }
+        return even_cost < odd_cost ? even_cost : odd_cost;
+    }
+    need_odd = (orbit1_requirement == PARITY_ODD) != current_odd;
+    return need_odd ? odd_cost : even_cost;
 }
 
 static unsigned char combined_cost(unsigned char centers_cost, unsigned char unpaired)
@@ -293,6 +338,16 @@ static unsigned char cube_cost_from_unpaired(const char *cube, unsigned char par
             return UINT8_MAX;
         }
         cost = combined_cost(centers_cost, unpaired);
+        if (inner_even_costs && cost != UINT8_MAX) {
+            unsigned char orbit_cost = inner_orbit1_cost(inner_centers_rank(cube), parity);
+
+            if (orbit_cost == UINT8_MAX) {
+                return UINT8_MAX;
+            }
+            if (orbit_cost > cost) {
+                cost = orbit_cost;
+            }
+        }
     }
     if (cost && cost_to_goal_multiplier) {
         cost = (unsigned char)roundf(cost * cost_to_goal_multiplier);
@@ -346,6 +401,20 @@ static void map_ranked_cost_file(const char *filename)
 
     ranked_cost_fd = file.fd;
     ranked_costs = file.costs;
+}
+
+static void unmap_inner_tables(void)
+{
+    if (ranked_costs && ranked_costs != MAP_FAILED) {
+        ida_unmap_cost_file(ranked_cost_fd, ranked_costs, (size_t)PRODUCT_UNIVERSE);
+    }
+    if (inner_even_costs && inner_even_costs != MAP_FAILED) {
+        ida_unmap_cost_file(inner_even_fd, inner_even_costs, (size_t)PRODUCT_UNIVERSE);
+    }
+    if (inner_odd_costs && inner_odd_costs != MAP_FAILED) {
+        ida_unmap_cost_file(inner_odd_fd, inner_odd_costs, (size_t)PRODUCT_UNIVERSE);
+    }
+    ranked_costs = inner_even_costs = inner_odd_costs = NULL;
 }
 
 static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
@@ -625,6 +694,10 @@ int main(int argc, char **argv)
             kociemba = argv[++index];
         } else if (!strcmp(argv[index], "--ranked-UD-inner-centers-cost") && index + 1 < argc) {
             ranked_filename = argv[++index];
+        } else if (!strcmp(argv[index], "--ud-inner-even-cost") && index + 1 < argc) {
+            inner_even_filename = argv[++index];
+        } else if (!strcmp(argv[index], "--ud-inner-odd-cost") && index + 1 < argc) {
+            inner_odd_filename = argv[++index];
         } else if (!strcmp(argv[index], "--min-ida-threshold") && index + 1 < argc) {
             min_threshold = (unsigned char)atoi(argv[++index]);
         } else if (!strcmp(argv[index], "--max-ida-threshold") && index + 1 < argc) {
@@ -667,11 +740,25 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: --multiplier must be at least 1.0\n");
         return 1;
     }
+    if ((inner_even_filename == NULL) != (inner_odd_filename == NULL) ||
+        ((inner_even_filename || inner_odd_filename) && obliques_only)) {
+        fprintf(stderr, "ERROR: --ud-inner-even-cost and --ud-inner-odd-cost must be passed together\n");
+        return 1;
+    }
 
     init_binom();
     init_move_tables();
     if (!obliques_only) {
         map_ranked_cost_file(ranked_filename);
+        if (inner_even_filename) {
+            struct mapped_cost_file even = ida_map_cost_file(inner_even_filename, PRODUCT_UNIVERSE);
+            struct mapped_cost_file odd = ida_map_cost_file(inner_odd_filename, PRODUCT_UNIVERSE);
+
+            inner_even_fd = even.fd;
+            inner_even_costs = even.costs;
+            inner_odd_fd = odd.fd;
+            inner_odd_costs = odd.costs;
+        }
     }
     init_cube(cube, kociemba);
     recolor_cube(cube);
@@ -681,6 +768,7 @@ int main(int argc, char **argv)
     unsigned char initial_cost = cube_cost(cube, 0);
     if (initial_cost == UINT8_MAX) {
         fprintf(stderr, "ERROR: initial ranked state is absent from the table\n");
+        unmap_inner_tables();
         return 1;
     }
     if (obliques_only) {
@@ -740,16 +828,12 @@ int main(int argc, char **argv)
             }
             printf("END\n");
             print_cube(cube, CUBE_SIZE);
-            if (ranked_costs && ranked_costs != MAP_FAILED) {
-                ida_unmap_cost_file(ranked_cost_fd, ranked_costs, (size_t)PRODUCT_UNIVERSE);
-            }
+            unmap_inner_tables();
             return 0;
         }
     }
 
     fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
-    if (ranked_costs && ranked_costs != MAP_FAILED) {
-        ida_unmap_cost_file(ranked_cost_fd, ranked_costs, (size_t)PRODUCT_UNIVERSE);
-    }
+    unmap_inner_tables();
     return 1;
 }

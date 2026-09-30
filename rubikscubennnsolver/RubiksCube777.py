@@ -47,6 +47,7 @@ Phase 9 - daisy-solve all six sides with no 3-wide move
 
 # standard libraries
 import logging
+import os
 import subprocess
 
 # rubiks cube libraries
@@ -382,6 +383,10 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
             "--ranked-UD-inner-centers-cost",
             self.filename,
         ]
+        even_cost = "lookup-tables/lookup-table-7x7x7-step20-UD-inner-centers-stage-orbit1-even.cost-only.bin"
+        odd_cost = "lookup-tables/lookup-table-7x7x7-step20-UD-inner-centers-stage-orbit1-odd.cost-only.bin"
+        if os.path.exists(even_cost) and os.path.exists(odd_cost):
+            cmd.extend(("--ud-inner-even-cost", even_cost, "--ud-inner-odd-cost", odd_cost))
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
@@ -510,6 +515,18 @@ class LookupTableIDA777UDObliquesOuterXStage:
             cmd.extend((flag, filename))
         if self.multiplier:
             cmd.extend(("--multiplier", str(self.multiplier)))
+        orbit0_pairs = tuple(
+            (
+                flag.replace("-cost", "-even-cost"),
+                flag.replace("-cost", "-odd-cost"),
+                filename.replace(".cost-only.bin", "-orbit0-even.cost-only.bin"),
+                filename.replace(".cost-only.bin", "-orbit0-odd.cost-only.bin"),
+            )
+            for flag, filename in UD_PHASE56_TABLES_777
+        )
+        if all(os.path.exists(path) for pair in orbit0_pairs for path in pair[2:]):
+            for even_flag, odd_flag, even_path, odd_path in orbit0_pairs:
+                cmd.extend((even_flag, even_path, odd_flag, odd_path))
 
         if self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()

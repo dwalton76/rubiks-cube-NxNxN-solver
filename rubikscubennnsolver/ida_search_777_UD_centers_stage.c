@@ -86,6 +86,13 @@ static struct ranked_table {
     {"--right-oblique-outer-x-cost", "ROOX", ORBIT_RIGHT_OBLIQUE, ORBIT_OUTER_X, NULL, NULL, -1},
 };
 
+static const char *pair_even_filename[TABLE_COUNT];
+static const char *pair_odd_filename[TABLE_COUNT];
+static unsigned char *pair_even_costs[TABLE_COUNT];
+static unsigned char *pair_odd_costs[TABLE_COUNT];
+static int pair_even_fd[TABLE_COUNT];
+static int pair_odd_fd[TABLE_COUNT];
+
 static move_type inverse_move[MOVE_MAX];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_777];
@@ -236,12 +243,76 @@ static unsigned char parity_flip_floor(unsigned char parity)
     return 0;
 }
 
+static unsigned char decode_product_cost(const unsigned char *costs, uint64_t rank)
+{
+    unsigned char encoded;
+
+    if (!costs || rank >= PRODUCT_UNIVERSE) {
+        return UINT8_MAX;
+    }
+    encoded = costs[rank];
+    return encoded ? (unsigned char)(encoded - 1) : UINT8_MAX;
+}
+
+static unsigned char pair_orbit0_cost(const struct heuristic_result *found, unsigned char parity)
+{
+    unsigned char current_odd = parity & 1;
+    unsigned char best = 0;
+    int need_odd = -1;
+    int loaded = 0;
+
+    if (orbit0_requirement == PARITY_ODD) {
+        need_odd = !current_odd;
+    } else if (orbit0_requirement == PARITY_EVEN) {
+        need_odd = current_odd;
+    }
+    for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+        unsigned char even_cost;
+        unsigned char odd_cost;
+        unsigned char cost;
+
+        if (!pair_even_costs[index]) {
+            continue;
+        }
+        loaded = 1;
+        even_cost = decode_product_cost(pair_even_costs[index], found->table_rank[index]);
+        odd_cost = decode_product_cost(pair_odd_costs[index], found->table_rank[index]);
+        if (need_odd < 0) {
+            if (even_cost == UINT8_MAX) {
+                cost = odd_cost;
+            } else if (odd_cost == UINT8_MAX) {
+                cost = even_cost;
+            } else {
+                cost = even_cost < odd_cost ? even_cost : odd_cost;
+            }
+        } else {
+            cost = need_odd ? odd_cost : even_cost;
+        }
+        if (cost == UINT8_MAX) {
+            return UINT8_MAX;
+        }
+        if (cost > best) {
+            best = cost;
+        }
+    }
+    return loaded ? best : 0;
+}
+
 static unsigned char cube_cost(const char *cube, unsigned char parity)
 {
-    unsigned char cost = heuristic(cube).cost;
+    struct heuristic_result found = heuristic(cube);
+    unsigned char cost = found.cost;
+    unsigned char orbit_cost;
 
     if (cost == UINT8_MAX) {
         return UINT8_MAX;
+    }
+    orbit_cost = pair_orbit0_cost(&found, parity);
+    if (orbit_cost == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    if (orbit_cost > cost) {
+        cost = orbit_cost;
     }
     if (cost && cost_to_goal_multiplier) {
         cost = (unsigned char)roundf(cost * cost_to_goal_multiplier);
@@ -314,6 +385,15 @@ static void map_ranked_tables(void)
 
         table->fd = file.fd;
         table->costs = file.costs;
+        if (pair_even_filename[index]) {
+            struct mapped_cost_file even = ida_map_cost_file(pair_even_filename[index], PRODUCT_UNIVERSE);
+            struct mapped_cost_file odd = ida_map_cost_file(pair_odd_filename[index], PRODUCT_UNIVERSE);
+
+            pair_even_fd[index] = even.fd;
+            pair_even_costs[index] = even.costs;
+            pair_odd_fd[index] = odd.fd;
+            pair_odd_costs[index] = odd.costs;
+        }
     }
 }
 
@@ -325,7 +405,36 @@ static void unmap_ranked_tables(void)
         ida_unmap_cost_file(table->fd, table->costs, (size_t)PRODUCT_UNIVERSE);
         table->costs = NULL;
         table->fd = -1;
+        if (pair_even_costs[index]) {
+            ida_unmap_cost_file(pair_even_fd[index], pair_even_costs[index], (size_t)PRODUCT_UNIVERSE);
+            ida_unmap_cost_file(pair_odd_fd[index], pair_odd_costs[index], (size_t)PRODUCT_UNIVERSE);
+            pair_even_costs[index] = pair_odd_costs[index] = NULL;
+            pair_even_fd[index] = pair_odd_fd[index] = -1;
+        }
     }
+}
+
+static int match_pair_orbit_flag(const char *arg, const char *suffix, unsigned int *table_out)
+{
+    for (unsigned int table = 0; table < TABLE_COUNT; table++) {
+        const char *flag = ranked_tables[table].flag;
+        size_t length = strlen(flag);
+        char expected[96];
+
+        if (length < 5 || strcmp(flag + length - 5, "-cost") != 0) {
+            continue;
+        }
+        if (length - 5 + strlen(suffix) >= sizeof(expected)) {
+            continue;
+        }
+        memcpy(expected, flag, length - 5);
+        memcpy(expected + (length - 5), suffix, strlen(suffix) + 1);
+        if (!strcmp(arg, expected)) {
+            *table_out = table;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
@@ -570,6 +679,16 @@ int main(int argc, char **argv)
     }
     for (int index = 1; index < argc; index++) {
         int matched_table = 0;
+        unsigned int orbit_table = 0;
+
+        if (match_pair_orbit_flag(argv[index], "-even-cost", &orbit_table) && index + 1 < argc) {
+            pair_even_filename[orbit_table] = argv[++index];
+            continue;
+        }
+        if (match_pair_orbit_flag(argv[index], "-odd-cost", &orbit_table) && index + 1 < argc) {
+            pair_odd_filename[orbit_table] = argv[++index];
+            continue;
+        }
 
         for (unsigned int table = 0; table < TABLE_COUNT; table++) {
             if (!strcmp(argv[index], ranked_tables[table].flag) && index + 1 < argc) {
@@ -627,6 +746,34 @@ int main(int argc, char **argv)
     if (cost_to_goal_multiplier && cost_to_goal_multiplier < 1.0f) {
         fprintf(stderr, "ERROR: --multiplier must be at least 1.0\n");
         return 1;
+    }
+    {
+        int loaded = 0;
+        int missing = 0;
+
+        for (unsigned int table = 0; table < TABLE_COUNT; table++) {
+            int table_loaded = ranked_tables[table].filename &&
+                (table_is_oblique_only(&ranked_tables[table]) || !obliques_only);
+            int even_set = pair_even_filename[table] != NULL;
+            int odd_set = pair_odd_filename[table] != NULL;
+
+            if (even_set != odd_set) {
+                fprintf(stderr, "ERROR: %s even and odd costs must be passed together\n", ranked_tables[table].label);
+                return 1;
+            }
+            if (!table_loaded) {
+                continue;
+            }
+            if (even_set) {
+                loaded++;
+            } else {
+                missing++;
+            }
+        }
+        if (loaded && missing) {
+            fprintf(stderr, "ERROR: pass even and odd costs for every loaded UD pair table\n");
+            return 1;
+        }
     }
 
     init_binom();

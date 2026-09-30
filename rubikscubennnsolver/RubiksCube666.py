@@ -19,7 +19,8 @@ Phase 1 - stage LR inner x-centers
 
 Phase 2 - pair LR obliques and stage UD inner x-centers
     A second C(24,8) table stages UD inner x-centers while the same search
-    pairs all eight LR obliques anywhere. It preserves phase 1 by forbidding
+    pairs all eight LR obliques anywhere. Cost is max(table, ceil(unpaired/4),
+    orbit-1 parity distance) scaled by 1.1. It preserves phase 1 by forbidding
     3Uw/3Dw/3Fw/3Bw quarter turns, while 3Lw/3Rw quarters remain available to
     rebalance the oblique orbits. This phase owns orbit-1 OLL.
 
@@ -474,14 +475,13 @@ class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
     Total: 735,471 entries
     Average: 6.03 moves
 
-    The obliques have no table of their own. ``ida_search_666_centers_stage``
-    combines this table's cost with the unpaired LR oblique count through the
-    sampled ``unpaired_count_UD_inner_centers_666`` matrix; ``--unpaired-multiplier``
-    falls back to max(table, ceil(unpaired * F)) and is how that matrix was
-    bootstrapped. Two more C(24, 8) files give the phase-2 distance to the
-    staged centers with even or odd orbit-1 parity. The search keeps both
-    loaded and switches on each 3Lw or 3Rw quarter. The heuristic is the max
-    of the matrix and that parity cost. This phase owns orbit-1 OLL.
+    The obliques have no table of their own. One move pairs at most four of the
+    eight LR oblique pairs, so the solver passes ``--unpaired-multiplier 0.25``
+    and takes max(table, ceil(unpaired / 4)). ``--multiplier 1.1`` then scales
+    that cost. Two more C(24, 8) files give the phase-2 distance to the staged
+    centers with even or odd orbit-1 parity. The search keeps both loaded,
+    switches on each 3Lw or 3Rw quarter, and takes the max of the unpaired
+    bound and that parity cost before the 1.1 scale. This phase owns orbit-1 OLL.
     """
 
     def __init__(self, parent):
@@ -502,6 +502,10 @@ class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
             UD_INNER_X_ORBIT1_EVEN_TABLE_666,
             "--ud-inner-x-odd-cost",
             UD_INNER_X_ORBIT1_ODD_TABLE_666,
+            "--unpaired-multiplier",
+            "0.25",
+            "--multiplier",
+            "1.1",
         ]
         orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
         cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
@@ -761,6 +765,29 @@ class LookupTableIDA666UDCentersStage:
             "--right-oblique-outer-x-cost",
             self.parent.lt_UD_right_oblique_outer_x_stage.filename,
         ]
+        orbit0_pairs = (
+            (
+                "--left-right-oblique-even-cost",
+                "--left-right-oblique-odd-cost",
+                "lookup-tables/lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage-orbit0-even.cost-only.bin",
+                "lookup-tables/lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage-orbit0-odd.cost-only.bin",
+            ),
+            (
+                "--left-oblique-outer-x-even-cost",
+                "--left-oblique-outer-x-odd-cost",
+                "lookup-tables/lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage-orbit0-even.cost-only.bin",
+                "lookup-tables/lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage-orbit0-odd.cost-only.bin",
+            ),
+            (
+                "--right-oblique-outer-x-even-cost",
+                "--right-oblique-outer-x-odd-cost",
+                "lookup-tables/lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage-orbit0-even.cost-only.bin",
+                "lookup-tables/lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage-orbit0-odd.cost-only.bin",
+            ),
+        )
+        if all(os.path.exists(path) for pair in orbit0_pairs for path in pair[2:]):
+            for even_flag, odd_flag, even_path, odd_path in orbit0_pairs:
+                cmd.extend((even_flag, even_path, odd_flag, odd_path))
 
         roots_filename = None
         if roots:

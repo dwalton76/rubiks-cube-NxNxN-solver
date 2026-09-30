@@ -9,6 +9,8 @@ from pathlib import Path
 from rubikscubennnsolver.RubiksCube666 import (
     LR_INNER_X_STAGE_TABLE_666,
     RubiksCube666,
+    UD_INNER_X_ORBIT1_EVEN_TABLE_666,
+    UD_INNER_X_ORBIT1_ODD_TABLE_666,
     UD_INNER_X_STAGE_TABLE_666,
     UFBD_left_oblique_edges_666,
     UFBD_outer_x_centers_666,
@@ -22,6 +24,8 @@ BINARY = ROOT / "ida_search_666_centers_stage"
 GROUP_UNIVERSE = math.comb(16, 8)
 PRODUCT_UNIVERSE = GROUP_UNIVERSE * GROUP_UNIVERSE
 UD_INNER_X = ROOT / UD_INNER_X_STAGE_TABLE_666
+UD_INNER_X_EVEN = ROOT / UD_INNER_X_ORBIT1_EVEN_TABLE_666
+UD_INNER_X_ODD = ROOT / UD_INNER_X_ORBIT1_ODD_TABLE_666
 LR_INNER_X = ROOT / LR_INNER_X_STAGE_TABLE_666
 
 ORBIT_SQUARES = {
@@ -377,6 +381,51 @@ class RankedCentersStage666Test(unittest.TestCase):
         )
         self.assertIn("combined heuristic matrix", result.stdout)
         self.assertIn("prune pairing regressions", result.stdout)
+
+    def test_orbit1_cost_files_must_be_passed_together(self):
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                self.solved.get_kociemba_string(True),
+                "--stage-ud-inner-x-pair-lr-obliques",
+                "--ud-inner-x-cost",
+                str(UD_INNER_X),
+                "--ud-inner-x-even-cost",
+                "even.bin",
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("must be passed together", result.stderr)
+
+    @unittest.skipUnless(
+        UD_INNER_X.is_file() and UD_INNER_X_EVEN.is_file() and UD_INNER_X_ODD.is_file(),
+        "orbit1 inner-x tables are not present",
+    )
+    def test_phase_two_orbit1_tables_match_the_requirement(self):
+        flags = (
+            "--ud-inner-x-even-cost",
+            str(UD_INNER_X_EVEN),
+            "--ud-inner-x-odd-cost",
+            str(UD_INNER_X_ODD),
+        )
+        even, _ = self._phase_two_ranks(self.solved, "--orbit1-need-even-w", *flags)
+        self.assertEqual(even["ORBIT1_COST"], 0)
+        self.assertEqual(even["COST"], 0)
+
+        odd, _ = self._phase_two_ranks(self.solved, "--orbit1-need-odd-w", *flags)
+        self.assertEqual(odd["UD_INNER_X_COST"], 0)
+        self.assertEqual(odd["UNPAIRED"], 0)
+        self.assertEqual(odd["ORBIT1_COST"], 7)
+        self.assertEqual(odd["COST"], 7)
+
+        moved = RubiksCube666(solved_666, "URFDLB")
+        moved.rotate("3Lw")
+        after, _ = self._phase_two_ranks(moved, "--orbit1-need-odd-w", *flags)
+        self.assertEqual(after["ORBIT1_COST"], 1)
 
     @unittest.skipUnless(UD_INNER_X.is_file() and LR_INNER_X.is_file(), "inner-x tables are not present")
     def test_unpaired_multiplier_rejects_invalid_values(self):

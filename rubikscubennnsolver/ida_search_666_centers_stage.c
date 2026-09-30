@@ -157,10 +157,16 @@ static int use_unpaired_multiplier;
 static int stage_lr_inner_x;
 static int stage_ud_inner_x_pair_lr_obliques;
 static const char *ud_inner_x_filename;
+static const char *ud_inner_x_even_filename;
+static const char *ud_inner_x_odd_filename;
 static const char *lr_inner_x_filename;
 static unsigned char *ud_inner_x_costs;
+static unsigned char *ud_inner_x_even_costs;
+static unsigned char *ud_inner_x_odd_costs;
 static unsigned char *lr_inner_x_costs;
 static int ud_inner_x_fd = -1;
+static int ud_inner_x_even_fd = -1;
+static int ud_inner_x_odd_fd = -1;
 static int lr_inner_x_fd = -1;
 static move_type best_solution[MAX_IDA_THRESHOLD + 1];
 static unsigned int requested_solutions = 1;
@@ -220,7 +226,8 @@ static void usage(const char *program)
     printf(
         "usage: %s {--kociemba STATE | --kociemba-file FILE} "
         "{--stage-lr-inner-x --lr-inner-x-cost FILE | "
-        "--stage-ud-inner-x-pair-lr-obliques --ud-inner-x-cost FILE | "
+        "--stage-ud-inner-x-pair-lr-obliques --ud-inner-x-cost FILE "
+        "[--ud-inner-x-even-cost FILE --ud-inner-x-odd-cost FILE] | "
         "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
         "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
@@ -236,6 +243,9 @@ static void usage(const char *program)
         "  parity requirements are 0=any, 1=odd, 2=even\n"
         "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
         "                           matrix; 0.25 is admissible and larger values are not\n"
+        "  --ud-inner-x-even-cost   phase-2 distance to staged UD inner x with even orbit-1 parity\n"
+        "  --ud-inner-x-odd-cost    same coordinate with odd orbit-1 parity; both files are required\n"
+        "                           together and the search switches on each 3Lw/3Rw quarter\n"
         "  --solution-count N       stop after N solutions at the shortest length;\n"
         "                           0 keeps searching until that length is exhausted\n"
     );
@@ -307,16 +317,71 @@ static unsigned char unpaired_cost(unsigned char unpaired)
     return unpaired && !cost ? 1 : cost;
 }
 
-static unsigned char ud_inner_x_table_cost(const char *cube)
+static uint64_t ud_inner_x_rank(const char *cube)
 {
-    uint64_t ud_rank = combination_rank_axis(cube, all_inner_x_squares, 24, 'U', 'D');
+    return combination_rank_axis(cube, all_inner_x_squares, 24, 'U', 'D');
+}
+
+static unsigned char decode_rank_cost(const unsigned char *costs, uint64_t rank)
+{
     unsigned char encoded;
 
-    if (ud_rank >= AXIS_CENTER_UNIVERSE) {
+    if (!costs || rank >= AXIS_CENTER_UNIVERSE) {
         return UINT8_MAX;
     }
-    encoded = ud_inner_x_costs[ud_rank];
+    encoded = costs[rank];
     return encoded ? decode_cost_byte(encoded) : UINT8_MAX;
+}
+
+static unsigned char ud_inner_x_table_cost(const char *cube)
+{
+    return decode_rank_cost(ud_inner_x_costs, ud_inner_x_rank(cube));
+}
+
+/*
+ * Even file: remaining path must contain an even number of orbit-1 quarter
+ * turns. Odd file: an odd number. 3Lw/3Lw'/3Rw/3Rw' are the only legal flips
+ * in this phase, so the file switches every time one of those is applied.
+ * With no parity requirement the min of the two files is the phase-2 center
+ * distance. That stays admissible beside the unrestricted step11 table.
+ */
+static unsigned char ud_inner_x_orbit1_cost(uint64_t rank, unsigned char parity)
+{
+    unsigned char current_odd = (parity >> 1) & 1;
+    unsigned char even_cost;
+    unsigned char odd_cost;
+    unsigned char need_odd;
+
+    if (!ud_inner_x_even_costs) {
+        return 0;
+    }
+    even_cost = decode_rank_cost(ud_inner_x_even_costs, rank);
+    odd_cost = decode_rank_cost(ud_inner_x_odd_costs, rank);
+    if (orbit1_requirement == PARITY_ANY) {
+        if (even_cost == UINT8_MAX) {
+            return odd_cost;
+        }
+        if (odd_cost == UINT8_MAX) {
+            return even_cost;
+        }
+        return even_cost < odd_cost ? even_cost : odd_cost;
+    }
+    need_odd = (orbit1_requirement == PARITY_ODD) ^ current_odd;
+    return need_odd ? odd_cost : even_cost;
+}
+
+static unsigned char lift_with_orbit1(unsigned char base, uint64_t rank, unsigned char parity)
+{
+    unsigned char orbit_cost;
+
+    if (!ud_inner_x_even_costs || base == UINT8_MAX) {
+        return base;
+    }
+    orbit_cost = ud_inner_x_orbit1_cost(rank, parity);
+    if (orbit_cost == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    return orbit_cost > base ? orbit_cost : base;
 }
 
 static unsigned char combined_cost(unsigned char centers_cost, unsigned char unpaired)
@@ -505,7 +570,12 @@ static unsigned char apply_multiplier_and_parity_floor(unsigned char cost, unsig
 
 static unsigned char cube_cost(const char *cube, unsigned char parity)
 {
-    return apply_multiplier_and_parity_floor(heuristic(cube).cost, parity);
+    unsigned char cost = heuristic(cube).cost;
+
+    if (stage_ud_inner_x_pair_lr_obliques) {
+        cost = lift_with_orbit1(cost, ud_inner_x_rank(cube), parity);
+    }
+    return apply_multiplier_and_parity_floor(cost, parity);
 }
 
 /*
@@ -514,12 +584,15 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
  */
 static unsigned char phase2_cube_cost(const char *cube, unsigned char parity, unsigned char unpaired)
 {
-    unsigned char table = ud_inner_x_table_cost(cube);
+    uint64_t rank = ud_inner_x_rank(cube);
+    unsigned char table = decode_rank_cost(ud_inner_x_costs, rank);
+    unsigned char cost;
 
     if (table == UINT8_MAX) {
         return UINT8_MAX;
     }
-    return apply_multiplier_and_parity_floor(combined_cost(table, unpaired), parity);
+    cost = lift_with_orbit1(combined_cost(table, unpaired), rank, parity);
+    return apply_multiplier_and_parity_floor(cost, parity);
 }
 
 /*
@@ -636,6 +709,15 @@ static void map_ranked_tables(void)
 
         ud_inner_x_fd = ud.fd;
         ud_inner_x_costs = ud.costs;
+        if (ud_inner_x_even_filename) {
+            struct mapped_cost_file even = ida_map_cost_file(ud_inner_x_even_filename, AXIS_CENTER_UNIVERSE);
+            struct mapped_cost_file odd = ida_map_cost_file(ud_inner_x_odd_filename, AXIS_CENTER_UNIVERSE);
+
+            ud_inner_x_even_fd = even.fd;
+            ud_inner_x_even_costs = even.costs;
+            ud_inner_x_odd_fd = odd.fd;
+            ud_inner_x_odd_costs = odd.costs;
+        }
         return;
     }
 
@@ -657,11 +739,17 @@ static void unmap_ranked_tables(void)
     if (ud_inner_x_costs) {
         ida_unmap_cost_file(ud_inner_x_fd, ud_inner_x_costs, AXIS_CENTER_UNIVERSE);
     }
+    if (ud_inner_x_even_costs) {
+        ida_unmap_cost_file(ud_inner_x_even_fd, ud_inner_x_even_costs, AXIS_CENTER_UNIVERSE);
+    }
+    if (ud_inner_x_odd_costs) {
+        ida_unmap_cost_file(ud_inner_x_odd_fd, ud_inner_x_odd_costs, AXIS_CENTER_UNIVERSE);
+    }
     if (lr_inner_x_costs) {
         ida_unmap_cost_file(lr_inner_x_fd, lr_inner_x_costs, AXIS_CENTER_UNIVERSE);
     }
-    ud_inner_x_fd = lr_inner_x_fd = -1;
-    ud_inner_x_costs = lr_inner_x_costs = NULL;
+    ud_inner_x_fd = ud_inner_x_even_fd = ud_inner_x_odd_fd = lr_inner_x_fd = -1;
+    ud_inner_x_costs = ud_inner_x_even_costs = ud_inner_x_odd_costs = lr_inner_x_costs = NULL;
 
     for (unsigned int index = 0; index < TABLE_COUNT; index++) {
         struct ranked_table *table = &ranked_tables[index];
@@ -1246,6 +1334,9 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
         printf(" %4s", "LRIX");
     } else if (stage_ud_inner_x_pair_lr_obliques) {
         printf(" %4s %4s", "UDIX", "UNPR");
+        if (ud_inner_x_even_costs) {
+            printf(" %4s", "O1");
+        }
     } else {
         for (unsigned int index = 0; index < TABLE_COUNT; index++) {
             if (ranked_tables[index].costs) {
@@ -1258,6 +1349,9 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
         printf(" ====");
     } else if (stage_ud_inner_x_pair_lr_obliques) {
         printf(" ==== ====");
+        if (ud_inner_x_even_costs) {
+            printf(" ====");
+        }
     } else {
         for (unsigned int index = 0; index < TABLE_COUNT; index++) {
             if (ranked_tables[index].costs) {
@@ -1279,6 +1373,11 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
             printf(" %4u", h.lr_inner_x_cost);
         } else if (stage_ud_inner_x_pair_lr_obliques) {
             printf(" %4u %4u", h.ud_inner_x_cost, h.unpaired_count);
+            if (ud_inner_x_even_costs) {
+                unsigned char orbit_cost = ud_inner_x_orbit1_cost(ud_inner_x_rank(cube), parity);
+
+                printf(" %4u", orbit_cost == UINT8_MAX ? 255 : orbit_cost);
+            }
         } else {
             for (unsigned int index = 0; index < TABLE_COUNT; index++) {
                 if (ranked_tables[index].costs) {
@@ -1335,6 +1434,10 @@ int main(int argc, char **argv)
             stage_ud_inner_x_pair_lr_obliques = 1;
         } else if (strmatch(argv[index], "--ud-inner-x-cost") && index + 1 < argc) {
             ud_inner_x_filename = argv[++index];
+        } else if (strmatch(argv[index], "--ud-inner-x-even-cost") && index + 1 < argc) {
+            ud_inner_x_even_filename = argv[++index];
+        } else if (strmatch(argv[index], "--ud-inner-x-odd-cost") && index + 1 < argc) {
+            ud_inner_x_odd_filename = argv[++index];
         } else if (strmatch(argv[index], "--lr-inner-x-cost") && index + 1 < argc) {
             lr_inner_x_filename = argv[++index];
         } else if (strmatch(argv[index], "--kociemba") && index + 1 < argc) {
@@ -1398,6 +1501,15 @@ int main(int argc, char **argv)
     if ((stage_lr_inner_x && !lr_inner_x_filename) ||
         (stage_ud_inner_x_pair_lr_obliques && !ud_inner_x_filename)) {
         usage(argv[0]);
+        return 2;
+    }
+    if ((ud_inner_x_even_filename == NULL) != (ud_inner_x_odd_filename == NULL) ||
+        ((ud_inner_x_even_filename || ud_inner_x_odd_filename) && !stage_ud_inner_x_pair_lr_obliques)) {
+        fprintf(
+            stderr,
+            "ERROR: --ud-inner-x-even-cost and --ud-inner-x-odd-cost must be passed together "
+            "with --stage-ud-inner-x-pair-lr-obliques\n"
+        );
         return 2;
     }
     if (stage_lr_inner_x || stage_ud_inner_x_pair_lr_obliques) {
@@ -1517,6 +1629,11 @@ int main(int argc, char **argv)
                 initial.ud_inner_x_cost,
                 initial.unpaired_count
             );
+            if (ud_inner_x_even_costs) {
+                unsigned char orbit_cost = ud_inner_x_orbit1_cost(ud_inner_x_rank(cube), 0);
+
+                printf(" ORBIT1_COST %u", orbit_cost == UINT8_MAX ? 255 : orbit_cost);
+            }
         } else {
             printf(
                 "OUTER_RANK %" PRIu64 " LEFT_RANK %" PRIu64 " RIGHT_RANK %" PRIu64,
@@ -1534,7 +1651,10 @@ int main(int argc, char **argv)
                 );
             }
         }
-        printf(" COST %u\n", initial.cost);
+        printf(
+            " COST %u\n",
+            stage_ud_inner_x_pair_lr_obliques ? cube_cost(cube, 0) : initial.cost
+        );
         unmap_ranked_tables();
         free(roots);
         return initial.cost == UINT8_MAX;
@@ -1543,7 +1663,8 @@ int main(int argc, char **argv)
     for (unsigned int root_index = 0; root_index < root_count; root_index++) {
         orbit0_requirement = roots[root_index].orbit0_requirement;
         orbit1_requirement = roots[root_index].orbit1_requirement;
-        if (heuristic(roots[root_index].cube).cost == UINT8_MAX) {
+        roots[root_index].initial_cost = cube_cost(roots[root_index].cube, 0);
+        if (roots[root_index].initial_cost == UINT8_MAX) {
             fprintf(
                 stderr,
                 "ERROR: root %u center state is absent from a ranked cost table\n",
@@ -1553,7 +1674,6 @@ int main(int argc, char **argv)
             free(roots);
             return 1;
         }
-        roots[root_index].initial_cost = cube_cost(roots[root_index].cube, 0);
     }
 
     if (min_threshold == UINT8_MAX) {
@@ -1571,7 +1691,7 @@ int main(int argc, char **argv)
         }
     }
     if (stage_lr_inner_x || stage_ud_inner_x_pair_lr_obliques) {
-        loaded_table_count = 1;
+        loaded_table_count = ud_inner_x_even_filename ? 3 : 1;
     }
     if (root_count == 1) {
         print_cube(cube, CUBE_SIZE);
@@ -1585,6 +1705,11 @@ int main(int argc, char **argv)
             LOG(
                 "staging UD inner x-centers while pairing LR obliques anywhere, unpaired multiplier %.2f, prune pairing regressions\n",
                 unpaired_multiplier
+            );
+        } else if (ud_inner_x_even_costs) {
+            LOG(
+                "staging UD inner x-centers while pairing LR obliques anywhere, combined heuristic matrix, "
+                "orbit1 parity tables, prune pairing regressions\n"
             );
         } else {
             LOG("staging UD inner x-centers while pairing LR obliques anywhere, combined heuristic matrix, prune pairing regressions\n");

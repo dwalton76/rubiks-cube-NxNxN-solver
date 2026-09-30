@@ -318,6 +318,12 @@ PHASE5_ILLEGAL_MOVES = (
 # stage LR inner x-centers
 # ==================================================
 UD_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-binary.cost-only.bin"
+UD_INNER_X_ORBIT1_EVEN_TABLE_666 = (
+    "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-orbit1-even.cost-only.bin"
+)
+UD_INNER_X_ORBIT1_ODD_TABLE_666 = (
+    "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-orbit1-odd.cost-only.bin"
+)
 LR_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step12-LR-inner-x-centers-stage-binary.cost-only.bin"
 
 
@@ -472,12 +478,17 @@ class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
     combines this table's cost with the unpaired LR oblique count through the
     sampled ``unpaired_count_UD_inner_centers_666`` matrix; ``--unpaired-multiplier``
     falls back to max(table, ceil(unpaired * F)) and is how that matrix was
-    bootstrapped. This phase owns orbit-1 OLL.
+    bootstrapped. Two more C(24, 8) files give the phase-2 distance to the
+    staged centers with even or odd orbit-1 parity. The search keeps both
+    loaded and switches on each 3Lw or 3Rw quarter. The heuristic is the max
+    of the matrix and that parity cost. This phase owns orbit-1 OLL.
     """
 
     def __init__(self, parent):
         self.parent = parent
         download_file_if_needed(UD_INNER_X_STAGE_TABLE_666)
+        download_file_if_needed(UD_INNER_X_ORBIT1_EVEN_TABLE_666)
+        download_file_if_needed(UD_INNER_X_ORBIT1_ODD_TABLE_666)
 
     def solve_via_c(self) -> None:
         cmd = [
@@ -487,6 +498,10 @@ class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
             "--stage-ud-inner-x-pair-lr-obliques",
             "--ud-inner-x-cost",
             UD_INNER_X_STAGE_TABLE_666,
+            "--ud-inner-x-even-cost",
+            UD_INNER_X_ORBIT1_EVEN_TABLE_666,
+            "--ud-inner-x-odd-cost",
+            UD_INNER_X_ORBIT1_ODD_TABLE_666,
         ]
         orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
         cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")

@@ -638,8 +638,9 @@ DAISY_MIXED_TABLES_777 = (
     ),
 )
 
-# Phase 8 takes the max of the paired-bar tables. Phase 9 takes the max of
-# PHASE8_TABLES_777. Oblique coordinates in that tuple have both daisy goals,
+# Phase 8 takes the max of the paired-bar tables and the two inner-plus-oblique
+# tables. Phase 9 takes the max of PHASE8_TABLES_777. Oblique coordinates in
+# that tuple have both daisy goals,
 # so a swapped orientation costs 0 there; --native-only still rejects that
 # orientation and the searcher lifts a 0 cost to 1.
 # Each paired-bar file is one axis: left, middle, and right obliques plus the
@@ -648,6 +649,17 @@ DAISY_MIXED_TABLES_777 = (
 PHASE8_PAIRED_TABLES_777 = (
     ("--ud-paired-cost", "lookup-tables/lookup-table-7x7x7-phase8-ud-paired-centers.cost-only.bin"),
     ("--fb-paired-cost", "lookup-tables/lookup-table-7x7x7-phase8-fb-paired-centers.cost-only.bin"),
+)
+# Native inners on one axis, 70 paired-bar goals on the other axis's obliques.
+PHASE8_INNER_OBLIQUE_TABLES_777 = (
+    (
+        "--ud-inner-fb-obliques-cost",
+        "lookup-tables/lookup-table-7x7x7-phase8-ud-inner-fb-obliques-centers.cost-only.bin",
+    ),
+    (
+        "--fb-inner-ud-obliques-cost",
+        "lookup-tables/lookup-table-7x7x7-phase8-fb-inner-ud-obliques-centers.cost-only.bin",
+    ),
 )
 PHASE8_INNER_INTERACTION_TABLE_777 = (
     "--inner-interaction-cost",
@@ -722,11 +734,16 @@ class LookupTableIDA777DaisyCenters:
     Phase 8 solves the UD and FB inners and pairs the UD and FB oblique bars.
     A bar may sit on either face of its axis. Its moves are the outer turns,
     the 2-wide half turns, and the L/R 3-wide half turns, which keep the phase 7
-    state. Cost is the max of ``PHASE8_PAIRED_TABLES_777``. Each table is the
-    five orbits of one axis, and its 70 goals are the ways to choose which four
-    bars are the primary color, with both inner orbits native. With those files
-    absent, 3Lw2 repairs eight wings of one axis, so ceil(unpaired / 8) is a
-    lower bound. Phase 8 does not use ``--multiplier`` or ``native_only``.
+    state. Cost is the max of ``PHASE8_PAIRED_TABLES_777`` and
+    ``PHASE8_INNER_OBLIQUE_TABLES_777``. Each paired file is the five orbits of
+    one axis. Each inner-oblique file is one axis's inners plus the other
+    axis's three oblique orbits. All four have 70 goals: the ways to choose
+    which four bars are the primary color, with the inner orbits native. With
+    those files absent, 3Lw2 repairs eight wings of one axis, so
+    ceil(unpaired / 8) is a lower bound. The solver passes ``--multiplier 1.2``.
+    On 50 random cubes that adds 0.04 moves and lengthens 2 solutions, and it
+    brings the slow reduction from about 49s to about 6s. ``native_only`` does
+    not apply.
 
     Phase 9 daisy-solves all six sides. It drops every 3-wide move, so the
     phase 8 inners stay solved and the bars stay paired. ``native_only`` applies
@@ -736,7 +753,7 @@ class LookupTableIDA777DaisyCenters:
     when ``native_only`` rejects the swapped orientation, a table cost of 0 is
     lifted to 1. That max is several moves short of the true distance, so
     phase 9 passes ``--multiplier 1.3`` by default. The multiplier is not
-    admissible. Phases 7 and 8 do not use it.
+    admissible. Phase 7 does not use it.
 
     Component tables
 
@@ -744,6 +761,7 @@ class LookupTableIDA777DaisyCenters:
     | ------------------------------------ | ------ | ----------- |
     | DAISY_LR_INNER_TABLE_777             | 1      | phase 7     |
     | PHASE8_PAIRED_TABLES_777             | 2      | phase 8     |
+    | PHASE8_INNER_OBLIQUE_TABLES_777      | 2      | phase 8     |
     | PHASE8_TABLES_777                    | 8      | phase 9     |
     """
 
@@ -776,9 +794,10 @@ class LookupTableIDA777DaisyCenters:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
         elif phase == 8:
-            for flag, filename in PHASE8_PAIRED_TABLES_777:
+            for flag, filename in PHASE8_PAIRED_TABLES_777 + PHASE8_INNER_OBLIQUE_TABLES_777:
                 download_file_if_needed(filename)
                 cmd.extend((flag, filename))
+            cmd.extend(("--multiplier", "1.2"))
         elif phase == 9:
             for flag, filename in PHASE8_TABLES_777:
                 download_file_if_needed(filename)

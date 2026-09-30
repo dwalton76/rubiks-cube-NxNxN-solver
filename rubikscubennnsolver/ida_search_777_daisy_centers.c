@@ -184,12 +184,15 @@ static int lr_inner_fd = -1;
 
 /* Phase 8 tables. Ranks are the mixed radix of orbit ranks already computed
  * for the daisy, in the builder's square-group order. */
-#define PHASE8_TABLE_COUNT 10
+#define PHASE8_TABLE_COUNT 12
 /* inner-interaction is the UD/FB inner-t and inner-x table. */
 #define PHASE8_INNER_TABLE 3
 /* 70 paired-bar goals: any four primary-color bars, inners native. */
 #define PHASE8_UD_PAIRED_TABLE 8
 #define PHASE8_FB_PAIRED_TABLE 9
+/* Native inners on one axis, 70 paired-bar goals on the other. */
+#define PHASE8_UD_INNER_FB_OBLIQUES_TABLE 10
+#define PHASE8_FB_INNER_UD_OBLIQUES_TABLE 11
 /* 3Lw2 pairs eight wings of one axis at once, so ceil(unpaired / 8) stays admissible. */
 #define PHASE8_WINGS_PER_MOVE 8
 #define PHASE8_AXIS_UNIVERSE UINT64_C(1680700000)
@@ -236,16 +239,24 @@ static struct phase8_cost_table phase8_tables[PHASE8_TABLE_COUNT] = {
     {"--fb-paired-cost", "FB_PAIRED", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
      {AXIS_FB, AXIS_FB, AXIS_FB, AXIS_FB, AXIS_FB},
      {ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE, ORBIT_INNER_T, ORBIT_INNER_X}},
+    {"--ud-inner-fb-obliques-cost", "UD_INNER_FB_OBLIQUES", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
+     {AXIS_UD, AXIS_UD, AXIS_FB, AXIS_FB, AXIS_FB},
+     {ORBIT_INNER_T, ORBIT_INNER_X, ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE}},
+    {"--fb-inner-ud-obliques-cost", "FB_INNER_UD_OBLIQUES", NULL, NULL, -1, PHASE8_AXIS_UNIVERSE, 5,
+     {AXIS_FB, AXIS_FB, AXIS_UD, AXIS_UD, AXIS_UD},
+     {ORBIT_INNER_T, ORBIT_INNER_X, ORBIT_LEFT_OBLIQUE, ORBIT_MIDDLE_OBLIQUE, ORBIT_RIGHT_OBLIQUE}},
 };
 
 /* Search probes in this order and stops once one cost already exceeds the
  * remaining moves. UD comes first, then the UD-oblique/FB-inner-t table, then
  * FB. The other two 1.68 GiB tables come last. */
 static const unsigned char phase8_probe_order[PHASE8_TABLE_COUNT] = {
-    0, 7, 1, 3, 4, 2, 5, 6, PHASE8_UD_PAIRED_TABLE, PHASE8_FB_PAIRED_TABLE
+    0, 7, 1, 3, 4, 2, 5, 6, PHASE8_UD_PAIRED_TABLE, PHASE8_FB_PAIRED_TABLE,
+    PHASE8_UD_INNER_FB_OBLIQUES_TABLE, PHASE8_FB_INNER_UD_OBLIQUES_TABLE
 };
 static const char *const phase8_short_label[PHASE8_TABLE_COUNT] = {
-    "UD", "FB", "LR", "INNER", "MIDDLE", "UD_OBL", "FB_OBL", "UD_IT", "UD_PAIRED", "FB_PAIRED"
+    "UD", "FB", "LR", "INNER", "MIDDLE", "UD_OBL", "FB_OBL", "UD_IT", "UD_PAIRED", "FB_PAIRED",
+    "UD_IN_FB", "FB_IN_UD"
 };
 
 struct mixed_cost_table {
@@ -355,6 +366,8 @@ static void usage(const char *program)
         "[--inner-interaction-cost FILE] [--middle-interaction-cost FILE] "
         "[--ud-obliques-fb-edges-cost FILE] [--fb-obliques-ud-edges-cost FILE] "
         "[--ud-obliques-fb-inner-t-cost FILE] "
+        "[--ud-paired-cost FILE] [--fb-paired-cost FILE] "
+        "[--ud-inner-fb-obliques-cost FILE] [--fb-inner-ud-obliques-cost FILE] "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] [--multiplier F] [--native-only] "
         "[--profile-prunes] [--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
         program
@@ -371,8 +384,8 @@ static void usage(const char *program)
         "  --oblique-weave-cost F  four more raw 70^5 tables. Each file is the\n"
         "                          identity probe; x y and z' y' cover the other\n"
         "                          two. The heuristic is the max of every loaded table.\n"
-        "  --multiplier F          scale that max by F. F must be at least 1.0 and is\n"
-        "                          not admissible.\n"
+        "  --multiplier F          scale the phase 8 or phase 9 cost by F. F must be at\n"
+        "                          least 1.0 and is not admissible. A goal stays 0.\n"
         "  --native-only           require every tracked orbit to use its native face\n"
         "                          orientation\n"
         "  --lr-inner-cost F       70^2 table: LR inner-t then LR inner-x. Exact for\n"
@@ -393,6 +406,10 @@ static void usage(const char *program)
         "                          phase 9 UD obliques, UD inner-t, FB inner-t, 70^5\n"
         "  --ud-paired-cost F      phase 8 raw 70^5 UD axis, 70 paired-bar goals\n"
         "  --fb-paired-cost F      phase 8 raw 70^5 FB axis, 70 paired-bar goals\n"
+        "  --ud-inner-fb-obliques-cost F\n"
+        "                          phase 8 UD inners plus FB obliques, 70 paired-bar goals\n"
+        "  --fb-inner-ud-obliques-cost F\n"
+        "                          phase 8 FB inners plus UD obliques, 70 paired-bar goals\n"
         "  --phase7                LR inner-t and inner-x native, and every oblique bar\n"
         "                          on L and R one color. LR obliques stay on L/R under every move\n"
         "                          still legal after LR staging. The full daisy tables\n"
@@ -400,7 +417,8 @@ static void usage(const char *program)
         "  --phase8                solve the UD and FB inners and pair the UD and FB\n"
         "                          oblique bars. A bar may sit on either face of its axis.\n"
         "                          Moves keep the phase 7 LR state. The start state has to\n"
-        "                          already be a phase 7 state.\n"
+        "                          already be a phase 7 state. Cost is the max of the loaded\n"
+        "                          paired-bar tables, including the inner-plus-oblique files.\n"
         "  --phase9                daisy-solve all six sides with no 3-wide move, so the\n"
         "                          inners stay solved and the bars stay paired. The start\n"
         "                          state has to already be a phase 8 state.\n"
@@ -730,6 +748,19 @@ static int cost_proves_prune(unsigned char cost, unsigned char budget)
     return budget != UINT8_MAX && (cost == UINT8_MAX || cost > budget);
 }
 
+/* A zero cost is a goal. UINT8_MAX means the state is absent from a table.
+ * Anything else is rounded and capped so it cannot collide with that sentinel. */
+static unsigned char scale_cost(unsigned char cost)
+{
+    float scaled;
+
+    if (!cost || cost == UINT8_MAX || !cost_to_goal_multiplier) {
+        return cost;
+    }
+    scaled = roundf(cost * cost_to_goal_multiplier);
+    return scaled > MAX_IDA_THRESHOLD ? MAX_IDA_THRESHOLD + 1 : (unsigned char)scaled;
+}
+
 static struct heuristic_result heuristic(const char *cube, unsigned char budget)
 {
     struct heuristic_result result;
@@ -784,8 +815,9 @@ static struct heuristic_result heuristic(const char *cube, unsigned char budget)
         struct phase8_cost_table *inner = &phase8_tables[PHASE8_INNER_TABLE];
         unsigned char best;
         int unseen = 0;
-        static const unsigned int paired_tables[2] = {
-            PHASE8_UD_PAIRED_TABLE, PHASE8_FB_PAIRED_TABLE
+        static const unsigned int paired_tables[] = {
+            PHASE8_UD_PAIRED_TABLE, PHASE8_FB_PAIRED_TABLE,
+            PHASE8_UD_INNER_FB_OBLIQUES_TABLE, PHASE8_FB_INNER_UD_OBLIQUES_TABLE
         };
 
         result.ud_unpaired = unpaired_wings_on(cube, square_on_ud_face);
@@ -795,7 +827,7 @@ static struct heuristic_result heuristic(const char *cube, unsigned char budget)
         result.goal = phase8_reached(cube) ? 1 : 0;
         result.daisy = cube_is_daisy(cube) ? 1 : 0;
         best = result.ud_oblique_cost > result.fb_oblique_cost ? result.ud_oblique_cost : result.fb_oblique_cost;
-        for (unsigned int which = 0; which < 2; which++) {
+        for (unsigned int which = 0; which < sizeof(paired_tables) / sizeof(paired_tables[0]); which++) {
             unsigned int table_index = paired_tables[which];
             struct phase8_cost_table *table = &phase8_tables[table_index];
             uint64_t rank;
@@ -853,6 +885,7 @@ static struct heuristic_result heuristic(const char *cube, unsigned char budget)
         } else {
             result.cost = best ? best : 1;
         }
+        result.cost = scale_cost(result.cost);
         return result;
     }
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
@@ -951,15 +984,7 @@ static struct heuristic_result heuristic(const char *cube, unsigned char budget)
     if (cost_proves_prune(result.cost, budget)) {
         return result;
     }
-    if (result.cost != UINT8_MAX && cost_to_goal_multiplier) {
-        float scaled = roundf(result.cost * cost_to_goal_multiplier);
-
-        /* Stay clear of the UINT8_MAX "absent from the table" sentinel. Any cost
-         * above MAX_IDA_THRESHOLD prunes at every threshold we can search. */
-        if (result.cost) {
-            result.cost = scaled > MAX_IDA_THRESHOLD ? MAX_IDA_THRESHOLD + 1 : (unsigned char)scaled;
-        }
-    }
+    result.cost = scale_cost(result.cost);
     result.daisy = cube_is_daisy(cube) ? 1 : 0;
     if (result.daisy) {
         result.cost = 0;
@@ -1920,9 +1945,11 @@ int main(int argc, char **argv)
         );
     } else if (search_phase == PHASE_8) {
         LOG(
-            "searching phase 8: UD/FB inners native, UD/FB oblique bars paired, keeping LR%s%s\n",
+            "searching phase 8: UD/FB inners native, UD/FB oblique bars paired, keeping LR%s%s%s%s\n",
             phase8_tables[PHASE8_UD_PAIRED_TABLE].costs ? ", UD paired-bar table" : "",
-            phase8_tables[PHASE8_FB_PAIRED_TABLE].costs ? ", FB paired-bar table" : ""
+            phase8_tables[PHASE8_FB_PAIRED_TABLE].costs ? ", FB paired-bar table" : "",
+            phase8_tables[PHASE8_UD_INNER_FB_OBLIQUES_TABLE].costs ? ", UD inner x FB obliques" : "",
+            phase8_tables[PHASE8_FB_INNER_UD_OBLIQUES_TABLE].costs ? ", FB inner x UD obliques" : ""
         );
     } else {
         LOG("searching phase 9: daisy solve, no 3-wide moves\n");

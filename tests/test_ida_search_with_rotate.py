@@ -13,6 +13,7 @@ from rubikscubennnsolver.RubiksCube666 import (
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_INNER_X_SPINE_TABLE_777,
     DAISY_LR_INNER_TABLE_777,
+    PHASE8_INNER_OBLIQUE_TABLES_777,
     PHASE8_PAIRED_TABLES_777,
     PHASE8_TABLES_777,
     DAISY_MIXED_TABLES_777,
@@ -383,8 +384,8 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertIn("--phase8", commands[index])
             self.assertNotIn("--phase9", commands[index])
             self.assertNotIn("--native-only", commands[index])
-            self.assertNotIn("--multiplier", commands[index])
-            for flag, filename in PHASE8_PAIRED_TABLES_777:
+            self.assertEqual(commands[index][commands[index].index("--multiplier") + 1], "1.2")
+            for flag, filename in PHASE8_PAIRED_TABLES_777 + PHASE8_INNER_OBLIQUE_TABLES_777:
                 self.assertIn(flag, commands[index])
                 self.assertIn(filename, commands[index])
             self.assertNotIn("--inner-interaction-cost", commands[index])

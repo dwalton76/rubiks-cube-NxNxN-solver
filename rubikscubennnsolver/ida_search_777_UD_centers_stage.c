@@ -138,7 +138,7 @@ struct child {
 static void usage(const char *program)
 {
     printf(
-        "usage: %s --kociemba STATE "
+        "usage: %s {--kociemba STATE | --kociemba-file FILE} "
         "(all six --*-cost FILE flags | --obliques-only and the three oblique-oblique FILE flags) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
         "[--multiplier F] [--pair-cost-matrix FILE] [--print-ida-summary] "
@@ -147,6 +147,8 @@ static void usage(const char *program)
         program
     );
     printf(
+        "  --kociemba-file FILE  one root per line: INDEX,ORBIT0,ORBIT1,294-STICKER-STATE;\n"
+        "                        requirement is 0 any, 1 odd, 2 even; orbit 1 is ignored\n"
         "  --obliques-only  pair UD left/middle/right obliques; do not load outer-x tables\n"
         "  --multiplier F   scale max(pair tables) by F; not admissible, default unused\n"
         "  --pair-cost-matrix FILE\n"
@@ -717,9 +719,104 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
     printf("\n");
 }
 
+struct search_root {
+    unsigned int index;
+    unsigned char orbit0_requirement;
+    unsigned char initial_cost;
+    char cube[CUBE_ARRAY_SIZE];
+};
+
+static int compare_search_roots(const void *left, const void *right)
+{
+    const struct search_root *a = left;
+    const struct search_root *b = right;
+
+    if (a->initial_cost != b->initial_cost) {
+        return a->initial_cost < b->initial_cost ? -1 : 1;
+    }
+    if (a->index != b->index) {
+        return a->index < b->index ? -1 : 1;
+    }
+    return 0;
+}
+
+/* 7*7*6 stickers. The scan width has to be a literal, so it matches CUBE_ARRAY_SIZE - 1. */
+static struct search_root *read_search_roots(const char *filename, unsigned int *root_count)
+{
+    FILE *stream = fopen(filename, "r");
+    char *line = NULL;
+    size_t capacity = 0;
+    ssize_t length;
+    unsigned int allocated = 0;
+    unsigned int line_number = 0;
+    struct search_root *roots = NULL;
+
+    if (!stream) {
+        fprintf(stderr, "ERROR: could not open --kociemba-file %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+
+    while ((length = getline(&line, &capacity, stream)) != -1) {
+        unsigned int index;
+        unsigned int orbit0;
+        unsigned int orbit1;
+        char kociemba[CUBE_ARRAY_SIZE];
+
+        line_number++;
+        if (length == 0 || line[0] == '\n' || line[0] == '\r') {
+            continue;
+        }
+        if (sscanf(line, "%u,%u,%u,%294[^\r\n]", &index, &orbit0, &orbit1, kociemba) != 4 ||
+            strlen(kociemba) != CUBE_ARRAY_SIZE - 1 || orbit0 > PARITY_EVEN || orbit1 > PARITY_EVEN) {
+            fprintf(
+                stderr,
+                "ERROR: invalid --kociemba-file line %u; expected "
+                "ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,294-STICKER-STATE\n",
+                line_number
+            );
+            free(line);
+            free(roots);
+            fclose(stream);
+            exit(1);
+        }
+
+        if (*root_count == allocated) {
+            struct search_root *grown;
+
+            allocated = allocated ? allocated * 2 : 16;
+            grown = realloc(roots, allocated * sizeof(*roots));
+            if (!grown) {
+                fprintf(stderr, "ERROR: could not allocate search roots\n");
+                free(line);
+                free(roots);
+                fclose(stream);
+                exit(1);
+            }
+            roots = grown;
+        }
+
+        roots[*root_count].index = index;
+        roots[*root_count].orbit0_requirement = (unsigned char)orbit0;
+        roots[*root_count].initial_cost = UINT8_MAX;
+        init_cube(roots[*root_count].cube, kociemba);
+        recolor_cube(roots[*root_count].cube);
+        (*root_count)++;
+    }
+
+    free(line);
+    fclose(stream);
+    if (!*root_count) {
+        fprintf(stderr, "ERROR: --kociemba-file %s contains no roots\n", filename);
+        free(roots);
+        exit(1);
+    }
+    return roots;
+}
+
 int main(int argc, char **argv)
 {
     const char *kociemba = NULL;
+    const char *kociemba_filename = NULL;
     const char *apply_move_string = NULL;
     unsigned char min_threshold = 0;
     unsigned char max_threshold = DEFAULT_MAX_IDA_THRESHOLD;
@@ -759,6 +856,8 @@ int main(int argc, char **argv)
         }
         if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
+        } else if (!strcmp(argv[index], "--kociemba-file") && index + 1 < argc) {
+            kociemba_filename = argv[++index];
         } else if (!strcmp(argv[index], "--min-ida-threshold") && index + 1 < argc) {
             min_threshold = (unsigned char)atoi(argv[++index]);
         } else if (!strcmp(argv[index], "--max-ida-threshold") && index + 1 < argc) {
@@ -788,10 +887,15 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    if (!kociemba || !thread_count || thread_count > MAX_THREADS ||
+    if ((kociemba && kociemba_filename) || (!kociemba && !kociemba_filename) ||
+        !thread_count || thread_count > MAX_THREADS ||
         min_threshold > max_threshold || max_threshold > MAX_IDA_THRESHOLD) {
         usage(argv[0]);
         return 2;
+    }
+    if (kociemba_filename && (apply_move_string || print_ranks || print_legal_moves)) {
+        fprintf(stderr, "ERROR: --apply-move, --print-ranks, and --print-legal-moves need --kociemba\n");
+        return 1;
     }
     for (unsigned int table = 0; table < TABLE_COUNT; table++) {
         if (table_is_oblique_only(&ranked_tables[table]) || !obliques_only) {
@@ -844,73 +948,132 @@ int main(int argc, char **argv)
         pair_cost_matrix_fd = mapped.fd;
         pair_cost_matrix = mapped.costs;
     }
-    init_cube(cube, kociemba);
-    if (apply_move_string) {
-        move_type move = parse_move(apply_move_string);
+    struct search_root *roots = NULL;
+    unsigned int root_count = 0;
 
-        if (move == MOVE_NONE) {
-            fprintf(stderr, "ERROR: invalid --apply-move %s\n", apply_move_string);
-            unmap_ranked_tables();
-            return 2;
-        }
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-    }
-    recolor_cube(cube);
+    if (kociemba_filename) {
+        roots = read_search_roots(kociemba_filename, &root_count);
+    } else {
+        init_cube(cube, kociemba);
+        if (apply_move_string) {
+            move_type move = parse_move(apply_move_string);
 
-    struct heuristic_result initial = heuristic(cube);
-    if (print_legal_moves) {
-        printf("LEGAL_MOVES");
-        for (unsigned int index = 0; index < legal_move_count[MOVE_NONE]; index++) {
-            printf(" %s", move2str[moves_777[legal_move_index[MOVE_NONE][index]]]);
+            if (move == MOVE_NONE) {
+                fprintf(stderr, "ERROR: invalid --apply-move %s\n", apply_move_string);
+                unmap_ranked_tables();
+                return 2;
+            }
+            rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
         }
-        printf("\n");
-    }
-    if (print_ranks) {
-        printf(
-            "OUTER_RANK %" PRIu64 " LEFT_RANK %" PRIu64 " MIDDLE_RANK %" PRIu64
-            " RIGHT_RANK %" PRIu64,
-            initial.orbit_rank[ORBIT_OUTER_X], initial.orbit_rank[ORBIT_LEFT_OBLIQUE],
-            initial.orbit_rank[ORBIT_MIDDLE_OBLIQUE], initial.orbit_rank[ORBIT_RIGHT_OBLIQUE]
-        );
-        for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+        recolor_cube(cube);
+
+        struct heuristic_result initial = heuristic(cube);
+        if (print_legal_moves) {
+            printf("LEGAL_MOVES");
+            for (unsigned int index = 0; index < legal_move_count[MOVE_NONE]; index++) {
+                printf(" %s", move2str[moves_777[legal_move_index[MOVE_NONE][index]]]);
+            }
+            printf("\n");
+        }
+        if (print_ranks) {
             printf(
-                " %s_RANK %" PRIu64 " %s_COST %u",
-                ranked_tables[index].label, initial.table_rank[index],
-                ranked_tables[index].label, initial.table_cost[index]
+                "OUTER_RANK %" PRIu64 " LEFT_RANK %" PRIu64 " MIDDLE_RANK %" PRIu64
+                " RIGHT_RANK %" PRIu64,
+                initial.orbit_rank[ORBIT_OUTER_X], initial.orbit_rank[ORBIT_LEFT_OBLIQUE],
+                initial.orbit_rank[ORBIT_MIDDLE_OBLIQUE], initial.orbit_rank[ORBIT_RIGHT_OBLIQUE]
             );
+            for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+                printf(
+                    " %s_RANK %" PRIu64 " %s_COST %u",
+                    ranked_tables[index].label, initial.table_rank[index],
+                    ranked_tables[index].label, initial.table_cost[index]
+                );
+            }
+            printf(" COST %u\n", initial.cost);
+            unmap_ranked_tables();
+            return initial.cost == UINT8_MAX;
         }
-        printf(" COST %u\n", initial.cost);
-        unmap_ranked_tables();
-        return initial.cost == UINT8_MAX;
+
+        roots = calloc(1, sizeof(*roots));
+        if (!roots) {
+            fprintf(stderr, "ERROR: could not allocate search roots\n");
+            unmap_ranked_tables();
+            return 1;
+        }
+        roots[0].orbit0_requirement = orbit0_requirement;
+        memcpy(roots[0].cube, cube, CUBE_ARRAY_SIZE);
+        root_count = 1;
     }
 
-    printf("START\n");
-    print_cube(cube, CUBE_SIZE);
-
-    unsigned char initial_cost = cube_cost(cube, 0);
-    if (initial_cost == UINT8_MAX) {
-        fprintf(stderr, "ERROR: initial center state is absent from a ranked cost table\n");
-        unmap_ranked_tables();
-        return 1;
+    for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+        orbit0_requirement = roots[root_index].orbit0_requirement;
+        roots[root_index].initial_cost = cube_cost(roots[root_index].cube, 0);
+        if (roots[root_index].initial_cost == UINT8_MAX) {
+            fprintf(stderr, "ERROR: initial center state is absent from a ranked cost table\n");
+            unmap_ranked_tables();
+            free(roots);
+            return 1;
+        }
+    }
+    qsort(roots, root_count, sizeof(*roots), compare_search_roots);
+    if (min_threshold < roots[0].initial_cost) {
+        min_threshold = roots[0].initial_cost;
     }
     if (cost_to_goal_multiplier) {
         LOG("searching with cost to goal multiplier %.2f\n", cost_to_goal_multiplier);
     } else if (pair_cost_matrix) {
         LOG("searching with pair cost matrix %s\n", pair_cost_matrix_filename);
     }
-    LOG("initial cost %u, threads %u, ranked tables %s\n",
-        initial_cost, thread_count, obliques_only ? "3 (obliques only)" : "6");
-    if (min_threshold < initial_cost) {
-        min_threshold = initial_cost;
+    if (root_count == 1) {
+        printf("START\n");
+        print_cube(roots[0].cube, CUBE_SIZE);
+        LOG(
+            "initial cost %u, threads %u, ranked tables %s\n",
+            roots[0].initial_cost,
+            thread_count,
+            obliques_only ? "3 (obliques only)" : "6"
+        );
+    } else {
+        LOG(
+            "loaded %u starting states from %s, min initial cost %u, threads %u, ranked tables %s\n",
+            root_count,
+            kociemba_filename,
+            roots[0].initial_cost,
+            thread_count,
+            obliques_only ? "3 (obliques only)" : "6"
+        );
     }
 
     for (unsigned char threshold = min_threshold; threshold <= max_threshold; threshold++) {
         struct timeval start;
         struct timeval end;
-        uint64_t threshold_nodes = 1;
+        struct search_root *selected = NULL;
+        uint64_t threshold_nodes = 0;
 
         gettimeofday(&start, NULL);
-        int found = !initial_cost || search_at_threshold(cube, threshold, thread_count, &threshold_nodes);
+        for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+            uint64_t root_nodes = 0;
+            int found;
+
+            if (roots[root_index].initial_cost > threshold) {
+                continue;
+            }
+            orbit0_requirement = roots[root_index].orbit0_requirement;
+            if (!roots[root_index].initial_cost) {
+                solution[0] = MOVE_NONE;
+                found = 1;
+                root_nodes = 1;
+            } else {
+                found = search_at_threshold(
+                    roots[root_index].cube, threshold, thread_count, &root_nodes
+                );
+            }
+            threshold_nodes += root_nodes;
+            if (found) {
+                selected = &roots[root_index];
+                break;
+            }
+        }
         gettimeofday(&end, NULL);
         {
             double seconds = elapsed_seconds(&start, &end);
@@ -924,11 +1087,14 @@ int main(int argc, char **argv)
                 nodes_per_sec
             );
         }
-        if (found) {
+        if (selected) {
             unsigned int length = 0;
 
             while (solution[length] != MOVE_NONE) {
                 length++;
+            }
+            if (kociemba_filename) {
+                printf("ROOT_INDEX %u\n", selected->index);
             }
             printf("SOLUTION (%u steps):", length);
             for (unsigned int index = 0; index < length; index++) {
@@ -936,19 +1102,21 @@ int main(int argc, char **argv)
             }
             printf("\n");
             if (print_summary) {
-                print_ida_summary(cube, length);
+                print_ida_summary(selected->cube, length);
             }
             for (unsigned int index = 0; index < length; index++) {
-                rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
+                rotate_777_centers(selected->cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
             }
             printf("END\n");
-            print_cube(cube, CUBE_SIZE);
+            print_cube(selected->cube, CUBE_SIZE);
             unmap_ranked_tables();
+            free(roots);
             return 0;
         }
     }
 
     fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
     unmap_ranked_tables();
+    free(roots);
     return 1;
 }

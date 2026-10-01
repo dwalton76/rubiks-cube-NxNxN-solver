@@ -21,16 +21,21 @@ Phase 2 - stage UD inner centers and pair LR oblique edges
     the last phase with a 3-wide quarter turn, so it owns orbit-1 OLL.
 
 Phase 3 - stage the LR left, middle, and right obliques and the LR outer x-centers
-    Those four orbits land on L and R. The search has no 3-wide quarter turn,
-    so the phase 1 and phase 2 centers and orbit-1 OLL stay as phase 2 left
-    them. Larger odd cubes whose outer x are real still use the fake 5x5x5 LR
-    center stage for this step.
+    Those four orbits land on L and R. ``--solution-count 0`` collects every
+    shortest solution. Phase 5 searches all of them, and this phase's moves
+    are applied for the root phase 5 keeps. The search has no 3-wide quarter
+    turn, so the phase 1 and phase 2 centers and orbit-1 OLL stay as phase 2
+    left them. Larger odd cubes whose outer x are real still use the fake
+    5x5x5 LR center stage for this step.
 
-Phase 5/6 - stage the UD left, middle, and right obliques
-    Three ranked pair tables. Outer x-centers are printed as ``.``. The middle
-    obliques are the outer t-centers. This phase owns orbit-0 OLL. Larger odd
-    cubes whose outer x are real still try the six-table search for 3 seconds
-    and then the sampled pair-cost matrix.
+Phase 5/6 - stage the UD left, middle, and right obliques and the UD outer x-centers
+    Six ranked pair tables. Every distinct phase 3 ending is a root of one
+    search; the first root that solves at the shortest depth is kept. The
+    search tries the admissible max for 3 seconds, then the sampled pair-cost
+    matrix. This phase owns orbit-0 OLL. ``solve_via_c(obliques_only=True)``
+    still stages only the three oblique orbits. Larger odd cubes whose outer
+    x are real use one fake 5x5x5 phase 3 solution and this same six-table
+    search.
 
 Phase 7 - solve the LR inner centers and pair the LR oblique bars
     LR inner-t and inner-x must be native. The eight oblique bars on L and R
@@ -47,10 +52,9 @@ Phase 8 - solve the UD and FB inners and pair the UD and FB oblique bars
 
 Phase 9 - daisy-solve all six sides
     No 3-wide move remains, so the phase 8 centers stay solved. Cost is the
-    max of the eight center tables, scaled by ``--multiplier 1.3``. Those
-    tables were built with 3Lw2 and 3Rw2 legal, so they are a lower bound on
-    this smaller move set. Outer x-centers are printed as ``.``. The remaining
-    puzzle is a 5x5x5.
+    max of the eight center tables, with no multiplier. Those tables were built
+    with 3Lw2 and 3Rw2 legal, so they are a lower bound on this smaller move
+    set. Outer x-centers are printed as ``.``. The remaining puzzle is a 5x5x5.
 """
 
 # standard libraries
@@ -528,8 +532,9 @@ PHASE56_ADMISSIBLE_SECONDS = 3
 class LookupTableIDA777UDObliquesOuterXStage:
     """
     Combined phases 5/6 IDA. The 7x7 solver stages the UD left, middle, and
-    right obliques and prints outer x-centers as ``.``. A larger odd cube whose
-    outer x are real also stages those, via the six pair tables.
+    right obliques and the UD outer x-centers. Every distinct phase 3 ending
+    is a root. A larger odd cube whose outer x are real uses the same six
+    pair tables from its one phase 3 solution.
 
     Four UFBD coordinates - left oblique, middle oblique, right oblique, and
     outer-x - taken two at a time give the six component tables listed in
@@ -549,21 +554,32 @@ class LookupTableIDA777UDObliquesOuterXStage:
     ``rubikscubelookuptables/builder777.py`` and are not repeated here.
 
     ``solve_via_c(obliques_only=True)`` loads ``UD_OBLIQUE_ONLY_TABLES_777`` and
-    passes ``--obliques-only``. That is the 7x7 phase. ``solve_via_c()`` loads
-    all six tables, runs the admissible max for ``PHASE56_ADMISSIBLE_SECONDS``
-    with no ``--multiplier``, and on timeout retries with ``--pair-cost-matrix``
-    ``PHASE56_PAIR_COST_MATRIX_777``. Larger odd cubes use that path when the
-    ring's outer x are real. The middle obliques are the outer t-centers. This
-    phase owns orbit-0 OLL.
+    passes ``--obliques-only``. ``solve_via_c()`` and ``solution_via_c(roots)``
+    load all six tables, run the admissible max for
+    ``PHASE56_ADMISSIBLE_SECONDS`` with no ``--multiplier``, and on timeout
+    retry with ``--pair-cost-matrix`` ``PHASE56_PAIR_COST_MATRIX_777``. The
+    first root that solves at the shortest depth is kept. The middle obliques
+    are the outer t-centers. This phase owns orbit-0 OLL.
     """
 
     def __init__(self, parent):
         self.parent = parent
         self.avoid_oll = None
 
-    def _command(self, obliques_only=False):
+    def _orbit_requirements(self, orbits_with_oll):
+        orbit0_requirement = 0
+        orbit1_requirement = 0
+        if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
+            orbit0_requirement = 1 if 0 in orbits_with_oll else 2
+        if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
+            orbit1_requirement = 1 if 1 in orbits_with_oll else 2
+        return orbit0_requirement, orbit1_requirement
+
+    def _command(self, obliques_only=False, kociemba=None):
         tables = UD_OBLIQUE_ONLY_TABLES_777 if obliques_only else UD_PHASE56_TABLES_777
-        cmd = ["./ida_search_777_UD_centers_stage", "--kociemba", self.parent.get_kociemba_string(True)]
+        cmd = ["./ida_search_777_UD_centers_stage"]
+        if kociemba is not None:
+            cmd.extend(("--kociemba", kociemba))
         if obliques_only:
             cmd.append("--obliques-only")
         for flag, filename in tables:
@@ -582,7 +598,7 @@ class LookupTableIDA777UDObliquesOuterXStage:
             for even_flag, odd_flag, even_path, odd_path in orbit0_pairs:
                 cmd.extend((even_flag, even_path, odd_flag, odd_path))
 
-        if self.avoid_oll is not None:
+        if kociemba is not None and self.avoid_oll is not None:
             orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
             if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
                 cmd.append("--orbit0-need-odd-w" if 0 in orbits_with_oll else "--orbit0-need-even-w")
@@ -614,32 +630,76 @@ class LookupTableIDA777UDObliquesOuterXStage:
                 return True
         return False
 
+    def _solution_from_output(self, output):
+        root_index = 0
+        steps = None
+        for line in output.splitlines():
+            if line.startswith("ROOT_INDEX "):
+                root_index = int(line.split()[1])
+            elif line.startswith("SOLUTION"):
+                steps = tuple(line.split(":", 1)[1].strip().split())
+        if steps is None:
+            return None
+        return root_index, steps
+
+    def solution_via_c(self, roots=None):
+        """
+        Return ``(root_index, steps)`` for the current cube, or for every phase-3 root.
+
+        ``roots`` is ``(index, kociemba, orbits_with_oll)``. The admissible search
+        runs for ``PHASE56_ADMISSIBLE_SECONDS``; a timeout retries with the pair-cost matrix.
+        """
+        roots_filename = None
+        try:
+            if roots:
+                with tempfile.NamedTemporaryFile(mode="w", prefix="777-ud-roots-", suffix=".txt", delete=False) as fh:
+                    roots_filename = fh.name
+                    for root_index, kociemba, orbits_with_oll in roots:
+                        orbit0_requirement, orbit1_requirement = self._orbit_requirements(orbits_with_oll)
+                        fh.write(f"{root_index},{orbit0_requirement},{orbit1_requirement},{kociemba}\n")
+                cmd = self._command(obliques_only=False)
+                cmd.extend(("--kociemba-file", roots_filename))
+            else:
+                cmd = self._command(obliques_only=False, kociemba=self.parent.get_kociemba_string(True))
+
+            output = self._run_search(cmd, PHASE56_ADMISSIBLE_SECONDS)
+            if output is not None:
+                found = self._solution_from_output(output)
+                if found is None:
+                    raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
+                self.parent.solve_via_c_output = output
+                return found
+
+            matrix_cmd = [*cmd, "--pair-cost-matrix", PHASE56_PAIR_COST_MATRIX_777]
+            output = self._run_search(matrix_cmd, None)
+            if output is not None:
+                found = self._solution_from_output(output)
+                if found is not None:
+                    self.parent.solve_via_c_output = output
+                    return found
+            raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
+
     def solve_via_c(self, obliques_only=False, **_kwargs):
-        cmd = self._command(obliques_only=obliques_only)
         if obliques_only:
+            cmd = self._command(obliques_only=True, kociemba=self.parent.get_kociemba_string(True))
             output = self._run_search(cmd, None)
             if output is not None and self._apply_solution(output):
                 return
             raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
 
-        output = self._run_search(cmd, PHASE56_ADMISSIBLE_SECONDS)
-        if output is not None:
-            if self._apply_solution(output):
-                return
-            raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
-
-        matrix_cmd = [*cmd, "--pair-cost-matrix", PHASE56_PAIR_COST_MATRIX_777]
-        output = self._run_search(matrix_cmd, None)
-        if output is not None and self._apply_solution(output):
-            return
-        raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
+        _root_index, steps = self.solution_via_c()
+        for step in steps:
+            self.parent.rotate(step)
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")
         self.parent.nuke_corners()
         self.parent.nuke_edges()
 
-        tracked = set(UFBD_oblique_edges_777)
+        tracked = set(UFBD_oblique_edges_777 + UFBD_outer_x_centers_777)
         for x in centers_777:
             if x in tracked:
                 self.parent.state[x] = "U" if self.parent.state[x] in ("U", "D") else "x"
@@ -822,13 +882,12 @@ class LookupTableIDA777DaisyCenters:
 
     Phase 9 daisy-solves all six sides. It drops every 3-wide move, so the
     phase 8 inners stay solved and the bars stay paired. ``native_only`` applies
-    here. Its cost is the max of ``PHASE8_TABLES_777``. Those files were built
-    with 3Lw2 and 3Rw2 legal, so their costs are a lower bound on this smaller
-    move set. Tables that include an oblique cost 0 at either daisy orientation;
-    when ``native_only`` rejects the swapped orientation, a table cost of 0 is
-    lifted to 1. That max is several moves short of the true distance, so
-    phase 9 passes ``--multiplier 1.3`` by default. The multiplier is not
-    admissible. Phase 7 does not use it.
+    here. Its cost is the max of ``PHASE8_TABLES_777``, with no multiplier.
+    Those files were built with 3Lw2 and 3Rw2 legal, so their costs are a lower
+    bound on this smaller move set. Tables that include an oblique cost 0 at
+    either daisy orientation; when ``native_only`` rejects the swapped
+    orientation, a table cost of 0 is lifted to 1. Phase 7 does not use a
+    multiplier either.
 
     Component tables
 
@@ -840,7 +899,7 @@ class LookupTableIDA777DaisyCenters:
     | PHASE8_TABLES_777                    | 8      | phase 9     |
     """
 
-    def __init__(self, parent, multiplier=1.3):
+    def __init__(self, parent, multiplier=None):
         self.parent = parent
         self.avoid_oll = None
         self.multiplier = multiplier
@@ -1099,11 +1158,54 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
     def UD_obliques_staged(self) -> bool:
         """True when the UD left, middle, and right obliques sit on U and D."""
-        for square in UFBD_oblique_edges_777:
+        return self._ud_colors_staged(UFBD_oblique_edges_777)
+
+    def UD_outer_x_staged(self) -> bool:
+        """True when the UD outer x-centers sit on U and D."""
+        return self._ud_colors_staged(UFBD_outer_x_centers_777)
+
+    def _ud_colors_staged(self, squares) -> bool:
+        for square in squares:
             on_ud = square <= 49 or square >= 246
             if on_ud != (self.state[square] in ("U", "D")):
                 return False
         return True
+
+    def _phase5_root_key(self, orbits_with_oll):
+        """Folded UD oblique and outer-x colors, plus the orbit-0 requirement."""
+
+        def fold(color):
+            if color == "R":
+                return "L"
+            if color == "D":
+                return "U"
+            if color == "B":
+                return "F"
+            return color
+
+        colors = "".join(fold(self.state[square]) for square in UFBD_oblique_edges_777 + UFBD_outer_x_centers_777)
+        return (colors, 0 in orbits_with_oll)
+
+    def _distinct_phase5_roots(self, portfolio):
+        """Phase-3 solutions that leave a different phase-5 state, as ``(steps, kociemba, orbits)``."""
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        distinct = []
+        seen = set()
+        for steps in portfolio:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            for step in steps:
+                self.rotate(step)
+            orbits = self.center_solution_leads_to_oll_parity()
+            key = self._phase5_root_key(orbits)
+            if key in seen:
+                continue
+            seen.add(key)
+            distinct.append((steps, self.get_kociemba_string(True), orbits))
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        return distinct
 
     def LR_oblique_pair_count(self) -> int:
         """Return how many LR oblique slots are paired, matching the C unpaired count."""
@@ -1229,7 +1331,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         phase 1 - use 5x5x5 solver to stage the LR inner centers
         phase 2 - stage UD inner centers and pair LR oblique edges, searching
         every distinct phase-1 ending and keeping the first one that solves
-        phase 3 - stage the LR left, middle, and right obliques and outer x-centers
+        phase 3 - collect every shortest LR oblique and outer-x staging; phase 5
+        chooses which one to apply
         """
         if self.stage_outer_x_centers:
             if self.LR_centers_staged() and self.UD_inside_centers_staged():
@@ -1279,8 +1382,7 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
                     self.rotate(step)
             self.print_cube_add_comment("LR centers staged", tmp_solution_len)
         else:
-            self._stage_lr_obliques()
-            self.print_cube_add_comment("LR obliques and outer x staged", tmp_solution_len)
+            self._phase3_portfolio = self._phase3_solutions()
 
     # UD centers
     def UD_inside_centers_staged(self):
@@ -1295,34 +1397,67 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         if self.stage_outer_x_centers:
             if self.UD_centers_staged():
                 return
-        elif self.UD_obliques_staged():
+            tmp_solution_len = len(self.solution)
+            self.lt_UD_obliques_outer_x_stage.solve_via_c()
+            self.print_cube_add_comment("UD centers staged", tmp_solution_len)
             return
 
-        # phases 5 and 6 - stage UD left/middle/right obliques
+        portfolio = getattr(self, "_phase3_portfolio", None)
+        if portfolio is None:
+            if self.UD_obliques_staged() and self.UD_outer_x_staged():
+                return
+            tmp_solution_len = len(self.solution)
+            self.lt_UD_obliques_outer_x_stage.solve_via_c()
+            self.print_cube_add_comment("UD centers staged", tmp_solution_len)
+            return
+
+        self._phase3_portfolio = None
+        distinct = self._distinct_phase5_roots(portfolio)
+        if not distinct:
+            raise SolveError("phase 3 found no LR oblique and outer-x solutions")
+        logger.info(
+            "phase 3: %d shortest solutions, %d distinct phase-5 roots",
+            len(portfolio),
+            len(distinct),
+        )
+        roots = [(index, kociemba, orbits) for index, (_steps, kociemba, orbits) in enumerate(distinct)]
+        root_index, phase5_steps = self.lt_UD_obliques_outer_x_stage.solution_via_c(roots)
+
         tmp_solution_len = len(self.solution)
-        self.lt_UD_obliques_outer_x_stage.solve_via_c(obliques_only=not self.stage_outer_x_centers)
+        for step in distinct[root_index][0]:
+            self.rotate(step)
+        self.print_cube_add_comment("LR obliques and outer x staged", tmp_solution_len)
+
+        tmp_solution_len = len(self.solution)
+        for step in phase5_steps:
+            self.rotate(step)
         self.print_cube_add_comment("UD centers staged", tmp_solution_len)
 
-    def _stage_lr_obliques(self):
+    def _phase3_solutions(self):
+        """Every shortest phase-3 solution, without applying one."""
         cmd = [
             "./ida_search_777_centers_stage",
             "--kociemba",
             self.get_kociemba_string(True),
             "--stage-lr-obliques",
+            "--solution-count",
+            "0",
         ]
-        logger.info("stage_LR_obliques: solving via C\n%s", " ".join(cmd))
+        logger.info("phase 3: solving via C\n%s", " ".join(cmd))
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as proc:
             output, _stderr = proc.communicate()
         output = output or ""
         for line in output.splitlines():
             logger.info("%s", line)
         self.solve_via_c_output = output
+        solutions = []
         for line in output.splitlines():
             if line.startswith("SOLUTION"):
-                for step in line.split(":", 1)[1].strip().split():
-                    self.rotate(step)
-                return
-        raise SolveError(f"ida_search_777_centers_stage --stage-lr-obliques failed\n{output}")
+                solutions.append(tuple(line.split(":", 1)[1].strip().split()))
+        if not solutions:
+            raise SolveError(f"ida_search_777_centers_stage --stage-lr-obliques failed\n{output}")
+        logger.info("phase 3: %d shortest solutions", len(solutions))
+        return solutions
 
     def centers_combined_daisy_solve(self, native_only=False):
         self.lt_daisy_centers.solve_via_c(native_only=native_only)

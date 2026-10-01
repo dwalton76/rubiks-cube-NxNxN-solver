@@ -125,6 +125,11 @@ static move_type inverse_move[MOVE_MAX];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_777];
 static move_type solution[MAX_IDA_THRESHOLD + 1];
+static unsigned int solution_limit;
+static int collect_solutions;
+static unsigned int collected_count;
+static unsigned int collected_capacity;
+static move_type (*collected)[MAX_IDA_THRESHOLD + 1];
 static atomic_uint next_task;
 static atomic_uint solution_task = NO_TASK;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -164,6 +169,7 @@ static void usage(const char *program)
         "(--ranked-UD-inner-centers-cost FILE | --obliques-only | --stage-lr-obliques) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
         "[--multiplier F] [--unpaired-multiplier F] [--print-ida-summary] "
+        "[--solution-count N] "
         "[--orbit0-need-odd-w] [--orbit0-need-even-w] "
         "[--orbit1-need-odd-w] [--orbit1-need-even-w] "
         "[--ud-inner-even-cost FILE --ud-inner-odd-cost FILE]\n",
@@ -175,6 +181,8 @@ static void usage(const char *program)
         "  --obliques-only          pair LR obliques only; ignore the UD inner-center table\n"
         "  --stage-lr-obliques      put LR left/middle/right obliques and outer x on L and R;\n"
         "                           3-wide quarters stay illegal\n"
+        "  --solution-count N       with --stage-lr-obliques, keep N solutions at the shortest\n"
+        "                           length; 0 keeps every one\n"
         "  --multiplier F           scale the cost to goal by F to trade solution length for\n"
         "                           search speed, used to bootstrap the matrix samples\n"
         "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
@@ -754,6 +762,37 @@ static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
     }
 }
 
+static int keep_solution(const move_type *moves)
+{
+    int stop;
+
+    pthread_mutex_lock(&solution_lock);
+    if (solution_limit && collected_count >= solution_limit) {
+        atomic_store(&solution_task, 1);
+        pthread_mutex_unlock(&solution_lock);
+        return 1;
+    }
+    if (collected_count == collected_capacity) {
+        unsigned int grown = collected_capacity ? collected_capacity * 2 : 16;
+        move_type (*next)[MAX_IDA_THRESHOLD + 1] = realloc(collected, grown * sizeof(*collected));
+
+        if (!next) {
+            fprintf(stderr, "ERROR: could not store phase 3 solutions\n");
+            exit(1);
+        }
+        collected = next;
+        collected_capacity = grown;
+    }
+    memcpy(collected[collected_count], moves, sizeof(collected[0]));
+    collected_count++;
+    stop = solution_limit && collected_count >= solution_limit;
+    if (stop) {
+        atomic_store(&solution_task, 1);
+    }
+    pthread_mutex_unlock(&solution_lock);
+    return stop;
+}
+
 static int ida_search(
     struct worker *worker,
     char cube[CUBE_ARRAY_SIZE],
@@ -795,6 +834,9 @@ static int ida_search(
         if (!cost) {
             worker->solution[depth] = move;
             worker->solution[next_depth] = MOVE_NONE;
+            if (collect_solutions) {
+                return keep_solution(worker->solution);
+            }
             return 1;
         }
         children[child_count].move = move;
@@ -868,6 +910,12 @@ static void *search_root_moves(void *argument)
         worker->solution[0] = first;
         if (!cost) {
             worker->solution[1] = MOVE_NONE;
+            if (collect_solutions) {
+                if (keep_solution(worker->solution)) {
+                    break;
+                }
+                continue;
+            }
             found = 1;
         } else if (search_threshold <= 1) {
             continue;
@@ -902,6 +950,9 @@ static int search_at_threshold(
 
     *nodes = 1;
     search_threshold = threshold;
+    if (collect_solutions) {
+        collected_count = 0;
+    }
     atomic_store(&next_task, 0);
     atomic_store(&solution_task, NO_TASK);
     for (unsigned int index = 0; index < worker_count; index++) {
@@ -915,6 +966,9 @@ static int search_at_threshold(
     for (unsigned int index = 0; index < worker_count; index++) {
         pthread_join(threads[index], NULL);
         *nodes += workers[index].ida_count;
+    }
+    if (collect_solutions) {
+        return collected_count > 0;
     }
     return atomic_load(&solution_task) != NO_TASK;
 }
@@ -1099,6 +1153,9 @@ int main(int argc, char **argv)
             stage_lr_obliques = 1;
         } else if (!strcmp(argv[index], "--print-ida-summary")) {
             print_summary = 1;
+        } else if (!strcmp(argv[index], "--solution-count") && index + 1 < argc) {
+            solution_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
+            collect_solutions = 1;
         } else {
             usage(argv[0]);
             return 1;
@@ -1126,6 +1183,10 @@ int main(int argc, char **argv)
     }
     if (kociemba_filename && (obliques_only || stage_lr_obliques)) {
         fprintf(stderr, "ERROR: --kociemba-file is only for the ranked UD inner-center search\n");
+        return 1;
+    }
+    if (collect_solutions && !stage_lr_obliques) {
+        fprintf(stderr, "ERROR: --solution-count is only for --stage-lr-obliques\n");
         return 1;
     }
     if ((inner_even_filename == NULL) != (inner_odd_filename == NULL) ||
@@ -1265,6 +1326,29 @@ int main(int argc, char **argv)
                 nodes_per_sec
             );
         }
+        if (selected && collect_solutions && collected_count) {
+            LOG("kept %u shortest phase 3 solutions\n", collected_count);
+            for (unsigned int which = 0; which < collected_count; which++) {
+                unsigned int length = 0;
+
+                while (collected[which][length] != MOVE_NONE) {
+                    length++;
+                }
+                printf("SOLUTION (%u steps):", length);
+                for (unsigned int index = 0; index < length; index++) {
+                    printf(" %s", move2str[collected[which][index]]);
+                }
+                printf("\n");
+            }
+            free(collected);
+            collected = NULL;
+            collected_count = 0;
+            collected_capacity = 0;
+            unmap_inner_tables();
+            free_stage_tables();
+            free(roots);
+            return 0;
+        }
         if (selected) {
             unsigned int length = 0;
             char rotate_tmp[CUBE_ARRAY_SIZE];
@@ -1296,6 +1380,7 @@ int main(int argc, char **argv)
     }
 
     fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
+    free(collected);
     unmap_inner_tables();
     free_stage_tables();
     free(roots);

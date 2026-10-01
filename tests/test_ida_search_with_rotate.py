@@ -214,7 +214,7 @@ class CenterStagingTablesTest(unittest.TestCase):
             patch.object(cube.fake_555.lt_LR_centers_stage, "solutions_via_c", side_effect=fake_solutions),
             patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
             patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
-            patch.object(cube, "_stage_lr_obliques"),
+            patch.object(cube, "_phase3_solutions"),
         ):
             cube.stage_LR_centers()
 
@@ -446,9 +446,7 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(combined.avoid_oll, 0)
         combined.recolor()
 
-        for square in UFBD_outer_x_centers_777:
-            self.assertEqual(cube.state[square], ".")
-        tracked = UFBD_left_oblique_777 + UFBD_middle_oblique_777 + UFBD_right_oblique_777
+        tracked = UFBD_left_oblique_777 + UFBD_middle_oblique_777 + UFBD_right_oblique_777 + UFBD_outer_x_centers_777
         for square in tracked:
             expected = "U" if square < 50 or square > 245 else "x"
             self.assertEqual(cube.state[square], expected)
@@ -488,7 +486,7 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertIn(flag, captured["cmd"])
             self.assertIn(filename, captured["cmd"])
 
-    def test_777_stage_ud_centers_ignores_outer_x(self):
+    def test_777_stage_ud_centers_stages_outer_x(self):
         cube = RubiksCube777(solved_777, "URFDLB")
         cube.lt_init()
         seen = {}
@@ -502,7 +500,25 @@ class CenterStagingTablesTest(unittest.TestCase):
         ):
             cube.stage_UD_centers()
 
-        self.assertTrue(seen["obliques_only"])
+        self.assertFalse(seen["obliques_only"])
+
+    def test_777_stage_ud_centers_applies_the_phase3_root_phase5_keeps(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        cube._phase3_portfolio = [("U",), ("Uw",)]
+
+        def fake_solution(roots):
+            self.assertEqual([index for index, _kociemba, _orbits in roots], [0, 1])
+            return (1, ("F",))
+
+        with patch.object(cube.lt_UD_obliques_outer_x_stage, "solution_via_c", side_effect=fake_solution):
+            cube.stage_UD_centers()
+
+        self.assertEqual(cube.solution[0], "Uw")
+        self.assertIn("F", cube.solution)
+        self.assertTrue(any(step.startswith("COMMENT_LR_obliques_and_outer_x_staged") for step in cube.solution))
+        self.assertTrue(any(step.startswith("COMMENT_UD_centers_staged") for step in cube.solution))
+        self.assertIsNone(cube._phase3_portfolio)
 
     def test_777_phase3_stages_lr_obliques(self):
         cube = RubiksCube777(solved_777, "URFDLB")
@@ -541,9 +557,10 @@ class CenterStagingTablesTest(unittest.TestCase):
 
         self.assertEqual(captured["cmd"][0], "./ida_search_777_centers_stage")
         self.assertIn("--stage-lr-obliques", captured["cmd"])
+        self.assertEqual(captured["cmd"][captured["cmd"].index("--solution-count") + 1], "0")
         self.assertIsNone(captured["timeout"])
-        self.assertIn("U", cube.solution)
-        self.assertTrue(any(step.startswith("COMMENT_LR_obliques_and_outer_x_staged") for step in cube.solution))
+        self.assertEqual(cube._phase3_portfolio, [("U",)])
+        self.assertNotIn("U", cube.solution)
 
     def test_nnnodd_keeps_outer_x_center_staging(self):
         cube = RubiksCube777ForNNNOdd(solved_777, "URFDLB")
@@ -573,7 +590,7 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(len(DAISY_PERFECT_TABLES_777), 2)
         self.assertEqual(DAISY_INNER_X_SPINE_TABLE_777[0], "--inner-x-spine-cost")
         self.assertEqual(len(DAISY_MIXED_TABLES_777), 4)
-        self.assertEqual(daisy.multiplier, 1.3)
+        self.assertIsNone(daisy.multiplier)
 
     def test_larger_odd_cubes_use_native_only_daisy_without_step_tables(self):
         cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
@@ -640,8 +657,8 @@ class CenterStagingTablesTest(unittest.TestCase):
                 self.assertNotIn(filename, commands[index])
         self.assertIn("--phase9", commands[2])
         self.assertIn("--phase9", commands[5])
-        self.assertEqual(commands[2][commands[2].index("--multiplier") + 1], "1.3")
-        self.assertEqual(commands[5][commands[5].index("--multiplier") + 1], "1.3")
+        self.assertNotIn("--multiplier", commands[2])
+        self.assertNotIn("--multiplier", commands[5])
         self.assertIn("--native-only", commands[2])
         self.assertNotIn("--native-only", commands[5])
         for flag, filename in PHASE8_TABLES_777:

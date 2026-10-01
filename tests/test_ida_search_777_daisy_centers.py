@@ -676,7 +676,7 @@ class DaisyCenters777Test(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 2)
-        self.assertIn("phase 9 start", result.stderr)
+        self.assertIn("phase 9 root", result.stderr)
 
         result = subprocess.run(
             self.phase_command(self.solved, 9, "--apply-move", "3Lw2"),
@@ -692,7 +692,7 @@ class DaisyCenters777Test(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 2)
-        self.assertIn("phase 8 start", result.stderr)
+        self.assertIn("phase 8 root", result.stderr)
 
     @unittest.skipUnless(Path(DAISY_LR_INNER_TABLE_777[1]).is_file(), "the LR inner table has not been built")
     def test_phase7_lr_inner_table_matches_its_file(self):

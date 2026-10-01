@@ -25,6 +25,7 @@
 #define OBLIQUE_COUNT 24
 #define MATRIX_UNPAIRED_MAX 16
 #define MATRIX_COST_MAX 12
+#define MATRIX_ORBIT1_COST_MAX 13
 #define DEFAULT_MAX_IDA_THRESHOLD 30
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
@@ -93,24 +94,262 @@ static const unsigned int outer_x_centers[OBLIQUE_COUNT] = {
  *
  * utils/build-777-UD-inner-centers-oblique-matrix.py was used to build this.
  */
-static const unsigned char unpaired_count_UD_inner_centers_777[MATRIX_UNPAIRED_MAX + 1][MATRIX_COST_MAX + 1] = {
-    { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12},  // unpaired 0
-    { 1,  1,  2,  3,  6,  7,  7,  7,  8,  9, 10, 11, 12},  // unpaired 1
-    { 1,  1,  2,  3,  6,  7,  8,  9,  9,  9, 10, 11, 12},  // unpaired 2
-    { 6,  6,  6,  6,  6,  7,  8,  9, 11, 13, 13, 13, 13},  // unpaired 3
-    { 6,  6,  6,  7,  7,  7,  8,  9, 11, 13, 14, 15, 15},  // unpaired 4
-    { 8,  8,  8,  8,  8,  8,  8,  9, 11, 13, 15, 15, 15},  // unpaired 5
-    { 8, 10, 10, 11, 11, 11, 11, 11, 11, 13, 15, 15, 15},  // unpaired 6
-    { 8, 10, 10, 12, 12, 12, 12, 12, 12, 13, 15, 16, 16},  // unpaired 7
-    { 9, 10, 11, 12, 12, 12, 12, 12, 12, 13, 15, 16, 16},  // unpaired 8
-    { 9, 11, 12, 14, 14, 14, 14, 14, 14, 14, 15, 16, 16},  // unpaired 9
-    {10, 11, 12, 14, 14, 14, 14, 14, 14, 14, 15, 18, 18},  // unpaired 10
-    {11, 11, 12, 14, 14, 14, 14, 17, 17, 17, 17, 18, 18},  // unpaired 11
-    {11, 11, 12, 14, 14, 14, 15, 17, 17, 17, 17, 18, 18},  // unpaired 12
-    {12, 12, 12, 14, 14, 14, 15, 18, 18, 18, 18, 18, 18},  // unpaired 13
-    {12, 12, 12, 14, 14, 14, 15, 18, 18, 18, 19, 19, 19},  // unpaired 14
-    {12, 12, 12, 14, 14, 14, 15, 18, 18, 18, 19, 19, 19},  // unpaired 15
-    {12, 12, 12, 14, 14, 14, 15, 18, 18, 18, 19, 19, 19},  // unpaired 16
+static const unsigned char unpaired_count_UD_inner_centers_777[MATRIX_UNPAIRED_MAX + 1][MATRIX_COST_MAX + 1][MATRIX_ORBIT1_COST_MAX + 1] = {
+    {  // unpaired 0
+        { 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 0
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 1
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 2
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 3
+        { 4,  4,  4,  4,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 4
+        { 5,  5,  5,  5,  5,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 5
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 6
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12, 13},  // centers 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 12
+    },
+    {  // unpaired 1
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 0
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 1
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 2
+        { 3,  3,  3,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 3
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 4
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12, 13},  // centers 5
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12, 13},  // centers 6
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12, 13},  // centers 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 12
+    },
+    {  // unpaired 2
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 0
+        { 1,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 1
+        { 2,  2,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 2
+        { 3,  3,  3,  3,  6,  7,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 3
+        { 6,  6,  6,  6,  7,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 4
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12, 13},  // centers 5
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 6
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 7
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 9
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 10
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 11
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 12
+    },
+    {  // unpaired 3
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 0
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 1
+        { 6,  6,  8,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 2
+        { 6,  6,  6,  8,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 3
+        { 6,  6,  6,  6,  8,  6,  8,  7,  8,  9, 10, 11, 12, 13},  // centers 4
+        { 7,  7,  7,  7,  7,  9,  7,  9,  8,  9, 10, 11, 12, 13},  // centers 5
+        { 8,  8,  8,  8,  8,  8, 10,  8,  8,  9, 10, 11, 12, 13},  // centers 6
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 7
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 8
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13},  // centers 9
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13},  // centers 10
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13},  // centers 11
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13},  // centers 12
+    },
+    {  // unpaired 4
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 0
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 1
+        { 6,  6,  6,  6,  6,  6,  6,  7,  8,  9, 10, 11, 12, 13},  // centers 2
+        { 7,  7,  7,  7,  7,  7,  7,  7,  8,  9, 10, 11, 12, 13},  // centers 3
+        { 7,  7,  7,  7,  9,  7,  7,  7,  8,  9, 10, 11, 12, 13},  // centers 4
+        { 7,  7,  7,  7,  7,  9,  9,  7,  8,  9, 10, 11, 12, 13},  // centers 5
+        { 8,  8,  8,  8,  8,  8, 10,  8,  8,  9, 10, 11, 12, 13},  // centers 6
+        { 9,  9,  9,  9,  9,  9,  9, 11,  9,  9, 10, 11, 12, 13},  // centers 7
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 8
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13},  // centers 9
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 10
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 11
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 12
+    },
+    {  // unpaired 5
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 0
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 1
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 2
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 3
+        { 8,  8,  8,  8, 10,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 4
+        { 8,  8,  8,  8,  8, 10,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 5
+        { 8,  8,  8,  8,  8,  8, 10, 10, 10,  9, 10, 11, 12, 13},  // centers 6
+        { 9,  9,  9,  9,  9,  9,  9, 11, 11, 11, 10, 11, 12, 13},  // centers 7
+        {11, 11, 11, 11, 11, 11, 11, 11, 13, 13, 11, 11, 12, 13},  // centers 8
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13},  // centers 9
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 10
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 11
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 12
+    },
+    {  // unpaired 6
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 0
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 1
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 2
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 3
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 4
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 5
+        {11, 11, 11, 11, 11, 11, 13, 11, 11, 11, 11, 11, 12, 13},  // centers 6
+        {11, 11, 11, 11, 11, 11, 11, 13, 13, 13, 11, 11, 12, 13},  // centers 7
+        {11, 11, 11, 11, 11, 11, 11, 11, 13, 13, 11, 11, 12, 13},  // centers 8
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 15, 13, 13, 13, 13},  // centers 9
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 10
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 11
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 12
+    },
+    {  // unpaired 7
+        { 8,  8,  8,  8,  8,  8,  8,  8,  8,  9, 10, 11, 12, 13},  // centers 0
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 1
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 2
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 3
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 4
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 5
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 6
+        {12, 12, 12, 12, 12, 12, 12, 12, 14, 12, 12, 12, 12, 13},  // centers 7
+        {12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 14, 12, 12, 13},  // centers 8
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 15, 13, 13, 13, 13},  // centers 9
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 10
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16},  // centers 11
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16},  // centers 12
+    },
+    {  // unpaired 8
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 0
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 1
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 2
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 3
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 4
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 5
+        {12, 12, 12, 12, 12, 12, 14, 12, 12, 12, 12, 12, 12, 13},  // centers 6
+        {12, 12, 12, 12, 12, 12, 12, 14, 14, 12, 12, 12, 12, 13},  // centers 7
+        {12, 12, 12, 12, 12, 12, 12, 12, 14, 14, 12, 12, 12, 13},  // centers 8
+        {13, 13, 13, 13, 13, 13, 13, 13, 13, 15, 15, 13, 13, 13},  // centers 9
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 10
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16},  // centers 11
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16},  // centers 12
+    },
+    {  // unpaired 9
+        { 9,  9,  9,  9,  9,  9,  9,  9,  9,  9, 10, 11, 12, 13},  // centers 0
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 6
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 16, 14, 14, 14, 14, 14},  // centers 8
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 14, 14, 14, 14},  // centers 9
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 17, 15, 15, 15},  // centers 10
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16},  // centers 11
+        {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16},  // centers 12
+    },
+    {  // unpaired 10
+        {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 12, 13},  // centers 0
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 6
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 7
+        {14, 14, 14, 14, 14, 14, 14, 14, 16, 14, 14, 14, 14, 14},  // centers 8
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 16, 16, 14, 14, 14},  // centers 9
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 17, 15, 15, 15},  // centers 10
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 11
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 12
+    },
+    {  // unpaired 11
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 0
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {14, 14, 14, 14, 14, 14, 16, 14, 14, 14, 14, 14, 14, 14},  // centers 6
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 7
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 8
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 9
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 10
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 11
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 12
+    },
+    {  // unpaired 12
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 0
+        {11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 6
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 7
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 8
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 9
+        {17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17},  // centers 10
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 11
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 12
+    },
+    {  // unpaired 13
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 0
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 6
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 7
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 8
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 9
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 10
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 11
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 12
+    },
+    {  // unpaired 14
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 0
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 6
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 7
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 8
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 9
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 10
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 11
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 12
+    },
+    {  // unpaired 15
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 0
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 6
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 7
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 8
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 9
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 10
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 11
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 12
+    },
+    {  // unpaired 16
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 0
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 1
+        {12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 13},  // centers 2
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 3
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 4
+        {14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14},  // centers 5
+        {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15},  // centers 6
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 7
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 8
+        {18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18},  // centers 9
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 10
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 11
+        {19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19},  // centers 12
+    },
 };
 
 static unsigned char *ranked_costs;
@@ -129,13 +368,24 @@ static unsigned int solution_limit;
 static int collect_solutions;
 static unsigned int collected_count;
 static unsigned int collected_capacity;
+static unsigned int root_limit;
 static move_type (*collected)[MAX_IDA_THRESHOLD + 1];
+struct phase5_root_key {
+    char colors[64];
+    unsigned char orbit0_odd;
+};
+static struct phase5_root_key *collected_keys;
+static unsigned int raw_solution_count;
+static unsigned char initial_orbit0_odd;
 static atomic_uint next_task;
 static atomic_uint solution_task = NO_TASK;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned char search_threshold;
 static float unpaired_multiplier = 0.25f;
 static int use_unpaired_multiplier;
+/* The sampled 3D experiment was slower and added moves on the 10-cube A/B,
+ * so production keeps the 2D matrix maxed with the exact orbit-1 cost. */
+static int legacy_phase2_matrix = 1;
 static int obliques_only;
 static int stage_lr_obliques;
 static float cost_to_goal_multiplier;
@@ -154,11 +404,18 @@ struct child {
     unsigned char cost;
 };
 
+/* Roots the matrix prices exactly at the winning depth were never searched
+ * one ply lower. A few of those can hide a shorter path when the matrix
+ * overestimated. Roots below that price were already exhausted. */
+#define SHORTER_ROOT_CHECKS 8
+
 struct search_root {
     unsigned int index;
     unsigned char orbit0_requirement;
     unsigned char orbit1_requirement;
     unsigned char initial_cost;
+    unsigned char quality_cost;
+    unsigned char unpaired;
     char cube[CUBE_ARRAY_SIZE];
 };
 
@@ -168,8 +425,9 @@ static void usage(const char *program)
         "usage: %s {--kociemba STATE | --kociemba-file FILE} "
         "(--ranked-UD-inner-centers-cost FILE | --obliques-only | --stage-lr-obliques) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
-        "[--multiplier F] [--unpaired-multiplier F] [--print-ida-summary] "
-        "[--solution-count N] "
+        "[--multiplier F] [--unpaired-multiplier F] [--orbit-aware-phase2-matrix] "
+        "[--print-ida-summary] "
+        "[--solution-count N] [--root-cap N] [--initial-orbit0-odd] "
         "[--orbit0-need-odd-w] [--orbit0-need-even-w] "
         "[--orbit1-need-odd-w] [--orbit1-need-even-w] "
         "[--ud-inner-even-cost FILE --ud-inner-odd-cost FILE]\n",
@@ -182,12 +440,14 @@ static void usage(const char *program)
         "  --stage-lr-obliques      put LR left/middle/right obliques and outer x on L and R;\n"
         "                           3-wide quarters stay illegal\n"
         "  --solution-count N       with --stage-lr-obliques, keep N solutions at the shortest\n"
-        "                           length; 0 keeps every one\n"
+        "                           length with distinct phase-5 roots; 0 keeps every distinct root\n"
+        "  --initial-orbit0-odd     phase 3 starts with orbit-0 OLL parity\n"
         "  --multiplier F           scale the cost to goal by F to trade solution length for\n"
         "                           search speed, used to bootstrap the matrix samples\n"
         "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
         "                           matrix, 0.25 is admissible and larger values are not\n"
-        "  --print-ida-summary      print the table cost and unpaired count along the solution\n"
+        "  --orbit-aware-phase2-matrix  use the experimental sampled 3D matrix\n"
+        "  --print-ida-summary      print table, orbit-1, and unpaired costs along the solution\n"
     );
 }
 
@@ -277,15 +537,23 @@ static unsigned char inner_orbit1_cost(uint64_t rank, unsigned char parity)
     return need_odd ? odd_cost : even_cost;
 }
 
-static unsigned char combined_cost(unsigned char centers_cost, unsigned char unpaired)
+static unsigned char combined_cost(
+    unsigned char centers_cost, unsigned char orbit1_cost, unsigned char unpaired)
 {
     unsigned char obliques_cost;
 
-    if (!use_unpaired_multiplier && centers_cost <= MATRIX_COST_MAX) {
-        return unpaired_count_UD_inner_centers_777[unpaired][centers_cost];
+    if (!use_unpaired_multiplier && centers_cost <= MATRIX_COST_MAX &&
+        orbit1_cost <= MATRIX_ORBIT1_COST_MAX) {
+        unsigned char cost = unpaired_count_UD_inner_centers_777
+                             [unpaired][centers_cost][legacy_phase2_matrix ? 0 : orbit1_cost];
+
+        return orbit1_cost > cost ? orbit1_cost : cost;
     }
     obliques_cost = unpaired_cost(unpaired);
-    return centers_cost > obliques_cost ? centers_cost : obliques_cost;
+    if (centers_cost > obliques_cost) {
+        obliques_cost = centers_cost;
+    }
+    return orbit1_cost > obliques_cost ? orbit1_cost : obliques_cost;
 }
 
 /* Bit 0 counts orbit0 wide quarter turns, bit 1 counts orbit1 wide quarter turns. */
@@ -357,24 +625,21 @@ static unsigned char cube_cost_from_unpaired(const char *cube, unsigned char par
 
     if (obliques_only) {
         cost = use_unpaired_multiplier ? unpaired_cost(unpaired)
-                                       : unpaired_count_UD_inner_centers_777[unpaired][0];
+                                       : unpaired_count_UD_inner_centers_777[unpaired][0][0];
     } else {
         unsigned char centers_cost = centers_table_cost(cube);
+        unsigned char orbit_cost = 0;
 
         if (centers_cost == UINT8_MAX) {
             return UINT8_MAX;
         }
-        cost = combined_cost(centers_cost, unpaired);
-        if (inner_even_costs && cost != UINT8_MAX) {
-            unsigned char orbit_cost = inner_orbit1_cost(inner_centers_rank(cube), parity);
-
+        if (inner_even_costs) {
+            orbit_cost = inner_orbit1_cost(inner_centers_rank(cube), parity);
             if (orbit_cost == UINT8_MAX) {
                 return UINT8_MAX;
             }
-            if (orbit_cost > cost) {
-                cost = orbit_cost;
-            }
         }
+        cost = combined_cost(centers_cost, orbit_cost, unpaired);
     }
     if (cost && cost_to_goal_multiplier) {
         cost = (unsigned char)roundf(cost * cost_to_goal_multiplier);
@@ -750,7 +1015,7 @@ static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
         if (ida_is_edge_or_corner(square, CUBE_SIZE) ||
             (!stage_lr_obliques && is_outer_x_center(square))) {
             cube[square] = '.';
-        } else if (is_oblique(square) || is_outer_x_center(square)) {
+        } else if (!stage_lr_obliques && (is_oblique(square) || is_outer_x_center(square))) {
             cube[square] = is_lr(cube[square]) ? 'L' : 'x';
         } else if (cube[square] == 'R') {
             cube[square] = 'L';
@@ -762,11 +1027,38 @@ static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
     }
 }
 
-static int keep_solution(const move_type *moves)
+static void phase5_root_key(
+    const char cube[CUBE_ARRAY_SIZE], unsigned char path_parity, struct phase5_root_key *key)
 {
+    unsigned int used = 0;
+
+    for (unsigned int orbit = 0; orbit < STAGE_ORBIT_COUNT; orbit++) {
+        for (unsigned int position = 0; position < STAGE_POSITIONS; position++) {
+            /* Skip the four L-face and four R-face positions. */
+            if ((position >= 4 && position < 8) || (position >= 12 && position < 16)) {
+                continue;
+            }
+            key->colors[used++] = cube[stage_orbits[orbit][position]];
+        }
+    }
+    key->orbit0_odd = initial_orbit0_odd ^ path_parity;
+}
+
+static int keep_solution(
+    const move_type *moves, const char goal_cube[CUBE_ARRAY_SIZE], unsigned char path_parity)
+{
+    struct phase5_root_key key;
     int stop;
 
+    phase5_root_key(goal_cube, path_parity, &key);
     pthread_mutex_lock(&solution_lock);
+    raw_solution_count++;
+    for (unsigned int index = 0; index < collected_count; index++) {
+        if (!memcmp(&collected_keys[index], &key, sizeof(key))) {
+            pthread_mutex_unlock(&solution_lock);
+            return 0;
+        }
+    }
     if (solution_limit && collected_count >= solution_limit) {
         atomic_store(&solution_task, 1);
         pthread_mutex_unlock(&solution_lock);
@@ -775,15 +1067,23 @@ static int keep_solution(const move_type *moves)
     if (collected_count == collected_capacity) {
         unsigned int grown = collected_capacity ? collected_capacity * 2 : 16;
         move_type (*next)[MAX_IDA_THRESHOLD + 1] = realloc(collected, grown * sizeof(*collected));
+        struct phase5_root_key *next_keys;
 
         if (!next) {
             fprintf(stderr, "ERROR: could not store phase 3 solutions\n");
             exit(1);
         }
         collected = next;
+        next_keys = realloc(collected_keys, grown * sizeof(*collected_keys));
+        if (!next_keys) {
+            fprintf(stderr, "ERROR: could not store phase 3 root keys\n");
+            exit(1);
+        }
+        collected_keys = next_keys;
         collected_capacity = grown;
     }
     memcpy(collected[collected_count], moves, sizeof(collected[0]));
+    collected_keys[collected_count] = key;
     collected_count++;
     stop = solution_limit && collected_count >= solution_limit;
     if (stop) {
@@ -825,20 +1125,26 @@ static int ida_search(
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
         unpaired = unpaired_oblique_count(cube);
         cost = search_cost(cube, next_parity, unpaired, unpaired_before);
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         worker->ida_count++;
 
         if (cost == UINT8_MAX || next_depth + cost > threshold) {
+            rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
             continue;
         }
         if (!cost) {
+            int stop;
+
             worker->solution[depth] = move;
             worker->solution[next_depth] = MOVE_NONE;
             if (collect_solutions) {
-                return keep_solution(worker->solution);
+                stop = keep_solution(worker->solution, cube, next_parity);
+                rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
+                return stop;
             }
+            rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
             return 1;
         }
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         children[child_count].move = move;
         children[child_count].parity = next_parity;
         children[child_count].cost = cost;
@@ -911,7 +1217,7 @@ static void *search_root_moves(void *argument)
         if (!cost) {
             worker->solution[1] = MOVE_NONE;
             if (collect_solutions) {
-                if (keep_solution(worker->solution)) {
+                if (keep_solution(worker->solution, cube, parity)) {
                     break;
                 }
                 continue;
@@ -952,6 +1258,7 @@ static int search_at_threshold(
     search_threshold = threshold;
     if (collect_solutions) {
         collected_count = 0;
+        raw_solution_count = 0;
     }
     atomic_store(&next_task, 0);
     atomic_store(&solution_task, NO_TASK);
@@ -980,18 +1287,21 @@ static double elapsed_seconds(const struct timeval *start, const struct timeval 
 
 /*
  * One row per state along the solution. TRU is the true remaining distance,
- * which is what the matrix builder samples for each (UNPR, TBL) pair.
+ * which is what the matrix builder samples for each (UNPR, TBL, ORB) tuple.
  */
 static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int length)
 {
     char walk[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
+    unsigned char parity = 0;
 
     memcpy(walk, cube, CUBE_ARRAY_SIZE);
-    printf("\n       TBL UNPR  CTG  TRU  IDX\n      ==== ====  ===  ===  ===\n");
+    printf("\n       TBL  ORB UNPR  CTG  TRU  IDX\n      ==== ==== ====  ===  ===  ===\n");
     for (unsigned int step = 0; step <= length; step++) {
         unsigned char unpaired = unpaired_oblique_count(walk);
         unsigned char centers_cost = obliques_only ? 0 : centers_table_cost(walk);
+        unsigned char orbit_cost = inner_even_costs ?
+                                   inner_orbit1_cost(inner_centers_rank(walk), parity) : 0;
 
         if (step) {
             printf("%5s ", move2str[solution[step - 1]]);
@@ -999,14 +1309,16 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
             printf(" INIT ");
         }
         printf(
-            " %4u %4u  %3u  %3u  %3u\n",
+            " %4u %4u %4u  %3u  %3u  %3u\n",
             centers_cost,
+            orbit_cost,
             unpaired,
-            combined_cost(centers_cost, unpaired),
+            combined_cost(centers_cost, orbit_cost, unpaired),
             length - step,
             step
         );
         if (step < length) {
+            parity = parity_after_move(parity, solution[step]);
             rotate_777_centers(walk, rotate_tmp, CUBE_ARRAY_SIZE, solution[step]);
         }
     }
@@ -1020,6 +1332,14 @@ static int compare_search_roots(const void *left, const void *right)
 
     if (a->initial_cost != b->initial_cost) {
         return a->initial_cost < b->initial_cost ? -1 : 1;
+    }
+    /* The max heuristic ties often. Prefer the root whose component costs are
+     * collectively smaller before using pairing and input order as tie-breakers. */
+    if (a->quality_cost != b->quality_cost) {
+        return a->quality_cost < b->quality_cost ? -1 : 1;
+    }
+    if (a->unpaired != b->unpaired) {
+        return a->unpaired < b->unpaired ? -1 : 1;
     }
     if (a->index != b->index) {
         return a->index < b->index ? -1 : 1;
@@ -1139,6 +1459,8 @@ int main(int argc, char **argv)
             use_unpaired_multiplier = 1;
         } else if (!strcmp(argv[index], "--multiplier") && index + 1 < argc) {
             cost_to_goal_multiplier = (float)atof(argv[++index]);
+        } else if (!strcmp(argv[index], "--orbit-aware-phase2-matrix")) {
+            legacy_phase2_matrix = 0;
         } else if (!strcmp(argv[index], "--orbit0-need-odd-w")) {
             orbit0_requirement = PARITY_ODD;
         } else if (!strcmp(argv[index], "--orbit0-need-even-w")) {
@@ -1156,6 +1478,10 @@ int main(int argc, char **argv)
         } else if (!strcmp(argv[index], "--solution-count") && index + 1 < argc) {
             solution_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
             collect_solutions = 1;
+        } else if (!strcmp(argv[index], "--root-cap") && index + 1 < argc) {
+            root_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
+        } else if (!strcmp(argv[index], "--initial-orbit0-odd")) {
+            initial_orbit0_odd = 1;
         } else {
             usage(argv[0]);
             return 1;
@@ -1235,6 +1561,14 @@ int main(int argc, char **argv)
         orbit0_requirement = roots[root_index].orbit0_requirement;
         orbit1_requirement = roots[root_index].orbit1_requirement;
         roots[root_index].initial_cost = cube_cost(roots[root_index].cube, 0);
+        roots[root_index].unpaired = unpaired_oblique_count(roots[root_index].cube);
+        if (!stage_lr_obliques) {
+            unsigned char centers = obliques_only ? 0 : centers_table_cost(roots[root_index].cube);
+            unsigned char orbit = inner_even_costs ?
+                                  inner_orbit1_cost(inner_centers_rank(roots[root_index].cube), 0) : 0;
+            roots[root_index].quality_cost =
+                centers + orbit + (unsigned char)((roots[root_index].unpaired + 3) / 4);
+        }
         if (roots[root_index].initial_cost == UINT8_MAX) {
             fprintf(
                 stderr,
@@ -1248,6 +1582,10 @@ int main(int argc, char **argv)
         }
     }
     qsort(roots, root_count, sizeof(*roots), compare_search_roots);
+    if (root_limit && root_count > root_limit) {
+        LOG("keeping %u of %u roots after heuristic ranking\n", root_limit, root_count);
+        root_count = root_limit;
+    }
     if (min_threshold < roots[0].initial_cost) {
         min_threshold = roots[0].initial_cost;
     }
@@ -1300,6 +1638,11 @@ int main(int argc, char **argv)
             orbit1_requirement = roots[root_index].orbit1_requirement;
             if (!roots[root_index].initial_cost) {
                 solution[0] = MOVE_NONE;
+                if (collect_solutions) {
+                    collected_count = 0;
+                    raw_solution_count = 0;
+                    keep_solution(solution, roots[root_index].cube, 0);
+                }
                 found = 1;
                 root_nodes = 1;
             } else {
@@ -1312,6 +1655,48 @@ int main(int argc, char **argv)
                 selected = &roots[root_index];
                 break;
             }
+        }
+        if (selected && !collect_solutions && selected->initial_cost) {
+            move_type best_solution[MAX_IDA_THRESHOLD + 1];
+            unsigned int best_length = 0;
+            unsigned int checks = 0;
+
+            while (solution[best_length] != MOVE_NONE) {
+                best_length++;
+            }
+            memcpy(best_solution, solution, sizeof(best_solution));
+            for (unsigned int root_index = 0; root_index < root_count && checks < SHORTER_ROOT_CHECKS; root_index++) {
+                uint64_t root_nodes = 0;
+                unsigned int length = 0;
+                int found;
+
+                if (&roots[root_index] == selected || roots[root_index].initial_cost != threshold) {
+                    continue;
+                }
+                checks++;
+                orbit0_requirement = roots[root_index].orbit0_requirement;
+                orbit1_requirement = roots[root_index].orbit1_requirement;
+                found = search_at_threshold(
+                    roots[root_index].cube, (unsigned char)(best_length - 1), thread_count, &root_nodes
+                );
+                threshold_nodes += root_nodes;
+                if (!found) {
+                    continue;
+                }
+                while (solution[length] != MOVE_NONE) {
+                    length++;
+                }
+                if (length < best_length) {
+                    LOG(
+                        "root %u solved in %u, shorter than root %u in %u\n",
+                        roots[root_index].index, length, selected->index, best_length
+                    );
+                    best_length = length;
+                    selected = &roots[root_index];
+                    memcpy(best_solution, solution, sizeof(best_solution));
+                }
+            }
+            memcpy(solution, best_solution, sizeof(solution));
         }
         gettimeofday(&end, NULL);
         {
@@ -1327,7 +1712,11 @@ int main(int argc, char **argv)
             );
         }
         if (selected && collect_solutions && collected_count) {
-            LOG("kept %u shortest phase 3 solutions\n", collected_count);
+            LOG(
+                "kept %u distinct phase-5 roots from %u shortest phase 3 solutions\n",
+                collected_count,
+                raw_solution_count
+            );
             for (unsigned int which = 0; which < collected_count; which++) {
                 unsigned int length = 0;
 
@@ -1341,7 +1730,9 @@ int main(int argc, char **argv)
                 printf("\n");
             }
             free(collected);
+            free(collected_keys);
             collected = NULL;
+            collected_keys = NULL;
             collected_count = 0;
             collected_capacity = 0;
             unmap_inner_tables();
@@ -1381,6 +1772,7 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
     free(collected);
+    free(collected_keys);
     unmap_inner_tables();
     free_stage_tables();
     free(roots);

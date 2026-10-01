@@ -157,6 +157,16 @@ static move_type inverse_move[MOVE_MAX];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_777];
 static move_type solution[MAX_IDA_THRESHOLD + 1];
+static int collect_solutions;
+static int distinct_solutions = 1;
+static unsigned int solution_limit;
+static unsigned int collected_count;
+static unsigned int collected_capacity;
+static move_type (*collected)[MAX_IDA_THRESHOLD + 1];
+static unsigned int *collected_roots;
+static char (*collected_keys)[CUBE_ARRAY_SIZE];
+static unsigned int raw_solution_count;
+static unsigned int current_root_index;
 static atomic_uint next_task;
 static atomic_uint solution_task = NO_TASK;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -356,7 +366,7 @@ struct child {
 static void usage(const char *program)
 {
     printf(
-        "usage: %s --kociemba STATE (--phase7 | --phase8 | --phase9) "
+        "usage: %s {--kociemba STATE | --kociemba-file FILE} (--phase7 | --phase8 | --phase9) "
         "(all 15 --{ud,lr,fb}-without-{left-oblique,middle-oblique,right-oblique,inner-t,inner-x}-cost FILE "
         "| --perfect-cost FILE --perfect-index FILE) "
         "[--inner-x-spine-cost FILE] [--lr-inner-cost FILE] "
@@ -368,11 +378,16 @@ static void usage(const char *program)
         "[--ud-obliques-fb-inner-t-cost FILE] "
         "[--ud-paired-cost FILE] [--fb-paired-cost FILE] "
         "[--ud-inner-fb-obliques-cost FILE] [--fb-inner-ud-obliques-cost FILE] "
-        "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] [--multiplier F] [--native-only] "
+        "[--solution-count N] [--allow-duplicate-solutions] "
+        "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
+        "[--multiplier F] [--native-only] "
         "[--profile-prunes] [--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
         program
     );
     printf(
+        "  --kociemba-file F       INDEX,ORBIT0,ORBIT1,294-STICKER-STATE; orbit fields are ignored\n"
+        "  --solution-count N      keep N distinct shortest downstream roots; 0 keeps every one\n"
+        "  --allow-duplicate-solutions  count duplicate paths toward --solution-count (benchmark only)\n"
         "  --perfect-cost F        one 105,356,972 orbit table covering all three axes\n"
         "  --perfect-index F       the rank-select symmetry index that goes with it\n"
         "  --inner-x-spine-cost F  raw 70^5 table: three inner-x orbits plus the UD\n"
@@ -1437,6 +1452,63 @@ static void print_prune_profile(unsigned int worker_count)
     printf("\n");
 }
 
+/* 0 keeps the workers going. 1 means the solution cap is full. */
+static int keep_solution(const move_type *moves, const char goal_cube[CUBE_ARRAY_SIZE])
+{
+    int stop;
+
+    pthread_mutex_lock(&solution_lock);
+    raw_solution_count++;
+    if (distinct_solutions) {
+        for (unsigned int index = 0; index < collected_count; index++) {
+            if (!memcmp(collected_keys[index], goal_cube, CUBE_ARRAY_SIZE)) {
+                pthread_mutex_unlock(&solution_lock);
+                return 0;
+            }
+        }
+    }
+    if (solution_limit && collected_count >= solution_limit) {
+        atomic_store(&solution_task, 1);
+        pthread_mutex_unlock(&solution_lock);
+        return 1;
+    }
+    if (collected_count == collected_capacity) {
+        unsigned int grown = collected_capacity ? collected_capacity * 2 : 16;
+        move_type (*next)[MAX_IDA_THRESHOLD + 1] = realloc(collected, grown * sizeof(*collected));
+        unsigned int *next_roots;
+        char (*next_keys)[CUBE_ARRAY_SIZE];
+
+        if (!next) {
+            fprintf(stderr, "ERROR: could not store daisy solutions\n");
+            exit(1);
+        }
+        collected = next;
+        next_roots = realloc(collected_roots, grown * sizeof(*collected_roots));
+        if (!next_roots) {
+            fprintf(stderr, "ERROR: could not store daisy solutions\n");
+            exit(1);
+        }
+        collected_roots = next_roots;
+        next_keys = realloc(collected_keys, grown * sizeof(*collected_keys));
+        if (!next_keys) {
+            fprintf(stderr, "ERROR: could not store daisy root keys\n");
+            exit(1);
+        }
+        collected_keys = next_keys;
+        collected_capacity = grown;
+    }
+    memcpy(collected[collected_count], moves, sizeof(collected[0]));
+    collected_roots[collected_count] = current_root_index;
+    memcpy(collected_keys[collected_count], goal_cube, CUBE_ARRAY_SIZE);
+    collected_count++;
+    stop = solution_limit && collected_count >= solution_limit;
+    if (stop) {
+        atomic_store(&solution_task, 1);
+    }
+    pthread_mutex_unlock(&solution_lock);
+    return stop;
+}
+
 static int ida_search(
     struct worker *worker,
     char cube[CUBE_ARRAY_SIZE],
@@ -1460,18 +1532,27 @@ static int ida_search(
 
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
         h = heuristic(cube, budget);
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         worker->ida_count++;
         note_prune_profile(worker, next_depth, &h, budget);
 
         if (h.cost == UINT8_MAX || next_depth + h.cost > threshold) {
+            rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
             continue;
         }
         if (h.goal) {
+            int stop;
+
             worker->solution[depth] = move;
             worker->solution[next_depth] = MOVE_NONE;
+            if (collect_solutions) {
+                stop = keep_solution(worker->solution, cube);
+                rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
+                return stop;
+            }
+            rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
             return 1;
         }
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         children[child_count].move = move;
         children[child_count].cost = h.cost;
         child_count++;
@@ -1536,6 +1617,12 @@ static void *search_root_moves(void *argument)
         worker->solution[0] = first;
         if (h.goal) {
             worker->solution[1] = MOVE_NONE;
+            if (collect_solutions) {
+                if (keep_solution(worker->solution, cube)) {
+                    break;
+                }
+                continue;
+            }
             found = 1;
         } else if (search_threshold <= 1) {
             continue;
@@ -1568,6 +1655,8 @@ static int search_at_threshold(
     unsigned int worker_count = thread_count < legal_move_count[MOVE_NONE] ?
                                 thread_count : legal_move_count[MOVE_NONE];
 
+    unsigned int collected_before = collected_count;
+
     *nodes = 1;
     search_threshold = threshold;
     atomic_store(&next_task, 0);
@@ -1588,6 +1677,9 @@ static int search_at_threshold(
     }
     if (profile_prunes) {
         print_prune_profile(worker_count);
+    }
+    if (collect_solutions) {
+        return collected_count > collected_before;
     }
     return atomic_load(&solution_task) != NO_TASK;
 }
@@ -1750,9 +1842,100 @@ static int configure_loaded_tables(void)
     return 0;
 }
 
+#define SHORTER_ROOT_CHECKS 8
+
+struct search_root {
+    unsigned int index;
+    unsigned char initial_cost;
+    char cube[CUBE_ARRAY_SIZE];
+};
+
+/* Same line format as the center-stage root file. Orbit fields are ignored. */
+static struct search_root *read_search_roots(const char *filename, unsigned int *root_count)
+{
+    FILE *stream = fopen(filename, "r");
+    char *line = NULL;
+    size_t capacity = 0;
+    ssize_t length;
+    unsigned int allocated = 0;
+    unsigned int line_number = 0;
+    struct search_root *roots = NULL;
+
+    if (!stream) {
+        fprintf(stderr, "ERROR: could not open --kociemba-file %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    while ((length = getline(&line, &capacity, stream)) != -1) {
+        unsigned int index;
+        unsigned int orbit0;
+        unsigned int orbit1;
+        char kociemba[CUBE_ARRAY_SIZE];
+
+        line_number++;
+        if (length == 0 || line[0] == '\n' || line[0] == '\r') {
+            continue;
+        }
+        if (sscanf(line, "%u,%u,%u,%294[^\r\n]", &index, &orbit0, &orbit1, kociemba) != 4 ||
+            strlen(kociemba) != CUBE_ARRAY_SIZE - 1 || orbit0 > 2 || orbit1 > 2) {
+            fprintf(
+                stderr,
+                "ERROR: invalid --kociemba-file line %u; expected "
+                "ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,294-STICKER-STATE\n",
+                line_number
+            );
+            free(line);
+            free(roots);
+            fclose(stream);
+            exit(1);
+        }
+        if (*root_count == allocated) {
+            struct search_root *grown;
+
+            allocated = allocated ? allocated * 2 : 16;
+            grown = realloc(roots, allocated * sizeof(*roots));
+            if (!grown) {
+                fprintf(stderr, "ERROR: could not allocate search roots\n");
+                free(line);
+                free(roots);
+                fclose(stream);
+                exit(1);
+            }
+            roots = grown;
+        }
+        roots[*root_count].index = index;
+        roots[*root_count].initial_cost = UINT8_MAX;
+        init_cube(roots[*root_count].cube, kociemba);
+        blank_untracked_squares(roots[*root_count].cube);
+        (*root_count)++;
+    }
+    free(line);
+    fclose(stream);
+    if (!*root_count) {
+        fprintf(stderr, "ERROR: --kociemba-file %s contains no roots\n", filename);
+        free(roots);
+        exit(1);
+    }
+    return roots;
+}
+
+static int compare_search_roots(const void *left, const void *right)
+{
+    const struct search_root *a = left;
+    const struct search_root *b = right;
+
+    if (a->initial_cost != b->initial_cost) {
+        return a->initial_cost < b->initial_cost ? -1 : 1;
+    }
+    if (a->index != b->index) {
+        return a->index < b->index ? -1 : 1;
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     const char *kociemba = NULL;
+    const char *kociemba_filename = NULL;
     const char *apply_move_string = NULL;
     unsigned char min_threshold = 0;
     unsigned char max_threshold = DEFAULT_MAX_IDA_THRESHOLD;
@@ -1762,7 +1945,8 @@ int main(int argc, char **argv)
     int print_ranks_flag = 0;
     int print_legal_moves = 0;
     int max_threshold_is_explicit = 0;
-    char cube[CUBE_ARRAY_SIZE];
+    struct search_root *roots = NULL;
+    unsigned int root_count = 0;
     char rotate_tmp[CUBE_ARRAY_SIZE];
 
     if (thread_count > MAX_THREADS) {
@@ -1817,6 +2001,13 @@ int main(int argc, char **argv)
             lr_inner_filename = argv[++index];
         } else if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
+        } else if (!strcmp(argv[index], "--kociemba-file") && index + 1 < argc) {
+            kociemba_filename = argv[++index];
+        } else if (!strcmp(argv[index], "--solution-count") && index + 1 < argc) {
+            solution_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
+            collect_solutions = 1;
+        } else if (!strcmp(argv[index], "--allow-duplicate-solutions")) {
+            distinct_solutions = 0;
         } else if (!strcmp(argv[index], "--min-ida-threshold") && index + 1 < argc) {
             min_threshold = (unsigned char)atoi(argv[++index]);
         } else if (!strcmp(argv[index], "--max-ida-threshold") && index + 1 < argc) {
@@ -1869,10 +2060,20 @@ int main(int argc, char **argv)
 
         max_threshold = scaled > MAX_IDA_THRESHOLD ? MAX_IDA_THRESHOLD : (unsigned char)scaled;
     }
-    if (search_phase == PHASE_UNSET || !kociemba || !thread_count || thread_count > MAX_THREADS ||
+    if (search_phase == PHASE_UNSET || (!kociemba && !kociemba_filename) ||
+        (kociemba && kociemba_filename) || !thread_count || thread_count > MAX_THREADS ||
         min_threshold > max_threshold || max_threshold > MAX_IDA_THRESHOLD ||
         !configure_loaded_tables()) {
         usage(argv[0]);
+        return 2;
+    }
+
+    if (kociemba_filename && (apply_move_string || print_ranks_flag || print_legal_moves)) {
+        fprintf(
+            stderr,
+            "ERROR: --kociemba-file cannot be combined with --apply-move, --print-ranks, "
+            "or --print-legal-moves\n"
+        );
         return 2;
     }
 
@@ -1880,20 +2081,32 @@ int main(int argc, char **argv)
     init_move_tables();
     init_center_symmetry_777();
     map_ranked_tables();
-    init_cube(cube, kociemba);
-    blank_untracked_squares(cube);
-    if (apply_move_string) {
-        move_type move = parse_move(apply_move_string);
-
-        if (move == MOVE_NONE || !move_is_allowed(move)) {
-            fprintf(stderr, "ERROR: invalid --apply-move %s\n", apply_move_string);
+    if (kociemba_filename) {
+        roots = read_search_roots(kociemba_filename, &root_count);
+    } else {
+        roots = calloc(1, sizeof(*roots));
+        if (!roots) {
+            fprintf(stderr, "ERROR: could not allocate search roots\n");
             unmap_ranked_tables();
-            return 2;
+            return 1;
         }
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        init_cube(roots[0].cube, kociemba);
+        blank_untracked_squares(roots[0].cube);
+        root_count = 1;
+        if (apply_move_string) {
+            move_type move = parse_move(apply_move_string);
+
+            if (move == MOVE_NONE || !move_is_allowed(move)) {
+                fprintf(stderr, "ERROR: invalid --apply-move %s\n", apply_move_string);
+                unmap_ranked_tables();
+                free(roots);
+                return 2;
+            }
+            rotate_777_centers(roots[0].cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        }
     }
 
-    struct heuristic_result initial = heuristic(cube, UINT8_MAX);
+    struct heuristic_result initial = heuristic(roots[0].cube, UINT8_MAX);
     if (print_legal_moves) {
         printf("LEGAL_MOVES");
         for (unsigned int index = 0; index < legal_move_count[MOVE_NONE]; index++) {
@@ -1904,32 +2117,54 @@ int main(int argc, char **argv)
     if (print_ranks_flag) {
         print_ranks(&initial);
         unmap_ranked_tables();
+        free(roots);
         return initial.cost == UINT8_MAX;
     }
-    if (search_phase == PHASE_8 && !phase7_reached(cube)) {
-        fprintf(
-            stderr,
-            "ERROR: phase 8 start does not have LR inners solved and LR oblique bars paired\n"
-        );
-        unmap_ranked_tables();
-        return 2;
-    }
-    if (search_phase == PHASE_9 && !phase8_reached(cube)) {
-        fprintf(
-            stderr,
-            "ERROR: phase 9 start does not have UD/FB inners solved and UD/FB oblique bars paired\n"
-        );
-        unmap_ranked_tables();
-        return 2;
-    }
+    for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+        struct heuristic_result cost = heuristic(roots[root_index].cube, UINT8_MAX);
 
-    printf("START\n");
-    print_cube(cube, CUBE_SIZE);
-
-    if (initial.cost == UINT8_MAX) {
-        fprintf(stderr, "ERROR: initial center state is absent from a ranked cost table\n");
-        unmap_ranked_tables();
-        return 1;
+        if (search_phase == PHASE_8 && !phase7_reached(roots[root_index].cube)) {
+            fprintf(
+                stderr,
+                "ERROR: phase 8 root %u does not have LR inners solved and LR oblique bars paired\n",
+                roots[root_index].index
+            );
+            unmap_ranked_tables();
+            free(roots);
+            return 2;
+        }
+        if (search_phase == PHASE_9 && !phase8_reached(roots[root_index].cube)) {
+            fprintf(
+                stderr,
+                "ERROR: phase 9 root %u does not have UD/FB inners solved and UD/FB oblique bars paired\n",
+                roots[root_index].index
+            );
+            unmap_ranked_tables();
+            free(roots);
+            return 2;
+        }
+        if (cost.cost == UINT8_MAX) {
+            fprintf(
+                stderr,
+                "ERROR: root %u center state is absent from a ranked cost table\n",
+                roots[root_index].index
+            );
+            unmap_ranked_tables();
+            free(roots);
+            return 1;
+        }
+        roots[root_index].initial_cost = cost.cost;
+    }
+    qsort(roots, root_count, sizeof(*roots), compare_search_roots);
+    initial = heuristic(roots[0].cube, UINT8_MAX);
+    if (root_count == 1) {
+        printf("START\n");
+        print_cube(roots[0].cube, CUBE_SIZE);
+    } else {
+        LOG(
+            "loaded %u starting states from %s, min initial cost %u\n",
+            root_count, kociemba_filename, roots[0].initial_cost
+        );
     }
     unsigned int mixed_loaded = 0;
 
@@ -1945,11 +2180,12 @@ int main(int argc, char **argv)
         );
     } else if (search_phase == PHASE_8) {
         LOG(
-            "searching phase 8: UD/FB inners native, UD/FB oblique bars paired, keeping LR%s%s%s%s\n",
+            "searching phase 8: UD/FB inners native, UD/FB oblique bars paired, keeping LR%s%s%s%s%s\n",
             phase8_tables[PHASE8_UD_PAIRED_TABLE].costs ? ", UD paired-bar table" : "",
             phase8_tables[PHASE8_FB_PAIRED_TABLE].costs ? ", FB paired-bar table" : "",
             phase8_tables[PHASE8_UD_INNER_FB_OBLIQUES_TABLE].costs ? ", UD inner x FB obliques" : "",
-            phase8_tables[PHASE8_FB_INNER_UD_OBLIQUES_TABLE].costs ? ", FB inner x UD obliques" : ""
+            phase8_tables[PHASE8_FB_INNER_UD_OBLIQUES_TABLE].costs ? ", FB inner x UD obliques" : "",
+            phase8_tables[PHASE8_INNER_TABLE].costs ? ", inner-interaction" : ""
         );
     } else {
         LOG("searching phase 9: daisy solve, no 3-wide moves\n");
@@ -1999,10 +2235,82 @@ int main(int argc, char **argv)
     for (unsigned char threshold = min_threshold; threshold <= max_threshold; threshold++) {
         struct timeval start;
         struct timeval end;
-        uint64_t threshold_nodes = 1;
+        struct search_root *selected = NULL;
+        uint64_t threshold_nodes = 0;
 
+        collected_count = 0;
+        raw_solution_count = 0;
         gettimeofday(&start, NULL);
-        int found = initial.goal || search_at_threshold(cube, threshold, thread_count, &threshold_nodes);
+        for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+            uint64_t root_nodes = 0;
+            int found;
+
+            if (roots[root_index].initial_cost > threshold) {
+                continue;
+            }
+            current_root_index = roots[root_index].index;
+            if (!roots[root_index].initial_cost) {
+                solution[0] = MOVE_NONE;
+                if (collect_solutions) {
+                    keep_solution(solution, roots[root_index].cube);
+                }
+                found = 1;
+                root_nodes = 1;
+            } else {
+                found = search_at_threshold(
+                    roots[root_index].cube, threshold, thread_count, &root_nodes
+                );
+            }
+            threshold_nodes += root_nodes;
+            if (!found) {
+                continue;
+            }
+            selected = &roots[root_index];
+            if (!collect_solutions || (solution_limit && collected_count >= solution_limit)) {
+                break;
+            }
+        }
+        if (selected && !collect_solutions && selected->initial_cost) {
+            move_type best_solution[MAX_IDA_THRESHOLD + 1];
+            unsigned int best_length = 0;
+            unsigned int checks = 0;
+
+            while (solution[best_length] != MOVE_NONE) {
+                best_length++;
+            }
+            memcpy(best_solution, solution, sizeof(best_solution));
+            for (unsigned int root_index = 0; root_index < root_count && checks < SHORTER_ROOT_CHECKS; root_index++) {
+                uint64_t root_nodes = 0;
+                unsigned int length = 0;
+                int found;
+
+                if (&roots[root_index] == selected || roots[root_index].initial_cost != threshold) {
+                    continue;
+                }
+                checks++;
+                current_root_index = roots[root_index].index;
+                found = search_at_threshold(
+                    roots[root_index].cube, (unsigned char)(best_length - 1), thread_count, &root_nodes
+                );
+                threshold_nodes += root_nodes;
+                if (!found) {
+                    continue;
+                }
+                while (solution[length] != MOVE_NONE) {
+                    length++;
+                }
+                if (length < best_length) {
+                    LOG(
+                        "root %u solved in %u, shorter than root %u in %u\n",
+                        roots[root_index].index, length, selected->index, best_length
+                    );
+                    best_length = length;
+                    selected = &roots[root_index];
+                    memcpy(best_solution, solution, sizeof(best_solution));
+                }
+            }
+            memcpy(solution, best_solution, sizeof(solution));
+        }
         gettimeofday(&end, NULL);
         {
             double seconds = elapsed_seconds(&start, &end);
@@ -2016,11 +2324,42 @@ int main(int argc, char **argv)
                 nodes_per_sec
             );
         }
-        if (found) {
+        if (collect_solutions && collected_count) {
+            LOG(
+                "kept %u distinct downstream roots from %u shortest solutions\n",
+                collected_count,
+                raw_solution_count
+            );
+            for (unsigned int which = 0; which < collected_count; which++) {
+                unsigned int length = 0;
+
+                while (collected[which][length] != MOVE_NONE) {
+                    length++;
+                }
+                if (kociemba_filename) {
+                    printf("ROOT_INDEX %u\n", collected_roots[which]);
+                }
+                printf("SOLUTION (%u steps):", length);
+                for (unsigned int index = 0; index < length; index++) {
+                    printf(" %s", move2str[collected[which][index]]);
+                }
+                printf("\n");
+            }
+            free(collected);
+            free(collected_roots);
+            free(collected_keys);
+            free(roots);
+            unmap_ranked_tables();
+            return 0;
+        }
+        if (selected) {
             unsigned int length = 0;
 
             while (solution[length] != MOVE_NONE) {
                 length++;
+            }
+            if (kociemba_filename) {
+                printf("ROOT_INDEX %u\n", selected->index);
             }
             printf("SOLUTION (%u steps):", length);
             for (unsigned int index = 0; index < length; index++) {
@@ -2028,19 +2367,24 @@ int main(int argc, char **argv)
             }
             printf("\n");
             if (print_summary) {
-                print_ida_summary(cube, length);
+                print_ida_summary(selected->cube, length);
             }
             for (unsigned int index = 0; index < length; index++) {
-                rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
+                rotate_777_centers(selected->cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
             }
             printf("END\n");
-            print_cube(cube, CUBE_SIZE);
+            print_cube(selected->cube, CUBE_SIZE);
+            free(roots);
             unmap_ranked_tables();
             return 0;
         }
     }
 
     fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
+    free(collected);
+    free(collected_roots);
+    free(collected_keys);
+    free(roots);
     unmap_ranked_tables();
     return 1;
 }

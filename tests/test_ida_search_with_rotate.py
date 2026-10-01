@@ -14,11 +14,12 @@ from rubikscubennnsolver.RubiksCube666 import (
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_INNER_X_SPINE_TABLE_777,
     DAISY_LR_INNER_TABLE_777,
-    PHASE56_ADMISSIBLE_SECONDS,
     PHASE56_PAIR_COST_MATRIX_777,
+    PHASE8_INNER_INTERACTION_TABLE_777,
     PHASE8_INNER_OBLIQUE_TABLES_777,
     PHASE8_PAIRED_TABLES_777,
     PHASE8_TABLES_777,
+    PHASE9_TABLES_777,
     DAISY_MIXED_TABLES_777,
     DAISY_PERFECT_TABLES_777,
     NATIVE_SOLVE_PERFECT_TABLES_777,
@@ -220,6 +221,7 @@ class CenterStagingTablesTest(unittest.TestCase):
 
         self.assertIn("--kociemba-file", captured["cmd"])
         self.assertNotIn("--kociemba", captured["cmd"])
+        self.assertEqual(captured["cmd"][captured["cmd"].index("--root-cap") + 1], "16")
         self.assertEqual(len(captured["roots"]), 2)
         self.assertTrue(captured["roots"][1].startswith("1,0,"))
         self.assertIn(uw_state, captured["roots"][1])
@@ -349,7 +351,7 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertIn(filename, captured["cmd"])
             self.assertNotIn("outer-x", flag)
 
-    def test_777_combined_ud_phase_tries_admissible_search_first(self):
+    def test_777_combined_ud_phase_can_try_admissible_search_first(self):
         cube = RubiksCube777(solved_777, "URFDLB")
         cube.lt_init()
         captured = {}
@@ -373,13 +375,13 @@ class CenterStagingTablesTest(unittest.TestCase):
             patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
             patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
         ):
-            cube.lt_UD_obliques_outer_x_stage.solve_via_c()
+            cube.lt_UD_obliques_outer_x_stage.solve_via_c(admissible_seconds=0.5)
 
         self.assertEqual(captured["cmd"][0], "./ida_search_777_UD_centers_stage")
         self.assertNotIn("--obliques-only", captured["cmd"])
         self.assertNotIn("--multiplier", captured["cmd"])
         self.assertNotIn("--pair-cost-matrix", captured["cmd"])
-        self.assertEqual(captured["timeout"], PHASE56_ADMISSIBLE_SECONDS)
+        self.assertEqual(captured["timeout"], 0.5)
         for flag, filename in UD_PHASE56_TABLES_777:
             self.assertIn(flag, captured["cmd"])
             self.assertIn(filename, captured["cmd"])
@@ -428,7 +430,7 @@ class CenterStagingTablesTest(unittest.TestCase):
             patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
             patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
         ):
-            cube.lt_UD_obliques_outer_x_stage.solve_via_c()
+            cube.lt_UD_obliques_outer_x_stage.solve_via_c(admissible_seconds=0.5)
 
         self.assertTrue(procs == [])
         self.assertNotIn("--multiplier", commands[0])
@@ -437,6 +439,34 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertNotIn("--multiplier", commands[1])
         self.assertEqual(commands[2], ("timeout", None))
         self.assertEqual(cube.solution, ["U", "U'"])
+
+    def test_777_combined_ud_phase_can_start_with_matrix(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        commands = []
+
+        class SolvedProc:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def communicate(self, timeout=None):
+                return ("SOLUTION (1 steps): U\n", None)
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch(
+                "rubikscubennnsolver.RubiksCube777.subprocess.Popen",
+                side_effect=lambda cmd, **_kwargs: commands.append(cmd) or SolvedProc(),
+            ),
+        ):
+            _root, steps = cube.lt_UD_obliques_outer_x_stage.solution_via_c(admissible_seconds=0)
+
+        self.assertEqual(steps, ("U",))
+        self.assertEqual(len(commands), 1)
+        self.assertIn("--pair-cost-matrix", commands[0])
 
     def test_777_combined_ud_phase_recolors_four_coordinates(self):
         cube = RubiksCube777(solved_777, "URFDLB")
@@ -551,13 +581,15 @@ class CenterStagingTablesTest(unittest.TestCase):
                 "solution_via_c",
                 return_value=(0, ()),
             ),
+            patch.object(cube, "center_solution_leads_to_oll_parity", return_value={0}),
             patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
         ):
             cube.stage_LR_centers()
 
         self.assertEqual(captured["cmd"][0], "./ida_search_777_centers_stage")
         self.assertIn("--stage-lr-obliques", captured["cmd"])
-        self.assertEqual(captured["cmd"][captured["cmd"].index("--solution-count") + 1], "0")
+        self.assertIn("--initial-orbit0-odd", captured["cmd"])
+        self.assertEqual(captured["cmd"][captured["cmd"].index("--solution-count") + 1], "8")
         self.assertIsNone(captured["timeout"])
         self.assertEqual(cube._phase3_portfolio, [("U",)])
         self.assertNotIn("U", cube.solution)
@@ -630,6 +662,14 @@ class CenterStagingTablesTest(unittest.TestCase):
             daisy.solve_via_c()
 
         self.assertEqual(len(commands), 6)
+        self.assertNotIn(
+            "--allow-duplicate-solutions",
+            daisy._command(8, native_only=False, solution_count=16),
+        )
+        self.assertIn(
+            "--allow-duplicate-solutions",
+            daisy._command(8, native_only=False, solution_count=16, distinct=False),
+        )
         retired = [filename for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777 + DAISY_PERFECT_TABLES_777]
         retired.append(DAISY_INNER_X_SPINE_TABLE_777[1])
         retired.extend(filename for _, filename in DAISY_MIXED_TABLES_777)
@@ -641,15 +681,18 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertIn(DAISY_LR_INNER_TABLE_777[1], commands[index])
             self.assertIn("--lr-inner-cost", commands[index])
             self.assertNotIn("--multiplier", commands[index])
+            self.assertEqual(commands[index][commands[index].index("--solution-count") + 1], "16")
         for index in (1, 4):
             self.assertIn("--phase8", commands[index])
             self.assertNotIn("--phase9", commands[index])
             self.assertNotIn("--native-only", commands[index])
             self.assertEqual(commands[index][commands[index].index("--multiplier") + 1], "1.2")
+            self.assertEqual(commands[index][commands[index].index("--solution-count") + 1], "16")
             for flag, filename in PHASE8_PAIRED_TABLES_777 + PHASE8_INNER_OBLIQUE_TABLES_777:
                 self.assertIn(flag, commands[index])
                 self.assertIn(filename, commands[index])
-            self.assertNotIn("--inner-interaction-cost", commands[index])
+            self.assertIn("--inner-interaction-cost", commands[index])
+            self.assertIn(PHASE8_INNER_INTERACTION_TABLE_777[1], commands[index])
             for flag, filename in PHASE8_TABLES_777:
                 if flag == "--inner-interaction-cost":
                     continue
@@ -661,11 +704,14 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertNotIn("--multiplier", commands[5])
         self.assertIn("--native-only", commands[2])
         self.assertNotIn("--native-only", commands[5])
-        for flag, filename in PHASE8_TABLES_777:
+        for flag, filename in PHASE9_TABLES_777:
             self.assertIn(flag, commands[2])
             self.assertIn(filename, commands[2])
             self.assertIn(flag, commands[5])
             self.assertIn(filename, commands[5])
+        for _flag, filename in PHASE8_TABLES_777:
+            self.assertNotIn(filename, commands[2])
+            self.assertNotIn(filename, commands[5])
         for filename in retired:
             for index in (1, 2, 4, 5):
                 self.assertNotIn(filename, commands[index])

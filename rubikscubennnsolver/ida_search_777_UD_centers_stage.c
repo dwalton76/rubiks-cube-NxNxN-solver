@@ -719,6 +719,11 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
     printf("\n");
 }
 
+/* Roots the matrix prices exactly at the winning depth were never searched
+ * one ply lower. A few of those can hide a shorter path when the matrix
+ * overestimated. Roots below that price were already exhausted. */
+#define SHORTER_ROOT_CHECKS 8
+
 struct search_root {
     unsigned int index;
     unsigned char orbit0_requirement;
@@ -1073,6 +1078,47 @@ int main(int argc, char **argv)
                 selected = &roots[root_index];
                 break;
             }
+        }
+        if (selected && selected->initial_cost) {
+            move_type best_solution[MAX_IDA_THRESHOLD + 1];
+            unsigned int best_length = 0;
+            unsigned int checks = 0;
+
+            while (solution[best_length] != MOVE_NONE) {
+                best_length++;
+            }
+            memcpy(best_solution, solution, sizeof(best_solution));
+            for (unsigned int root_index = 0; root_index < root_count && checks < SHORTER_ROOT_CHECKS; root_index++) {
+                uint64_t root_nodes = 0;
+                unsigned int length = 0;
+                int found;
+
+                if (&roots[root_index] == selected || roots[root_index].initial_cost != threshold) {
+                    continue;
+                }
+                checks++;
+                orbit0_requirement = roots[root_index].orbit0_requirement;
+                found = search_at_threshold(
+                    roots[root_index].cube, (unsigned char)(best_length - 1), thread_count, &root_nodes
+                );
+                threshold_nodes += root_nodes;
+                if (!found) {
+                    continue;
+                }
+                while (solution[length] != MOVE_NONE) {
+                    length++;
+                }
+                if (length < best_length) {
+                    LOG(
+                        "root %u solved in %u, shorter than root %u in %u\n",
+                        roots[root_index].index, length, selected->index, best_length
+                    );
+                    best_length = length;
+                    selected = &roots[root_index];
+                    memcpy(best_solution, solution, sizeof(best_solution));
+                }
+            }
+            memcpy(solution, best_solution, sizeof(solution));
         }
         gettimeofday(&end, NULL);
         {

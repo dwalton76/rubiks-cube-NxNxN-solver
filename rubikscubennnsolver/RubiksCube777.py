@@ -14,47 +14,56 @@ Phase 1 - stage LR inner centers
 Phase 2 - stage UD inner centers and pair LR oblique edges
     One ranked table covers the UFBD inner-t and inner-x centers. The LR
     obliques only have to be paired, not land on LR. Every distinct phase 1
-    ending is a root of this search; the first root that solves at the
-    shortest depth is kept. With no multiplier set, the search uses the
-    sampled unpaired-count matrix. Even and odd orbit-1 tables are loaded
-    when present, and each root carries its own orbit-1 requirement. This is
-    the last phase with a 3-wide quarter turn, so it owns orbit-1 OLL.
+    ending is a root of this search. The orbit-1 table is maxed with the
+    sampled unpaired-count matrix, so that exact cost is already a second
+    coordinate. Equal matrix costs try the root with fewer unpaired obliques
+    first. After the first solution, up to eight roots the matrix priced at
+    that same depth are searched one ply shallower, and a shorter one replaces
+    it. Even and odd orbit-1 tables are loaded when present, and each root
+    carries its own orbit-1 requirement. This is the last phase with a 3-wide
+    quarter turn, so it owns orbit-1 OLL.
 
 Phase 3 - stage the LR left, middle, and right obliques and the LR outer x-centers
-    Those four orbits land on L and R. ``--solution-count 0`` collects every
-    shortest solution. Phase 5 searches all of them, and this phase's moves
-    are applied for the root phase 5 keeps. The search has no 3-wide quarter
-    turn, so the phase 1 and phase 2 centers and orbit-1 OLL stay as phase 2
-    left them. Larger odd cubes whose outer x are real still use the fake
-    5x5x5 LR center stage for this step.
+    Those four orbits land on L and R. The search keeps up to 8 distinct shortest
+    solutions, and phase 5 drops the ones that reach the same state. This
+    phase's moves are applied for the root phase 5 keeps. The search has no
+    3-wide quarter turn, so the phase 1 and phase 2 centers and orbit-1 OLL
+    stay as phase 2 left them. Larger odd cubes whose outer x are real still
+    use the fake 5x5x5 LR center stage for this step.
 
 Phase 5/6 - stage the UD left, middle, and right obliques and the UD outer x-centers
     Six ranked pair tables. Every distinct phase 3 ending is a root of one
-    search; the first root that solves at the shortest depth is kept. The
-    search tries the admissible max for 3 seconds, then the sampled pair-cost
-    matrix. This phase owns orbit-0 OLL. ``solve_via_c(obliques_only=True)``
-    still stages only the three oblique orbits. Larger odd cubes whose outer
-    x are real use one fake 5x5x5 phase 3 solution and this same six-table
-    search.
+    search. The admissible max runs for half a second, then the sampled
+    pair-cost matrix. Up to eight roots priced at the winning depth are
+    searched one ply shallower. This phase owns orbit-0 OLL.
+    ``solve_via_c(obliques_only=True)`` still stages only the three oblique
+    orbits. Larger odd cubes whose outer x are real use one fake 5x5x5 phase 3
+    solution and this same six-table search.
 
 Phase 7 - solve the LR inner centers and pair the LR oblique bars
     LR inner-t and inner-x must be native. The eight oblique bars on L and R
     must each be one color; their slot does not matter. Cost is the max of the
-    LR inner table and ceil(unpaired LR wings / 4). No multiplier. Outer
-    x-centers are printed as ``.``.
+    LR inner table and ceil(unpaired LR wings / 4). No multiplier. Up to 16
+    distinct shortest endings are kept, and phase 8 searches those center
+    states. Outer x-centers are printed as ``.``.
 
 Phase 8 - solve the UD and FB inners and pair the UD and FB oblique bars
     A bar may sit on either face of its axis. Moves keep the phase 7 LR state:
     outer turns, 2-wide half turns, and the L/R 3-wide half turns. Cost is the
-    max of the two paired-bar tables and the two inner-plus-oblique tables,
-    scaled by ``--multiplier 1.2``. Each of those tables is 70^5 with 70 goals.
-    Outer x-centers are printed as ``.``.
+    max of the two paired-bar tables, the two inner-plus-oblique tables, and
+    the inner-interaction table, scaled by ``--multiplier 1.2``. The 70^5
+    tables have 70 goals. The inner-interaction table is the UD/FB inner-t and
+    inner-x quartic. Up to 16 distinct shortest endings are kept for phase 9. Outer
+    x-centers are printed as ``.``.
 
 Phase 9 - daisy-solve all six sides
-    No 3-wide move remains, so the phase 8 centers stay solved. Cost is the
-    max of the eight center tables, with no multiplier. Those tables were built
-    with 3Lw2 and 3Rw2 legal, so they are a lower bound on this smaller move
-    set. Outer x-centers are printed as ``.``. The remaining puzzle is a 5x5x5.
+    Every distinct phase 8 ending is a root. The first root that solves at the
+    shortest depth is kept, and up to eight roots priced at that depth are
+    searched one ply shallower. No 3-wide move remains, so the phase 8 centers
+    stay solved. Cost is the max of the eight center tables, with no multiplier.
+    Those tables were built with 3Lw2 and 3Rw2 legal, so they are a lower bound
+    on this smaller move set. Outer x-centers are printed as ``.``. The
+    remaining puzzle is a 5x5x5.
 """
 
 # standard libraries
@@ -108,6 +117,9 @@ outer_x_centers_777 = (
     205, 209, 233, 237,  # Back
     254, 258, 282, 286,  # Down
 )
+
+# Centers the daisy phases actually rank. Outer x is blanked in those searches.
+_DAISY_CENTER_SQUARES = tuple(square for square in centers_777 if square not in set(outer_x_centers_777))
 
 UFBD_outer_x_centers_777 = (
     9, 13, 37, 41,  # Upper
@@ -400,7 +412,7 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
             orbit1_requirement = 1 if 1 in orbits_with_oll else 2
         return orbit0_requirement, orbit1_requirement
 
-    def solution_via_c(self, roots=None):
+    def solution_via_c(self, roots=None, root_cap=None):
         """
         Return ``(root_index, steps)`` for one cube, or for every phase-1 root.
 
@@ -440,6 +452,8 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
                     cmd.append("--orbit1-need-odd-w")
                 elif orbit1_requirement == 2:
                     cmd.append("--orbit1-need-even-w")
+        if root_cap is not None:
+            cmd.extend(("--root-cap", str(root_cap)))
 
         try:
             logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
@@ -526,7 +540,11 @@ UD_OBLIQUE_ONLY_TABLES_777 = tuple(
     (flag, filename) for flag, filename in UD_PHASE56_TABLES_777 if "outer-x" not in flag
 )
 PHASE56_PAIR_COST_MATRIX_777 = "rubikscubennnsolver/phase56_pair_cost_matrix_777.bin"
-PHASE56_ADMISSIBLE_SECONDS = 3
+PHASE56_ADMISSIBLE_SECONDS = 0.0
+PHASE1_ROOT_CAP = 16
+PHASE3_SOLUTION_CAP = 8
+DAISY_PORTFOLIO_CAP = 16
+PHASE8_MULTIPLIER = 1.2
 
 
 class LookupTableIDA777UDObliquesOuterXStage:
@@ -555,9 +573,9 @@ class LookupTableIDA777UDObliquesOuterXStage:
 
     ``solve_via_c(obliques_only=True)`` loads ``UD_OBLIQUE_ONLY_TABLES_777`` and
     passes ``--obliques-only``. ``solve_via_c()`` and ``solution_via_c(roots)``
-    load all six tables, run the admissible max for
-    ``PHASE56_ADMISSIBLE_SECONDS`` with no ``--multiplier``, and on timeout
-    retry with ``--pair-cost-matrix`` ``PHASE56_PAIR_COST_MATRIX_777``. The
+    load all six tables and run with ``--pair-cost-matrix``
+    ``PHASE56_PAIR_COST_MATRIX_777``. Callers can request a bounded admissible
+    pass first for experiments. The
     first root that solves at the shortest depth is kept. The middle obliques
     are the outer t-centers. This phase owns orbit-0 OLL.
     """
@@ -642,12 +660,18 @@ class LookupTableIDA777UDObliquesOuterXStage:
             return None
         return root_index, steps
 
-    def solution_via_c(self, roots=None):
+    def solution_via_c(
+        self,
+        roots=None,
+        admissible_seconds=PHASE56_ADMISSIBLE_SECONDS,
+        matrix_seconds=None,
+        fallback_multiplier=None,
+    ):
         """
         Return ``(root_index, steps)`` for the current cube, or for every phase-3 root.
 
-        ``roots`` is ``(index, kociemba, orbits_with_oll)``. The admissible search
-        runs for ``PHASE56_ADMISSIBLE_SECONDS``; a timeout retries with the pair-cost matrix.
+        ``roots`` is ``(index, kociemba, orbits_with_oll)``. Production starts
+        with the pair-cost matrix; optional budgets support matched policy experiments.
         """
         roots_filename = None
         try:
@@ -662,7 +686,7 @@ class LookupTableIDA777UDObliquesOuterXStage:
             else:
                 cmd = self._command(obliques_only=False, kociemba=self.parent.get_kociemba_string(True))
 
-            output = self._run_search(cmd, PHASE56_ADMISSIBLE_SECONDS)
+            output = self._run_search(cmd, admissible_seconds) if admissible_seconds else None
             if output is not None:
                 found = self._solution_from_output(output)
                 if found is None:
@@ -671,18 +695,26 @@ class LookupTableIDA777UDObliquesOuterXStage:
                 return found
 
             matrix_cmd = [*cmd, "--pair-cost-matrix", PHASE56_PAIR_COST_MATRIX_777]
-            output = self._run_search(matrix_cmd, None)
+            output = self._run_search(matrix_cmd, matrix_seconds)
             if output is not None:
                 found = self._solution_from_output(output)
                 if found is not None:
                     self.parent.solve_via_c_output = output
                     return found
+            if fallback_multiplier is not None:
+                fallback_cmd = [*cmd, "--multiplier", str(fallback_multiplier)]
+                output = self._run_search(fallback_cmd, None)
+                if output is not None:
+                    found = self._solution_from_output(output)
+                    if found is not None:
+                        self.parent.solve_via_c_output = output
+                        return found
             raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
         finally:
             if roots_filename is not None:
                 os.unlink(roots_filename)
 
-    def solve_via_c(self, obliques_only=False, **_kwargs):
+    def solve_via_c(self, obliques_only=False, **kwargs):
         if obliques_only:
             cmd = self._command(obliques_only=True, kociemba=self.parent.get_kociemba_string(True))
             output = self._run_search(cmd, None)
@@ -690,7 +722,7 @@ class LookupTableIDA777UDObliquesOuterXStage:
                 return
             raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
 
-        _root_index, steps = self.solution_via_c()
+        _root_index, steps = self.solution_via_c(**kwargs)
         for step in steps:
             self.parent.rotate(step)
 
@@ -774,8 +806,8 @@ DAISY_MIXED_TABLES_777 = (
 )
 
 # Phase 8 takes the max of the paired-bar tables and the two inner-plus-oblique
-# tables. Phase 9 takes the max of PHASE8_TABLES_777. Oblique coordinates in
-# that tuple have both daisy goals,
+# tables. Phase 9 takes the max of PHASE9_TABLES_777. Oblique coordinates in
+# those tables have both daisy goals,
 # so a swapped orientation costs 0 there; --native-only still rejects that
 # orientation and the searcher lifts a 0 cost to 1.
 # Each paired-bar file is one axis: left, middle, and right obliques plus the
@@ -822,6 +854,7 @@ PHASE8_TABLES_777 = (
         "lookup-tables/lookup-table-7x7x7-phase8-ud-obliques-fb-inner-t-centers.cost-only.bin",
     ),
 )
+PHASE9_TABLES_777 = tuple((flag, filename.replace("phase8-", "phase9-")) for flag, filename in PHASE8_TABLES_777)
 
 # A wide quarter turn would move centers out of their orbit, so the daisy keeps the
 # outer turns and the 2- and 3-wide half turns. This must match move_is_allowed() in
@@ -869,22 +902,22 @@ class LookupTableIDA777DaisyCenters:
     Phase 8 solves the UD and FB inners and pairs the UD and FB oblique bars.
     A bar may sit on either face of its axis. Its moves are the outer turns,
     the 2-wide half turns, and the L/R 3-wide half turns, which keep the phase 7
-    state. Cost is the max of ``PHASE8_PAIRED_TABLES_777`` and
-    ``PHASE8_INNER_OBLIQUE_TABLES_777``. Each paired file is the five orbits of
-    one axis. Each inner-oblique file is one axis's inners plus the other
-    axis's three oblique orbits. All four have 70 goals: the ways to choose
-    which four bars are the primary color, with the inner orbits native. With
-    those files absent, 3Lw2 repairs eight wings of one axis, so
-    ceil(unpaired / 8) is a lower bound. The solver passes ``--multiplier 1.2``.
-    On 50 random cubes that adds 0.04 moves and lengthens 2 solutions, and it
-    brings the slow reduction from about 49s to about 6s. ``native_only`` does
-    not apply.
+    state. Cost is the max of ``PHASE8_PAIRED_TABLES_777``,
+    ``PHASE8_INNER_OBLIQUE_TABLES_777``, and
+    ``PHASE8_INNER_INTERACTION_TABLE_777``. Each paired file is the five orbits
+    of one axis. Each inner-oblique file is one axis's inners plus the other
+    axis's three oblique orbits. Those four have 70 goals. The inner-interaction
+    file is the four UD/FB inner orbits. With the 70^5 files absent, 3Lw2
+    repairs eight wings of one axis, so ceil(unpaired / 8) is a lower bound.
+    The solver passes ``--multiplier 1.2``. ``native_only`` does not apply.
+    Up to 16 distinct shortest phase 7 endings become phase 8 roots, and up to
+    16 distinct shortest phase 8 endings become phase 9 roots.
 
     Phase 9 daisy-solves all six sides. It drops every 3-wide move, so the
     phase 8 inners stay solved and the bars stay paired. ``native_only`` applies
-    here. Its cost is the max of ``PHASE8_TABLES_777``, with no multiplier.
-    Those files were built with 3Lw2 and 3Rw2 legal, so their costs are a lower
-    bound on this smaller move set. Tables that include an oblique cost 0 at
+    here. Its cost is the max of ``PHASE9_TABLES_777``, with no multiplier.
+    Those files are built for phase 9's smaller move set. Tables that include
+    an oblique cost 0 at
     either daisy orientation; when ``native_only`` rejects the swapped
     orientation, a table cost of 0 is lifted to 1. Phase 7 does not use a
     multiplier either.
@@ -896,7 +929,8 @@ class LookupTableIDA777DaisyCenters:
     | DAISY_LR_INNER_TABLE_777             | 1      | phase 7     |
     | PHASE8_PAIRED_TABLES_777             | 2      | phase 8     |
     | PHASE8_INNER_OBLIQUE_TABLES_777      | 2      | phase 8     |
-    | PHASE8_TABLES_777                    | 8      | phase 9     |
+    | PHASE8_INNER_INTERACTION_TABLE_777   | 1      | phase 8     |
+    | PHASE9_TABLES_777                    | 8      | phase 9     |
     """
 
     def __init__(self, parent, multiplier=None):
@@ -904,52 +938,159 @@ class LookupTableIDA777DaisyCenters:
         self.avoid_oll = None
         self.multiplier = multiplier
 
-    def solve_via_c(self, native_only=False, **_kwargs):
+    def solve_via_c(self, native_only=False, portfolio_cap=None, distinct=True, **_kwargs):
         parent = self.parent
+        portfolio_cap = DAISY_PORTFOLIO_CAP if portfolio_cap is None else portfolio_cap
+        phase7 = self._solutions(
+            7,
+            [parent.get_kociemba_string(True)],
+            solution_count=portfolio_cap,
+            distinct=distinct,
+        )
+        roots8 = self._distinct_centers([steps for _root, steps in phase7])
+        logger.info(
+            "phase 7: %d shortest solutions, %d distinct phase-8 roots",
+            len(phase7),
+            len(roots8),
+        )
+        phase8 = self._solutions(
+            8,
+            [kociemba for _moves, kociemba in roots8],
+            solution_count=portfolio_cap,
+            distinct=distinct,
+        )
+        chains = [(roots8[root_index][0], steps) for root_index, steps in phase8]
+        roots9 = self._distinct_phase9(chains)
+        logger.info(
+            "phase 8: %d shortest solutions, %d distinct phase-9 roots",
+            len(phase8),
+            len(roots9),
+        )
+        phase9 = self._solutions(
+            9,
+            [kociemba for _phase7, _phase8, kociemba in roots9],
+            native_only=native_only,
+        )
+        root_index, phase9_steps = phase9[0]
+        phase7_steps, phase8_steps, _kociemba = roots9[root_index]
+
         tmp_solution_len = len(parent.solution)
-        self._solve_phase(7, native_only=False)
+        for step in phase7_steps:
+            parent.rotate(step)
         parent.print_cube_add_comment("LR inners solved, LR obliques paired", tmp_solution_len)
         tmp_solution_len = len(parent.solution)
-        self._solve_phase(8, native_only=False)
+        for step in phase8_steps:
+            parent.rotate(step)
         parent.print_cube_add_comment("UD/FB inners solved, UD/FB obliques paired", tmp_solution_len)
         tmp_solution_len = len(parent.solution)
-        self._solve_phase(9, native_only=native_only)
+        for step in phase9_steps:
+            parent.rotate(step)
         parent.print_cube_add_comment("centers daisy solved", tmp_solution_len)
 
-    def _solve_phase(self, phase, native_only):
-        cmd = [
-            "./ida_search_777_daisy_centers",
-            "--kociemba",
-            self.parent.get_kociemba_string(True),
-            f"--phase{phase}",
-        ]
+    def _solutions(self, phase, states, native_only=False, solution_count=None, distinct=True):
+        roots_filename = None
+        try:
+            cmd = self._command(phase, native_only, solution_count=solution_count, distinct=distinct)
+            if len(states) == 1:
+                cmd.extend(("--kociemba", states[0]))
+            else:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", prefix="777-daisy-roots-", suffix=".txt", delete=False
+                ) as fh:
+                    roots_filename = fh.name
+                    for index, kociemba in enumerate(states):
+                        fh.write(f"{index},0,0,{kociemba}\n")
+                cmd.extend(("--kociemba-file", roots_filename))
+            output = self._run(cmd)
+        finally:
+            if roots_filename is not None:
+                os.unlink(roots_filename)
+
+        self.parent.solve_via_c_output = output
+        found = []
+        root_index = 0
+        for line in output.splitlines():
+            if line.startswith("ROOT_INDEX "):
+                root_index = int(line.split()[1])
+            elif line.startswith("SOLUTION"):
+                found.append((root_index, tuple(line.split(":", 1)[1].strip().split())))
+        if not found:
+            raise SolveError(f"ida_search_777_daisy_centers failed\n{output}")
+        return found
+
+    def _distinct_centers(self, move_lists):
+        parent = self.parent
+        original_state = parent.state[:]
+        original_solution = parent.solution[:]
+        seen = set()
+        distinct = []
+        try:
+            for moves in move_lists:
+                parent.state = original_state[:]
+                parent.solution = original_solution[:]
+                for step in moves:
+                    parent.rotate(step)
+                key = tuple(parent.state[square] for square in _DAISY_CENTER_SQUARES)
+                if key in seen:
+                    continue
+                seen.add(key)
+                distinct.append((tuple(moves), parent.get_kociemba_string(True)))
+        finally:
+            parent.state = original_state[:]
+            parent.solution = original_solution[:]
+        if not distinct:
+            raise SolveError("daisy search produced no center states")
+        return distinct
+
+    def _distinct_phase9(self, chains):
+        parent = self.parent
+        original_state = parent.state[:]
+        original_solution = parent.solution[:]
+        seen = set()
+        distinct = []
+        try:
+            for phase7_steps, phase8_steps in chains:
+                parent.state = original_state[:]
+                parent.solution = original_solution[:]
+                for step in phase7_steps + phase8_steps:
+                    parent.rotate(step)
+                key = tuple(parent.state[square] for square in _DAISY_CENTER_SQUARES)
+                if key in seen:
+                    continue
+                seen.add(key)
+                distinct.append((phase7_steps, phase8_steps, parent.get_kociemba_string(True)))
+        finally:
+            parent.state = original_state[:]
+            parent.solution = original_solution[:]
+        if not distinct:
+            raise SolveError("phase 8 produced no phase-9 states")
+        return distinct
+
+    def _command(self, phase, native_only, solution_count=None, distinct=True):
+        cmd = ["./ida_search_777_daisy_centers", f"--phase{phase}"]
         if phase == 7:
             flag, filename = DAISY_LR_INNER_TABLE_777
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
         elif phase == 8:
-            for flag, filename in PHASE8_PAIRED_TABLES_777 + PHASE8_INNER_OBLIQUE_TABLES_777:
+            tables = PHASE8_PAIRED_TABLES_777 + PHASE8_INNER_OBLIQUE_TABLES_777 + (PHASE8_INNER_INTERACTION_TABLE_777,)
+            for flag, filename in tables:
                 download_file_if_needed(filename)
                 cmd.extend((flag, filename))
-            cmd.extend(("--multiplier", "1.2"))
+            cmd.extend(("--multiplier", str(PHASE8_MULTIPLIER)))
         elif phase == 9:
-            for flag, filename in PHASE8_TABLES_777:
+            for flag, filename in PHASE9_TABLES_777:
                 download_file_if_needed(filename)
                 cmd.extend((flag, filename))
             if self.multiplier:
                 cmd.extend(("--multiplier", str(self.multiplier)))
             if native_only:
                 cmd.append("--native-only")
-
-        output = self._run(cmd)
-        self.parent.solve_via_c_output = output
-        for line in output.splitlines():
-            if line.startswith("SOLUTION"):
-                for step in line.split(":", 1)[1].strip().split():
-                    self.parent.rotate(step)
-                return
-
-        raise SolveError(f"ida_search_777_daisy_centers failed\n{output}")
+        if solution_count is not None:
+            cmd.extend(("--solution-count", str(solution_count)))
+            if not distinct:
+                cmd.append("--allow-duplicate-solutions")
+        return cmd
 
     def _run(self, cmd):
         logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
@@ -1350,7 +1491,9 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         tmp_solution_len = len(self.solution)
         portfolio = self._inside_lr_center_solutions()
         roots = [(index, kociemba, orbits) for index, (_steps, kociemba, orbits) in enumerate(portfolio)]
-        root_index, phase2_steps = self.lt_LR_oblique_edges_UD_inner_centers_stage.solution_via_c(roots)
+        root_index, phase2_steps = self.lt_LR_oblique_edges_UD_inner_centers_stage.solution_via_c(
+            roots, root_cap=PHASE1_ROOT_CAP
+        )
         for step in portfolio[root_index][0]:
             self.rotate(step)
         self.print_cube_add_comment("LR inner centers staged", tmp_solution_len)
@@ -1433,16 +1576,19 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             self.rotate(step)
         self.print_cube_add_comment("UD centers staged", tmp_solution_len)
 
-    def _phase3_solutions(self):
+    def _phase3_solutions(self, solution_cap=None):
         """Every shortest phase-3 solution, without applying one."""
+        solution_cap = PHASE3_SOLUTION_CAP if solution_cap is None else solution_cap
         cmd = [
             "./ida_search_777_centers_stage",
             "--kociemba",
             self.get_kociemba_string(True),
             "--stage-lr-obliques",
             "--solution-count",
-            "0",
+            str(solution_cap),
         ]
+        if 0 in self.center_solution_leads_to_oll_parity():
+            cmd.append("--initial-orbit0-odd")
         logger.info("phase 3: solving via C\n%s", " ".join(cmd))
         with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as proc:
             output, _stderr = proc.communicate()

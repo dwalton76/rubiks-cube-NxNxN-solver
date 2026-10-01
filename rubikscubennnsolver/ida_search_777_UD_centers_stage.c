@@ -24,6 +24,14 @@
 #define PRODUCT_UNIVERSE UINT64_C(165636900)
 #define ORBIT_COUNT 4
 #define TABLE_COUNT 6
+/*
+ * Pair tables top out at depth 15. The sampled matrix is indexed by the six
+ * costs in ranked_tables order: LOMO, LORO, LOOX, MORO, MOOX, ROOX.
+ * index = ((((c0 * 16 + c1) * 16 + c2) * 16 + c3) * 16 + c4) * 16 + c5.
+ */
+#define PHASE56_COST_MAX 15
+#define PHASE56_MATRIX_SIDE (PHASE56_COST_MAX + 1)
+#define PHASE56_MATRIX_SIZE UINT64_C(16777216)
 #define DEFAULT_MAX_IDA_THRESHOLD 30
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
@@ -104,6 +112,9 @@ static unsigned char search_threshold;
 static float cost_to_goal_multiplier;
 static unsigned char orbit0_requirement;
 static int obliques_only;
+static const char *pair_cost_matrix_filename;
+static unsigned char *pair_cost_matrix;
+static int pair_cost_matrix_fd = -1;
 
 struct heuristic_result {
     uint64_t orbit_rank[ORBIT_COUNT];
@@ -130,7 +141,7 @@ static void usage(const char *program)
         "usage: %s --kociemba STATE "
         "(all six --*-cost FILE flags | --obliques-only and the three oblique-oblique FILE flags) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
-        "[--multiplier F] [--print-ida-summary] "
+        "[--multiplier F] [--pair-cost-matrix FILE] [--print-ida-summary] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
         program
@@ -138,6 +149,9 @@ static void usage(const char *program)
     printf(
         "  --obliques-only  pair UD left/middle/right obliques; do not load outer-x tables\n"
         "  --multiplier F   scale max(pair tables) by F; not admissible, default unused\n"
+        "  --pair-cost-matrix FILE\n"
+        "                   16^6 uint8 of (LOMO,LORO,LOOX,MORO,MOOX,ROOX) -> remaining;\n"
+        "                   used instead of the multiplier when that flag is omitted\n"
     );
 }
 
@@ -298,6 +312,25 @@ static unsigned char pair_orbit0_cost(const struct heuristic_result *found, unsi
     return loaded ? best : 0;
 }
 
+/* Six pair costs, each clamped to 0..15, packed in ranked_tables order. */
+static unsigned char matrix_pair_cost(const unsigned char table_cost[TABLE_COUNT])
+{
+    uint32_t index = 0;
+
+    for (unsigned int axis = 0; axis < TABLE_COUNT; axis++) {
+        unsigned char cost = table_cost[axis];
+
+        if (cost == UINT8_MAX) {
+            return UINT8_MAX;
+        }
+        if (cost > PHASE56_COST_MAX) {
+            cost = PHASE56_COST_MAX;
+        }
+        index = index * PHASE56_MATRIX_SIDE + cost;
+    }
+    return pair_cost_matrix[index];
+}
+
 static unsigned char cube_cost(const char *cube, unsigned char parity)
 {
     struct heuristic_result found = heuristic(cube);
@@ -306,6 +339,18 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
 
     if (cost == UINT8_MAX) {
         return UINT8_MAX;
+    }
+    /*
+     * The matrix estimates the moves still left from the six pair costs. It is
+     * not applied on top of --multiplier: that flag already inflates the
+     * admissible max, and stacking both over-prunes.
+     */
+    if (pair_cost_matrix && !cost_to_goal_multiplier) {
+        unsigned char estimated = matrix_pair_cost(found.table_cost);
+
+        if (estimated != UINT8_MAX && estimated > cost) {
+            cost = estimated;
+        }
     }
     orbit_cost = pair_orbit0_cost(&found, parity);
     if (orbit_cost == UINT8_MAX) {
@@ -411,6 +456,11 @@ static void unmap_ranked_tables(void)
             pair_even_costs[index] = pair_odd_costs[index] = NULL;
             pair_even_fd[index] = pair_odd_fd[index] = -1;
         }
+    }
+    if (pair_cost_matrix) {
+        ida_unmap_cost_file(pair_cost_matrix_fd, pair_cost_matrix, (size_t)PHASE56_MATRIX_SIZE);
+        pair_cost_matrix = NULL;
+        pair_cost_matrix_fd = -1;
     }
 }
 
@@ -710,6 +760,8 @@ int main(int argc, char **argv)
             thread_count = (unsigned int)atoi(argv[++index]);
         } else if (!strcmp(argv[index], "--multiplier") && index + 1 < argc) {
             cost_to_goal_multiplier = (float)atof(argv[++index]);
+        } else if (!strcmp(argv[index], "--pair-cost-matrix") && index + 1 < argc) {
+            pair_cost_matrix_filename = argv[++index];
         } else if (!strcmp(argv[index], "--orbit0-need-odd-w")) {
             orbit0_requirement = PARITY_ODD;
         } else if (!strcmp(argv[index], "--orbit0-need-even-w")) {
@@ -779,6 +831,12 @@ int main(int argc, char **argv)
     init_binom();
     init_move_tables();
     map_ranked_tables();
+    if (pair_cost_matrix_filename) {
+        struct mapped_cost_file mapped = ida_map_cost_file(pair_cost_matrix_filename, PHASE56_MATRIX_SIZE);
+
+        pair_cost_matrix_fd = mapped.fd;
+        pair_cost_matrix = mapped.costs;
+    }
     init_cube(cube, kociemba);
     if (apply_move_string) {
         move_type move = parse_move(apply_move_string);
@@ -830,6 +888,8 @@ int main(int argc, char **argv)
     }
     if (cost_to_goal_multiplier) {
         LOG("searching with cost to goal multiplier %.2f\n", cost_to_goal_multiplier);
+    } else if (pair_cost_matrix) {
+        LOG("searching with pair cost matrix %s\n", pair_cost_matrix_filename);
     }
     LOG("initial cost %u, threads %u, ranked tables %s\n",
         initial_cost, thread_count, obliques_only ? "3 (obliques only)" : "6");

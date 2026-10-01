@@ -27,7 +27,8 @@ Phase 3 - stage the remaining LR centers
 Phase 5/6 - stage UD outer x-centers and pair UD obliques
     Ranked pairwise tables over the UFBD outer-x, left, middle, and right
     oblique coordinates. The middle obliques are the outer t-centers, so this
-    also stages the remaining UD centers.
+    also stages the remaining UD centers. The search runs admissible for 3
+    seconds, then falls back to the sampled pair-cost matrix.
 
 Phase 7 - solve the LR inner centers and pair the LR oblique bars
     LR inner-t and inner-x must be native. The eight oblique bars on L and R
@@ -468,6 +469,8 @@ UD_PHASE56_TABLES_777 = (
 UD_OBLIQUE_ONLY_TABLES_777 = tuple(
     (flag, filename) for flag, filename in UD_PHASE56_TABLES_777 if "outer-x" not in flag
 )
+PHASE56_PAIR_COST_MATRIX_777 = "rubikscubennnsolver/phase56_pair_cost_matrix_777.bin"
+PHASE56_ADMISSIBLE_SECONDS = 3
 
 
 class LookupTableIDA777UDObliquesOuterXStage:
@@ -495,26 +498,26 @@ class LookupTableIDA777UDObliquesOuterXStage:
     Every table is the exact joint distance for its pair, so
     ``ida_search_777_UD_centers_stage`` takes the max of the six as an admissible
     heuristic. That max is often several moves short of the true distance (11 vs
-    17 is typical), so the solver passes ``--multiplier 1.3`` by default: not
-    admissible, but it keeps IDA from exploding. ``UD_OBLIQUE_ONLY_TABLES_777`` is
-    the three-table subset that drops outer-x, which ``RubiksCubeNNNOdd`` uses for
-    rings whose outer-x are painted placeholders. The middle obliques are the
-    outer t-centers, so a solution here also finishes staging the remaining UD
-    centers. This phase owns orbit-0 OLL.
+    17 is typical). The solver runs that admissible search for
+    ``PHASE56_ADMISSIBLE_SECONDS`` with no ``--multiplier``. If it has not
+    finished, the process is killed and the solve is retried with
+    ``--pair-cost-matrix`` ``PHASE56_PAIR_COST_MATRIX_777``.
+    ``UD_OBLIQUE_ONLY_TABLES_777`` is the three-table subset that drops outer-x,
+    which ``RubiksCubeNNNOdd`` uses for rings whose outer-x are painted
+    placeholders. The middle obliques are the outer t-centers, so a solution
+    here also finishes staging the remaining UD centers. This phase owns orbit-0
+    OLL.
     """
 
-    def __init__(self, parent, multiplier=1.3):
+    def __init__(self, parent):
         self.parent = parent
         self.avoid_oll = None
-        self.multiplier = multiplier
 
-    def solve_via_c(self, **_kwargs):
+    def _command(self):
         cmd = ["./ida_search_777_UD_centers_stage", "--kociemba", self.parent.get_kociemba_string(True)]
         for flag, filename in UD_PHASE56_TABLES_777:
             download_file_if_needed(filename)
             cmd.extend((flag, filename))
-        if self.multiplier:
-            cmd.extend(("--multiplier", str(self.multiplier)))
         orbit0_pairs = tuple(
             (
                 flag.replace("-cost", "-even-cost"),
@@ -534,30 +537,45 @@ class LookupTableIDA777UDObliquesOuterXStage:
                 cmd.append("--orbit0-need-odd-w" if 0 in orbits_with_oll else "--orbit0-need-even-w")
             if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
                 cmd.append("--orbit1-need-odd-w" if 1 in orbits_with_oll else "--orbit1-need-even-w")
+        return cmd
 
+    def _run_search(self, cmd, timeout):
         logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
-        lines = []
-        with subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        ) as proc:
-            for line in proc.stdout:
-                lines.append(line)
-                logger.info("%s", line.rstrip("\n"))
-            returncode = proc.wait()
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as proc:
+            try:
+                output, _stderr = proc.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.communicate()
+                logger.info("%s: no solution within %ss", self.__class__.__name__, timeout)
+                return None
+        output = output or ""
+        for line in output.splitlines():
+            logger.info("%s", line)
+        return output
 
-        output = "".join(lines)
+    def _apply_solution(self, output):
         self.parent.solve_via_c_output = output
         for line in output.splitlines():
             if line.startswith("SOLUTION"):
                 for step in line.split(":", 1)[1].strip().split():
                     self.parent.rotate(step)
-                return
+                return True
+        return False
 
-        raise SolveError(f"ida_search_777_UD_centers_stage failed with exit {returncode}\n{output}")
+    def solve_via_c(self, **_kwargs):
+        cmd = self._command()
+        output = self._run_search(cmd, PHASE56_ADMISSIBLE_SECONDS)
+        if output is not None:
+            if self._apply_solution(output):
+                return
+            raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
+
+        matrix_cmd = [*cmd, "--pair-cost-matrix", PHASE56_PAIR_COST_MATRIX_777]
+        output = self._run_search(matrix_cmd, None)
+        if output is not None and self._apply_solution(output):
+            return
+        raise SolveError(f"ida_search_777_UD_centers_stage failed\n{output}")
 
     def recolor(self):
         logger.info(f"{self}: recolor (custom)")

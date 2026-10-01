@@ -1,4 +1,5 @@
 # standard libraries
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -13,6 +14,8 @@ from rubikscubennnsolver.RubiksCube666 import (
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_INNER_X_SPINE_TABLE_777,
     DAISY_LR_INNER_TABLE_777,
+    PHASE56_ADMISSIBLE_SECONDS,
+    PHASE56_PAIR_COST_MATRIX_777,
     PHASE8_INNER_OBLIQUE_TABLES_777,
     PHASE8_PAIRED_TABLES_777,
     PHASE8_TABLES_777,
@@ -271,23 +274,21 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertIn(filename, captured["cmd"])
             self.assertNotIn("outer-x", flag)
 
-    def test_777_combined_ud_phase_passes_heuristic_multiplier(self):
+    def test_777_combined_ud_phase_tries_admissible_search_first(self):
         cube = RubiksCube777(solved_777, "URFDLB")
         cube.lt_init()
         captured = {}
 
         class FakeProc:
-            def __init__(self):
-                self.stdout = iter(["SOLUTION (0 steps):\n"])
-
             def __enter__(self):
                 return self
 
             def __exit__(self, *_exc):
                 return False
 
-            def wait(self):
-                return 0
+            def communicate(self, timeout=None):
+                captured["timeout"] = timeout
+                return ("SOLUTION (0 steps):\n", None)
 
         def fake_popen(cmd, **_kwargs):
             captured["cmd"] = cmd
@@ -301,10 +302,66 @@ class CenterStagingTablesTest(unittest.TestCase):
 
         self.assertEqual(captured["cmd"][0], "./ida_search_777_UD_centers_stage")
         self.assertNotIn("--obliques-only", captured["cmd"])
-        self.assertEqual(captured["cmd"][captured["cmd"].index("--multiplier") + 1], "1.3")
+        self.assertNotIn("--multiplier", captured["cmd"])
+        self.assertNotIn("--pair-cost-matrix", captured["cmd"])
+        self.assertEqual(captured["timeout"], PHASE56_ADMISSIBLE_SECONDS)
         for flag, filename in UD_PHASE56_TABLES_777:
             self.assertIn(flag, captured["cmd"])
             self.assertIn(filename, captured["cmd"])
+
+    def test_777_combined_ud_phase_falls_back_to_pair_cost_matrix(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        commands = []
+
+        class TimeoutProc:
+            def __init__(self):
+                self.killed = False
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def communicate(self, timeout=None):
+                if not self.killed:
+                    raise subprocess.TimeoutExpired(cmd="ida", timeout=timeout)
+                return ("", None)
+
+            def kill(self):
+                self.killed = True
+
+        class SolvedProc:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def communicate(self, timeout=None):
+                commands.append(("timeout", timeout))
+                return ("SOLUTION (2 steps): U U'\n", None)
+
+        procs = [TimeoutProc(), SolvedProc()]
+
+        def fake_popen(cmd, **_kwargs):
+            commands.append(cmd)
+            return procs.pop(0)
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
+        ):
+            cube.lt_UD_obliques_outer_x_stage.solve_via_c()
+
+        self.assertTrue(procs == [])
+        self.assertNotIn("--multiplier", commands[0])
+        self.assertNotIn("--pair-cost-matrix", commands[0])
+        self.assertEqual(commands[1][commands[1].index("--pair-cost-matrix") + 1], PHASE56_PAIR_COST_MATRIX_777)
+        self.assertNotIn("--multiplier", commands[1])
+        self.assertEqual(commands[2], ("timeout", None))
+        self.assertEqual(cube.solution, ["U", "U'"])
 
     def test_777_combined_ud_phase_recolors_four_coordinates(self):
         cube = RubiksCube777(solved_777, "URFDLB")

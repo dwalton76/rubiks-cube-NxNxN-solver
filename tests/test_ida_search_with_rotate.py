@@ -151,6 +151,81 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(cube.solution, [])
         self.assertEqual(cube.LR_oblique_pair_count(), 16)
 
+    def test_777_phase1_portfolio_drops_duplicate_phase2_states(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        with patch("rubikscubennnsolver.RubiksCube555.download_file_if_needed"):
+            cube.get_fake_555()
+
+        def fake_solutions(solution_count):
+            self.assertEqual(solution_count, 0)
+            return [((), ()), ((), ())]
+
+        with (
+            patch.object(cube, "LR_inside_centers_staged", return_value=False),
+            patch.object(cube, "create_fake_555_from_inside_centers"),
+            patch.object(cube.fake_555.lt_LR_centers_stage, "solutions_via_c", side_effect=fake_solutions),
+        ):
+            portfolio = cube._inside_lr_center_solutions()
+
+        self.assertEqual(len(portfolio), 1)
+        self.assertEqual(portfolio[0][0], ())
+        self.assertEqual(cube.solution, [])
+
+    def test_777_phase2_applies_the_phase1_root_that_solves(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        uw_cube = RubiksCube777(solved_777, "URFDLB")
+        uw_cube.rotate("3Uw")
+        uw_state = uw_cube.get_kociemba_string(True)
+        captured = {}
+
+        class FakeProc:
+            def __init__(self, lines):
+                self.stdout = lines
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def wait(self):
+                return 0
+
+        def fake_solutions(solution_count):
+            self.assertEqual(solution_count, 0)
+            return [(("U",), ()), (("Uw",), ())]
+
+        def fake_popen(cmd, **_kwargs):
+            captured["cmd"] = cmd
+            roots_path = cmd[cmd.index("--kociemba-file") + 1]
+            with open(roots_path) as fh:
+                captured["roots"] = fh.read().splitlines()
+            return FakeProc(["ROOT_INDEX 1\n", "SOLUTION (1 steps): F\n"])
+
+        with patch("rubikscubennnsolver.RubiksCube555.download_file_if_needed"):
+            cube.get_fake_555()
+        with (
+            patch.object(cube, "LR_inside_centers_staged", return_value=False),
+            patch.object(cube, "UD_inside_centers_staged", return_value=False),
+            patch.object(cube, "LR_obliques_staged", return_value=False),
+            patch.object(cube, "create_fake_555_from_inside_centers"),
+            patch.object(cube.fake_555.lt_LR_centers_stage, "solutions_via_c", side_effect=fake_solutions),
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
+            patch.object(cube, "_stage_lr_obliques"),
+        ):
+            cube.stage_LR_centers()
+
+        self.assertIn("--kociemba-file", captured["cmd"])
+        self.assertNotIn("--kociemba", captured["cmd"])
+        self.assertEqual(len(captured["roots"]), 2)
+        self.assertTrue(captured["roots"][1].startswith("1,0,"))
+        self.assertIn(uw_state, captured["roots"][1])
+        self.assertEqual(cube.solution[0], "3Uw")
+        self.assertIn("F", cube.solution)
+
     def test_larger_odd_cubes_use_combined_phase_two_only_on_full_mapping_slices(self):
         """Partial rings pair obliques only; a real 7x7 of that orbit uses phase 2."""
         cube = RubiksCubeNNNOdd(solved_999, "URFDLB")
@@ -371,10 +446,122 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(combined.avoid_oll, 0)
         combined.recolor()
 
-        tracked = UFBD_outer_x_centers_777 + UFBD_left_oblique_777 + UFBD_middle_oblique_777 + UFBD_right_oblique_777
+        for square in UFBD_outer_x_centers_777:
+            self.assertEqual(cube.state[square], ".")
+        tracked = UFBD_left_oblique_777 + UFBD_middle_oblique_777 + UFBD_right_oblique_777
         for square in tracked:
             expected = "U" if square < 50 or square > 245 else "x"
             self.assertEqual(cube.state[square], expected)
+
+    def test_777_ud_phase_stages_obliques_without_outer_x(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        captured = {}
+
+        class FakeProc:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def communicate(self, timeout=None):
+                captured["timeout"] = timeout
+                return ("SOLUTION (0 steps):\n", None)
+
+        def fake_popen(cmd, **_kwargs):
+            captured["cmd"] = cmd
+            return FakeProc()
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
+        ):
+            cube.lt_UD_obliques_outer_x_stage.solve_via_c(obliques_only=True)
+
+        self.assertIn("--obliques-only", captured["cmd"])
+        self.assertNotIn("--multiplier", captured["cmd"])
+        self.assertNotIn("--pair-cost-matrix", captured["cmd"])
+        self.assertNotIn("--left-oblique-outer-x-cost", captured["cmd"])
+        self.assertIsNone(captured["timeout"])
+        for flag, filename in UD_OBLIQUE_ONLY_TABLES_777:
+            self.assertIn(flag, captured["cmd"])
+            self.assertIn(filename, captured["cmd"])
+
+    def test_777_stage_ud_centers_ignores_outer_x(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        seen = {}
+
+        def fake_solve(obliques_only=False, **_kwargs):
+            seen["obliques_only"] = obliques_only
+
+        with (
+            patch.object(cube, "UD_obliques_staged", return_value=False),
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "solve_via_c", side_effect=fake_solve),
+        ):
+            cube.stage_UD_centers()
+
+        self.assertTrue(seen["obliques_only"])
+
+    def test_777_phase3_stages_lr_obliques(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        captured = {}
+
+        class FakeProc:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def communicate(self, timeout=None):
+                captured["timeout"] = timeout
+                return ("SOLUTION (1 steps): U\n", None)
+
+        def fake_popen(cmd, **_kwargs):
+            captured["cmd"] = cmd
+            return FakeProc()
+
+        with (
+            patch.object(cube, "LR_inside_centers_staged", return_value=False),
+            patch.object(cube, "UD_inside_centers_staged", return_value=False),
+            patch.object(cube, "LR_obliques_staged", return_value=False),
+            patch.object(cube, "LR_outer_x_staged", return_value=False),
+            patch.object(cube, "_inside_lr_center_solutions", return_value=[((), "STATE", set())]),
+            patch.object(
+                cube.lt_LR_oblique_edges_UD_inner_centers_stage,
+                "solution_via_c",
+                return_value=(0, ()),
+            ),
+            patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
+        ):
+            cube.stage_LR_centers()
+
+        self.assertEqual(captured["cmd"][0], "./ida_search_777_centers_stage")
+        self.assertIn("--stage-lr-obliques", captured["cmd"])
+        self.assertIsNone(captured["timeout"])
+        self.assertIn("U", cube.solution)
+        self.assertTrue(any(step.startswith("COMMENT_LR_obliques_and_outer_x_staged") for step in cube.solution))
+
+    def test_nnnodd_keeps_outer_x_center_staging(self):
+        cube = RubiksCube777ForNNNOdd(solved_777, "URFDLB")
+        cube.lt_init()
+        seen = {}
+
+        def fake_solve(obliques_only=False, **_kwargs):
+            seen["obliques_only"] = obliques_only
+
+        self.assertTrue(cube.stage_outer_x_centers)
+        with (
+            patch.object(cube, "UD_centers_staged", return_value=False),
+            patch.object(cube, "group_inside_UD_centers"),
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "solve_via_c", side_effect=fake_solve),
+        ):
+            cube.stage_UD_centers()
+
+        self.assertFalse(seen["obliques_only"])
 
     def test_777_combined_daisy_replaces_serial_bar_phases(self):
         cube = RubiksCube777(solved_777, "URFDLB")

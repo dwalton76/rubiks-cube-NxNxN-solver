@@ -156,6 +156,8 @@ class LookupTableIDA777UDObliqueEdgePairing:
 class RubiksCube777ForNNNOdd(RubiksCube777):
     """Fake 7x7 adapter containing behavior used only by larger odd cubes."""
 
+    stage_outer_x_centers = True
+
     def lt_init(self):
         if self.lt_init_called:
             return

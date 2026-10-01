@@ -1,5 +1,6 @@
 # standard libraries
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -93,3 +94,47 @@ class IdaSearch777CentersStageObliquesOnlyTest(unittest.TestCase):
         fake_777.lt_LR_oblique_edge_pairing.solve_via_c()
         self.assertEqual(unpaired_lr_obliques(fake_777), 0)
         self.assertIn("searching LR obliques only, prune pairing regressions", fake_777.solve_via_c_output)
+
+    def test_kociemba_file_is_only_for_the_ranked_search(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as fh:
+            fh.write(f"0,0,0,{cube.get_kociemba_string(True)}\n")
+            filename = fh.name
+        result = subprocess.run(
+            [str(BINARY), "--kociemba-file", filename, "--obliques-only"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--kociemba-file is only for the ranked", result.stderr)
+
+    def test_kociemba_file_rejects_a_short_state(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as fh:
+            fh.write("0,0,0,UUU\n")
+            filename = fh.name
+        result = subprocess.run(
+            [str(BINARY), "--kociemba-file", filename, "--ranked-UD-inner-centers-cost", "missing.bin"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("invalid --kociemba-file", result.stderr)
+
+    def test_kociemba_file_keeps_the_lower_index_when_both_are_solved(self):
+        table = ROOT / "lookup-tables/lookup-table-7x7x7-step20-UD-inner-centers-stage.cost-only.bin"
+        if not table.exists():
+            raise unittest.SkipTest(f"{table} is not built")
+        cube = RubiksCube777(solved_777, "URFDLB")
+        state = cube.get_kociemba_string(True)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as fh:
+            fh.write(f"7,0,0,{state}\n")
+            fh.write(f"3,0,0,{state}\n")
+            filename = fh.name
+        result = subprocess.run(
+            [str(BINARY), "--kociemba-file", filename, "--ranked-UD-inner-centers-cost", str(table)],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("ROOT_INDEX 3\n", result.stdout)
+        self.assertIn("SOLUTION (0 steps):", result.stdout)

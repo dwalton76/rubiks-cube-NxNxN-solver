@@ -492,10 +492,17 @@ static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
     ida_init_cube(cube, CUBE_SIZE, kociemba);
 }
 
+static int is_outer_x_center(unsigned int square)
+{
+    unsigned int face_offset = (square - 1) % (CUBE_SIZE * CUBE_SIZE);
+
+    return face_offset == 8 || face_offset == 12 || face_offset == 36 || face_offset == 40;
+}
+
 static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
 {
     for (unsigned int square = 1; square < CUBE_ARRAY_SIZE; square++) {
-        if (ida_is_edge_or_corner(square, CUBE_SIZE)) {
+        if (ida_is_edge_or_corner(square, CUBE_SIZE) || (obliques_only && is_outer_x_center(square))) {
             cube[square] = '.';
         } else if (cube[square] == 'R') {
             cube[square] = 'L';

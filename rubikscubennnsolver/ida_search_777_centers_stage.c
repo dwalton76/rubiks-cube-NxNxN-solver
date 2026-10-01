@@ -72,6 +72,12 @@ static const unsigned int right_obliques[OBLIQUE_COUNT] = {
     159, 163, 181, 185, 208, 212, 230, 234, 257, 261, 279, 283,
 };
 
+/* Same face order as the oblique orbits: 4 squares each on U L F R B D. */
+static const unsigned int outer_x_centers[OBLIQUE_COUNT] = {
+    9, 13, 37, 41, 58, 62, 86, 90, 107, 111, 135, 139,
+    156, 160, 184, 188, 205, 209, 233, 237, 254, 258, 282, 286,
+};
+
 /*
  * Combined heuristic for staging the UD inner t/x centers while pairing the
  * LR obliques. Rows are the unpaired oblique count (0..16), columns are the
@@ -126,6 +132,7 @@ static unsigned char search_threshold;
 static float unpaired_multiplier = 0.25f;
 static int use_unpaired_multiplier;
 static int obliques_only;
+static int stage_lr_obliques;
 static float cost_to_goal_multiplier;
 static unsigned char orbit0_requirement;
 static unsigned char orbit1_requirement;
@@ -142,11 +149,19 @@ struct child {
     unsigned char cost;
 };
 
+struct search_root {
+    unsigned int index;
+    unsigned char orbit0_requirement;
+    unsigned char orbit1_requirement;
+    unsigned char initial_cost;
+    char cube[CUBE_ARRAY_SIZE];
+};
+
 static void usage(const char *program)
 {
     printf(
-        "usage: %s --kociemba STATE "
-        "(--ranked-UD-inner-centers-cost FILE | --obliques-only) "
+        "usage: %s {--kociemba STATE | --kociemba-file FILE} "
+        "(--ranked-UD-inner-centers-cost FILE | --obliques-only | --stage-lr-obliques) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
         "[--multiplier F] [--unpaired-multiplier F] [--print-ida-summary] "
         "[--orbit0-need-odd-w] [--orbit0-need-even-w] "
@@ -155,7 +170,11 @@ static void usage(const char *program)
         program
     );
     printf(
+        "  --kociemba-file lines: ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,STATE\n"
+        "                       parity requirements are 0=any, 1=odd, 2=even\n"
         "  --obliques-only          pair LR obliques only; ignore the UD inner-center table\n"
+        "  --stage-lr-obliques      put LR left/middle/right obliques and outer x on L and R;\n"
+        "                           3-wide quarters stay illegal\n"
         "  --multiplier F           scale the cost to goal by F to trade solution length for\n"
         "                           search speed, used to bootstrap the matrix samples\n"
         "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
@@ -355,9 +374,269 @@ static unsigned char cube_cost_from_unpaired(const char *cube, unsigned char par
     return cost ? cost : parity_flip_floor(parity);
 }
 
+/*
+ * Phase 3. Each orbit is C(24, 8) = 735,471. The single goal puts the eight
+ * L/R colors on the L and R faces. Distance is exact for one orbit, so the
+ * max of the four (three oblique orbits plus outer x) is admissible. 3-wide
+ * quarters stay illegal: they would flip the orbit-1 parity phase 2 already set.
+ */
+#define STAGE_ORBIT_COUNT 4
+#define STAGE_POSITIONS 24
+#define STAGE_LR_COUNT 8
+#define STAGE_UNIVERSE 735471u
+#define STAGE_CACHE "rubikscubennnsolver/lr-oblique-stage-777.bin"
+static const char STAGE_CACHE_MAGIC[4] = {'L', 'R', 'O', '4'};
+
+static int move_is_allowed(move_type move);
+static double elapsed_seconds(const struct timeval *start, const struct timeval *end);
+
+static unsigned char *stage_cost[STAGE_ORBIT_COUNT];
+static unsigned char stage_src[STAGE_ORBIT_COUNT][MOVE_COUNT_777][STAGE_POSITIONS];
+static unsigned char stage_moves[MOVE_COUNT_777];
+static unsigned int stage_move_count;
+
+static const unsigned int *stage_orbits[STAGE_ORBIT_COUNT] = {
+    left_obliques,
+    middle_obliques,
+    right_obliques,
+    outer_x_centers,
+};
+
+static uint32_t stage_mask_rank(uint32_t mask)
+{
+    unsigned int remaining = STAGE_LR_COUNT;
+    uint32_t rank = 0;
+
+    for (unsigned int position = 0; position < STAGE_POSITIONS; position++) {
+        unsigned int after = STAGE_POSITIONS - position - 1;
+
+        if (mask & (1u << position)) {
+            remaining--;
+        } else if (remaining) {
+            rank += (uint32_t)binom[after][remaining - 1];
+        }
+    }
+    return remaining ? UINT32_MAX : rank;
+}
+
+static uint32_t stage_rank(const char *cube, const unsigned int squares[STAGE_POSITIONS])
+{
+    unsigned int remaining = STAGE_LR_COUNT;
+    uint32_t rank = 0;
+
+    for (unsigned int position = 0; position < STAGE_POSITIONS; position++) {
+        unsigned int after = STAGE_POSITIONS - position - 1;
+
+        if (cube[squares[position]] == 'L') {
+            if (!remaining) {
+                return UINT32_MAX;
+            }
+            remaining--;
+        } else if (remaining) {
+            rank += (uint32_t)binom[after][remaining - 1];
+        }
+    }
+    return remaining ? UINT32_MAX : rank;
+}
+
+static unsigned char stage_lr_cost(const char *cube)
+{
+    unsigned char best = 0;
+
+    for (unsigned int orbit = 0; orbit < STAGE_ORBIT_COUNT; orbit++) {
+        uint32_t rank = stage_rank(cube, stage_orbits[orbit]);
+        unsigned char encoded;
+
+        if (rank >= STAGE_UNIVERSE) {
+            return UINT8_MAX;
+        }
+        encoded = stage_cost[orbit][rank];
+        if (!encoded) {
+            return UINT8_MAX;
+        }
+        if ((unsigned char)(encoded - 1) > best) {
+            best = (unsigned char)(encoded - 1);
+        }
+    }
+    return best;
+}
+
+static void free_stage_tables(void)
+{
+    for (unsigned int orbit = 0; orbit < STAGE_ORBIT_COUNT; orbit++) {
+        free(stage_cost[orbit]);
+        stage_cost[orbit] = NULL;
+    }
+}
+
+static int load_stage_cache(void)
+{
+    FILE *file = fopen(STAGE_CACHE, "rb");
+    char magic[4];
+
+    if (!file) {
+        return 0;
+    }
+    if (fread(magic, 1, 4, file) != 4 || memcmp(magic, STAGE_CACHE_MAGIC, 4) != 0) {
+        fclose(file);
+        return 0;
+    }
+    for (unsigned int orbit = 0; orbit < STAGE_ORBIT_COUNT; orbit++) {
+        stage_cost[orbit] = malloc(STAGE_UNIVERSE);
+        if (!stage_cost[orbit] || fread(stage_cost[orbit], 1, STAGE_UNIVERSE, file) != STAGE_UNIVERSE) {
+            fclose(file);
+            free_stage_tables();
+            return 0;
+        }
+    }
+    fclose(file);
+    return 1;
+}
+
+static void save_stage_cache(void)
+{
+    FILE *file = fopen(STAGE_CACHE, "wb");
+
+    if (!file) {
+        return;
+    }
+    fwrite(STAGE_CACHE_MAGIC, 1, 4, file);
+    for (unsigned int orbit = 0; orbit < STAGE_ORBIT_COUNT; orbit++) {
+        fwrite(stage_cost[orbit], 1, STAGE_UNIVERSE, file);
+    }
+    fclose(file);
+}
+
+static void build_stage_permutations(void)
+{
+    stage_move_count = 0;
+    for (unsigned int move_index = 0; move_index < MOVE_COUNT_777; move_index++) {
+        if (move_is_allowed(moves_777[move_index])) {
+            stage_moves[stage_move_count++] = (unsigned char)move_index;
+        }
+    }
+
+    for (unsigned int orbit = 0; orbit < STAGE_ORBIT_COUNT; orbit++) {
+        const unsigned int *squares = stage_orbits[orbit];
+
+        for (unsigned int list_index = 0; list_index < stage_move_count; list_index++) {
+            unsigned int move_index = stage_moves[list_index];
+            unsigned char cube[CUBE_ARRAY_SIZE];
+            unsigned char scratch[CUBE_ARRAY_SIZE];
+
+            memset(cube, 0xFF, sizeof(cube));
+            for (unsigned int position = 0; position < STAGE_POSITIONS; position++) {
+                cube[squares[position]] = (unsigned char)position;
+            }
+            rotate_777_centers((char *)cube, (char *)scratch, CUBE_ARRAY_SIZE, moves_777[move_index]);
+            for (unsigned int destination = 0; destination < STAGE_POSITIONS; destination++) {
+                unsigned char source = cube[squares[destination]];
+
+                if (source >= STAGE_POSITIONS) {
+                    fprintf(
+                        stderr,
+                        "ERROR: LR stage orbit is not closed under %s\n",
+                        move2str[moves_777[move_index]]
+                    );
+                    exit(1);
+                }
+                stage_src[orbit][move_index][destination] = source;
+            }
+        }
+    }
+}
+
+static void build_stage_tables(void)
+{
+    uint32_t goal_mask = (0xFu << 4) | (0xFu << 12);
+    uint32_t goal_rank = stage_mask_rank(goal_mask);
+    uint32_t *masks;
+    uint32_t *ranks;
+    struct timeval start;
+    struct timeval end;
+
+    if (goal_rank >= STAGE_UNIVERSE) {
+        fprintf(stderr, "ERROR: LR stage goal rank is outside C(24, 8)\n");
+        exit(1);
+    }
+    masks = malloc(sizeof(uint32_t) * STAGE_UNIVERSE);
+    ranks = malloc(sizeof(uint32_t) * STAGE_UNIVERSE);
+    if (!masks || !ranks) {
+        fprintf(stderr, "ERROR: out of memory building LR stage tables\n");
+        exit(1);
+    }
+    build_stage_permutations();
+    gettimeofday(&start, NULL);
+    for (unsigned int orbit = 0; orbit < STAGE_ORBIT_COUNT; orbit++) {
+        uint32_t head = 0;
+        uint32_t tail = 0;
+
+        stage_cost[orbit] = calloc(STAGE_UNIVERSE, 1);
+        if (!stage_cost[orbit]) {
+            fprintf(stderr, "ERROR: out of memory building LR stage tables\n");
+            exit(1);
+        }
+        stage_cost[orbit][goal_rank] = 1;
+        masks[tail] = goal_mask;
+        ranks[tail] = goal_rank;
+        tail++;
+        while (head < tail) {
+            uint32_t mask = masks[head];
+            unsigned char encoded = stage_cost[orbit][ranks[head]];
+
+            head++;
+            for (unsigned int list_index = 0; list_index < stage_move_count; list_index++) {
+                unsigned int move_index = stage_moves[list_index];
+                uint32_t next_mask = 0;
+                uint32_t next_rank;
+
+                for (unsigned int destination = 0; destination < STAGE_POSITIONS; destination++) {
+                    unsigned char source = stage_src[orbit][move_index][destination];
+
+                    if (mask & (1u << source)) {
+                        next_mask |= 1u << destination;
+                    }
+                }
+                next_rank = stage_mask_rank(next_mask);
+                if (next_rank >= STAGE_UNIVERSE || stage_cost[orbit][next_rank]) {
+                    continue;
+                }
+                stage_cost[orbit][next_rank] = (unsigned char)(encoded + 1);
+                masks[tail] = next_mask;
+                ranks[tail] = next_rank;
+                tail++;
+            }
+        }
+        LOG("LR stage orbit %u reached %" PRIu32 " states\n", orbit, tail);
+    }
+    gettimeofday(&end, NULL);
+    LOG("LR stage tables built in %.3fs\n", elapsed_seconds(&start, &end));
+    free(masks);
+    free(ranks);
+}
+
 static unsigned char cube_cost(const char *cube, unsigned char parity)
 {
+    if (stage_lr_obliques) {
+        (void)parity;
+        return stage_lr_cost(cube);
+    }
     return cube_cost_from_unpaired(cube, parity, unpaired_oblique_count(cube));
+}
+
+static unsigned char search_cost(
+    const char *cube, unsigned char parity, unsigned char unpaired, unsigned char unpaired_before)
+{
+    if (stage_lr_obliques) {
+        (void)parity;
+        (void)unpaired;
+        (void)unpaired_before;
+        return stage_lr_cost(cube);
+    }
+    if (unpaired > unpaired_before) {
+        return UINT8_MAX;
+    }
+    return cube_cost_from_unpaired(cube, parity, unpaired);
 }
 
 /*
@@ -383,6 +662,11 @@ static int move_is_allowed(move_type move)
         case threeDw:
         case threeDw_PRIME:
             return 0;
+        case threeLw:
+        case threeLw_PRIME:
+        case threeRw:
+        case threeRw_PRIME:
+            return !stage_lr_obliques;
         default:
             return 1;
     }
@@ -455,9 +739,10 @@ static int is_oblique(unsigned int square)
 static void recolor_cube(char cube[CUBE_ARRAY_SIZE])
 {
     for (unsigned int square = 1; square < CUBE_ARRAY_SIZE; square++) {
-        if (ida_is_edge_or_corner(square, CUBE_SIZE) || is_outer_x_center(square)) {
+        if (ida_is_edge_or_corner(square, CUBE_SIZE) ||
+            (!stage_lr_obliques && is_outer_x_center(square))) {
             cube[square] = '.';
-        } else if (is_oblique(square)) {
+        } else if (is_oblique(square) || is_outer_x_center(square)) {
             cube[square] = is_lr(cube[square]) ? 'L' : 'x';
         } else if (cube[square] == 'R') {
             cube[square] = 'L';
@@ -500,8 +785,7 @@ static int ida_search(
         next_parity = parity_after_move(parity, move);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
         unpaired = unpaired_oblique_count(cube);
-        cost = unpaired > unpaired_before ? UINT8_MAX
-                                          : cube_cost_from_unpaired(cube, next_parity, unpaired);
+        cost = search_cost(cube, next_parity, unpaired, unpaired_before);
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         worker->ida_count++;
 
@@ -576,7 +860,7 @@ static void *search_root_moves(void *argument)
         rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
         worker->ida_count++;
         unpaired = unpaired_oblique_count(cube);
-        cost = unpaired > unpaired_before ? UINT8_MAX : cube_cost_from_unpaired(cube, parity, unpaired);
+        cost = search_cost(cube, parity, unpaired, unpaired_before);
 
         if (cost == UINT8_MAX || 1 + cost > search_threshold) {
             continue;
@@ -675,16 +959,106 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
     printf("\n");
 }
 
+static int compare_search_roots(const void *left, const void *right)
+{
+    const struct search_root *a = left;
+    const struct search_root *b = right;
+
+    if (a->initial_cost != b->initial_cost) {
+        return a->initial_cost < b->initial_cost ? -1 : 1;
+    }
+    if (a->index != b->index) {
+        return a->index < b->index ? -1 : 1;
+    }
+    return 0;
+}
+
+/* 7*7*6 stickers. The scan width has to be a literal, so it matches CUBE_ARRAY_SIZE - 1. */
+static struct search_root *read_search_roots(const char *filename, unsigned int *root_count)
+{
+    FILE *stream = fopen(filename, "r");
+    char *line = NULL;
+    size_t capacity = 0;
+    ssize_t length;
+    unsigned int allocated = 0;
+    unsigned int line_number = 0;
+    struct search_root *roots = NULL;
+
+    if (!stream) {
+        fprintf(stderr, "ERROR: could not open --kociemba-file %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+
+    while ((length = getline(&line, &capacity, stream)) != -1) {
+        unsigned int index;
+        unsigned int orbit0;
+        unsigned int orbit1;
+        char kociemba[CUBE_ARRAY_SIZE];
+
+        line_number++;
+        if (length == 0 || line[0] == '\n' || line[0] == '\r') {
+            continue;
+        }
+        if (sscanf(line, "%u,%u,%u,%294[^\r\n]", &index, &orbit0, &orbit1, kociemba) != 4 ||
+            strlen(kociemba) != CUBE_ARRAY_SIZE - 1 || orbit0 > PARITY_EVEN || orbit1 > PARITY_EVEN) {
+            fprintf(
+                stderr,
+                "ERROR: invalid --kociemba-file line %u; expected "
+                "ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,294-STICKER-STATE\n",
+                line_number
+            );
+            free(line);
+            free(roots);
+            fclose(stream);
+            exit(1);
+        }
+
+        if (*root_count == allocated) {
+            struct search_root *grown;
+
+            allocated = allocated ? allocated * 2 : 16;
+            grown = realloc(roots, allocated * sizeof(*roots));
+            if (!grown) {
+                fprintf(stderr, "ERROR: could not allocate search roots\n");
+                free(line);
+                free(roots);
+                fclose(stream);
+                exit(1);
+            }
+            roots = grown;
+        }
+
+        roots[*root_count].index = index;
+        roots[*root_count].orbit0_requirement = (unsigned char)orbit0;
+        roots[*root_count].orbit1_requirement = (unsigned char)orbit1;
+        roots[*root_count].initial_cost = UINT8_MAX;
+        init_cube(roots[*root_count].cube, kociemba);
+        recolor_cube(roots[*root_count].cube);
+        (*root_count)++;
+    }
+
+    free(line);
+    fclose(stream);
+    if (!*root_count) {
+        fprintf(stderr, "ERROR: --kociemba-file %s contains no roots\n", filename);
+        free(roots);
+        exit(1);
+    }
+    return roots;
+}
+
 int main(int argc, char **argv)
 {
     const char *kociemba = NULL;
+    const char *kociemba_filename = NULL;
     const char *ranked_filename = NULL;
     unsigned char min_threshold = 0;
     unsigned char max_threshold = DEFAULT_MAX_IDA_THRESHOLD;
     long detected_cpus = sysconf(_SC_NPROCESSORS_ONLN);
     unsigned int thread_count = detected_cpus > 0 ? (unsigned int)detected_cpus : 1;
     int print_summary = 0;
-    char cube[CUBE_ARRAY_SIZE];
+    struct search_root *roots = NULL;
+    unsigned int root_count = 0;
 
     if (thread_count > MAX_THREADS) {
         thread_count = MAX_THREADS;
@@ -692,6 +1066,8 @@ int main(int argc, char **argv)
     for (int index = 1; index < argc; index++) {
         if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
             kociemba = argv[++index];
+        } else if (!strcmp(argv[index], "--kociemba-file") && index + 1 < argc) {
+            kociemba_filename = argv[++index];
         } else if (!strcmp(argv[index], "--ranked-UD-inner-centers-cost") && index + 1 < argc) {
             ranked_filename = argv[++index];
         } else if (!strcmp(argv[index], "--ud-inner-even-cost") && index + 1 < argc) {
@@ -719,6 +1095,8 @@ int main(int argc, char **argv)
             orbit1_requirement = PARITY_EVEN;
         } else if (!strcmp(argv[index], "--obliques-only")) {
             obliques_only = 1;
+        } else if (!strcmp(argv[index], "--stage-lr-obliques")) {
+            stage_lr_obliques = 1;
         } else if (!strcmp(argv[index], "--print-ida-summary")) {
             print_summary = 1;
         } else {
@@ -726,7 +1104,9 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    if (!kociemba || (!obliques_only && !ranked_filename) || !thread_count || thread_count > MAX_THREADS ||
+    if ((kociemba == NULL) == (kociemba_filename == NULL) ||
+        (!obliques_only && !stage_lr_obliques && !ranked_filename) || !thread_count ||
+        thread_count > MAX_THREADS ||
         min_threshold > max_threshold || max_threshold > MAX_IDA_THRESHOLD) {
         usage(argv[0]);
         return 1;
@@ -740,15 +1120,44 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: --multiplier must be at least 1.0\n");
         return 1;
     }
+    if (obliques_only && stage_lr_obliques) {
+        fprintf(stderr, "ERROR: pass only one of --obliques-only and --stage-lr-obliques\n");
+        return 1;
+    }
+    if (kociemba_filename && (obliques_only || stage_lr_obliques)) {
+        fprintf(stderr, "ERROR: --kociemba-file is only for the ranked UD inner-center search\n");
+        return 1;
+    }
     if ((inner_even_filename == NULL) != (inner_odd_filename == NULL) ||
-        ((inner_even_filename || inner_odd_filename) && obliques_only)) {
+        ((inner_even_filename || inner_odd_filename) && (obliques_only || stage_lr_obliques))) {
         fprintf(stderr, "ERROR: --ud-inner-even-cost and --ud-inner-odd-cost must be passed together\n");
         return 1;
     }
 
     init_binom();
     init_move_tables();
-    if (!obliques_only) {
+    if (kociemba_filename) {
+        roots = read_search_roots(kociemba_filename, &root_count);
+    } else {
+        roots = calloc(1, sizeof(*roots));
+        if (!roots) {
+            fprintf(stderr, "ERROR: could not allocate search roots\n");
+            return 1;
+        }
+        roots[0].orbit0_requirement = orbit0_requirement;
+        roots[0].orbit1_requirement = orbit1_requirement;
+        init_cube(roots[0].cube, kociemba);
+        recolor_cube(roots[0].cube);
+        root_count = 1;
+    }
+    if (stage_lr_obliques) {
+        if (!load_stage_cache()) {
+            build_stage_tables();
+            save_stage_cache();
+        } else {
+            LOG("loaded LR oblique and outer-x stage tables\n");
+        }
+    } else if (!obliques_only) {
         map_ranked_cost_file(ranked_filename);
         if (inner_even_filename) {
             struct mapped_cost_file even = ida_map_cost_file(inner_even_filename, PRODUCT_UNIVERSE);
@@ -760,41 +1169,89 @@ int main(int argc, char **argv)
             inner_odd_costs = odd.costs;
         }
     }
-    init_cube(cube, kociemba);
-    recolor_cube(cube);
-    printf("START\n");
-    print_cube(cube, CUBE_SIZE);
 
-    unsigned char initial_cost = cube_cost(cube, 0);
-    if (initial_cost == UINT8_MAX) {
-        fprintf(stderr, "ERROR: initial ranked state is absent from the table\n");
-        unmap_inner_tables();
-        return 1;
+    for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+        orbit0_requirement = roots[root_index].orbit0_requirement;
+        orbit1_requirement = roots[root_index].orbit1_requirement;
+        roots[root_index].initial_cost = cube_cost(roots[root_index].cube, 0);
+        if (roots[root_index].initial_cost == UINT8_MAX) {
+            fprintf(
+                stderr,
+                "ERROR: root %u center state is absent from the table\n",
+                roots[root_index].index
+            );
+            unmap_inner_tables();
+            free_stage_tables();
+            free(roots);
+            return 1;
+        }
     }
-    if (obliques_only) {
+    qsort(roots, root_count, sizeof(*roots), compare_search_roots);
+    if (min_threshold < roots[0].initial_cost) {
+        min_threshold = roots[0].initial_cost;
+    }
+
+    if (root_count == 1) {
+        printf("START\n");
+        print_cube(roots[0].cube, CUBE_SIZE);
+    }
+    if (stage_lr_obliques) {
+        LOG("staging LR left/middle/right obliques and outer x\n");
+    } else if (obliques_only) {
         LOG("searching LR obliques only, prune pairing regressions\n");
     } else if (use_unpaired_multiplier) {
         LOG("searching with unpaired multiplier %.2f, prune pairing regressions\n", unpaired_multiplier);
     } else {
         LOG("searching with the empirical unpaired-count matrix, prune pairing regressions\n");
     }
-    LOG(
-        "initial cost %u, unpaired obliques %u, threads %u\n",
-        initial_cost,
-        unpaired_oblique_count(cube),
-        thread_count
-    );
-    if (min_threshold < initial_cost) {
-        min_threshold = initial_cost;
+    if (root_count == 1) {
+        LOG(
+            "initial cost %u, unpaired obliques %u, threads %u\n",
+            roots[0].initial_cost,
+            unpaired_oblique_count(roots[0].cube),
+            thread_count
+        );
+    } else {
+        LOG(
+            "loaded %u starting states from %s, min initial cost %u, threads %u\n",
+            root_count,
+            kociemba_filename,
+            roots[0].initial_cost,
+            thread_count
+        );
     }
 
     for (unsigned char threshold = min_threshold; threshold <= max_threshold; threshold++) {
         struct timeval start;
         struct timeval end;
-        uint64_t threshold_nodes = 1;
+        struct search_root *selected = NULL;
+        uint64_t threshold_nodes = 0;
 
         gettimeofday(&start, NULL);
-        int found = !initial_cost || search_at_threshold(cube, threshold, thread_count, &threshold_nodes);
+        for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+            uint64_t root_nodes = 0;
+            int found;
+
+            if (roots[root_index].initial_cost > threshold) {
+                continue;
+            }
+            orbit0_requirement = roots[root_index].orbit0_requirement;
+            orbit1_requirement = roots[root_index].orbit1_requirement;
+            if (!roots[root_index].initial_cost) {
+                solution[0] = MOVE_NONE;
+                found = 1;
+                root_nodes = 1;
+            } else {
+                found = search_at_threshold(
+                    roots[root_index].cube, threshold, thread_count, &root_nodes
+                );
+            }
+            threshold_nodes += root_nodes;
+            if (found) {
+                selected = &roots[root_index];
+                break;
+            }
+        }
         gettimeofday(&end, NULL);
         {
             double seconds = elapsed_seconds(&start, &end);
@@ -808,11 +1265,15 @@ int main(int argc, char **argv)
                 nodes_per_sec
             );
         }
-        if (found) {
+        if (selected) {
             unsigned int length = 0;
+            char rotate_tmp[CUBE_ARRAY_SIZE];
 
             while (solution[length] != MOVE_NONE) {
                 length++;
+            }
+            if (kociemba_filename) {
+                printf("ROOT_INDEX %u\n", selected->index);
             }
             printf("SOLUTION (%u steps):", length);
             for (unsigned int index = 0; index < length; index++) {
@@ -820,20 +1281,23 @@ int main(int argc, char **argv)
             }
             printf("\n");
             if (print_summary) {
-                print_ida_summary(cube, length);
+                print_ida_summary(selected->cube, length);
             }
-            char rotate_tmp[CUBE_ARRAY_SIZE];
             for (unsigned int index = 0; index < length; index++) {
-                rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
+                rotate_777_centers(selected->cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
             }
             printf("END\n");
-            print_cube(cube, CUBE_SIZE);
+            print_cube(selected->cube, CUBE_SIZE);
             unmap_inner_tables();
+            free_stage_tables();
+            free(roots);
             return 0;
         }
     }
 
     fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
     unmap_inner_tables();
+    free_stage_tables();
+    free(roots);
     return 1;
 }

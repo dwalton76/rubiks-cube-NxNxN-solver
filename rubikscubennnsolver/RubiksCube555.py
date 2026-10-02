@@ -29,8 +29,9 @@ Phase 3 - EO the wings and midges; LR centers to 1-of-432
     Split the 24 wings and 12 midges into high/low groups. Each of the 12
     edges can be in its final orientation or not, but only an even number may
     be flipped, so there are 2048 legal EO permutations. All of them are
-    searched and the shortest is kept. LR centers are reduced to one of 432
-    shapes along the way.
+    searched together. The two shortest-solution endpoints with the best
+    phase-4 lower bound continue into phases 4+5+6. LR centers are reduced to
+    one of 432 shapes along the way.
 
 Phases 4 and 5 - pair four edges on the x-plane; LR/FB centers to vertical bars
     Phase 4 ranks the high wing, midge, and low wing locations as three
@@ -45,9 +46,11 @@ Phase 6 - pair the last eight edges and solve the centers
     Pair the remaining wings with their midges and fully solve all 54 centers.
     Dense shared-parity edge and grouped-center cost tables guide this phase.
     pairs whatever sits in the y-plane and z-plane, so it requires the four
-    edges already paired to be the ones in the x-plane. Prefixes (phase 4 plus
-    5) are grouped by length so the search can minimize the total, not just the
-    phase-6 suffix.
+    edges already paired to be the ones in the x-plane. Every shortest phase-3
+    endpoint contributes its phase-6 states. The cheapest phase 3+4+5 prefix
+    is kept for each state, and those prefixes are searched one length group
+    at a time so the total, not just the phase-6 suffix, is minimized. A later
+    group is capped one move below a tie with the incumbent.
 
 Larger cubes that have already reduced to a 5x5x5 reuse the phase-1 and
 phase-2 ranked solvers (``lt_LR_centers_stage``, ``lt_FB_centers_stage``,
@@ -73,6 +76,8 @@ from rubikscubennnsolver.RubiksCubeHighLow import highlow_edge_values_555
 from rubikscubennnsolver.swaps import swaps_555
 
 logger = logging.getLogger(__name__)
+
+PHASE3_ENDPOINT_CAP = 2
 
 # fmt: off
 moves_555 = (
@@ -1378,6 +1383,8 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA555RankedCenters)
     ``pt_states`` the current cube is ranked into a single root, and ``eo_edges`` instead hands in
     one root per legal EO mapping so all 2048 even-parity mappings are searched together.
     Solutions come back sorted shortest first, each tagged with the root it came from.
+    ``reduce_333`` asks for every solution at that minimum length and keeps the endpoint whose
+    phase 4+5+6 continuation is shortest.
     """
 
     def __init__(self, parent):
@@ -1793,9 +1800,10 @@ class LookupTableIDA555Phase6:
     Heuristic is the max of the edge cost and the center cost; a state is pruned when either
     reports an unreachable rank. Roots are the ``ranks()`` tuples reached by each phase-4/phase-5
     prefix, deduplicated and written to a roots file. Because the C search returns the first root
-    that solves at the minimum threshold and knows nothing about prefix cost, ``pair_edges`` groups
-    the roots by phase-4-plus-phase-5 length and searches each group separately so the total, not
-    just the phase-6 suffix, is minimized.
+    that solves at the minimum threshold and knows nothing about prefix cost, the caller groups
+    roots by prefix length and searches each group separately. ``reduce_333`` builds that portfolio
+    from the two shortest phase-3 endpoints with the best phase-4 lower bound. After an incumbent
+    total is known, a later group is capped one move below a tie with that total.
     """
 
     edge_filename = "lookup-tables/lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin"
@@ -1881,7 +1889,13 @@ class LookupTableIDA555Phase6:
     def ranks(self):
         return self.edge_rank(), self.center_rank()
 
-    def solutions_via_c(self, pt_states, solution_count=1, find_extra=False, max_ida_threshold=None):
+    def solutions_via_c(
+        self,
+        pt_states,
+        solution_count=1,
+        find_extra=False,
+        max_ida_threshold=None,
+    ):
         for filename in (self.edge_filename, self.center_filename):
             download_file_if_needed(filename)
 
@@ -2193,29 +2207,23 @@ class RubiksCube555(RubiksCube):
 
         return set(result)
 
-    def eo_edges(self):
+    def _phase3_eo_roots(self):
         """
-        Our goal is to get the edges split into high/low groups but we do not care what
-        the final orientation is of the edges. Each edge can either be in its final
-        orientation or not so there are (2^12)/2 or 2048 possible permutations.  The /2
-        is because there cannot be an odd number of edges not in their final orientation.
+        Rank every even EO mapping of the current cube.
+
+        Each edge can be in its final orientation or not, and an odd number of flips
+        is illegal, so there are 2048 roots. The cube is restored before returning.
         """
-        logger.info("eo_edges called")
         permutations = []
         original_state = self.state[:]
         original_solution = self.solution[:]
-        tmp_solution_len = len(self.solution)
-
-        # Build a list of the wing strings at each midge
         wing_strs = []
 
         for _, square_index, partner_index in midges_recolor_tuples_555:
             square_value = self.state[square_index]
             partner_value = self.state[partner_index]
-            wing_str = wing_str_map[square_value + partner_value]
-            wing_strs.append(wing_str)
+            wing_strs.append(wing_str_map[square_value + partner_value])
 
-        # build a list of all possible EO permutations...an even number of edges must be high
         for num in range(4096):
             bits = str(bin(num)).lstrip("0b").zfill(12)
             if bits.count("1") % 2 == 0:
@@ -2244,15 +2252,298 @@ class RubiksCube555(RubiksCube):
 
         self.state = original_state[:]
         self.solution = original_solution[:]
-        self.lt_phase3.solve_via_c(pt_states=pt_state_indexes)
+        return wing_strs, pt_state_indexes
 
+    def _phase3_solutions(self):
+        """Every shortest phase-3 solution, without applying one."""
+        wing_strs, pt_state_indexes = self._phase3_eo_roots()
+        solutions = self.lt_phase3.solutions_via_c(pt_states=pt_state_indexes, solution_count=0)
+        if not solutions:
+            raise SolveError("phase 3 found no EO solution")
+        return wing_strs, [solution for solution, _states in solutions]
+
+    def _apply_phase3_solution(self, solution, wing_strs, pre_state, pre_solution, comment=False):
+        """Apply one phase-3 solution and recolor edges for pairing."""
+        self.state = list(pre_state)
+        self.solution = list(pre_solution)
+        for step in solution:
+            self.rotate(step)
+        if comment:
+            self.print_cube_add_comment("Phase 3: edges EOed into high/low groups", len(pre_solution))
+        self.post_eo_state = self.state[:]
+        self.post_eo_solution = self.solution[:]
+        self.edges_flip_orientation(wing_strs, [])
+
+    def _phase45_prefixes(self):
+        """
+        Phase-4 and phase-5 solutions for the current recolored cube.
+
+        The result maps each phase-6 rank to the cheapest phase-4 and phase-5
+        moves that reach it. An empty dict means no four-edge choice under three
+        moves produced a paired x-plane.
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(original_solution)
+        phase5_roots = []
+        phase5_root_to_wing_str_combo = {}
+
+        for phase4_solution_len, wing_str_combo in self.find_first_four_edges_to_pair():
+            if phase4_solution_len >= 3:
+                break
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            self.lt_phase4.wing_strs = wing_str_combo
+            self.lt_phase4.solve()
+            self.edges_flip_orientation(wing_str_combo, [])
+
+            phase5_root = self.lt_phase5.ranks(wing_str_combo)
+            phase5_root_to_wing_str_combo[phase5_root] = wing_str_combo
+            phase5_roots.append(phase5_root)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        if not phase5_roots:
+            return {}
+
+        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=phase5_roots, solution_count=10, find_extra=True)
+        prefixes = {}
+        for phase5_solution, phase5_root in phase5_solutions:
+            wing_str_combo = phase5_root_to_wing_str_combo[phase5_root]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            self.lt_phase4.wing_strs = wing_str_combo
+            self.lt_phase4.solve()
+            phase4_solution = tuple(self.solution[original_solution_len:])
+
+            self.edges_flip_orientation(wing_strs_all, [])
+            for step in phase5_solution:
+                self.rotate(step)
+
+            if not self.x_plane_edges_paired():
+                continue
+
+            phase6_ranks = self.lt_phase6.ranks()
+            prefix_len = len(phase4_solution) + len(phase5_solution)
+            previous = prefixes.get(phase6_ranks)
+            if previous is None or prefix_len < len(previous[0]) + len(previous[1]):
+                prefixes[phase6_ranks] = (phase4_solution, phase5_solution)
+
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+        return prefixes
+
+    def _best_phase6(self, prefixes):
+        """
+        Search phase 6 once per prefix length.
+
+        ``prefixes`` maps a phase-6 rank to ``(prefix_len, phase4_solution, phase5_solution)``.
+        After an incumbent total is known, a later group is searched with
+        ``--max-ida-threshold`` set to one less than that total minus its prefix
+        length. A solution must shorten the total. A prefix that can only tie
+        with a 0-move phase 6 is not searched.
+        """
+        roots_by_prefix_len = {}
+        for rank, (prefix_len, _phase4_solution, _phase5_solution) in prefixes.items():
+            roots_by_prefix_len.setdefault(prefix_len, []).append(rank)
+
+        best = None
+        for prefix_len, roots in sorted(roots_by_prefix_len.items()):
+            if best is not None and prefix_len >= best[0]:
+                logger.info(
+                    "skip phase-6 prefix length %d, incumbent total is %d",
+                    prefix_len,
+                    best[0],
+                )
+                break
+
+            phase6_limit = None if best is None else best[0] - prefix_len - 1
+            try:
+                phase6_solution, phase6_states = self.lt_phase6.solutions_via_c(
+                    pt_states=roots,
+                    max_ida_threshold=phase6_limit,
+                )[0]
+            except NoIDASolution:
+                if best is None:
+                    raise
+                logger.info(
+                    "phase-6 prefix length %d has no solution within %d moves",
+                    prefix_len,
+                    phase6_limit,
+                )
+                continue
+            root = tuple(phase6_states[:2])
+            _prefix_len, phase4_solution, phase5_solution = prefixes[root]
+            candidate = (
+                prefix_len + len(phase6_solution),
+                len(phase6_solution),
+                phase4_solution,
+                phase5_solution,
+                phase6_solution,
+                root,
+            )
+            if best is None or candidate < best:
+                best = candidate
+
+        if best is None:
+            raise SolveError("could not solve phase 6 from any phase-4/5 portfolio endpoint")
+
+        _optimal_total, _, phase4_solution, phase5_solution, phase6_solution, root = best
+        logger.info(
+            "phases 4, 5, and 6 lengths %d + %d + %d (%d total) from %d prefix-length groups",
+            len(phase4_solution),
+            len(phase5_solution),
+            len(phase6_solution),
+            len(phase4_solution) + len(phase5_solution) + len(phase6_solution),
+            len(roots_by_prefix_len),
+        )
+        return root, phase4_solution, phase5_solution, phase6_solution
+
+    def _apply_phase456(self, phase4_solution, phase5_solution, phase6_solution):
+        """Apply phases 4, 5, and 6 to the unrecolored post-EO cube."""
+        tmp_solution_len = len(self.solution)
+        for step in phase4_solution:
+            self.rotate(step)
+        self.print_cube_add_comment("Phase 4: four edges prepped for pairing", tmp_solution_len)
+
+        tmp_solution_len = len(self.solution)
+        for step in phase5_solution:
+            self.rotate(step)
+        if not self.x_plane_edges_paired():
+            raise SolveError("phase 5 did not pair the x-plane edges")
+        self.print_cube_add_comment("Phase 5: x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
+
+        tmp_solution_len = len(self.solution)
+        for step in phase6_solution:
+            self.rotate(step)
+        if not self.edges_paired() or not self.centers_solved():
+            raise SolveError("phase 6 did not pair all edges and solve all centers")
+        self.print_cube_add_comment("Phase 6: last eight edges paired, centers solved", tmp_solution_len)
+
+    def _min_phase4_distance(self):
+        """Shortest table cost among the 495 four-edge choices."""
+        download_file_if_needed(self.lt_phase4.filename)
+        best = None
+        with open(self.lt_phase4.filename, "rb") as handle:
+            for combo in itertools.combinations(wing_strs_all, 4):
+                handle.seek(self.lt_phase4.rank(combo))
+                encoded = handle.read(1)
+                if not encoded or not encoded[0]:
+                    continue
+                distance = encoded[0] - 1
+                if best is None or distance < best:
+                    best = distance
+                    if best == 0:
+                        break
+        if best is None:
+            raise SolveError("phase 4 cost table has no reachable four-edge choice")
+        return best
+
+    def _pair_edges_from_phase3_portfolio(self):
+        """
+        Rank every shortest phase-3 endpoint by its phase-4 lower bound.
+
+        The best two endpoints continue into phases 4 and 5. Their phase-6
+        states are merged, and phase 6 runs once for each distinct phase
+        3+4+5 prefix length. The shortest of those totals is kept.
+        """
+        pre_state = self.state[:]
+        pre_solution = self.solution[:]
+        wing_strs, solutions = self._phase3_solutions()
+
+        endpoints = []
+        seen_states = set()
+        for solution in solutions:
+            self._apply_phase3_solution(solution, wing_strs, pre_state, pre_solution)
+            state_key = tuple(self.post_eo_state)
+            if state_key in seen_states:
+                continue
+            seen_states.add(state_key)
+            if self.edge_swaps_odd(False, 0, False):
+                logger.info("phase-3 endpoint %s has odd edge swaps", " ".join(solution))
+                continue
+            endpoints.append((self._min_phase4_distance(), solution))
+
+        endpoints.sort(key=lambda item: (item[0], item[1]))
+        endpoints = endpoints[:PHASE3_ENDPOINT_CAP]
+        logger.info(
+            "phase 3: keeping %d of %d distinct even endpoints before phases 4+5",
+            len(endpoints),
+            len(seen_states),
+        )
+
+        best_by_rank = {}
+        paired_endpoints = 0
+        for _phase4_lower_bound, solution in endpoints:
+            self._apply_phase3_solution(solution, wing_strs, pre_state, pre_solution)
+            try:
+                prefixes = self._phase45_prefixes()
+            except (SolveError, NoIDASolution) as exc:
+                logger.info("phase-3 endpoint %s did not pair: %s", " ".join(solution), exc)
+                continue
+            if not prefixes:
+                logger.info("phase-3 endpoint %s produced no paired x-plane prefix", " ".join(solution))
+                continue
+            paired_endpoints += 1
+            for rank, (phase4_solution, phase5_solution) in prefixes.items():
+                prefix_len = len(solution) + len(phase4_solution) + len(phase5_solution)
+                previous = best_by_rank.get(rank)
+                if previous is not None and prefix_len >= previous[0]:
+                    continue
+                best_by_rank[rank] = (
+                    prefix_len,
+                    solution,
+                    self.post_eo_state[:],
+                    self.post_eo_solution[:],
+                    phase4_solution,
+                    phase5_solution,
+                )
+
+        if not best_by_rank:
+            raise SolveError("phase 3 portfolio produced no paired reduction")
+
+        search_prefixes = {rank: (candidate[0], candidate[4], candidate[5]) for rank, candidate in best_by_rank.items()}
+        logger.info(
+            "phase 3: %d shortest solutions, %d paired endpoints, %d phase-6 roots",
+            len(solutions),
+            paired_endpoints,
+            len(best_by_rank),
+        )
+        root, phase4_solution, phase5_solution, phase6_solution = self._best_phase6(search_prefixes)
+        (
+            _prefix_len,
+            phase3_solution,
+            post_eo_state,
+            post_eo_solution,
+            phase4_solution,
+            phase5_solution,
+        ) = best_by_rank[root]
+        self.state = list(post_eo_state)
+        self.solution = list(post_eo_solution)
+        self.print_cube_add_comment("Phase 3: edges EOed into high/low groups", len(pre_solution))
+        self._apply_phase456(phase4_solution, phase5_solution, phase6_solution)
+        logger.info(
+            "kept phase-3 %s with phases 4-6 length %d",
+            " ".join(phase3_solution),
+            len(phase4_solution) + len(phase5_solution) + len(phase6_solution),
+        )
+
+    def eo_edges(self):
+        """
+        Apply one shortest high/low EO.
+
+        ``reduce_333`` does not use this. It ranks every shortest phase-3
+        endpoint by phase-4 cost and carries the best two into phases 4+5+6.
+        """
+        logger.info("eo_edges called")
+        tmp_solution_len = len(self.solution)
+        wing_strs, pt_state_indexes = self._phase3_eo_roots()
+        self.lt_phase3.solve_via_c(pt_states=pt_state_indexes)
         self.print_cube_add_comment("Phase 3: edges EOed into high/low groups", tmp_solution_len)
         self.post_eo_state = self.state[:]
         self.post_eo_solution = self.solution[:]
-
-        # re-color the cube so that the edges are oriented correctly so we can
-        # pair 4-edges then 8-edges. After all edge pairing is done we will uncolor
-        # the cube and re-apply the solution.
         self.edges_flip_orientation(wing_strs, [])
 
     def find_first_four_edges_to_pair(self):
@@ -2364,151 +2655,22 @@ class RubiksCube555(RubiksCube):
 
     def pair_edges(self):
         """
-        Phases 4+5+6: park four edges on the x-plane, pair them while putting
-        LR/FB centers into vertical bars, then pair the last eight and solve
-        the centers. Keep the shortest combined path across the portfolio.
+        Phases 4+5+6 on the current EO endpoint. Keep the shortest combined path.
         """
-        # We need the edge swaps to be even for our phase6 lookup tables to work.
         if self.edge_swaps_odd(False, 0, False):
             raise SolveError(f"{self} edge swaps are odd, cannot pair edges")
 
-        # phase 4
-        # phase 5
-        original_state = self.state[:]
-        original_solution = self.solution[:]
-        original_solution_len = len(original_solution)
-        phase5_roots = []
-        phase5_root_to_wing_str_combo = {}
-
-        for phase4_solution_len, wing_str_combo in self.find_first_four_edges_to_pair():
-            if phase4_solution_len >= 3:
-                break
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            self.lt_phase4.wing_strs = wing_str_combo
-            self.lt_phase4.solve()
-            self.edges_flip_orientation(wing_str_combo, [])
-
-            phase5_root = self.lt_phase5.ranks(wing_str_combo)
-            phase5_root_to_wing_str_combo[phase5_root] = wing_str_combo
-            phase5_roots.append(phase5_root)
-
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-        phase5_solutions = self.lt_phase5.solutions_via_c(pt_states=phase5_roots, solution_count=10, find_extra=True)
-
-        # phase 6
-        phase6_pt_state_indexes_to_prefix = {}
-
-        for phase5_solution, phase5_root in phase5_solutions:
-            wing_str_combo = phase5_root_to_wing_str_combo[phase5_root]
-            self.state = original_state[:]
-            self.solution = original_solution[:]
-
-            self.lt_phase4.wing_strs = wing_str_combo
-            self.lt_phase4.solve()
-            phase4_solution = self.solution[original_solution_len:]
-
-            self.edges_flip_orientation(wing_strs_all, [])
-
-            for step in phase5_solution:
-                self.rotate(step)
-
-            if not self.x_plane_edges_paired():
-                continue
-
-            phase6_ranks = self.lt_phase6.ranks()
-
-            # Several phase-4/phase-5 pairs can lead to the same phase-6 state. Since
-            # they all share the same phase-6 cost from here on, keep the cheapest one.
-            prefix_len = len(phase4_solution) + len(phase5_solution)
-            previous_prefix = phase6_pt_state_indexes_to_prefix.get(phase6_ranks)
-
-            if previous_prefix is None:
-                phase6_pt_state_indexes_to_prefix[phase6_ranks] = (
-                    phase4_solution,
-                    phase5_solution,
-                )
-            elif prefix_len < len(previous_prefix[0]) + len(previous_prefix[1]):
-                phase6_pt_state_indexes_to_prefix[phase6_ranks] = (
-                    phase4_solution,
-                    phase5_solution,
-                )
-
-        # Phase 6's C search returns the first root that solves at the minimum
-        # threshold, which ignores how expensive the phase-4/phase-5 prefix was.
-        # Search each prefix-length group separately and keep the cheapest total.
-        roots_by_prefix_len = {}
-        for root, (phase4_solution, phase5_solution) in phase6_pt_state_indexes_to_prefix.items():
-            prefix_len = len(phase4_solution) + len(phase5_solution)
-            roots_by_prefix_len.setdefault(prefix_len, []).append(root)
-
-        if not roots_by_prefix_len:
+        prefixes = self._phase45_prefixes()
+        if not prefixes:
             raise SolveError("no ranked phase-5 solution paired the x-plane edges")
-
-        best = None
-        for prefix_len, roots in sorted(roots_by_prefix_len.items()):
-            if best is not None and prefix_len >= best[0]:
-                break
-
-            phase6_solution, phase6_states = self.lt_phase6.solutions_via_c(pt_states=roots)[0]
-            root = tuple(phase6_states[:2])
-            phase4_solution, phase5_solution = phase6_pt_state_indexes_to_prefix[root]
-            candidate = (
-                prefix_len + len(phase6_solution),
-                len(phase6_solution),
-                phase4_solution,
-                phase5_solution,
-                phase6_solution,
-            )
-
-            if best is None or candidate < best:
-                best = candidate
-
-        if best is None:
-            raise SolveError("could not solve phase 6 from any phase-4/5 portfolio endpoint")
-
-        _, _, phase4_solution, phase5_solution, phase6_solution = best
-        logger.info(
-            "phases 4, 5, and 6 lengths %d + %d + %d (%d total) from %d prefix-length groups",
-            len(phase4_solution),
-            len(phase5_solution),
-            len(phase6_solution),
-            len(phase4_solution) + len(phase5_solution) + len(phase6_solution),
-            len(roots_by_prefix_len),
-        )
-
-        # apply the solution
+        search_prefixes = {
+            rank: (len(phase4_solution) + len(phase5_solution), phase4_solution, phase5_solution)
+            for rank, (phase4_solution, phase5_solution) in prefixes.items()
+        }
+        _root, phase4_solution, phase5_solution, phase6_solution = self._best_phase6(search_prefixes)
         self.state = self.post_eo_state
         self.solution = self.post_eo_solution[:]
-
-        # phase 4
-        tmp_solution_len = len(self.solution)
-        for step in phase4_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("Phase 4: four edges prepped for pairing", tmp_solution_len)
-
-        # phase 5
-        tmp_solution_len = len(self.solution)
-
-        for step in phase5_solution:
-            self.rotate(step)
-
-        if not self.x_plane_edges_paired():
-            raise SolveError("phase 5 did not pair the x-plane edges")
-        self.print_cube_add_comment("Phase 5: x-plane edges paired, LR FB centers vertical bars", tmp_solution_len)
-
-        # phase 6
-        tmp_solution_len = len(self.solution)
-
-        for step in phase6_solution:
-            self.rotate(step)
-
-        if not self.edges_paired() or not self.centers_solved():
-            raise SolveError("phase 6 did not pair all edges and solve all centers")
-        self.print_cube_add_comment("Phase 6: last eight edges paired, centers solved", tmp_solution_len)
+        self._apply_phase456(phase4_solution, phase5_solution, phase6_solution)
 
     def reduce_333(self):
         """Stage centers, EO, pair edges, and solve centers so the cube is a 3x3x3."""
@@ -2521,12 +2683,7 @@ class RubiksCube555(RubiksCube):
         self.rotate_F_to_F()
 
         self.group_centers_phase1_and_2()
-
-        # phase 3
-        self.eo_edges()
-
-        # phases 4 5 and 6
-        self.pair_edges()
+        self._pair_edges_from_phase3_portfolio()
 
 
 def rotate_555(cube, step):

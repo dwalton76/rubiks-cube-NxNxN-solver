@@ -383,9 +383,6 @@ static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned char search_threshold;
 static float unpaired_multiplier = 0.25f;
 static int use_unpaired_multiplier;
-/* The sampled 3D experiment was slower and added moves on the 10-cube A/B,
- * so production keeps the 2D matrix maxed with the exact orbit-1 cost. */
-static int legacy_phase2_matrix = 1;
 static int obliques_only;
 static int stage_lr_obliques;
 static float cost_to_goal_multiplier;
@@ -425,7 +422,7 @@ static void usage(const char *program)
         "usage: %s {--kociemba STATE | --kociemba-file FILE} "
         "(--ranked-UD-inner-centers-cost FILE | --obliques-only | --stage-lr-obliques) "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
-        "[--multiplier F] [--unpaired-multiplier F] [--orbit-aware-phase2-matrix] "
+        "[--multiplier F] [--unpaired-multiplier F] "
         "[--print-ida-summary] "
         "[--solution-count N] [--root-cap N] [--initial-orbit0-odd] "
         "[--orbit0-need-odd-w] [--orbit0-need-even-w] "
@@ -445,9 +442,9 @@ static void usage(const char *program)
         "  --multiplier F           scale the cost to goal by F to trade solution length for\n"
         "                           search speed, used to bootstrap the matrix samples\n"
         "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
-        "                           matrix, 0.25 is admissible and larger values are not\n"
-        "  --orbit-aware-phase2-matrix  use the experimental sampled 3D matrix\n"
-        "  --print-ida-summary      print table, orbit-1, and unpaired costs along the solution\n"
+        "                           matrix, and rank roots with that same estimate;\n"
+        "                           0.25 is admissible and larger values are not\n"
+        "  --print-ida-summary      accepted for compatibility; the path table is always printed\n"
     );
 }
 
@@ -544,8 +541,7 @@ static unsigned char combined_cost(
 
     if (!use_unpaired_multiplier && centers_cost <= MATRIX_COST_MAX &&
         orbit1_cost <= MATRIX_ORBIT1_COST_MAX) {
-        unsigned char cost = unpaired_count_UD_inner_centers_777
-                             [unpaired][centers_cost][legacy_phase2_matrix ? 0 : orbit1_cost];
+        unsigned char cost = unpaired_count_UD_inner_centers_777[unpaired][centers_cost][0];
 
         return orbit1_cost > cost ? orbit1_cost : cost;
     }
@@ -1430,7 +1426,6 @@ int main(int argc, char **argv)
     unsigned char max_threshold = DEFAULT_MAX_IDA_THRESHOLD;
     long detected_cpus = sysconf(_SC_NPROCESSORS_ONLN);
     unsigned int thread_count = detected_cpus > 0 ? (unsigned int)detected_cpus : 1;
-    int print_summary = 0;
     struct search_root *roots = NULL;
     unsigned int root_count = 0;
 
@@ -1459,8 +1454,6 @@ int main(int argc, char **argv)
             use_unpaired_multiplier = 1;
         } else if (!strcmp(argv[index], "--multiplier") && index + 1 < argc) {
             cost_to_goal_multiplier = (float)atof(argv[++index]);
-        } else if (!strcmp(argv[index], "--orbit-aware-phase2-matrix")) {
-            legacy_phase2_matrix = 0;
         } else if (!strcmp(argv[index], "--orbit0-need-odd-w")) {
             orbit0_requirement = PARITY_ODD;
         } else if (!strcmp(argv[index], "--orbit0-need-even-w")) {
@@ -1474,7 +1467,7 @@ int main(int argc, char **argv)
         } else if (!strcmp(argv[index], "--stage-lr-obliques")) {
             stage_lr_obliques = 1;
         } else if (!strcmp(argv[index], "--print-ida-summary")) {
-            print_summary = 1;
+            /* The path table is printed for the solution. */
         } else if (!strcmp(argv[index], "--solution-count") && index + 1 < argc) {
             solution_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
             collect_solutions = 1;
@@ -1567,7 +1560,7 @@ int main(int argc, char **argv)
             unsigned char orbit = inner_even_costs ?
                                   inner_orbit1_cost(inner_centers_rank(roots[root_index].cube), 0) : 0;
             roots[root_index].quality_cost =
-                centers + orbit + (unsigned char)((roots[root_index].unpaired + 3) / 4);
+                centers + orbit + unpaired_cost(roots[root_index].unpaired);
         }
         if (roots[root_index].initial_cost == UINT8_MAX) {
             fprintf(
@@ -1755,9 +1748,7 @@ int main(int argc, char **argv)
                 printf(" %s", move2str[solution[index]]);
             }
             printf("\n");
-            if (print_summary) {
-                print_ida_summary(selected->cube, length);
-            }
+            print_ida_summary(selected->cube, length);
             for (unsigned int index = 0; index < length; index++) {
                 rotate_777_centers(selected->cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
             }

@@ -149,7 +149,7 @@ static void usage(const char *program)
     printf(
         "  --kociemba-file FILE  one root per line: INDEX,ORBIT0,ORBIT1,294-STICKER-STATE;\n"
         "                        requirement is 0 any, 1 odd, 2 even; orbit 1 is ignored\n"
-        "  --obliques-only  pair UD left/middle/right obliques; do not load outer-x tables\n"
+        "  --obliques-only  stage UD left/middle/right obliques; do not load outer-x tables\n"
         "  --multiplier F   scale max(pair tables) by F; not admissible, default unused\n"
         "  --pair-cost-matrix FILE\n"
         "                   16^6 uint8 of (LOMO,LORO,LOOX,MORO,MOOX,ROOX) -> remaining;\n"

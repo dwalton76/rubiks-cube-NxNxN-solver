@@ -20,6 +20,7 @@ from rubikscubennnsolver.RubiksCube555 import (
     t_centers_without_middles_555,
     x_centers_without_middles_555,
 )
+from rubikscubennnsolver.LookupTable import NoIDASolution
 from rubikscubennnsolver.swaps import swaps_555
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -221,6 +222,93 @@ class Ranked555PythonWiringTest(unittest.TestCase):
         self.assertEqual(command[0], "./ida_search_555_phase3")
         self.assertIn("--roots-file", command)
         self.assertEqual(solutions, [((), expected_root + (None, None))])
+
+    def _run_phase3_portfolio(self, prefixes_for_move, phase6_suffix):
+        cube = self.cube
+        calls = []
+
+        def fake_prefixes():
+            move = next(step for step in reversed(cube.solution) if not step.startswith("COMMENT"))
+            return prefixes_for_move[move]
+
+        def fake_phase6(pt_states, max_ida_threshold=None, **_kwargs):
+            root = tuple(pt_states[0][:2])
+            calls.append((root, max_ida_threshold))
+            return [(phase6_suffix(root), root)]
+
+        with (
+            patch.object(cube, "_phase3_solutions", return_value=(["UF"], [("F",), ("U",)])),
+            patch.object(cube, "_phase45_prefixes", side_effect=fake_prefixes),
+            patch.object(cube, "edge_swaps_odd", return_value=False),
+            patch.object(cube, "x_plane_edges_paired", return_value=True),
+            patch.object(cube, "edges_paired", return_value=True),
+            patch.object(cube, "centers_solved", return_value=True),
+            patch.object(cube, "print_cube"),
+            patch.object(cube.lt_phase6, "solutions_via_c", side_effect=fake_phase6),
+        ):
+            cube._pair_edges_from_phase3_portfolio()
+        return calls, [step for step in cube.solution if not step.startswith("COMMENT")]
+
+    def test_phase3_portfolio_skips_a_prefix_that_cannot_beat_the_incumbent(self):
+        calls, moves = self._run_phase3_portfolio(
+            {"F": {(1, 1): (("R",), ())}, "U": {(2, 2): (("L",) * 5, ())}},
+            lambda root: ("B",),
+        )
+        self.assertEqual(calls, [((1, 1), None)])
+        self.assertEqual(moves, ["F", "R", "B"])
+
+    def test_phase3_portfolio_searches_a_longer_prefix_that_can_still_win(self):
+        calls, moves = self._run_phase3_portfolio(
+            {"F": {(1, 1): (("R",), ())}, "U": {(2, 2): (("L",) * 4, ())}},
+            lambda root: ("B",) * (10 if root == (1, 1) else 1),
+        )
+        self.assertEqual(calls, [((1, 1), None), ((2, 2), 6)])
+        self.assertEqual(moves, ["U", "L", "L", "L", "L", "B"])
+
+    def test_phase3_portfolio_caps_phase6_and_continues_after_a_miss(self):
+        cube = self.cube
+        calls = []
+
+        def fake_prefixes():
+            move = next(step for step in reversed(cube.solution) if not step.startswith("COMMENT"))
+            return {
+                "F": {(1, 1): (("R",), ())},
+                "U": {(2, 2): (("L",) * 3, ())},
+                "D": {(3, 3): (("B",) * 4, ())},
+            }[move]
+
+        def fake_phase6(pt_states, max_ida_threshold=None, **_kwargs):
+            root = tuple(pt_states[0][:2])
+            calls.append((root, max_ida_threshold))
+            if root == (2, 2):
+                raise NoIDASolution("over the cap")
+            suffix = ("B",) * (10 if root == (1, 1) else 1)
+            return [(suffix, root)]
+
+        with (
+            patch.object(cube555_module, "PHASE3_ENDPOINT_CAP", 3),
+            patch.object(cube, "_phase3_solutions", return_value=(["UF"], [("F",), ("U",), ("D",)])),
+            patch.object(cube, "_phase45_prefixes", side_effect=fake_prefixes),
+            patch.object(cube, "edge_swaps_odd", return_value=False),
+            patch.object(cube, "x_plane_edges_paired", return_value=True),
+            patch.object(cube, "edges_paired", return_value=True),
+            patch.object(cube, "centers_solved", return_value=True),
+            patch.object(cube, "print_cube"),
+            patch.object(cube.lt_phase6, "solutions_via_c", side_effect=fake_phase6),
+        ):
+            cube._pair_edges_from_phase3_portfolio()
+
+        moves = [step for step in cube.solution if not step.startswith("COMMENT")]
+        self.assertEqual(calls, [((1, 1), None), ((2, 2), 7), ((3, 3), 6)])
+        self.assertEqual(moves, ["D", "B", "B", "B", "B", "B"])
+
+    def test_phase3_portfolio_keeps_the_cheaper_prefix_for_one_phase6_state(self):
+        calls, moves = self._run_phase3_portfolio(
+            {"F": {(1, 1): (("R",) * 4, ())}, "U": {(1, 1): (("L",), ())}},
+            lambda _root: ("B",),
+        )
+        self.assertEqual(calls, [((1, 1), None)])
+        self.assertEqual(moves, ["U", "L", "B"])
 
     def test_phase4_wrapper_batches_combinations(self):
         combos = (("UB", "UL", "UR", "UF"), ("DB", "DL", "DR", "DF"))

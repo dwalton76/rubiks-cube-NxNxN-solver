@@ -174,6 +174,11 @@ static unsigned char search_threshold;
 static unsigned int loaded_table_count;
 static unsigned int loaded_tables[TABLE_COUNT];
 static float cost_to_goal_multiplier;
+/* Phase 7 default. 0.25 is admissible (one move pairs at most four LR wings).
+ * 0.40 is the measured speed/length tradeoff and is not a lower bound.
+ * Phase 8 sets 0.20 when this flag is omitted. 0.125 is admissible for phase 8. */
+static float unpaired_multiplier = 0.40f;
+static int unpaired_multiplier_is_explicit;
 static int native_only;
 
 /* Phase 7 pairs the LR inners and the LR oblique bars. Phase 8 daisy-solves
@@ -203,8 +208,7 @@ static int lr_inner_fd = -1;
 /* Native inners on one axis, 70 paired-bar goals on the other. */
 #define PHASE8_UD_INNER_FB_OBLIQUES_TABLE 10
 #define PHASE8_FB_INNER_UD_OBLIQUES_TABLE 11
-/* 3Lw2 pairs eight wings of one axis at once, so ceil(unpaired / 8) stays admissible. */
-#define PHASE8_WINGS_PER_MOVE 8
+/* 3Lw2 pairs eight wings of one axis at once, so ceil(unpaired * 0.125) stays admissible. */
 #define PHASE8_AXIS_UNIVERSE UINT64_C(1680700000)
 #define PHASE8_QUARTIC_UNIVERSE UINT64_C(24010000)
 struct phase8_cost_table {
@@ -380,8 +384,13 @@ static void usage(const char *program)
         "[--ud-inner-fb-obliques-cost FILE] [--fb-inner-ud-obliques-cost FILE] "
         "[--solution-count N] [--allow-duplicate-solutions] "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
-        "[--multiplier F] [--native-only] "
-        "[--profile-prunes] [--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n",
+        "[--multiplier F] [--unpaired-multiplier F] [--native-only] "
+        "[--profile-prunes] [--print-ida-summary] [--apply-move MOVE] [--print-ranks] [--print-legal-moves]\n"
+        "  --print-ida-summary     accepted for compatibility; the path table is always printed\n"
+        "                          for the solution, or for the first one when --solution-count is above 1\n"
+        "  --unpaired-multiplier F oblique cost is ceil(unpaired * F). Phase 7 defaults to\n"
+        "                          0.40 and phase 8 to 0.20. 0.25 is admissible for phase 7\n"
+        "                          and 0.125 for phase 8; a larger value is not\n",
         program
     );
     printf(
@@ -651,7 +660,7 @@ static unsigned char unpaired_wings_on(const char *cube, int (*on_face)(unsigned
 
 /* L is squares 50-98 and R is 148-196. Phase 7 only prices the oblique bars
  * on those faces. One move pairs at most four of their wings, so
- * ceil(unpaired / 4) is a lower bound. */
+ * ceil(unpaired * 0.25) is a lower bound. The default multiplier is 0.40. */
 static unsigned char unpaired_oblique_wings(const char *cube)
 {
     return unpaired_wings_on(cube, square_on_lr_face);
@@ -659,7 +668,9 @@ static unsigned char unpaired_oblique_wings(const char *cube)
 
 static unsigned char oblique_wing_cost(unsigned char unpaired)
 {
-    return unpaired ? (unsigned char)((unpaired + 3) / 4) : 0;
+    unsigned char cost = (unsigned char)ceilf(unpaired * unpaired_multiplier);
+
+    return unpaired && !cost ? 1 : cost;
 }
 
 static int lr_inners_native(const char *cube)
@@ -694,7 +705,9 @@ static int phase8_reached(const char *cube)
 
 static unsigned char phase8_pair_cost(unsigned char unpaired)
 {
-    return unpaired ? (unsigned char)((unpaired + PHASE8_WINGS_PER_MOVE - 1) / PHASE8_WINGS_PER_MOVE) : 0;
+    unsigned char cost = (unsigned char)ceilf(unpaired * unpaired_multiplier);
+
+    return unpaired && !cost ? 1 : cost;
 }
 
 static void take_cost(struct heuristic_result *result, unsigned char decoded)
@@ -1699,9 +1712,15 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
         printf(" %4s", ranked_tables[loaded_tables[loaded]].label);
     }
+    if (search_phase == PHASE_7) {
+        printf(" %4s %4s %4s", "LRIN", "OBL", "UNP");
+    }
     printf("  CTG  TRU  IDX  DAY\n      ");
     for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
         printf(" ====");
+    }
+    if (search_phase == PHASE_7) {
+        printf(" ==== ==== ====");
     }
     printf("  ===  ===  ===  ===\n");
     for (unsigned int step = 0; step <= length; step++) {
@@ -1714,6 +1733,9 @@ static void print_ida_summary(const char cube[CUBE_ARRAY_SIZE], unsigned int len
         }
         for (unsigned int loaded = 0; loaded < loaded_table_count; loaded++) {
             printf(" %4u", h.table_cost[loaded_tables[loaded]]);
+        }
+        if (search_phase == PHASE_7) {
+            printf(" %4u %4u %4u", h.lr_inner_cost, h.oblique_cost, h.unpaired_obliques);
         }
         printf("  %3u  %3u  %3u  %3u\n", h.cost, length - step, step, h.daisy);
         if (step < length) {
@@ -1941,7 +1963,6 @@ int main(int argc, char **argv)
     unsigned char max_threshold = DEFAULT_MAX_IDA_THRESHOLD;
     long detected_cpus = sysconf(_SC_NPROCESSORS_ONLN);
     unsigned int thread_count = detected_cpus > 0 ? (unsigned int)detected_cpus : 1;
-    int print_summary = 0;
     int print_ranks_flag = 0;
     int print_legal_moves = 0;
     int max_threshold_is_explicit = 0;
@@ -2017,6 +2038,9 @@ int main(int argc, char **argv)
             thread_count = (unsigned int)atoi(argv[++index]);
         } else if (!strcmp(argv[index], "--multiplier") && index + 1 < argc) {
             cost_to_goal_multiplier = (float)atof(argv[++index]);
+        } else if (!strcmp(argv[index], "--unpaired-multiplier") && index + 1 < argc) {
+            unpaired_multiplier = (float)atof(argv[++index]);
+            unpaired_multiplier_is_explicit = 1;
         } else if (!strcmp(argv[index], "--native-only")) {
             native_only = 1;
         } else if (!strcmp(argv[index], "--phase7") || !strcmp(argv[index], "--phase8") ||
@@ -2042,7 +2066,7 @@ int main(int argc, char **argv)
         } else if (!strcmp(argv[index], "--print-legal-moves")) {
             print_legal_moves = 1;
         } else if (!strcmp(argv[index], "--print-ida-summary")) {
-            print_summary = 1;
+            /* The path table is printed once, for the first kept solution. */
         } else {
             usage(argv[0]);
             return 1;
@@ -2051,6 +2075,17 @@ int main(int argc, char **argv)
     /* Below 1.0 would weaken an already weak heuristic rather than inflate it. */
     if (cost_to_goal_multiplier && cost_to_goal_multiplier < 1.0f) {
         fprintf(stderr, "ERROR: --multiplier must be at least 1.0\n");
+        return 2;
+    }
+    if (search_phase == PHASE_8 && !unpaired_multiplier_is_explicit) {
+        unpaired_multiplier = 0.20f;
+    }
+    if (unpaired_multiplier <= 0.0f || unpaired_multiplier > 1.0f) {
+        fprintf(stderr, "ERROR: --unpaired-multiplier must be in (0, 1]\n");
+        return 2;
+    }
+    if (unpaired_multiplier_is_explicit && search_phase != PHASE_7 && search_phase != PHASE_8) {
+        fprintf(stderr, "ERROR: --unpaired-multiplier applies to phase 7 and phase 8 only\n");
         return 2;
     }
     /* A multiplier scales the initial cost too, and that seeds the first threshold.
@@ -2175,17 +2210,19 @@ int main(int argc, char **argv)
     }
     if (search_phase == PHASE_7) {
         LOG(
-            "searching phase 7: LR inners native, LR oblique bars paired%s\n",
-            lr_inner_costs ? ", LR inner-t x inner-x cost table" : ""
+            "searching phase 7: LR inners native, LR oblique bars paired%s, unpaired multiplier %.3f\n",
+            lr_inner_costs ? ", LR inner-t x inner-x cost table" : "",
+            unpaired_multiplier
         );
     } else if (search_phase == PHASE_8) {
         LOG(
-            "searching phase 8: UD/FB inners native, UD/FB oblique bars paired, keeping LR%s%s%s%s%s\n",
+            "searching phase 8: UD/FB inners native, UD/FB oblique bars paired, keeping LR%s%s%s%s%s, unpaired multiplier %.3f\n",
             phase8_tables[PHASE8_UD_PAIRED_TABLE].costs ? ", UD paired-bar table" : "",
             phase8_tables[PHASE8_FB_PAIRED_TABLE].costs ? ", FB paired-bar table" : "",
             phase8_tables[PHASE8_UD_INNER_FB_OBLIQUES_TABLE].costs ? ", UD inner x FB obliques" : "",
             phase8_tables[PHASE8_FB_INNER_UD_OBLIQUES_TABLE].costs ? ", FB inner x UD obliques" : "",
-            phase8_tables[PHASE8_INNER_TABLE].costs ? ", inner-interaction" : ""
+            phase8_tables[PHASE8_INNER_TABLE].costs ? ", inner-interaction" : "",
+            unpaired_multiplier
         );
     } else {
         LOG("searching phase 9: daisy solve, no 3-wide moves\n");
@@ -2345,6 +2382,29 @@ int main(int argc, char **argv)
                 }
                 printf("\n");
             }
+            {
+                const char *start = NULL;
+                unsigned int length = 0;
+
+                while (collected[0][length] != MOVE_NONE) {
+                    length++;
+                }
+                for (unsigned int root_index = 0; root_index < root_count; root_index++) {
+                    if (roots[root_index].index == collected_roots[0]) {
+                        start = roots[root_index].cube;
+                        break;
+                    }
+                }
+                memcpy(solution, collected[0], sizeof(solution));
+                if (start) {
+                    if (collected_count > 1) {
+                        printf("first kept solution\n");
+                    }
+                    print_ida_summary(start, length);
+                }
+                printf("END\n");
+                print_cube(collected_keys[0], CUBE_SIZE);
+            }
             free(collected);
             free(collected_roots);
             free(collected_keys);
@@ -2366,9 +2426,7 @@ int main(int argc, char **argv)
                 printf(" %s", move2str[solution[index]]);
             }
             printf("\n");
-            if (print_summary) {
-                print_ida_summary(selected->cube, length);
-            }
+            print_ida_summary(selected->cube, length);
             for (unsigned int index = 0; index < length; index++) {
                 rotate_777_centers(selected->cube, rotate_tmp, CUBE_ARRAY_SIZE, solution[index]);
             }

@@ -14,6 +14,8 @@ from rubikscubennnsolver.RubiksCube666 import (
 from rubikscubennnsolver.RubiksCube777 import (
     DAISY_INNER_X_SPINE_TABLE_777,
     DAISY_LR_INNER_TABLE_777,
+    PHASE56_ADMISSIBLE_CAP,
+    PHASE56_MATRIX_CAP,
     PHASE56_PAIR_COST_MATRIX_777,
     PHASE8_INNER_INTERACTION_TABLE_777,
     PHASE8_INNER_OBLIQUE_TABLES_777,
@@ -516,37 +518,95 @@ class CenterStagingTablesTest(unittest.TestCase):
             self.assertIn(flag, captured["cmd"])
             self.assertIn(filename, captured["cmd"])
 
-    def test_777_stage_ud_centers_stages_outer_x(self):
+    def test_777_stage_ud_centers_falls_back_when_combined_search_times_out(self):
         cube = RubiksCube777(solved_777, "URFDLB")
         cube.lt_init()
         seen = {}
 
-        def fake_solve(obliques_only=False, **_kwargs):
-            seen["obliques_only"] = obliques_only
+        def fake_combined(roots=None, **kwargs):
+            seen["roots"] = roots
+            seen["caps"] = (kwargs["admissible_seconds"], kwargs["matrix_seconds"])
+            return None
+
+        def fake_pair(roots=None):
+            seen["pair_roots"] = roots
+            return (0, ("U",))
+
+        def fake_phase6():
+            cube.rotate("D")
 
         with (
-            patch.object(cube, "UD_obliques_staged", return_value=False),
-            patch.object(cube.lt_UD_obliques_outer_x_stage, "solve_via_c", side_effect=fake_solve),
+            patch.object(cube, "UD_centers_staged", side_effect=(False, True)),
+            patch.object(cube, "UD_obliques_staged", side_effect=(False, True)),
+            patch.object(cube, "UD_obliques_paired", return_value=True),
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "solution_via_c", side_effect=fake_combined),
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "stage_obliques_via_c", side_effect=fake_pair),
+            patch.object(cube, "_stage_outside_centers_via_555", side_effect=fake_phase6),
         ):
             cube.stage_UD_centers()
 
-        self.assertFalse(seen["obliques_only"])
+        self.assertIsNone(seen["roots"])
+        self.assertIsNone(seen["pair_roots"])
+        self.assertEqual(seen["caps"], (PHASE56_ADMISSIBLE_CAP, PHASE56_MATRIX_CAP))
+        self.assertIn("U", cube.solution)
+        self.assertTrue(any(step.startswith("COMMENT_UD_obliques_staged") for step in cube.solution))
+        self.assertTrue(any(step.startswith("COMMENT_UD_centers_staged") for step in cube.solution))
 
-    def test_777_stage_ud_centers_applies_the_phase3_root_phase5_keeps(self):
+    def test_777_stage_ud_centers_keeps_the_combined_phase5_solution(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        cube._phase3_portfolio = [("U",), ("Uw",)]
+        seen = {}
+
+        def fake_combined(roots=None, **kwargs):
+            seen["indexes"] = [index for index, _kociemba, _orbits in roots]
+            seen["caps"] = (kwargs["admissible_seconds"], kwargs["matrix_seconds"])
+            return (1, ("F",))
+
+        with (
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "solution_via_c", side_effect=fake_combined),
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "stage_obliques_via_c") as oblique_search,
+            patch.object(cube, "_stage_outside_centers_via_555") as phase6,
+        ):
+            cube.stage_UD_centers()
+
+        self.assertEqual(seen["indexes"], [0, 1])
+        self.assertEqual(seen["caps"], (PHASE56_ADMISSIBLE_CAP, PHASE56_MATRIX_CAP))
+        oblique_search.assert_not_called()
+        phase6.assert_not_called()
+        self.assertEqual(cube.solution[0], "Uw")
+        self.assertIn("F", cube.solution)
+        self.assertTrue(any(step.startswith("COMMENT_LR_obliques_and_outer_x_staged") for step in cube.solution))
+        self.assertTrue(any(step.startswith("COMMENT_UD_centers_staged") for step in cube.solution))
+        self.assertFalse(any(step.startswith("COMMENT_UD_obliques_staged") for step in cube.solution))
+        self.assertIsNone(cube._phase3_portfolio)
+
+    def test_777_stage_ud_centers_applies_the_phase3_root_when_phase5_times_out(self):
         cube = RubiksCube777(solved_777, "URFDLB")
         cube.lt_init()
         cube._phase3_portfolio = [("U",), ("Uw",)]
 
-        def fake_solution(roots):
+        def fake_pair(roots=None):
             self.assertEqual([index for index, _kociemba, _orbits in roots], [0, 1])
             return (1, ("F",))
 
-        with patch.object(cube.lt_UD_obliques_outer_x_stage, "solution_via_c", side_effect=fake_solution):
+        def fake_phase6():
+            cube.rotate("D")
+
+        with (
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "solution_via_c", return_value=None),
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "stage_obliques_via_c", side_effect=fake_pair),
+            patch.object(cube, "_stage_outside_centers_via_555", side_effect=fake_phase6),
+            patch.object(cube, "UD_obliques_staged", return_value=True),
+            patch.object(cube, "UD_obliques_paired", return_value=True),
+            patch.object(cube, "UD_centers_staged", return_value=True),
+        ):
             cube.stage_UD_centers()
 
         self.assertEqual(cube.solution[0], "Uw")
         self.assertIn("F", cube.solution)
         self.assertTrue(any(step.startswith("COMMENT_LR_obliques_and_outer_x_staged") for step in cube.solution))
+        self.assertTrue(any(step.startswith("COMMENT_UD_obliques_staged") for step in cube.solution))
         self.assertTrue(any(step.startswith("COMMENT_UD_centers_staged") for step in cube.solution))
         self.assertIsNone(cube._phase3_portfolio)
 
@@ -599,18 +659,21 @@ class CenterStagingTablesTest(unittest.TestCase):
         cube.lt_init()
         seen = {}
 
-        def fake_solve(obliques_only=False, **_kwargs):
-            seen["obliques_only"] = obliques_only
+        def fake_finish(roots=None, phase3_steps=None):
+            seen["roots"] = roots
+            seen["phase3_steps"] = phase3_steps
 
         self.assertTrue(cube.stage_outer_x_centers)
         with (
             patch.object(cube, "UD_centers_staged", return_value=False),
             patch.object(cube, "group_inside_UD_centers"),
-            patch.object(cube.lt_UD_obliques_outer_x_stage, "solve_via_c", side_effect=fake_solve),
+            patch.object(cube.lt_UD_obliques_outer_x_stage, "solution_via_c", return_value=None),
+            patch.object(cube, "_pair_ud_obliques_and_stage", side_effect=fake_finish),
         ):
             cube.stage_UD_centers()
 
-        self.assertFalse(seen["obliques_only"])
+        self.assertIsNone(seen["roots"])
+        self.assertIsNone(seen["phase3_steps"])
 
     def test_777_combined_daisy_replaces_serial_bar_phases(self):
         cube = RubiksCube777(solved_777, "URFDLB")

@@ -331,7 +331,7 @@ UD_INNER_X_ORBIT1_EVEN_TABLE_666 = (
 UD_INNER_X_ORBIT1_ODD_TABLE_666 = (
     "lookup-tables/lookup-table-6x6x6-step11-UD-inner-x-centers-stage-orbit1-odd.cost-only.bin"
 )
-# Built locally by ./ida_search_666_centers_stage --build-lr-bar-table; there is no download for it.
+# Built by rubiks-cube-lookup-tables `make 666-phase2-lr-bars`; there is no download for it.
 LR_BAR_TABLE_666 = "lookup-tables/lookup-table-6x6x6-phase2-LR-oblique-bars.sym-depth3.hash.bin"
 LR_INNER_X_STAGE_TABLE_666 = "lookup-tables/lookup-table-6x6x6-step12-LR-inner-x-centers-stage-binary.cost-only.bin"
 PHASE2_ROOT_CAP_666 = 8
@@ -491,8 +491,9 @@ class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
 
     The obliques use the LR bar table. Its key is 48 bits, one per oblique
     sticker, set when that sticker is L or R. Keys are canonicalized under the
-    16 rotations and mirrors that preserve the LR axis. It is built breadth
-    first from all C(24, 8) placements of eight paired LR bars through depth 3.
+    16 rotations and mirrors that preserve the LR axis. rubiks-cube-lookup-tables
+    builds it (`make 666-phase2-lr-bars`) breadth first from all C(24, 8)
+    placements of eight paired LR bars through depth 3.
     On a miss the search checks all legal one-move children: a depth-3 child
     gives cost 4, and no child gives a lower bound of 5. Two more C(24, 8) files
     give the phase-2 distance to the staged centers with even or odd orbit-1
@@ -521,7 +522,7 @@ class LookupTableIDA666UDInnerXCentersStageLRObliquePairing:
         if not os.path.exists(LR_BAR_TABLE_666):
             raise SolveError(
                 f"{LR_BAR_TABLE_666} is missing; build it with "
-                "./ida_search_666_centers_stage --build-lr-bar-table FILE --lr-bar-depth N"
+                "make -C ../rubiks-cube-lookup-tables 666-phase2-lr-bars"
             )
 
     def _command(self, roots_filename=None, root_cap=None):

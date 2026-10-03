@@ -1,5 +1,6 @@
 # standard libraries
 import math
+import struct
 import subprocess
 import tempfile
 import unittest
@@ -361,18 +362,12 @@ class RankedCentersStage666Test(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("usage:", result.stdout)
 
-    def test_lr_bar_builder_canonicalizes_goals_and_shallow_tables_are_rejected(self):
+    def test_shallow_lr_bar_tables_are_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             bar = Path(directory) / "bars.bin"
-            result = subprocess.run(
-                [str(BINARY), "--build-lr-bar-table", str(bar), "--lr-bar-depth", "1", "--threads", "4"],
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            normalized = result.stdout.replace("735471", "735,471").replace("46935", "46,935")
-            self.assertIn("735,471 raw goals, 46,935 canonical goals", normalized)
-            self.assertIn("0 steps has 46,935 entries", normalized)
+            # A matching depth-1 header is still not the depth-3 file the searcher loads.
+            header = struct.pack("<8sIIQ" + "Q" * 21, b"LRBAR662", 1, 1, 0, *([0] * 21))
+            bar.write_bytes(header + bytes(16))
 
             result = subprocess.run(
                 [

@@ -223,9 +223,6 @@ static void usage(const char *program)
         "  --lr-bar-cost FILE       phase-2 cost is max(LR bar table, UD inner x, orbit-1); a table\n"
         "                           miss looks one move ahead: depth+1 on a hit, depth+2 otherwise\n"
         "  --bar-lookup-stats       print direct hits, lookahead hits/misses, and hash probes\n"
-        "  --build-lr-bar-table FILE [--lr-bar-depth N]\n"
-        "                           breadth first from every paired LR oblique placement to\n"
-        "                           depth N (default 3), then exit\n"
         "  --solution-count N       stop after N solutions at the shortest length;\n"
         "                           0 keeps searching until that length is exhausted\n"
         "  --root-cap N             rank phase-2 roots by initial cost and keep the best N\n"
@@ -264,18 +261,16 @@ static uint64_t combination_rank_axis(
  * holds L or R: bit i is all_left_oblique_squares[i] and bit i + 24 is
  * all_right_oblique_squares[i]. A key with eight pairs fully set is a goal;
  * there are C(24, 8) of them. The file is an open-address hash of
- * key | cost << 48, built breadth first from every goal to a fixed depth, so
- * a miss means more than that many moves remain. A key always has 16 bits
- * set, so 0 marks an empty slot.
+ * key | cost << 48. rubiks-cube-lookup-tables writes it; this searcher only
+ * loads a depth-3 file. A miss means more than that many moves remain. A key
+ * always has 16 bits set, so 0 marks an empty slot.
  */
 #define BAR_SQUARES 48
 #define BAR_SYMMETRIES 16
 #define BAR_KEY_MASK ((UINT64_C(1) << BAR_SQUARES) - 1)
 #define BAR_COST_SHIFT 48
 #define BAR_MAX_DEPTH 20
-#define BAR_FIRST_LOG2 22
 #define BAR_MAX_LOG2 31
-#define BAR_COUNT_BATCH 0x10000u
 #define BAR_CACHE_LOG2 23
 
 struct bar_header {
@@ -617,85 +612,8 @@ static void unmap_bar_table(void)
     bar_cache = NULL;
 }
 
-/* Builder state. Slots are written with compare-and-swap so threads can share one table. */
-static struct {
-    uint64_t *slots;
-    uint64_t *old_slots;
-    uint64_t old_capacity;
-    unsigned int log2;
-    uint64_t mask;
-    unsigned int shift;
-    uint64_t limit;
-    atomic_uint_fast64_t count;
-    atomic_int overflow;
-} bar_build;
-
 static uint64_t bar_byte_map[MOVE_COUNT_666][6][256];
 static unsigned char bar_move_position[MOVE_COUNT_666][BAR_SQUARES];
-
-struct bar_worker {
-    unsigned int index;
-    unsigned int threads;
-    unsigned char depth;
-};
-
-static uint64_t *bar_allocate(unsigned int log2)
-{
-    size_t bytes = sizeof(uint64_t) << log2;
-    void *slots = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-    if (slots == MAP_FAILED) {
-        fprintf(stderr, "ERROR: could not allocate %zu bytes for the LR bar table\n", bytes);
-        exit(1);
-    }
-    return slots;
-}
-
-static void bar_use_table(uint64_t *slots, unsigned int log2, double max_load)
-{
-    bar_build.slots = slots;
-    bar_build.log2 = log2;
-    bar_build.mask = (UINT64_C(1) << log2) - 1;
-    bar_build.shift = 64 - log2;
-    bar_build.limit = (uint64_t)((double)(UINT64_C(1) << log2) * max_load);
-}
-
-/* 1 when the key was added, 0 when it was already there. */
-static int bar_insert(uint64_t key, unsigned char cost)
-{
-    uint64_t packed = key | ((uint64_t)cost << BAR_COST_SHIFT);
-    uint64_t index = bar_hash_index(key, bar_build.shift);
-
-    while (1) {
-        uint64_t slot = __atomic_load_n(&bar_build.slots[index], __ATOMIC_RELAXED);
-
-        if (!slot) {
-            uint64_t expected = 0;
-
-            if (__atomic_compare_exchange_n(
-                    &bar_build.slots[index], &expected, packed, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
-                return 1;
-            }
-            slot = expected;
-        }
-        if ((slot & BAR_KEY_MASK) == key) {
-            return 0;
-        }
-        index = (index + 1) & bar_build.mask;
-    }
-}
-
-static void bar_count_inserts(uint64_t *pending, int force)
-{
-    if (*pending >= BAR_COUNT_BATCH || (force && *pending)) {
-        uint64_t total = atomic_fetch_add(&bar_build.count, *pending) + *pending;
-
-        *pending = 0;
-        if (total > bar_build.limit) {
-            atomic_store(&bar_build.overflow, 1);
-        }
-    }
-}
 
 static void bar_init_moves(void)
 {
@@ -773,238 +691,6 @@ static inline uint64_t bar_apply_move(uint64_t key, unsigned int move_index)
 
     return map[0][key & 0xff] | map[1][(key >> 8) & 0xff] | map[2][(key >> 16) & 0xff] |
            map[3][(key >> 24) & 0xff] | map[4][(key >> 32) & 0xff] | map[5][(key >> 40) & 0xff];
-}
-
-static void *bar_expand_level(void *argument)
-{
-    struct bar_worker *worker = argument;
-    uint64_t capacity = bar_build.mask + 1;
-    uint64_t begin = capacity / worker->threads * worker->index;
-    uint64_t end = worker->index + 1 == worker->threads ? capacity : capacity / worker->threads * (worker->index + 1);
-    uint64_t pending = 0;
-
-    for (uint64_t index = begin; index < end; index++) {
-        uint64_t slot = __atomic_load_n(&bar_build.slots[index], __ATOMIC_RELAXED);
-        uint64_t key;
-
-        if (!slot || (slot >> BAR_COST_SHIFT) != worker->depth) {
-            continue;
-        }
-        if (atomic_load_explicit(&bar_build.overflow, memory_order_relaxed)) {
-            break;
-        }
-        key = slot & BAR_KEY_MASK;
-        for (unsigned int move_index = 0; move_index < bar_move_count; move_index++) {
-            pending += (uint64_t)bar_insert(
-                bar_canonical_key(bar_apply_move(key, move_index)),
-                worker->depth + 1
-            );
-        }
-        bar_count_inserts(&pending, 0);
-    }
-    bar_count_inserts(&pending, 1);
-    return NULL;
-}
-
-static void *bar_rehash_range(void *argument)
-{
-    struct bar_worker *worker = argument;
-    uint64_t begin = bar_build.old_capacity / worker->threads * worker->index;
-    uint64_t end = worker->index + 1 == worker->threads
-                       ? bar_build.old_capacity
-                       : bar_build.old_capacity / worker->threads * (worker->index + 1);
-
-    for (uint64_t index = begin; index < end; index++) {
-        uint64_t slot = bar_build.old_slots[index];
-
-        if (slot) {
-            bar_insert(slot & BAR_KEY_MASK, (unsigned char)(slot >> BAR_COST_SHIFT));
-        }
-    }
-    return NULL;
-}
-
-static void bar_run_threads(void *(*routine)(void *), unsigned int threads, unsigned char depth)
-{
-    pthread_t handles[MAX_THREADS];
-    struct bar_worker workers[MAX_THREADS];
-
-    for (unsigned int index = 0; index < threads; index++) {
-        workers[index].index = index;
-        workers[index].threads = threads;
-        workers[index].depth = depth;
-        if (pthread_create(&handles[index], NULL, routine, &workers[index]) != 0) {
-            fprintf(stderr, "ERROR: could not create LR bar thread %u\n", index);
-            exit(1);
-        }
-    }
-    for (unsigned int index = 0; index < threads; index++) {
-        pthread_join(handles[index], NULL);
-    }
-}
-
-static void bar_rehash(unsigned int log2, unsigned int threads, double max_load)
-{
-    uint64_t old_capacity = bar_build.mask + 1;
-    uint64_t *old_slots = bar_build.slots;
-
-    bar_build.old_slots = old_slots;
-    bar_build.old_capacity = old_capacity;
-    bar_use_table(bar_allocate(log2), log2, max_load);
-    bar_run_threads(bar_rehash_range, threads, 0);
-    munmap(old_slots, sizeof(uint64_t) * old_capacity);
-    bar_build.old_slots = NULL;
-}
-
-static double bar_seconds_since(const struct timeval *start)
-{
-    struct timeval now;
-
-    gettimeofday(&now, NULL);
-    return (double)(now.tv_sec - start->tv_sec) + (double)(now.tv_usec - start->tv_usec) / 1000000.0;
-}
-
-static int build_lr_bar_table(const char *filename, unsigned char depth, unsigned int threads)
-{
-    const double build_load = 0.75;
-    const double file_load = 0.5;
-    struct bar_header header;
-    struct timeval start;
-    unsigned char completed = 0;
-    unsigned int file_log2;
-    uint64_t raw_goals = 0;
-    uint64_t goals = 0;
-    char temporary[PATH_MAX];
-    FILE *fh;
-
-    memset(&header, 0, sizeof(header));
-    memcpy(header.magic, BAR_MAGIC, sizeof(BAR_MAGIC));
-    gettimeofday(&start, NULL);
-    bar_init_moves();
-    bar_use_table(bar_allocate(BAR_FIRST_LOG2), BAR_FIRST_LOG2, build_load);
-    atomic_store(&bar_build.count, 0);
-    atomic_store(&bar_build.overflow, 0);
-
-    for (uint32_t pairs = 0xff; pairs < (UINT32_C(1) << OBLIQUE_PAIR_COUNT);) {
-        uint32_t low = pairs & -pairs;
-        uint32_t ripple = pairs + low;
-
-        raw_goals++;
-        goals += (uint64_t)bar_insert(
-            bar_canonical_key((uint64_t)pairs | ((uint64_t)pairs << OBLIQUE_PAIR_COUNT)),
-            0
-        );
-        pairs = (((ripple ^ pairs) >> 2) / low) | ripple;
-    }
-    atomic_store(&bar_build.count, goals);
-    header.depth_count[0] = goals;
-    LOG(
-        "LR bar table: %u legal phase-2 moves, %'llu raw goals, %'llu canonical goals\n",
-        bar_move_count,
-        (unsigned long long)raw_goals,
-        (unsigned long long)goals
-    );
-
-    for (unsigned char level = 0; level < depth; level++) {
-        uint64_t before = atomic_load(&bar_build.count);
-        int full = 0;
-
-        while (1) {
-            atomic_store(&bar_build.overflow, 0);
-            bar_run_threads(bar_expand_level, threads, level);
-            if (!atomic_load(&bar_build.overflow)) {
-                break;
-            }
-            if (bar_build.log2 >= BAR_MAX_LOG2) {
-                full = 1;
-                break;
-            }
-            LOG("LR bar table: growing to 2^%u slots during depth %u\n", bar_build.log2 + 1, level + 1);
-            bar_rehash(bar_build.log2 + 1, threads, build_load);
-            {
-                uint64_t recount = 0;
-
-                for (uint64_t index = 0; index <= bar_build.mask; index++) {
-                    recount += bar_build.slots[index] != 0;
-                }
-                atomic_store(&bar_build.count, recount);
-            }
-        }
-        header.depth_count[level + 1] = atomic_load(&bar_build.count) - before;
-        LOG(
-            "LR bar table: depth %u has %'llu entries, %'llu total, %.1fs\n",
-            level + 1,
-            (unsigned long long)header.depth_count[level + 1],
-            (unsigned long long)atomic_load(&bar_build.count),
-            bar_seconds_since(&start)
-        );
-        if (full) {
-            fprintf(
-                stderr,
-                "ERROR: LR bar depth %u did not fit in 2^%u slots; no table was written\n",
-                level + 1,
-                BAR_MAX_LOG2
-            );
-            return 1;
-        }
-        completed = level + 1;
-    }
-
-    header.depth = completed;
-    header.count = atomic_load(&bar_build.count);
-    {
-        uint64_t counted = 0;
-
-        for (unsigned int level = 0; level <= completed; level++) {
-            counted += header.depth_count[level];
-        }
-        if (completed != depth || counted != header.count) {
-            fprintf(stderr, "ERROR: LR bar table did not complete depth %u consistently\n", depth);
-            return 1;
-        }
-    }
-    file_log2 = BAR_FIRST_LOG2;
-    while (file_log2 < BAR_MAX_LOG2 && (double)header.count > (double)(UINT64_C(1) << file_log2) * file_load) {
-        file_log2++;
-    }
-    if (file_log2 != bar_build.log2) {
-        bar_rehash(file_log2, threads, 1.0);
-    }
-    header.log2_capacity = bar_build.log2;
-
-    if (snprintf(temporary, sizeof(temporary), "%s.tmp.%ld", filename, (long)getpid()) >= (int)sizeof(temporary)) {
-        fprintf(stderr, "ERROR: LR bar table filename is too long\n");
-        return 1;
-    }
-    fh = fopen(temporary, "wb");
-    if (!fh) {
-        fprintf(stderr, "ERROR: could not write %s: %s\n", temporary, strerror(errno));
-        return 1;
-    }
-    if (fwrite(&header, sizeof(header), 1, fh) != 1 ||
-        fwrite(bar_build.slots, sizeof(uint64_t), (size_t)bar_build.mask + 1, fh) != (size_t)bar_build.mask + 1 ||
-        fflush(fh) != 0 || fsync(fileno(fh)) != 0 || fclose(fh) != 0) {
-        fprintf(stderr, "ERROR: could not write %s\n", temporary);
-        unlink(temporary);
-        return 1;
-    }
-    if (rename(temporary, filename) != 0) {
-        fprintf(stderr, "ERROR: could not rename %s to %s: %s\n", temporary, filename, strerror(errno));
-        unlink(temporary);
-        return 1;
-    }
-    LOG(
-        "LR bar table: wrote %s, depth %u, %'llu entries in 2^%u slots, %.1fs\n",
-        filename,
-        header.depth,
-        (unsigned long long)header.count,
-        header.log2_capacity,
-        bar_seconds_since(&start)
-    );
-    for (unsigned int level = 0; level <= header.depth; level++) {
-        printf("%u steps has %'llu entries\n", level, (unsigned long long)header.depth_count[level]);
-    }
-    return 0;
 }
 
 static uint64_t ud_inner_x_rank(const char *cube)
@@ -2177,8 +1863,6 @@ int main(int argc, char **argv)
     int print_ranks = 0;
     int print_legal_moves = 0;
     unsigned int benchmark_count = 0;
-    const char *build_bar_filename = NULL;
-    unsigned int build_bar_depth = 3;
     char cube[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
     struct heuristic_result initial;
@@ -2261,34 +1945,12 @@ int main(int argc, char **argv)
             lr_bar_filename = argv[++index];
         } else if (strmatch(argv[index], "--bar-lookup-stats")) {
             bar_lookup_stats = 1;
-        } else if (strmatch(argv[index], "--build-lr-bar-table") && index + 1 < argc) {
-            build_bar_filename = argv[++index];
-        } else if (strmatch(argv[index], "--lr-bar-depth") && index + 1 < argc) {
-            build_bar_depth = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else {
             usage(argv[0]);
             return 2;
         }
     }
 
-    if (build_bar_filename) {
-        if (!build_bar_depth || build_bar_depth >= BAR_MAX_DEPTH) {
-            fprintf(stderr, "ERROR: --lr-bar-depth must be 1..%u\n", BAR_MAX_DEPTH - 1);
-            return 2;
-        }
-        if (!thread_count) {
-            long online = sysconf(_SC_NPROCESSORS_ONLN);
-            thread_count = online > 1 ? (unsigned int)online : 1;
-        }
-        if (thread_count > MAX_THREADS) {
-            thread_count = MAX_THREADS;
-        }
-        setvbuf(stdout, NULL, _IOLBF, 0);
-        setlocale(LC_NUMERIC, "");
-        stage_ud_inner_x_pair_lr_obliques = 1;
-        init_move_tables();
-        return build_lr_bar_table(build_bar_filename, (unsigned char)build_bar_depth, thread_count);
-    }
     if ((!kociemba && !kociemba_filename) || (kociemba && kociemba_filename)) {
         usage(argv[0]);
         return 2;

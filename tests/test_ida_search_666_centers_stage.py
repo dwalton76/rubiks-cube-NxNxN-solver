@@ -7,6 +7,7 @@ from pathlib import Path
 
 # rubiks cube libraries
 from rubikscubennnsolver.RubiksCube666 import (
+    LR_BAR_TABLE_666,
     LR_INNER_X_STAGE_TABLE_666,
     RubiksCube666,
     UD_INNER_X_ORBIT1_EVEN_TABLE_666,
@@ -27,6 +28,7 @@ UD_INNER_X = ROOT / UD_INNER_X_STAGE_TABLE_666
 UD_INNER_X_EVEN = ROOT / UD_INNER_X_ORBIT1_EVEN_TABLE_666
 UD_INNER_X_ODD = ROOT / UD_INNER_X_ORBIT1_ODD_TABLE_666
 LR_INNER_X = ROOT / LR_INNER_X_STAGE_TABLE_666
+LR_BAR = ROOT / LR_BAR_TABLE_666
 
 ORBIT_SQUARES = {
     "outer": UFBD_outer_x_centers_666,
@@ -227,7 +229,7 @@ class RankedCentersStage666Test(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("usage:", result.stdout)
 
-    @unittest.skipUnless(UD_INNER_X.is_file(), "UD inner-x table is not present")
+    @unittest.skipUnless(UD_INNER_X.is_file() and LR_BAR.is_file(), "phase-2 tables are not present")
     def test_phase_two_combines_ud_inner_x_and_lr_oblique_pairing(self):
         result = subprocess.run(
             [
@@ -237,6 +239,8 @@ class RankedCentersStage666Test(unittest.TestCase):
                 "--stage-ud-inner-x-pair-lr-obliques",
                 "--ud-inner-x-cost",
                 str(UD_INNER_X),
+                "--lr-bar-cost",
+                str(LR_BAR),
                 "--orbit1-need-even-w",
                 "--max-ida-threshold",
                 "0",
@@ -246,7 +250,7 @@ class RankedCentersStage666Test(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("UD_INNER_X_COST 0 UNPAIRED 0", result.stdout)
+        self.assertIn("UD_INNER_X_COST 0 LR_BAR_COST 0", result.stdout)
 
     @unittest.skipUnless(LR_INNER_X.is_file(), "LR inner-x table is not present")
     def test_phase_one_stages_lr_inner_x_only(self):
@@ -302,6 +306,8 @@ class RankedCentersStage666Test(unittest.TestCase):
                 "--stage-ud-inner-x-pair-lr-obliques",
                 "--ud-inner-x-cost",
                 str(UD_INNER_X),
+                "--lr-bar-cost",
+                str(LR_BAR),
                 "--print-legal-moves",
                 "--print-ranks",
             ],
@@ -323,6 +329,8 @@ class RankedCentersStage666Test(unittest.TestCase):
                 "--stage-ud-inner-x-pair-lr-obliques",
                 "--ud-inner-x-cost",
                 str(UD_INNER_X),
+                "--lr-bar-cost",
+                str(LR_BAR),
                 "--print-ranks",
                 *extra,
             ],
@@ -335,41 +343,12 @@ class RankedCentersStage666Test(unittest.TestCase):
         return {tokens[index]: int(tokens[index + 1]) for index in range(0, len(tokens), 2)}, result.stdout
 
     @unittest.skipUnless(UD_INNER_X.is_file(), "UD inner-x table is not present")
-    def test_phase_two_uses_combined_matrix_by_default(self):
-        matrix = (
-            (0, 1, 2, 3, 4, 5, 6, 7, 8),
-            (1, 1, 2, 3, 6, 6, 6, 7, 8),
-            (1, 1, 2, 3, 6, 6, 6, 7, 8),
-            (1, 1, 2, 3, 6, 6, 6, 8, 8),
-            (1, 1, 2, 3, 6, 6, 6, 9, 9),
-            (2, 2, 2, 3, 6, 6, 6, 9, 9),
-            (2, 2, 2, 3, 6, 6, 6, 10, 10),
-            (2, 2, 4, 5, 6, 6, 7, 10, 10),
-            (2, 2, 4, 7, 8, 8, 8, 10, 10),
-        )
-        scrambled = RubiksCube666(solved_666, "URFDLB")
-        for move in ("Uw", "3Lw", "Fw", "Rw", "3Rw'", "Dw"):
-            scrambled.rotate(move)
-
-        ranks, _ = self._phase_two_ranks(scrambled)
-        self.assertEqual(
-            ranks["COST"],
-            matrix[ranks["UNPAIRED"]][ranks["UD_INNER_X_COST"]],
-        )
-        self.assertGreater(ranks["COST"], max(ranks["UD_INNER_X_COST"], math.ceil(ranks["UNPAIRED"] / 4)))
-
-        multiplier, _ = self._phase_two_ranks(scrambled, "--unpaired-multiplier", "0.25")
-        self.assertEqual(
-            multiplier["COST"],
-            max(multiplier["UD_INNER_X_COST"], math.ceil(multiplier["UNPAIRED"] * 0.25)),
-        )
-        self.assertLess(multiplier["COST"], ranks["COST"])
-
+    def test_phase_two_requires_lr_bar_table(self):
         result = subprocess.run(
             [
                 str(BINARY),
                 "--kociemba",
-                scrambled.get_kociemba_string(True),
+                self.solved.get_kociemba_string(True),
                 "--stage-ud-inner-x-pair-lr-obliques",
                 "--ud-inner-x-cost",
                 str(UD_INNER_X),
@@ -379,8 +358,96 @@ class RankedCentersStage666Test(unittest.TestCase):
             capture_output=True,
             text=True,
         )
-        self.assertIn("combined heuristic matrix", result.stdout)
-        self.assertIn("prune pairing regressions", result.stdout)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("usage:", result.stdout)
+
+    def test_lr_bar_builder_canonicalizes_goals_and_shallow_tables_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            bar = Path(directory) / "bars.bin"
+            result = subprocess.run(
+                [str(BINARY), "--build-lr-bar-table", str(bar), "--lr-bar-depth", "1", "--threads", "4"],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            normalized = result.stdout.replace("735471", "735,471").replace("46935", "46,935")
+            self.assertIn("735,471 raw goals, 46,935 canonical goals", normalized)
+            self.assertIn("0 steps has 46,935 entries", normalized)
+
+            result = subprocess.run(
+                [
+                    str(BINARY),
+                    "--kociemba",
+                    self.solved.get_kociemba_string(True),
+                    "--stage-ud-inner-x-pair-lr-obliques",
+                    "--ud-inner-x-cost",
+                    str(UD_INNER_X),
+                    "--lr-bar-cost",
+                    str(bar),
+                    "--print-ranks",
+                ],
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("is not an LR bar table", result.stderr)
+
+    @unittest.skipUnless(UD_INNER_X.is_file() and LR_BAR.is_file(), "phase-2 tables are not present")
+    def test_phase_two_lr_bar_table_is_max_with_the_center_table(self):
+        samples = (
+            (0, ()),
+            (1, ("Fw", "3Lw")),
+            (2, ("Uw", "3Rw'", "Uw2", "F")),
+            (3, ("Uw2", "3Rw2", "Bw", "3Rw", "3Dw2", "3Lw")),
+            (4, ("D2", "Uw'", "3Rw", "B'", "Dw'", "F'")),
+            (5, ("Uw", "3Rw2", "L'", "Dw", "3Lw", "3Rw", "Uw'", "Dw", "3Rw")),
+            (5, ("Uw'", "3Rw", "L", "Bw", "Rw", "F'", "L2", "Uw'", "3Rw", "D2", "Uw'", "Fw'")),
+        )
+        for expected, sequence in samples:
+            cube = RubiksCube666(solved_666, "URFDLB")
+            for move in sequence:
+                cube.rotate(move)
+            ranks, output = self._phase_two_ranks(
+                cube,
+                "--lr-bar-cost",
+                str(LR_BAR),
+                "--bar-lookup-stats",
+            )
+            self.assertEqual(ranks["LR_BAR_COST"], expected, sequence)
+            self.assertEqual(ranks["LR_BAR_SYMMETRY_OK"], 1, sequence)
+            self.assertEqual(ranks["COST"], max(ranks["UD_INNER_X_COST"], expected), sequence)
+            if expected == 4:
+                self.assertIn("cache_hits 1", output)
+                self.assertIn("lookahead_hits 1", output)
+            elif expected == 5:
+                self.assertIn("cache_hits 1", output)
+                self.assertIn("lookahead_misses 1", output)
+
+        missed = RubiksCube666(solved_666, "URFDLB")
+        for move in samples[-1][1]:
+            missed.rotate(move)
+        plain, _ = self._phase_two_ranks(missed, "--lr-bar-cost", str(LR_BAR))
+        self.assertGreater(plain["LR_BAR_COST"], 3)
+
+        result = subprocess.run(
+            [
+                str(BINARY),
+                "--kociemba",
+                missed.get_kociemba_string(True),
+                "--stage-ud-inner-x-pair-lr-obliques",
+                "--ud-inner-x-cost",
+                str(UD_INNER_X),
+                "--lr-bar-cost",
+                str(LR_BAR),
+                "--multiplier",
+                "1.1",
+                "--print-ranks",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("cannot be combined with --multiplier", result.stderr)
 
     def test_orbit1_cost_files_must_be_passed_together(self):
         result = subprocess.run(
@@ -391,6 +458,8 @@ class RankedCentersStage666Test(unittest.TestCase):
                 "--stage-ud-inner-x-pair-lr-obliques",
                 "--ud-inner-x-cost",
                 str(UD_INNER_X),
+                "--lr-bar-cost",
+                str(LR_BAR),
                 "--ud-inner-x-even-cost",
                 "even.bin",
                 "--print-ranks",
@@ -418,7 +487,7 @@ class RankedCentersStage666Test(unittest.TestCase):
 
         odd, _ = self._phase_two_ranks(self.solved, "--orbit1-need-odd-w", *flags)
         self.assertEqual(odd["UD_INNER_X_COST"], 0)
-        self.assertEqual(odd["UNPAIRED"], 0)
+        self.assertEqual(odd["LR_BAR_COST"], 0)
         self.assertEqual(odd["ORBIT1_COST"], 7)
         self.assertEqual(odd["COST"], 7)
 
@@ -426,44 +495,6 @@ class RankedCentersStage666Test(unittest.TestCase):
         moved.rotate("3Lw")
         after, _ = self._phase_two_ranks(moved, "--orbit1-need-odd-w", *flags)
         self.assertEqual(after["ORBIT1_COST"], 1)
-
-    @unittest.skipUnless(UD_INNER_X.is_file() and LR_INNER_X.is_file(), "inner-x tables are not present")
-    def test_unpaired_multiplier_rejects_invalid_values(self):
-        result = subprocess.run(
-            [
-                str(BINARY),
-                "--kociemba",
-                self.solved.get_kociemba_string(True),
-                "--stage-ud-inner-x-pair-lr-obliques",
-                "--ud-inner-x-cost",
-                str(UD_INNER_X),
-                "--unpaired-multiplier",
-                "0",
-                "--print-ranks",
-            ],
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("must be in (0.0, 1.0]", result.stderr)
-
-        result = subprocess.run(
-            [
-                str(BINARY),
-                "--kociemba",
-                self.solved.get_kociemba_string(True),
-                "--stage-lr-inner-x",
-                "--lr-inner-x-cost",
-                str(LR_INNER_X),
-                "--unpaired-multiplier",
-                "0.25",
-                "--print-ranks",
-            ],
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("only valid with --stage-ud-inner-x-pair-lr-obliques", result.stderr)
 
     def test_zero_byte_is_absent_and_file_size_is_enforced(self):
         self.write_tables([], labels=REQUIRED_LABELS)
@@ -553,12 +584,12 @@ class RankedCentersStage666Test(unittest.TestCase):
         for label, flag, _, required in TABLES:
             if required:
                 cmd.extend((flag, str(self.paths[label])))
-        cmd.extend(("--threads", "1", "--max-ida-threshold", "1"))
+        cmd.extend(("--threads", "1", "--max-ida-threshold", "1", "--root-cap", "1"))
 
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("loaded 2 starting states", result.stdout)
+        self.assertIn("keeping 1 of 2 roots after phase-2 heuristic ranking", result.stdout)
         self.assertIn("ROOT_INDEX 22", result.stdout)
         self.assertIn("SOLUTION (0 steps)", result.stdout)
 

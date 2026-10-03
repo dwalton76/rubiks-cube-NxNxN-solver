@@ -26,8 +26,6 @@
 #define PRODUCT_UNIVERSE UINT64_C(165636900)
 #define AXIS_CENTER_UNIVERSE UINT64_C(735471)
 #define OBLIQUE_PAIR_COUNT 24
-#define MATRIX_UNPAIRED_MAX 8
-#define MATRIX_COST_MAX 8
 #define DEFAULT_MAX_IDA_THRESHOLD 20
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
@@ -100,34 +98,6 @@ static const unsigned int *orbit_squares[ORBIT_COUNT] = {
 };
 
 /*
- * Combined heuristic for staging the UD inner x-centers while pairing the
- * LR obliques. Rows are the unpaired oblique count (0..8), columns are the
- * exact ranked table cost (0..8, the table's completed depth).
- *
- * The table only sees the UD inner x-centers and one move pairs at most four
- * obliques, so max(table, ceil(unpaired/4)) is admissible yet far below the
- * real remaining distance.
- *
- * Column 0 seeds from ceil(unpaired/4). Every other cell is the smallest
- * remaining move count observed for that pair while sampling solutions, never
- * below max(column 0, table cost). Sparse columns (table cost 7 and 8) are
- * filled from neighbors.
- *
- * utils/build-666-UD-inner-centers-oblique-matrix.py was used to build this.
- */
-static const unsigned char unpaired_count_UD_inner_centers_666[MATRIX_UNPAIRED_MAX + 1][MATRIX_COST_MAX + 1] = {
-    { 0,  1,  2,  3,  4,  5,  6,  7,  8},  // unpaired 0
-    { 1,  1,  2,  3,  6,  6,  6,  7,  8},  // unpaired 1
-    { 1,  1,  2,  3,  6,  6,  6,  7,  8},  // unpaired 2
-    { 1,  1,  2,  3,  6,  6,  6,  8,  8},  // unpaired 3
-    { 1,  1,  2,  3,  6,  6,  6,  9,  9},  // unpaired 4
-    { 2,  2,  2,  3,  6,  6,  6,  9,  9},  // unpaired 5
-    { 2,  2,  2,  3,  6,  6,  6, 10, 10},  // unpaired 6
-    { 2,  2,  4,  5,  6,  6,  7, 10, 10},  // unpaired 7
-    { 2,  2,  4,  7,  8,  8,  8, 10, 10},  // unpaired 8
-};
-
-/*
  * Each table holds the exact joint distance for one pair of orbits, so the
  * heuristic is the max over all three pairings of the remaining phase-4
  * orbits. A cost of 0 therefore means all three UD center orbits are staged.
@@ -159,8 +129,6 @@ static move_type inverse_move[MOVE_MAX];
 static unsigned char orbit0_requirement;
 static unsigned char orbit1_requirement;
 static float cost_to_goal_multiplier;
-static float unpaired_multiplier = 0.25f;
-static int use_unpaired_multiplier;
 static int stage_lr_inner_x;
 static int stage_ud_inner_x_pair_lr_obliques;
 static const char *ud_inner_x_filename;
@@ -199,14 +167,15 @@ struct heuristic_result {
     uint64_t orbit_rank[ORBIT_COUNT];
     uint64_t table_rank[TABLE_COUNT];
     unsigned char table_cost[TABLE_COUNT];
-    unsigned char unpaired_count;
     unsigned char ud_inner_x_cost;
+    unsigned char lr_bar_cost;
     unsigned char lr_inner_x_cost;
     unsigned char cost;
 };
 
 struct search_root {
     unsigned int index;
+    unsigned int input_order;
     unsigned char orbit0_requirement;
     unsigned char orbit1_requirement;
     unsigned char initial_cost;
@@ -234,11 +203,11 @@ static void usage(const char *program)
         "usage: %s {--kociemba STATE | --kociemba-file FILE} "
         "{--stage-lr-inner-x --lr-inner-x-cost FILE | "
         "--stage-ud-inner-x-pair-lr-obliques --ud-inner-x-cost FILE "
-        "[--ud-inner-x-even-cost FILE --ud-inner-x-odd-cost FILE] | "
+        "[--ud-inner-x-even-cost FILE --ud-inner-x-odd-cost FILE] [--lr-bar-cost FILE] | "
         "--left-right-oblique-cost FILE --left-oblique-outer-x-cost FILE "
         "--right-oblique-outer-x-cost FILE} "
         "[--min-ida-threshold N] [--max-ida-threshold N] [--threads N] "
-        "[--multiplier FLOAT] [--unpaired-multiplier FLOAT] [--solution-count N] "
+        "[--multiplier FLOAT] [--solution-count N] [--root-cap N] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--orbit0-need-odd-w|--orbit0-need-even-w] "
         "[--orbit1-need-odd-w|--orbit1-need-even-w] "
@@ -248,41 +217,19 @@ static void usage(const char *program)
     printf(
         "  --kociemba-file lines: ROOT_INDEX,ORBIT0_REQUIREMENT,ORBIT1_REQUIREMENT,STATE\n"
         "  parity requirements are 0=any, 1=odd, 2=even\n"
-        "  --unpaired-multiplier F  use max(table, ceil(unpaired * F)) instead of the combined\n"
-        "                           matrix; 0.25 is admissible and larger values are not\n"
         "  --ud-inner-x-even-cost   phase-2 distance to staged UD inner x with even orbit-1 parity\n"
         "  --ud-inner-x-odd-cost    same coordinate with odd orbit-1 parity; both files are required\n"
         "                           together and the search switches on each 3Lw/3Rw quarter\n"
+        "  --lr-bar-cost FILE       phase-2 cost is max(LR bar table, UD inner x, orbit-1); a table\n"
+        "                           miss looks one move ahead: depth+1 on a hit, depth+2 otherwise\n"
+        "  --bar-lookup-stats       print direct hits, lookahead hits/misses, and hash probes\n"
+        "  --build-lr-bar-table FILE [--lr-bar-depth N]\n"
+        "                           breadth first from every paired LR oblique placement to\n"
+        "                           depth N (default 3), then exit\n"
         "  --solution-count N       stop after N solutions at the shortest length;\n"
         "                           0 keeps searching until that length is exhausted\n"
+        "  --root-cap N             rank phase-2 roots by initial cost and keep the best N\n"
     );
-}
-
-/* Eight of the 24 oblique pairs hold the LR obliques once they are all paired. */
-static unsigned char unpaired_lr_oblique_count(const char *cube)
-{
-    unsigned char unpaired = 8;
-
-    for (unsigned int index = 0; index < OBLIQUE_PAIR_COUNT; index++) {
-        char left = cube[all_left_oblique_squares[index]];
-        char right = cube[all_right_oblique_squares[index]];
-
-        if ((left == 'L' || left == 'R') && (right == 'L' || right == 'R')) {
-            unpaired--;
-        }
-    }
-    return unpaired;
-}
-
-/*
- * Phase 2 experiment: a move that raises the unpaired LR oblique count is
- * never expanded. This is incomplete — some shortest paths unpair for a ply —
- * but it keeps the search on monotonically non-worsening pairing progress.
- */
-static int pairing_got_worse(const char *cube, unsigned char unpaired_before)
-{
-    return stage_ud_inner_x_pair_lr_obliques &&
-           unpaired_lr_oblique_count(cube) > unpaired_before;
 }
 
 static uint64_t combination_rank_axis(
@@ -313,15 +260,751 @@ static uint64_t combination_rank_axis(
 }
 
 /*
- * One move pairs at most four of the eight LR oblique pairs, so a multiplier
- * of 0.25 is admissible. ceilf is required: integer ceil(unpaired / 4)
- * truncates first and would treat UNPR 1..3 as solved.
+ * Phase-2 LR bar table. The key is one bit per oblique sticker, set when it
+ * holds L or R: bit i is all_left_oblique_squares[i] and bit i + 24 is
+ * all_right_oblique_squares[i]. A key with eight pairs fully set is a goal;
+ * there are C(24, 8) of them. The file is an open-address hash of
+ * key | cost << 48, built breadth first from every goal to a fixed depth, so
+ * a miss means more than that many moves remain. A key always has 16 bits
+ * set, so 0 marks an empty slot.
  */
-static unsigned char unpaired_cost(unsigned char unpaired)
-{
-    unsigned char cost = (unsigned char)ceilf(unpaired * unpaired_multiplier);
+#define BAR_SQUARES 48
+#define BAR_SYMMETRIES 16
+#define BAR_KEY_MASK ((UINT64_C(1) << BAR_SQUARES) - 1)
+#define BAR_COST_SHIFT 48
+#define BAR_MAX_DEPTH 20
+#define BAR_FIRST_LOG2 22
+#define BAR_MAX_LOG2 31
+#define BAR_COUNT_BATCH 0x10000u
+#define BAR_CACHE_LOG2 23
 
-    return unpaired && !cost ? 1 : cost;
+struct bar_header {
+    char magic[8];
+    uint32_t depth;
+    uint32_t log2_capacity;
+    uint64_t count;
+    uint64_t depth_count[BAR_MAX_DEPTH + 1];
+};
+
+static const char BAR_MAGIC[8] = {'L', 'R', 'B', 'A', 'R', '6', '6', '2'};
+static const char *lr_bar_filename;
+static const uint64_t *bar_slots;
+static uint64_t bar_mask;
+static unsigned int bar_shift;
+static unsigned char bar_depth;
+static unsigned char bar_miss_cost;
+static void *bar_map;
+static size_t bar_map_size;
+static uint64_t *bar_cache;
+static int bar_lookup_stats;
+static atomic_uint_fast64_t bar_direct_hits;
+static atomic_uint_fast64_t bar_lookahead_hits;
+static atomic_uint_fast64_t bar_lookahead_misses;
+static atomic_uint_fast64_t bar_cache_hits;
+static atomic_uint_fast64_t bar_probes;
+static uint64_t bar_symmetry_byte_map[BAR_SYMMETRIES][6][256];
+static unsigned char bar_symmetry_position[BAR_SYMMETRIES][BAR_SQUARES];
+static int bar_symmetry_initialized;
+static unsigned int bar_move_count;
+
+static unsigned int bar_square(unsigned int bit)
+{
+    return bit < OBLIQUE_PAIR_COUNT ? all_left_oblique_squares[bit]
+                                    : all_right_oblique_squares[bit - OBLIQUE_PAIR_COUNT];
+}
+
+static uint64_t bar_key(const char *cube)
+{
+    uint64_t key = 0;
+
+    for (unsigned int bit = 0; bit < BAR_SQUARES; bit++) {
+        char value = cube[bar_square(bit)];
+
+        if (value == 'L' || value == 'R') {
+            key |= UINT64_C(1) << bit;
+        }
+    }
+    return key;
+}
+
+static void bar_square_position(unsigned int square, int8_t position[3])
+{
+    unsigned int face = (square - 1) / 36;
+    unsigned int offset = (square - 1) % 36;
+    int row = (int)(offset / 6);
+    int col = (int)(offset % 6);
+    static const int8_t coordinate[6] = {-5, -3, -1, 1, 3, 5};
+
+    switch (face) {
+        case 0: position[0] = coordinate[col]; position[1] = 5; position[2] = coordinate[row]; break;
+        case 1: position[0] = -5; position[1] = -coordinate[row]; position[2] = coordinate[col]; break;
+        case 2: position[0] = coordinate[col]; position[1] = -coordinate[row]; position[2] = 5; break;
+        case 3: position[0] = 5; position[1] = -coordinate[row]; position[2] = -coordinate[col]; break;
+        case 4: position[0] = -coordinate[col]; position[1] = -coordinate[row]; position[2] = -5; break;
+        default: position[0] = coordinate[col]; position[1] = -5; position[2] = -coordinate[row]; break;
+    }
+}
+
+static void bar_init_symmetry(void)
+{
+    static const unsigned char axis_permutations[2][3] = {
+        {0, 1, 2}, {0, 2, 1},
+    };
+    int8_t coordinates[BAR_SQUARES][3];
+    unsigned int symmetry = 0;
+
+    if (bar_symmetry_initialized) {
+        return;
+    }
+    for (unsigned int bit = 0; bit < BAR_SQUARES; bit++) {
+        bar_square_position(bar_square(bit), coordinates[bit]);
+    }
+    for (unsigned int permutation = 0; permutation < 2; permutation++) {
+        const unsigned char *axes = axis_permutations[permutation];
+
+        for (unsigned int sign_bits = 0; sign_bits < 8; sign_bits++, symmetry++) {
+            for (unsigned int source = 0; source < BAR_SQUARES; source++) {
+                int8_t image[3] = {0, 0, 0};
+                unsigned int destination = BAR_SQUARES;
+
+                for (unsigned int axis = 0; axis < 3; axis++) {
+                    int sign = (sign_bits & (1u << axis)) ? 1 : -1;
+                    image[axes[axis]] = (int8_t)(sign * coordinates[source][axis]);
+                }
+                for (unsigned int candidate = 0; candidate < BAR_SQUARES; candidate++) {
+                    if (coordinates[candidate][0] == image[0] &&
+                        coordinates[candidate][1] == image[1] &&
+                        coordinates[candidate][2] == image[2]) {
+                        destination = candidate;
+                        break;
+                    }
+                }
+                if (destination == BAR_SQUARES) {
+                    fprintf(stderr, "ERROR: LR-axis symmetry leaves the oblique coordinate\n");
+                    exit(1);
+                }
+                bar_symmetry_position[symmetry][source] = (unsigned char)destination;
+            }
+        }
+    }
+    if (symmetry != BAR_SYMMETRIES) {
+        abort();
+    }
+    for (unsigned int map = 0; map < BAR_SYMMETRIES; map++) {
+        for (unsigned int byte = 0; byte < 6; byte++) {
+            for (unsigned int value = 0; value < 256; value++) {
+                uint64_t transformed = 0;
+
+                for (unsigned int bit = 0; bit < 8; bit++) {
+                    if (value & (1u << bit)) {
+                        transformed |= UINT64_C(1) << bar_symmetry_position[map][byte * 8 + bit];
+                    }
+                }
+                bar_symmetry_byte_map[map][byte][value] = transformed;
+            }
+        }
+    }
+    bar_symmetry_initialized = 1;
+}
+
+static inline uint64_t bar_transform(uint64_t key, unsigned int symmetry)
+{
+    const uint64_t (*map)[256] = bar_symmetry_byte_map[symmetry];
+
+    return map[0][key & 0xff] | map[1][(key >> 8) & 0xff] | map[2][(key >> 16) & 0xff] |
+           map[3][(key >> 24) & 0xff] | map[4][(key >> 32) & 0xff] | map[5][(key >> 40) & 0xff];
+}
+
+static inline uint64_t bar_canonical_key(uint64_t key)
+{
+    uint64_t canonical = UINT64_MAX;
+
+    for (unsigned int symmetry = 0; symmetry < BAR_SYMMETRIES; symmetry++) {
+        uint64_t transformed = bar_transform(key, symmetry);
+
+        if (transformed < canonical) {
+            canonical = transformed;
+        }
+    }
+    return canonical;
+}
+
+static int bar_symmetry_is_consistent(uint64_t key)
+{
+    uint64_t canonical = bar_canonical_key(key);
+
+    for (unsigned int symmetry = 0; symmetry < BAR_SYMMETRIES; symmetry++) {
+        if (bar_canonical_key(bar_transform(key, symmetry)) != canonical) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static inline uint64_t bar_hash_index(uint64_t key, unsigned int shift)
+{
+    return (key * UINT64_C(0x9E3779B97F4A7C15)) >> shift;
+}
+
+static void bar_init_moves(void);
+static inline uint64_t bar_apply_move(uint64_t key, unsigned int move_index);
+
+static unsigned char bar_probe(uint64_t canonical, uint64_t *probes)
+{
+    uint64_t index = bar_hash_index(canonical, bar_shift);
+
+    while (1) {
+        uint64_t slot = bar_slots[index];
+
+        (*probes)++;
+        if (!slot) {
+            return UINT8_MAX;
+        }
+        if ((slot & BAR_KEY_MASK) == canonical) {
+            return (unsigned char)(slot >> BAR_COST_SHIFT);
+        }
+        index = (index + 1) & bar_mask;
+    }
+}
+
+static unsigned char bar_table_cost(const char *cube)
+{
+    uint64_t canonical = bar_canonical_key(bar_key(cube));
+    uint64_t cache_index = bar_hash_index(canonical, 64 - BAR_CACHE_LOG2);
+    uint64_t cached = __atomic_load_n(&bar_cache[cache_index], __ATOMIC_RELAXED);
+    uint64_t probes = 0;
+    unsigned char cost;
+
+    if ((cached & BAR_KEY_MASK) == canonical) {
+        if (bar_lookup_stats) {
+            atomic_fetch_add_explicit(&bar_cache_hits, 1, memory_order_relaxed);
+        }
+        return (unsigned char)(cached >> BAR_COST_SHIFT);
+    }
+    cost = bar_probe(canonical, &probes);
+    if (cost != UINT8_MAX) {
+        __atomic_store_n(
+            &bar_cache[cache_index],
+            canonical | ((uint64_t)cost << BAR_COST_SHIFT),
+            __ATOMIC_RELAXED
+        );
+        if (bar_lookup_stats) {
+            atomic_fetch_add_explicit(&bar_direct_hits, 1, memory_order_relaxed);
+            atomic_fetch_add_explicit(&bar_probes, probes, memory_order_relaxed);
+        }
+        return cost;
+    }
+    for (unsigned int move = 0; move < bar_move_count; move++) {
+        uint64_t child = bar_canonical_key(bar_apply_move(canonical, move));
+
+        cost = bar_probe(child, &probes);
+        if (cost != UINT8_MAX) {
+            if (cost != bar_depth) {
+                fprintf(stderr, "ERROR: LR bar miss has a neighbor at depth %u\n", cost);
+                abort();
+            }
+            if (bar_lookup_stats) {
+                atomic_fetch_add_explicit(&bar_lookahead_hits, 1, memory_order_relaxed);
+                atomic_fetch_add_explicit(&bar_probes, probes, memory_order_relaxed);
+            }
+            __atomic_store_n(
+                &bar_cache[cache_index],
+                canonical | ((uint64_t)bar_miss_cost << BAR_COST_SHIFT),
+                __ATOMIC_RELAXED
+            );
+            return bar_miss_cost;
+        }
+    }
+    if (bar_lookup_stats) {
+        atomic_fetch_add_explicit(&bar_lookahead_misses, 1, memory_order_relaxed);
+        atomic_fetch_add_explicit(&bar_probes, probes, memory_order_relaxed);
+    }
+    cost = (unsigned char)(bar_miss_cost + 1);
+    __atomic_store_n(
+        &bar_cache[cache_index],
+        canonical | ((uint64_t)cost << BAR_COST_SHIFT),
+        __ATOMIC_RELAXED
+    );
+    return cost;
+}
+
+static void print_bar_lookup_stats(void)
+{
+    if (!bar_lookup_stats) {
+        return;
+    }
+    printf(
+        "LR_BAR_LOOKUPS cache_hits %" PRIuFAST64 " direct_hits %" PRIuFAST64 " lookahead_hits %" PRIuFAST64
+        " lookahead_misses %" PRIuFAST64 " probes %" PRIuFAST64 "\n",
+        atomic_load_explicit(&bar_cache_hits, memory_order_relaxed),
+        atomic_load_explicit(&bar_direct_hits, memory_order_relaxed),
+        atomic_load_explicit(&bar_lookahead_hits, memory_order_relaxed),
+        atomic_load_explicit(&bar_lookahead_misses, memory_order_relaxed),
+        atomic_load_explicit(&bar_probes, memory_order_relaxed)
+    );
+}
+
+static void map_bar_table(const char *filename)
+{
+    const struct bar_header *header;
+    uint64_t counted = 0;
+    struct stat info;
+    int fd;
+
+    bar_init_moves();
+    fd = open(filename, O_RDONLY);
+
+    if (fd < 0) {
+        fprintf(stderr, "ERROR: could not open %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    if (fstat(fd, &info) != 0 || (size_t)info.st_size < sizeof(*header)) {
+        fprintf(stderr, "ERROR: %s is not an LR bar table\n", filename);
+        exit(1);
+    }
+    bar_map_size = (size_t)info.st_size;
+    bar_map = mmap(NULL, bar_map_size, PROT_READ, MAP_SHARED, fd, 0);
+    close(fd);
+    if (bar_map == MAP_FAILED) {
+        fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
+        exit(1);
+    }
+    header = bar_map;
+    for (unsigned int depth = 0; depth <= header->depth && depth <= BAR_MAX_DEPTH; depth++) {
+        counted += header->depth_count[depth];
+    }
+    if (memcmp(header->magic, BAR_MAGIC, sizeof(BAR_MAGIC)) != 0 ||
+        header->log2_capacity < 1 || header->log2_capacity > BAR_MAX_LOG2 ||
+        header->depth != 3 ||
+        header->count != counted ||
+        header->count >= (UINT64_C(1) << header->log2_capacity) ||
+        bar_map_size != sizeof(*header) + (sizeof(uint64_t) << header->log2_capacity)) {
+        fprintf(stderr, "ERROR: %s is not an LR bar table\n", filename);
+        exit(1);
+    }
+    bar_slots = (const uint64_t *)(header + 1);
+    bar_mask = (UINT64_C(1) << header->log2_capacity) - 1;
+    bar_shift = 64 - header->log2_capacity;
+    bar_depth = (unsigned char)header->depth;
+    bar_miss_cost = bar_depth + 1;
+    bar_cache = mmap(
+        NULL,
+        sizeof(uint64_t) << BAR_CACHE_LOG2,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANONYMOUS,
+        -1,
+        0
+    );
+    if (bar_cache == MAP_FAILED) {
+        fprintf(stderr, "ERROR: could not allocate LR bar lookup cache\n");
+        exit(1);
+    }
+    /* The first phase-2 search otherwise faults random pages from a 16 GiB
+     * file. Start asynchronous read-ahead when the table is mapped. */
+    (void)madvise(bar_map, bar_map_size, MADV_WILLNEED);
+}
+
+static void unmap_bar_table(void)
+{
+    if (bar_map) {
+        munmap(bar_map, bar_map_size);
+    }
+    if (bar_cache && bar_cache != MAP_FAILED) {
+        munmap(bar_cache, sizeof(uint64_t) << BAR_CACHE_LOG2);
+    }
+    bar_map = NULL;
+    bar_slots = NULL;
+    bar_cache = NULL;
+}
+
+/* Builder state. Slots are written with compare-and-swap so threads can share one table. */
+static struct {
+    uint64_t *slots;
+    uint64_t *old_slots;
+    uint64_t old_capacity;
+    unsigned int log2;
+    uint64_t mask;
+    unsigned int shift;
+    uint64_t limit;
+    atomic_uint_fast64_t count;
+    atomic_int overflow;
+} bar_build;
+
+static uint64_t bar_byte_map[MOVE_COUNT_666][6][256];
+static unsigned char bar_move_position[MOVE_COUNT_666][BAR_SQUARES];
+
+struct bar_worker {
+    unsigned int index;
+    unsigned int threads;
+    unsigned char depth;
+};
+
+static uint64_t *bar_allocate(unsigned int log2)
+{
+    size_t bytes = sizeof(uint64_t) << log2;
+    void *slots = mmap(NULL, bytes, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (slots == MAP_FAILED) {
+        fprintf(stderr, "ERROR: could not allocate %zu bytes for the LR bar table\n", bytes);
+        exit(1);
+    }
+    return slots;
+}
+
+static void bar_use_table(uint64_t *slots, unsigned int log2, double max_load)
+{
+    bar_build.slots = slots;
+    bar_build.log2 = log2;
+    bar_build.mask = (UINT64_C(1) << log2) - 1;
+    bar_build.shift = 64 - log2;
+    bar_build.limit = (uint64_t)((double)(UINT64_C(1) << log2) * max_load);
+}
+
+/* 1 when the key was added, 0 when it was already there. */
+static int bar_insert(uint64_t key, unsigned char cost)
+{
+    uint64_t packed = key | ((uint64_t)cost << BAR_COST_SHIFT);
+    uint64_t index = bar_hash_index(key, bar_build.shift);
+
+    while (1) {
+        uint64_t slot = __atomic_load_n(&bar_build.slots[index], __ATOMIC_RELAXED);
+
+        if (!slot) {
+            uint64_t expected = 0;
+
+            if (__atomic_compare_exchange_n(
+                    &bar_build.slots[index], &expected, packed, 0, __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
+                return 1;
+            }
+            slot = expected;
+        }
+        if ((slot & BAR_KEY_MASK) == key) {
+            return 0;
+        }
+        index = (index + 1) & bar_build.mask;
+    }
+}
+
+static void bar_count_inserts(uint64_t *pending, int force)
+{
+    if (*pending >= BAR_COUNT_BATCH || (force && *pending)) {
+        uint64_t total = atomic_fetch_add(&bar_build.count, *pending) + *pending;
+
+        *pending = 0;
+        if (total > bar_build.limit) {
+            atomic_store(&bar_build.overflow, 1);
+        }
+    }
+}
+
+static void bar_init_moves(void)
+{
+    char cube[CUBE_ARRAY_SIZE];
+    char rotate_tmp[CUBE_ARRAY_SIZE];
+
+    bar_init_symmetry();
+    bar_move_count = legal_move_count[MOVE_NONE];
+    for (unsigned int move_index = 0; move_index < bar_move_count; move_index++) {
+        move_type move = moves_666[legal_move_index[MOVE_NONE][move_index]];
+        unsigned char destination[BAR_SQUARES];
+
+        memset(cube, '.', sizeof(cube));
+        for (unsigned int bit = 0; bit < BAR_SQUARES; bit++) {
+            cube[bar_square(bit)] = (char)(64 + bit);
+        }
+        rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        for (unsigned int bit = 0; bit < BAR_SQUARES; bit++) {
+            int source = cube[bar_square(bit)] - 64;
+
+            if (source < 0 || source >= BAR_SQUARES) {
+                fprintf(stderr, "ERROR: %s moves a non-oblique onto an oblique square\n", move2str[move]);
+                exit(1);
+            }
+            destination[source] = (unsigned char)bit;
+            bar_move_position[move_index][source] = (unsigned char)bit;
+        }
+        for (unsigned int byte = 0; byte < 6; byte++) {
+            for (unsigned int value = 0; value < 256; value++) {
+                uint64_t moved = 0;
+
+                for (unsigned int bit = 0; bit < 8; bit++) {
+                    if (value & (1u << bit)) {
+                        moved |= UINT64_C(1) << destination[byte * 8 + bit];
+                    }
+                }
+                bar_byte_map[move_index][byte][value] = moved;
+            }
+        }
+    }
+    for (unsigned int symmetry = 0; symmetry < BAR_SYMMETRIES; symmetry++) {
+        for (unsigned int move = 0; move < bar_move_count; move++) {
+            int found = 0;
+
+            for (unsigned int candidate = 0; candidate < bar_move_count && !found; candidate++) {
+                found = 1;
+                for (unsigned int bit = 0; bit < BAR_SQUARES; bit++) {
+                    unsigned int left =
+                        bar_symmetry_position[symmetry][bar_move_position[move][bit]];
+                    unsigned int right =
+                        bar_move_position[candidate][bar_symmetry_position[symmetry][bit]];
+
+                    if (left != right) {
+                        found = 0;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                fprintf(
+                    stderr,
+                    "ERROR: LR symmetry %u does not conjugate legal move %s onto a legal move\n",
+                    symmetry,
+                    move2str[moves_666[legal_move_index[MOVE_NONE][move]]]
+                );
+                exit(1);
+            }
+        }
+    }
+}
+
+static inline uint64_t bar_apply_move(uint64_t key, unsigned int move_index)
+{
+    const uint64_t (*map)[256] = bar_byte_map[move_index];
+
+    return map[0][key & 0xff] | map[1][(key >> 8) & 0xff] | map[2][(key >> 16) & 0xff] |
+           map[3][(key >> 24) & 0xff] | map[4][(key >> 32) & 0xff] | map[5][(key >> 40) & 0xff];
+}
+
+static void *bar_expand_level(void *argument)
+{
+    struct bar_worker *worker = argument;
+    uint64_t capacity = bar_build.mask + 1;
+    uint64_t begin = capacity / worker->threads * worker->index;
+    uint64_t end = worker->index + 1 == worker->threads ? capacity : capacity / worker->threads * (worker->index + 1);
+    uint64_t pending = 0;
+
+    for (uint64_t index = begin; index < end; index++) {
+        uint64_t slot = __atomic_load_n(&bar_build.slots[index], __ATOMIC_RELAXED);
+        uint64_t key;
+
+        if (!slot || (slot >> BAR_COST_SHIFT) != worker->depth) {
+            continue;
+        }
+        if (atomic_load_explicit(&bar_build.overflow, memory_order_relaxed)) {
+            break;
+        }
+        key = slot & BAR_KEY_MASK;
+        for (unsigned int move_index = 0; move_index < bar_move_count; move_index++) {
+            pending += (uint64_t)bar_insert(
+                bar_canonical_key(bar_apply_move(key, move_index)),
+                worker->depth + 1
+            );
+        }
+        bar_count_inserts(&pending, 0);
+    }
+    bar_count_inserts(&pending, 1);
+    return NULL;
+}
+
+static void *bar_rehash_range(void *argument)
+{
+    struct bar_worker *worker = argument;
+    uint64_t begin = bar_build.old_capacity / worker->threads * worker->index;
+    uint64_t end = worker->index + 1 == worker->threads
+                       ? bar_build.old_capacity
+                       : bar_build.old_capacity / worker->threads * (worker->index + 1);
+
+    for (uint64_t index = begin; index < end; index++) {
+        uint64_t slot = bar_build.old_slots[index];
+
+        if (slot) {
+            bar_insert(slot & BAR_KEY_MASK, (unsigned char)(slot >> BAR_COST_SHIFT));
+        }
+    }
+    return NULL;
+}
+
+static void bar_run_threads(void *(*routine)(void *), unsigned int threads, unsigned char depth)
+{
+    pthread_t handles[MAX_THREADS];
+    struct bar_worker workers[MAX_THREADS];
+
+    for (unsigned int index = 0; index < threads; index++) {
+        workers[index].index = index;
+        workers[index].threads = threads;
+        workers[index].depth = depth;
+        if (pthread_create(&handles[index], NULL, routine, &workers[index]) != 0) {
+            fprintf(stderr, "ERROR: could not create LR bar thread %u\n", index);
+            exit(1);
+        }
+    }
+    for (unsigned int index = 0; index < threads; index++) {
+        pthread_join(handles[index], NULL);
+    }
+}
+
+static void bar_rehash(unsigned int log2, unsigned int threads, double max_load)
+{
+    uint64_t old_capacity = bar_build.mask + 1;
+    uint64_t *old_slots = bar_build.slots;
+
+    bar_build.old_slots = old_slots;
+    bar_build.old_capacity = old_capacity;
+    bar_use_table(bar_allocate(log2), log2, max_load);
+    bar_run_threads(bar_rehash_range, threads, 0);
+    munmap(old_slots, sizeof(uint64_t) * old_capacity);
+    bar_build.old_slots = NULL;
+}
+
+static double bar_seconds_since(const struct timeval *start)
+{
+    struct timeval now;
+
+    gettimeofday(&now, NULL);
+    return (double)(now.tv_sec - start->tv_sec) + (double)(now.tv_usec - start->tv_usec) / 1000000.0;
+}
+
+static int build_lr_bar_table(const char *filename, unsigned char depth, unsigned int threads)
+{
+    const double build_load = 0.75;
+    const double file_load = 0.5;
+    struct bar_header header;
+    struct timeval start;
+    unsigned char completed = 0;
+    unsigned int file_log2;
+    uint64_t raw_goals = 0;
+    uint64_t goals = 0;
+    char temporary[PATH_MAX];
+    FILE *fh;
+
+    memset(&header, 0, sizeof(header));
+    memcpy(header.magic, BAR_MAGIC, sizeof(BAR_MAGIC));
+    gettimeofday(&start, NULL);
+    bar_init_moves();
+    bar_use_table(bar_allocate(BAR_FIRST_LOG2), BAR_FIRST_LOG2, build_load);
+    atomic_store(&bar_build.count, 0);
+    atomic_store(&bar_build.overflow, 0);
+
+    for (uint32_t pairs = 0xff; pairs < (UINT32_C(1) << OBLIQUE_PAIR_COUNT);) {
+        uint32_t low = pairs & -pairs;
+        uint32_t ripple = pairs + low;
+
+        raw_goals++;
+        goals += (uint64_t)bar_insert(
+            bar_canonical_key((uint64_t)pairs | ((uint64_t)pairs << OBLIQUE_PAIR_COUNT)),
+            0
+        );
+        pairs = (((ripple ^ pairs) >> 2) / low) | ripple;
+    }
+    atomic_store(&bar_build.count, goals);
+    header.depth_count[0] = goals;
+    LOG(
+        "LR bar table: %u legal phase-2 moves, %'llu raw goals, %'llu canonical goals\n",
+        bar_move_count,
+        (unsigned long long)raw_goals,
+        (unsigned long long)goals
+    );
+
+    for (unsigned char level = 0; level < depth; level++) {
+        uint64_t before = atomic_load(&bar_build.count);
+        int full = 0;
+
+        while (1) {
+            atomic_store(&bar_build.overflow, 0);
+            bar_run_threads(bar_expand_level, threads, level);
+            if (!atomic_load(&bar_build.overflow)) {
+                break;
+            }
+            if (bar_build.log2 >= BAR_MAX_LOG2) {
+                full = 1;
+                break;
+            }
+            LOG("LR bar table: growing to 2^%u slots during depth %u\n", bar_build.log2 + 1, level + 1);
+            bar_rehash(bar_build.log2 + 1, threads, build_load);
+            {
+                uint64_t recount = 0;
+
+                for (uint64_t index = 0; index <= bar_build.mask; index++) {
+                    recount += bar_build.slots[index] != 0;
+                }
+                atomic_store(&bar_build.count, recount);
+            }
+        }
+        header.depth_count[level + 1] = atomic_load(&bar_build.count) - before;
+        LOG(
+            "LR bar table: depth %u has %'llu entries, %'llu total, %.1fs\n",
+            level + 1,
+            (unsigned long long)header.depth_count[level + 1],
+            (unsigned long long)atomic_load(&bar_build.count),
+            bar_seconds_since(&start)
+        );
+        if (full) {
+            fprintf(
+                stderr,
+                "ERROR: LR bar depth %u did not fit in 2^%u slots; no table was written\n",
+                level + 1,
+                BAR_MAX_LOG2
+            );
+            return 1;
+        }
+        completed = level + 1;
+    }
+
+    header.depth = completed;
+    header.count = atomic_load(&bar_build.count);
+    {
+        uint64_t counted = 0;
+
+        for (unsigned int level = 0; level <= completed; level++) {
+            counted += header.depth_count[level];
+        }
+        if (completed != depth || counted != header.count) {
+            fprintf(stderr, "ERROR: LR bar table did not complete depth %u consistently\n", depth);
+            return 1;
+        }
+    }
+    file_log2 = BAR_FIRST_LOG2;
+    while (file_log2 < BAR_MAX_LOG2 && (double)header.count > (double)(UINT64_C(1) << file_log2) * file_load) {
+        file_log2++;
+    }
+    if (file_log2 != bar_build.log2) {
+        bar_rehash(file_log2, threads, 1.0);
+    }
+    header.log2_capacity = bar_build.log2;
+
+    if (snprintf(temporary, sizeof(temporary), "%s.tmp.%ld", filename, (long)getpid()) >= (int)sizeof(temporary)) {
+        fprintf(stderr, "ERROR: LR bar table filename is too long\n");
+        return 1;
+    }
+    fh = fopen(temporary, "wb");
+    if (!fh) {
+        fprintf(stderr, "ERROR: could not write %s: %s\n", temporary, strerror(errno));
+        return 1;
+    }
+    if (fwrite(&header, sizeof(header), 1, fh) != 1 ||
+        fwrite(bar_build.slots, sizeof(uint64_t), (size_t)bar_build.mask + 1, fh) != (size_t)bar_build.mask + 1 ||
+        fflush(fh) != 0 || fsync(fileno(fh)) != 0 || fclose(fh) != 0) {
+        fprintf(stderr, "ERROR: could not write %s\n", temporary);
+        unlink(temporary);
+        return 1;
+    }
+    if (rename(temporary, filename) != 0) {
+        fprintf(stderr, "ERROR: could not rename %s to %s: %s\n", temporary, filename, strerror(errno));
+        unlink(temporary);
+        return 1;
+    }
+    LOG(
+        "LR bar table: wrote %s, depth %u, %'llu entries in 2^%u slots, %.1fs\n",
+        filename,
+        header.depth,
+        (unsigned long long)header.count,
+        header.log2_capacity,
+        bar_seconds_since(&start)
+    );
+    for (unsigned int level = 0; level <= header.depth; level++) {
+        printf("%u steps has %'llu entries\n", level, (unsigned long long)header.depth_count[level]);
+    }
+    return 0;
 }
 
 static uint64_t ud_inner_x_rank(const char *cube)
@@ -444,20 +1127,6 @@ static unsigned char pair_orbit0_cost(const struct heuristic_result *found, unsi
     return best;
 }
 
-static unsigned char combined_cost(unsigned char centers_cost, unsigned char unpaired)
-{
-    unsigned char obliques_cost;
-
-    if (unpaired > MATRIX_UNPAIRED_MAX) {
-        unpaired = MATRIX_UNPAIRED_MAX;
-    }
-    if (!use_unpaired_multiplier && centers_cost <= MATRIX_COST_MAX) {
-        return unpaired_count_UD_inner_centers_666[unpaired][centers_cost];
-    }
-    obliques_cost = unpaired_cost(unpaired);
-    return centers_cost > obliques_cost ? centers_cost : obliques_cost;
-}
-
 /*
  * Matches get_orbit0/1_wide_quarter_turn_count() in ida_search_core.c: every
  * wide quarter turn flips its orbit, half turns never do.
@@ -573,8 +1242,8 @@ static struct heuristic_result heuristic(const char *cube)
             result.cost = UINT8_MAX;
             return result;
         }
-        result.unpaired_count = unpaired_lr_oblique_count(cube);
-        result.cost = combined_cost(result.ud_inner_x_cost, result.unpaired_count);
+        result.lr_bar_cost = bar_table_cost(cube);
+        result.cost = result.lr_bar_cost > result.ud_inner_x_cost ? result.lr_bar_cost : result.ud_inner_x_cost;
         return result;
     }
 
@@ -648,11 +1317,7 @@ static unsigned char cube_cost(const char *cube, unsigned char parity)
     return apply_multiplier_and_parity_floor(cost, parity);
 }
 
-/*
- * Phase 2 hot path: the caller already counted the unpaired obliques for the
- * regression prune, so reuse that instead of scanning all 24 pairs again.
- */
-static unsigned char phase2_cube_cost(const char *cube, unsigned char parity, unsigned char unpaired)
+static unsigned char phase2_cube_cost(const char *cube, unsigned char parity)
 {
     uint64_t rank = ud_inner_x_rank(cube);
     unsigned char table = decode_rank_cost(ud_inner_x_costs, rank);
@@ -661,7 +1326,12 @@ static unsigned char phase2_cube_cost(const char *cube, unsigned char parity, un
     if (table == UINT8_MAX) {
         return UINT8_MAX;
     }
-    cost = lift_with_orbit1(combined_cost(table, unpaired), rank, parity);
+    {
+        unsigned char bar = bar_table_cost(cube);
+
+        cost = bar > table ? bar : table;
+    }
+    cost = lift_with_orbit1(cost, rank, parity);
     return apply_multiplier_and_parity_floor(cost, parity);
 }
 
@@ -850,6 +1520,7 @@ static void unmap_ranked_tables(void)
     if (lr_inner_x_costs) {
         ida_unmap_cost_file(lr_inner_x_fd, lr_inner_x_costs, AXIS_CENTER_UNIVERSE);
     }
+    unmap_bar_table();
     ud_inner_x_fd = ud_inner_x_even_fd = ud_inner_x_odd_fd = lr_inner_x_fd = -1;
     ud_inner_x_costs = ud_inner_x_even_costs = ud_inner_x_odd_costs = lr_inner_x_costs = NULL;
 
@@ -1003,6 +1674,7 @@ static struct search_root *read_search_roots(const char *filename, unsigned int 
         }
 
         roots[*root_count].index = index;
+        roots[*root_count].input_order = *root_count;
         roots[*root_count].orbit0_requirement = (unsigned char)orbit0;
         roots[*root_count].orbit1_requirement = (unsigned char)orbit1;
         roots[*root_count].initial_cost = UINT8_MAX;
@@ -1020,6 +1692,20 @@ static struct search_root *read_search_roots(const char *filename, unsigned int 
     return roots;
 }
 
+static int compare_search_roots(const void *left_pointer, const void *right_pointer)
+{
+    const struct search_root *left = left_pointer;
+    const struct search_root *right = right_pointer;
+
+    if (left->initial_cost != right->initial_cost) {
+        return left->initial_cost < right->initial_cost ? -1 : 1;
+    }
+    if (left->input_order != right->input_order) {
+        return left->input_order < right->input_order ? -1 : 1;
+    }
+    return 0;
+}
+
 static int ida_search(
     struct worker *worker,
     char cube[CUBE_ARRAY_SIZE],
@@ -1035,8 +1721,6 @@ static int ida_search(
     unsigned char next_depth = depth + 1;
     int last_ply = next_depth == threshold;
     char rotate_tmp[CUBE_ARRAY_SIZE];
-    unsigned char unpaired_before =
-        stage_ud_inner_x_pair_lr_obliques ? unpaired_lr_oblique_count(cube) : 0;
 
     if (have_enough_solutions()) {
         worker->aborted = 1;
@@ -1053,13 +1737,9 @@ static int ida_search(
         }
         next_parity = parity_after_move(parity, move);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-        if (stage_ud_inner_x_pair_lr_obliques) {
-            unsigned char unpaired = unpaired_lr_oblique_count(cube);
-
-            cost = unpaired > unpaired_before ? UINT8_MAX : phase2_cube_cost(cube, next_parity, unpaired);
-        } else {
-            cost = cube_cost(cube, next_parity);
-        }
+        cost = stage_ud_inner_x_pair_lr_obliques
+                   ? phase2_cube_cost(cube, next_parity)
+                   : cube_cost(cube, next_parity);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
         worker->ida_count++;
 
@@ -1168,8 +1848,6 @@ static int build_split_tasks(
     unsigned char prefix[MAX_SPLIT_PREFIX] = {0};
     char cube[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
-    unsigned char unpaired_before =
-        stage_ud_inner_x_pair_lr_obliques ? unpaired_lr_oblique_count(root) : 0;
 
     split_task_count = 0;
     split_task_depth = threshold < MAX_SPLIT_PREFIX ? (threshold < 2 ? 2 : threshold) : MAX_SPLIT_PREFIX;
@@ -1185,9 +1863,6 @@ static int build_split_tasks(
         parity = parity_after_move(0, first);
         memcpy(cube, root, CUBE_ARRAY_SIZE);
         rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
-        if (pairing_got_worse(cube, unpaired_before)) {
-            continue;
-        }
         (*nodes)++;
         cost = cube_cost(cube, parity);
         if (cost == UINT8_MAX || 1 + cost > threshold) {
@@ -1256,8 +1931,6 @@ static void *search_split_tasks(void *argument)
             unsigned char move_index = split_tasks[task].move_index[step];
             move_type move = moves_666[legal_move_index[previous][move_index]];
             unsigned char depth = step + 1;
-            unsigned char unpaired_before =
-                stage_ud_inner_x_pair_lr_obliques ? unpaired_lr_oblique_count(cube) : 0;
 
             if (depth == worker->threshold && !last_ply_can_be_goal(parity, move)) {
                 pruned = 1;
@@ -1265,10 +1938,6 @@ static void *search_split_tasks(void *argument)
             }
             parity = parity_after_move(parity, move);
             rotate_666_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-            if (pairing_got_worse(cube, unpaired_before)) {
-                pruned = 1;
-                break;
-            }
             worker->solution[step] = move;
             previous = move;
 
@@ -1414,12 +2083,6 @@ static void run_benchmark(const char *root, unsigned int count)
 
     clock_gettime(CLOCK_MONOTONIC, &start);
     for (unsigned int index = 0; index < count; index++) {
-        sink += unpaired_lr_oblique_count(states[index]);
-    }
-    printf("oblique pairing count    %8.0f ns/op\n", seconds_since(start) * 1e9 / count);
-
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    for (unsigned int index = 0; index < count; index++) {
         sink += heuristic(states[index]).cost;
     }
     printf("full heuristic           %8.0f ns/op\n", seconds_since(start) * 1e9 / count);
@@ -1441,7 +2104,7 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
     if (stage_lr_inner_x) {
         printf(" %4s", "LRIX");
     } else if (stage_ud_inner_x_pair_lr_obliques) {
-        printf(" %4s %4s", "UDIX", "UNPR");
+        printf(" %4s %4s", "UDIX", "BAR");
         if (ud_inner_x_even_costs) {
             printf(" %4s", "O1");
         }
@@ -1480,7 +2143,7 @@ static void print_ida_summary(char cube[CUBE_ARRAY_SIZE], const move_type *solut
         if (stage_lr_inner_x) {
             printf(" %4u", h.lr_inner_x_cost);
         } else if (stage_ud_inner_x_pair_lr_obliques) {
-            printf(" %4u %4u", h.ud_inner_x_cost, h.unpaired_count);
+            printf(" %4u %4u", h.ud_inner_x_cost, h.lr_bar_cost);
             if (ud_inner_x_even_costs) {
                 unsigned char orbit_cost = ud_inner_x_orbit1_cost(ud_inner_x_rank(cube), parity);
 
@@ -1514,11 +2177,14 @@ int main(int argc, char **argv)
     int print_ranks = 0;
     int print_legal_moves = 0;
     unsigned int benchmark_count = 0;
+    const char *build_bar_filename = NULL;
+    unsigned int build_bar_depth = 3;
     char cube[CUBE_ARRAY_SIZE];
     char rotate_tmp[CUBE_ARRAY_SIZE];
     struct heuristic_result initial;
     struct search_root *roots = NULL;
     unsigned int root_count = 0;
+    unsigned int root_limit = 0;
     struct timeval start;
     uint64_t total_nodes = 0;
 
@@ -1570,11 +2236,10 @@ int main(int argc, char **argv)
             thread_count = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (strmatch(argv[index], "--multiplier") && index + 1 < argc) {
             cost_to_goal_multiplier = atof(argv[++index]);
-        } else if (strmatch(argv[index], "--unpaired-multiplier") && index + 1 < argc) {
-            unpaired_multiplier = (float)atof(argv[++index]);
-            use_unpaired_multiplier = 1;
         } else if (strmatch(argv[index], "--solution-count") && index + 1 < argc) {
             requested_solutions = (unsigned int)strtoul(argv[++index], NULL, 10);
+        } else if (strmatch(argv[index], "--root-cap") && index + 1 < argc) {
+            root_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (strmatch(argv[index], "--orbit0-need-odd-w")) {
             orbit0_requirement = PARITY_ODD;
         } else if (strmatch(argv[index], "--orbit0-need-even-w")) {
@@ -1592,14 +2257,48 @@ int main(int argc, char **argv)
             print_ranks = 1;
         } else if (strmatch(argv[index], "--print-legal-moves")) {
             print_legal_moves = 1;
+        } else if (strmatch(argv[index], "--lr-bar-cost") && index + 1 < argc) {
+            lr_bar_filename = argv[++index];
+        } else if (strmatch(argv[index], "--bar-lookup-stats")) {
+            bar_lookup_stats = 1;
+        } else if (strmatch(argv[index], "--build-lr-bar-table") && index + 1 < argc) {
+            build_bar_filename = argv[++index];
+        } else if (strmatch(argv[index], "--lr-bar-depth") && index + 1 < argc) {
+            build_bar_depth = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else {
             usage(argv[0]);
             return 2;
         }
     }
 
+    if (build_bar_filename) {
+        if (!build_bar_depth || build_bar_depth >= BAR_MAX_DEPTH) {
+            fprintf(stderr, "ERROR: --lr-bar-depth must be 1..%u\n", BAR_MAX_DEPTH - 1);
+            return 2;
+        }
+        if (!thread_count) {
+            long online = sysconf(_SC_NPROCESSORS_ONLN);
+            thread_count = online > 1 ? (unsigned int)online : 1;
+        }
+        if (thread_count > MAX_THREADS) {
+            thread_count = MAX_THREADS;
+        }
+        setvbuf(stdout, NULL, _IOLBF, 0);
+        setlocale(LC_NUMERIC, "");
+        stage_ud_inner_x_pair_lr_obliques = 1;
+        init_move_tables();
+        return build_lr_bar_table(build_bar_filename, (unsigned char)build_bar_depth, thread_count);
+    }
     if ((!kociemba && !kociemba_filename) || (kociemba && kociemba_filename)) {
         usage(argv[0]);
+        return 2;
+    }
+    if (lr_bar_filename && !stage_ud_inner_x_pair_lr_obliques) {
+        fprintf(stderr, "ERROR: --lr-bar-cost is only valid with --stage-ud-inner-x-pair-lr-obliques\n");
+        return 2;
+    }
+    if (lr_bar_filename && cost_to_goal_multiplier) {
+        fprintf(stderr, "ERROR: --lr-bar-cost cannot be combined with --multiplier\n");
         return 2;
     }
     if (kociemba_filename &&
@@ -1617,7 +2316,7 @@ int main(int argc, char **argv)
         return 2;
     }
     if ((stage_lr_inner_x && !lr_inner_x_filename) ||
-        (stage_ud_inner_x_pair_lr_obliques && !ud_inner_x_filename)) {
+        (stage_ud_inner_x_pair_lr_obliques && (!ud_inner_x_filename || !lr_bar_filename))) {
         usage(argv[0]);
         return 2;
     }
@@ -1693,15 +2392,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: --multiplier must be at least 1.0\n");
         return 2;
     }
-    if (use_unpaired_multiplier && !stage_ud_inner_x_pair_lr_obliques) {
-        fprintf(stderr, "ERROR: --unpaired-multiplier is only valid with --stage-ud-inner-x-pair-lr-obliques\n");
-        return 2;
-    }
-    if (use_unpaired_multiplier && (unpaired_multiplier <= 0.0f || unpaired_multiplier > 1.0f)) {
-        fprintf(stderr, "ERROR: --unpaired-multiplier must be in (0.0, 1.0]\n");
-        return 2;
-    }
-
     /* Line buffer so threshold progress still appears when stdout is a pipe. */
     setvbuf(stdout, NULL, _IOLBF, 0);
     setlocale(LC_NUMERIC, "");
@@ -1719,6 +2409,7 @@ int main(int argc, char **argv)
         }
         root_count = 1;
         roots[0].index = 0;
+        roots[0].input_order = 0;
         roots[0].orbit0_requirement = orbit0_requirement;
         roots[0].orbit1_requirement = orbit1_requirement;
         init_cube_from_kociemba(roots[0].cube, kociemba);
@@ -1744,6 +2435,9 @@ int main(int argc, char **argv)
     }
 
     map_ranked_tables();
+    if (lr_bar_filename) {
+        map_bar_table(lr_bar_filename);
+    }
     memcpy(cube, roots[0].cube, sizeof(cube));
     orbit0_requirement = roots[0].orbit0_requirement;
     orbit1_requirement = roots[0].orbit1_requirement;
@@ -1758,6 +2452,7 @@ int main(int argc, char **argv)
     }
     if (benchmark_count) {
         run_benchmark(roots[0].cube, benchmark_count);
+        print_bar_lookup_stats();
         unmap_ranked_tables();
         free(roots);
         return 0;
@@ -1770,9 +2465,10 @@ int main(int argc, char **argv)
             );
         } else if (stage_ud_inner_x_pair_lr_obliques) {
             printf(
-                "UD_INNER_X_COST %u UNPAIRED %u",
+                "UD_INNER_X_COST %u LR_BAR_COST %u LR_BAR_SYMMETRY_OK %u",
                 initial.ud_inner_x_cost,
-                initial.unpaired_count
+                initial.lr_bar_cost,
+                bar_symmetry_is_consistent(bar_key(cube))
             );
             if (ud_inner_x_even_costs) {
                 unsigned char orbit_cost = ud_inner_x_orbit1_cost(ud_inner_x_rank(cube), 0);
@@ -1800,6 +2496,7 @@ int main(int argc, char **argv)
             " COST %u\n",
             stage_ud_inner_x_pair_lr_obliques ? cube_cost(cube, 0) : initial.cost
         );
+        print_bar_lookup_stats();
         unmap_ranked_tables();
         free(roots);
         return initial.cost == UINT8_MAX;
@@ -1820,6 +2517,11 @@ int main(int argc, char **argv)
             return 1;
         }
     }
+    qsort(roots, root_count, sizeof(*roots), compare_search_roots);
+    if (root_limit && root_count > root_limit) {
+        LOG("keeping %u of %u roots after phase-2 heuristic ranking\n", root_limit, root_count);
+        root_count = root_limit;
+    }
 
     if (min_threshold == UINT8_MAX) {
         min_threshold = roots[0].initial_cost;
@@ -1837,6 +2539,7 @@ int main(int argc, char **argv)
     }
     if (stage_lr_inner_x || stage_ud_inner_x_pair_lr_obliques) {
         loaded_table_count = ud_inner_x_even_filename ? 3 : 1;
+        loaded_table_count += bar_slots ? 1 : 0;
     }
     if (root_count == 1) {
         print_cube(cube, CUBE_SIZE);
@@ -1846,27 +2549,13 @@ int main(int argc, char **argv)
     if (stage_lr_inner_x) {
         LOG("staging LR inner x-centers\n");
     } else if (stage_ud_inner_x_pair_lr_obliques) {
-        if (use_unpaired_multiplier) {
-            char cost_note[40] = "";
-
-            if (cost_to_goal_multiplier) {
-                snprintf(cost_note, sizeof(cost_note), ", cost multiplier %.2f", cost_to_goal_multiplier);
-            }
-            LOG(
-                "staging UD inner x-centers while pairing LR obliques anywhere, "
-                "unpaired multiplier %.2f%s%s, prune pairing regressions\n",
-                unpaired_multiplier,
-                cost_note,
-                ud_inner_x_even_costs ? ", orbit1 parity tables" : ""
-            );
-        } else if (ud_inner_x_even_costs) {
-            LOG(
-                "staging UD inner x-centers while pairing LR obliques anywhere, combined heuristic matrix, "
-                "orbit1 parity tables, prune pairing regressions\n"
-            );
-        } else {
-            LOG("staging UD inner x-centers while pairing LR obliques anywhere, combined heuristic matrix, prune pairing regressions\n");
-        }
+        LOG(
+            "staging UD inner x-centers while pairing LR obliques anywhere, LR bar table depth %u "
+            "(a miss costs %u)%s\n",
+            bar_depth,
+            bar_miss_cost,
+            ud_inner_x_even_costs ? ", orbit1 parity tables" : ""
+        );
     }
     LOG("searching with %u threads over %u ranked tables\n", thread_count, loaded_table_count);
     memset(best_solution, 0, sizeof(best_solution));
@@ -1915,7 +2604,7 @@ int main(int argc, char **argv)
                 atomic_load(&found_solutions),
                 atomic_load(&found_solutions) == 1 ? "" : "s",
                 (unsigned long long)total_nodes, us / 1000000, (unsigned long long)nodes_per_sec);
-            if (root_count > 1) {
+            if (kociemba_filename) {
                 printf("ROOT_INDEX %u\n", selected_root->index);
             }
             if (requested_solutions == 1) {
@@ -1923,6 +2612,7 @@ int main(int argc, char **argv)
                 print_ida_summary(selected_root->cube, best_solution);
                 print_cube(selected_root->cube, CUBE_SIZE);
             }
+            print_bar_lookup_stats();
             unmap_ranked_tables();
             free(roots);
             return 0;
@@ -1930,6 +2620,7 @@ int main(int argc, char **argv)
     }
 
     LOG("IDA failed with range %u->%u\n", min_threshold, max_threshold);
+    print_bar_lookup_stats();
     unmap_ranked_tables();
     free(roots);
     return 1;

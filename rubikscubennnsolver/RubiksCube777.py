@@ -19,9 +19,12 @@ Phase 2 - stage UD inner centers and pair LR oblique edges
     coordinate. Equal matrix costs try the root with fewer unpaired obliques
     first. After the first solution, up to eight roots the matrix priced at
     that same depth are searched one ply shallower, and a shorter one replaces
-    it. Even and odd orbit-1 tables are loaded when present, and each root
-    carries its own orbit-1 requirement. This is the last phase with a 3-wide
-    quarter turn, so it owns orbit-1 OLL.
+    it. The matrix cost is scaled by 1.05 for ``PHASE2_SECONDS`` seconds. A
+    search still running then is retried at 1.10, which kept the 17-move
+    solution on the 66s cube and finished in about 4s. Even and odd orbit-1
+    tables are loaded when present, and each root carries its own orbit-1
+    requirement. This is the last phase with a 3-wide quarter turn, so it
+    owns orbit-1 OLL.
 
 Phase 3 - stage the LR left, middle, and right obliques and the LR outer x-centers
     Those four orbits land on L and R. The search keeps up to 8 distinct shortest
@@ -75,8 +78,10 @@ Phase 9 - daisy-solve all six sides
 # standard libraries
 import logging
 import os
+import shutil
 import subprocess
 import tempfile
+import time
 
 # rubiks cube libraries
 from rubikscubennnsolver.LookupTable import download_file_if_needed
@@ -397,7 +402,8 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
     The LR obliques have no table; ``ida_search_777_centers_stage`` combines this
     table with an unpaired-oblique count over the left/middle/right triplets, and
     the obliques only have to be paired, not land on LR. The solver scales that
-    cost by ``--multiplier 1.05``. This is the last phase
+    cost by ``--multiplier 1.05`` for ``PHASE2_SECONDS`` seconds, then retries
+    the same roots at 1.10. This is the last phase
     with a 3Xw quarter turn available, so it owns orbit-1 OLL.
 
     ``solution_via_c(roots)`` searches every distinct phase-1 ending in one
@@ -419,6 +425,27 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
             orbit1_requirement = 1 if 1 in orbits_with_oll else 2
         return orbit0_requirement, orbit1_requirement
 
+    def _run_centers_stage(self, cmd, timeout):
+        logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as proc:
+            try:
+                output, _stderr = proc.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.communicate()
+                logger.info(
+                    "%s: no solution within %.0fs at multiplier %s",
+                    self.__class__.__name__,
+                    timeout,
+                    cmd[cmd.index("--multiplier") + 1],
+                )
+                return None
+            returncode = proc.returncode
+        output = output or ""
+        for line in output.splitlines():
+            logger.info("%s", line)
+        return output, returncode
+
     def solution_via_c(self, roots=None, root_cap=None):
         """
         Return ``(root_index, steps)`` for one cube, or for every phase-1 root.
@@ -436,7 +463,6 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
         odd_cost = "lookup-tables/lookup-table-7x7x7-step20-UD-inner-centers-stage-orbit1-odd.cost-only.bin"
         if os.path.exists(even_cost) and os.path.exists(odd_cost):
             cmd.extend(("--ud-inner-even-cost", even_cost, "--ud-inner-odd-cost", odd_cost))
-        cmd.extend(("--multiplier", str(PHASE2_MULTIPLIER)))
 
         roots_filename = None
         if roots:
@@ -463,25 +489,24 @@ class LookupTableIDA777LRObliqueEdgesUDInnerCentersStage:
         if root_cap is not None:
             cmd.extend(("--root-cap", str(root_cap)))
 
+        started = time.perf_counter()
         try:
-            logger.info("%s: solving via C\n%s", self.__class__.__name__, " ".join(cmd))
-            lines = []
-            with subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-            ) as proc:
-                for line in proc.stdout:
-                    lines.append(line)
-                    logger.info("%s", line.rstrip("\n"))
-                returncode = proc.wait()
+            result = None
+            for multiplier, timeout in (
+                (PHASE2_MULTIPLIER, PHASE2_SECONDS),
+                (PHASE2_FALLBACK_MULTIPLIER, None),
+            ):
+                result = self._run_centers_stage(cmd + ["--multiplier", f"{multiplier:.2f}"], timeout)
+                if result is not None:
+                    break
         finally:
             if roots_filename is not None:
+                _keep_slow_phase2_roots(roots_filename, time.perf_counter() - started)
                 os.unlink(roots_filename)
 
-        output = "".join(lines)
+        if result is None:
+            raise SolveError("ida_search_777_centers_stage timed out")
+        output, returncode = result
         self.parent.solve_via_c_output = output
         root_index = 0
         for line in output.splitlines():
@@ -555,11 +580,27 @@ PHASE56_ADMISSIBLE_SECONDS = 0.0
 # search that ran for 40 minutes, go to the oblique-plus-5x5 fallback.
 PHASE56_ADMISSIBLE_CAP = 5.0
 PHASE56_MATRIX_CAP = 6.0
-# 1.05 keeps the 1.0 length on the slow phase-2 states and on 6 of 8 ordinary
-# cubes, and cuts the 20-30s searches to a few seconds. 1.10 makes the 92s
-# search take 5s but adds a move on every cube and is slower than 1.05 on most.
+# On 30 phase-2 searches at 1.05, 23 finished by 22.8s and the next was 30.7s.
+# 1.10 on the 66s/17-move cube finishes in 3.8s at the same length. 1.15 matches
+# that length in 3.5s. 1.20 adds a move. Try 1.05 for 25s, then 1.10.
 PHASE2_MULTIPLIER = 1.05
+PHASE2_FALLBACK_MULTIPLIER = 1.10
+PHASE2_SECONDS = 25.0
 PHASE1_ROOT_CAP = 16
+# A phase-2 search this slow keeps its roots file so the same portfolio can be replayed.
+SLOW_PHASE2_SECONDS = 60.0
+SLOW_PHASE2_ROOTS_DIR = "/tmp/slow-search-roots"
+
+
+def _keep_slow_phase2_roots(path, seconds):
+    if seconds < SLOW_PHASE2_SECONDS:
+        return
+    os.makedirs(SLOW_PHASE2_ROOTS_DIR, exist_ok=True)
+    dest = os.path.join(SLOW_PHASE2_ROOTS_DIR, f"777-centers-roots-{seconds:.0f}s-{os.path.basename(path)}")
+    shutil.copy(path, dest)
+    logger.info("kept slow phase-2 roots at %s (%.1fs)", dest, seconds)
+
+
 PHASE3_SOLUTION_CAP = 8
 DAISY_PORTFOLIO_CAP = 16
 PHASE8_MULTIPLIER = 1.2

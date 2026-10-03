@@ -7,6 +7,7 @@ from unittest.mock import patch
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import (
     DAISY_INNER_X_SPINE_TABLES_666,
+    PHASE2_ROOT_CAP_666,
     RubiksCube666,
     UFBD_outer_x_centers_666,
     solved_666,
@@ -72,6 +73,54 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertEqual(cube.lt_daisy_centers.__class__.__name__, "LookupTableIDA666DaisyCenters")
         self.assertEqual(len(DAISY_INNER_X_SPINE_TABLES_666), 3)
         self.assertIsNone(cube.lt_daisy_centers.multiplier)
+
+    def test_666_phase2_searches_every_distinct_phase1_ending(self):
+        cube = RubiksCube666(solved_666, "URFDLB")
+        with patch("rubikscubennnsolver.LookupTable.download_file_if_needed"):
+            cube.lt_init()
+
+        captured = {}
+        finished = {"value": False}
+
+        def phase2_is_done():
+            return finished["value"]
+
+        def fake_phase2(roots, root_cap=None):
+            captured["roots"] = roots
+            captured["states"] = [root[1] for root in roots]
+            captured["root_cap"] = root_cap
+            finished["value"] = True
+            chosen_index = roots[1][0]
+            captured["chosen"] = ("Rw",) if chosen_index == 0 else ("Lw",)
+            return chosen_index, ("Fw",)
+
+        with (
+            patch.object(cube, "LR_inner_x_centers_staged", return_value=False),
+            patch.object(cube, "inner_x_centers_staged", side_effect=phase2_is_done),
+            patch.object(cube, "LR_obliques_paired", side_effect=phase2_is_done),
+            patch.object(cube, "center_solution_leads_to_oll_parity", return_value=[]),
+            patch.object(
+                cube.lt_LR_inner_x_centers_stage,
+                "solutions_via_c",
+                return_value=[("Rw",), ("Rw",), ("Lw",)],
+            ),
+            patch.object(
+                cube.lt_UD_inner_x_centers_stage_LR_oblique_pairing,
+                "solution_via_c",
+                side_effect=fake_phase2,
+            ),
+        ):
+            cube.stage_inner_x_and_pair_LR_obliques()
+
+        self.assertEqual(len(captured["roots"]), 2)
+        self.assertEqual(captured["root_cap"], PHASE2_ROOT_CAP_666)
+        self.assertEqual(len(set(captured["states"])), 2)
+        self.assertEqual([root[2] for root in captured["roots"]], [frozenset(), frozenset()])
+        self.assertGreaterEqual(captured["roots"][0][3], captured["roots"][1][3])
+        self.assertEqual(cube.solution[0], captured["chosen"][0])
+        self.assertEqual(cube.solution[2], "Fw")
+        self.assertTrue(any(step.startswith("COMMENT_LR_inner_x_centers_staged_") for step in cube.solution))
+        self.assertTrue(any("LR_oblique_edges_paired_" in step for step in cube.solution))
 
     def test_666_has_no_eo_phase_of_its_own(self):
         """The fake 4x4x4 that pairs the inside wings EOes them along the way."""
@@ -186,6 +235,7 @@ class CenterStagingTablesTest(unittest.TestCase):
         class FakeProc:
             def __init__(self, lines):
                 self.stdout = lines
+                self.returncode = 0
 
             def __enter__(self):
                 return self
@@ -193,8 +243,9 @@ class CenterStagingTablesTest(unittest.TestCase):
             def __exit__(self, *_exc):
                 return False
 
-            def wait(self):
-                return 0
+            def communicate(self, timeout=None):
+                captured["timeout"] = timeout
+                return ("".join(self.stdout), None)
 
         def fake_solutions(solution_count):
             self.assertEqual(solution_count, 0)
@@ -224,11 +275,60 @@ class CenterStagingTablesTest(unittest.TestCase):
         self.assertIn("--kociemba-file", captured["cmd"])
         self.assertNotIn("--kociemba", captured["cmd"])
         self.assertEqual(captured["cmd"][captured["cmd"].index("--root-cap") + 1], "16")
+        self.assertEqual(captured["cmd"][captured["cmd"].index("--multiplier") + 1], "1.05")
+        self.assertEqual(captured["timeout"], 25.0)
         self.assertEqual(len(captured["roots"]), 2)
         self.assertTrue(captured["roots"][1].startswith("1,0,"))
         self.assertIn(uw_state, captured["roots"][1])
         self.assertEqual(cube.solution[0], "3Uw")
         self.assertIn("F", cube.solution)
+
+    def test_777_phase2_retries_at_1_10_when_1_05_times_out(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        calls = []
+
+        class FakeProc:
+            def __init__(self, cmd):
+                self.cmd = cmd
+                self.returncode = 0
+                self.timed_out = False
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_exc):
+                return False
+
+            def kill(self):
+                calls.append("kill")
+
+            def communicate(self, timeout=None):
+                if self.timed_out:
+                    return ("", None)
+                multiplier = self.cmd[self.cmd.index("--multiplier") + 1]
+                if timeout is not None:
+                    self.timed_out = True
+                    calls.append((multiplier, timeout))
+                    raise subprocess.TimeoutExpired(self.cmd, timeout)
+                calls.append((multiplier, timeout))
+                return ("ROOT_INDEX 1\nSOLUTION (2 steps): U F\n", None)
+
+        def fake_popen(cmd, **_kwargs):
+            return FakeProc(cmd)
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch("rubikscubennnsolver.RubiksCube777.subprocess.Popen", side_effect=fake_popen),
+        ):
+            root_index, steps = cube.lt_LR_oblique_edges_UD_inner_centers_stage.solution_via_c(
+                roots=[(1, "STATE", set())],
+                root_cap=16,
+            )
+
+        self.assertEqual(calls, [("1.05", 25.0), "kill", ("1.10", None)])
+        self.assertEqual(root_index, 1)
+        self.assertEqual(steps, ("U", "F"))
 
     def test_larger_odd_cubes_use_combined_phase_two_only_on_full_mapping_slices(self):
         """Partial rings pair obliques only; a real 7x7 of that orbit uses phase 2."""

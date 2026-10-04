@@ -13,8 +13,8 @@ moves are rewritten as the matching wide turns on this cube.
        x-centers are real, or t-centers / oblique pairing otherwise).
     2. Stage every UD center orbit the same way (ranked outer-x / oblique
        tables on full mappings; ranked oblique-only tables otherwise).
-    3. Solve every center orbit to its native orientation with the combined
-       7x7x7 daisy search.
+    3. Solve every center orbit with the combined 7x7x7 daisy search. Phases
+       7 and 8 run on every cycle. Phase 9 runs on the last cycle of the orbit.
 
 After the centers are a 5x5x5, ``group_edges`` (on ``RubiksCubeNNNOddEdges``)
 pairs each wing orbit via a fake 5x5x5, inside to outside. ``solve_333`` then
@@ -569,7 +569,7 @@ class RubiksCubeNNNOdd(RubiksCubeNNNOddEdges):
                     self.fake_777.lt_LR_oblique_edge_pairing.solve_via_c(use_kociemba_string=True)
 
         elif action == "solve_centers":
-            self.fake_777.centers_combined_daisy_solve(native_only=True)
+            self.fake_777.centers_combined_daisy_solve(native_only=True, do_phase9=cycle == max_cycle)
 
         else:
             raise Exception(f"Invalid action {action}")

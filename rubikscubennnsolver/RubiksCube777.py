@@ -1105,7 +1105,9 @@ class LookupTableIDA777DaisyCenters:
 
     Phase 9 daisy-solves all six sides. It drops every 3-wide move, so the
     phase 8 inners stay solved and the bars stay paired. ``native_only`` applies
-    here. Its cost is the max of ``PHASE9_TABLES_777``, with no multiplier.
+    here. ``do_phase9`` skips this search and defaults to true; NNNOdd sets it
+    false on every cycle except the last of an orbit. Its cost is the max of
+    ``PHASE9_TABLES_777``, with no multiplier.
     Those files are built for phase 9's smaller move set. Tables that include
     an oblique cost 0 at
     either daisy orientation; when ``native_only`` rejects the swapped
@@ -1166,7 +1168,7 @@ class LookupTableIDA777DaisyCenters:
         self.avoid_oll = None
         self.multiplier = multiplier
 
-    def solve_via_c(self, native_only=False, portfolio_cap=None, distinct=True, **_kwargs):
+    def solve_via_c(self, native_only=False, portfolio_cap=None, distinct=True, do_phase9=True, **_kwargs):
         parent = self.parent
         portfolio_cap = DAISY_PORTFOLIO_CAP if portfolio_cap is None else portfolio_cap
         phase7 = self._solutions(
@@ -1194,13 +1196,17 @@ class LookupTableIDA777DaisyCenters:
             len(phase8),
             len(roots9),
         )
-        phase9 = self._solutions(
-            9,
-            [kociemba for _phase7, _phase8, kociemba in roots9],
-            native_only=native_only,
-        )
-        root_index, phase9_steps = phase9[0]
-        phase7_steps, phase8_steps, _kociemba = roots9[root_index]
+        if do_phase9:
+            phase9 = self._solutions(
+                9,
+                [kociemba for _phase7, _phase8, kociemba in roots9],
+                native_only=native_only,
+            )
+            root_index, phase9_steps = phase9[0]
+            phase7_steps, phase8_steps, _kociemba = roots9[root_index]
+        else:
+            phase7_steps, phase8_steps, _kociemba = roots9[0]
+            phase9_steps = ()
 
         tmp_solution_len = len(parent.solution)
         for step in phase7_steps:
@@ -1210,10 +1216,11 @@ class LookupTableIDA777DaisyCenters:
         for step in phase8_steps:
             parent.rotate(step)
         parent.print_cube_add_comment("UD/FB inners solved, UD/FB obliques paired", tmp_solution_len)
-        tmp_solution_len = len(parent.solution)
-        for step in phase9_steps:
-            parent.rotate(step)
-        parent.print_cube_add_comment("centers daisy solved", tmp_solution_len)
+        if do_phase9:
+            tmp_solution_len = len(parent.solution)
+            for step in phase9_steps:
+                parent.rotate(step)
+            parent.print_cube_add_comment("centers daisy solved", tmp_solution_len)
 
     def _solutions(self, phase, states, native_only=False, solution_count=None, distinct=True):
         roots_filename = None
@@ -1904,8 +1911,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         logger.info("phase 3: %d shortest solutions", len(solutions))
         return solutions
 
-    def centers_combined_daisy_solve(self, native_only=False):
-        self.lt_daisy_centers.solve_via_c(native_only=native_only)
+    def centers_combined_daisy_solve(self, native_only=False, do_phase9=True):
+        self.lt_daisy_centers.solve_via_c(native_only=native_only, do_phase9=do_phase9)
 
     def reduce_555(self):
         self.lt_init()

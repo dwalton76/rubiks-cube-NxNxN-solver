@@ -792,8 +792,15 @@ class CenterStagingTablesTest(unittest.TestCase):
             ),
         ):
             cube.stage_or_solve_inside_777(0, 0, 7, 0, 0, "solve_centers")
+            cube.stage_or_solve_inside_777(1, 1, 7, 0, 1, "solve_centers")
 
-        self.assertEqual(calls, [{"native_only": True}])
+        self.assertEqual(
+            calls,
+            [
+                {"native_only": True, "do_phase9": True},
+                {"native_only": True, "do_phase9": False},
+            ],
+        )
         for step in (70, 71, 72, 75, 76):
             self.assertFalse(hasattr(fake_777, f"lt_step{step}"))
         self.assertIsNotNone(fake_777.lt_daisy_centers)
@@ -879,6 +886,25 @@ class CenterStagingTablesTest(unittest.TestCase):
                 self.assertNotIn(filename, commands[index])
                 self.assertNotIn("--perfect-cost", commands[index])
                 self.assertNotIn("--inner-x-spine-cost", commands[index])
+
+    def test_do_phase9_false_stops_after_phase8(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        daisy = cube.lt_daisy_centers
+        commands = []
+
+        def fake_run(cmd):
+            commands.append(cmd)
+            return "SOLUTION (0 steps):"
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch.object(daisy, "_run", side_effect=fake_run),
+        ):
+            daisy.solve_via_c(do_phase9=False)
+
+        self.assertEqual([cmd[1] for cmd in commands], ["--phase7", "--phase8"])
+        self.assertNotIn("centers daisy solved", " ".join(cube.solution))
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

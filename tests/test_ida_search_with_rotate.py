@@ -13,7 +13,6 @@ from rubikscubennnsolver.RubiksCube666 import (
     solved_666,
 )
 from rubikscubennnsolver.RubiksCube777 import (
-    DAISY_INNER_X_SPINE_TABLE_777,
     DAISY_LR_INNER_TABLE_777,
     PHASE56_ADMISSIBLE_CAP,
     PHASE56_MATRIX_CAP,
@@ -23,9 +22,6 @@ from rubikscubennnsolver.RubiksCube777 import (
     PHASE8_PAIRED_TABLES_777,
     PHASE8_TABLES_777,
     PHASE9_TABLES_777,
-    DAISY_MIXED_TABLES_777,
-    DAISY_PERFECT_TABLES_777,
-    NATIVE_SOLVE_PERFECT_TABLES_777,
     RubiksCube777,
     UD_OBLIQUE_ONLY_TABLES_777,
     UD_PHASE56_TABLES_777,
@@ -780,11 +776,6 @@ class CenterStagingTablesTest(unittest.TestCase):
         cube.lt_init()
         daisy = cube.lt_daisy_centers
 
-        # One cost table plus its symmetry index, shared by all three axes,
-        # plus the inner-x spine and the four mixed-axis 70^5 tables.
-        self.assertEqual(len(DAISY_PERFECT_TABLES_777), 2)
-        self.assertEqual(DAISY_INNER_X_SPINE_TABLE_777[0], "--inner-x-spine-cost")
-        self.assertEqual(len(DAISY_MIXED_TABLES_777), 4)
         self.assertIsNone(daisy.multiplier)
 
     def test_larger_odd_cubes_use_native_only_daisy_without_step_tables(self):
@@ -833,9 +824,17 @@ class CenterStagingTablesTest(unittest.TestCase):
             "--allow-duplicate-solutions",
             daisy._command(8, native_only=False, solution_count=16, distinct=False),
         )
-        retired = [filename for _, filename in NATIVE_SOLVE_PERFECT_TABLES_777 + DAISY_PERFECT_TABLES_777]
-        retired.append(DAISY_INNER_X_SPINE_TABLE_777[1])
-        retired.extend(filename for _, filename in DAISY_MIXED_TABLES_777)
+        retired = (
+            "lookup-tables/lookup-table-7x7x7-solve-perfect-centers.cost-only.bin",
+            "lookup-tables/lookup-table-7x7x7-solve-perfect-centers.cost-only.bin.symmetry-index.bin",
+            "lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin",
+            "lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin.symmetry-index.bin",
+            "lookup-tables/lookup-table-7x7x7-daisy-inner-x-spine-centers.cost-only.bin",
+            "lookup-tables/lookup-table-7x7x7-daisy-inner-x-plus-two-inner-t-centers.cost-only.bin",
+            "lookup-tables/lookup-table-7x7x7-daisy-inner-t-plus-two-inner-x-centers.cost-only.bin",
+            "lookup-tables/lookup-table-7x7x7-daisy-middle-plus-two-inner-t-centers.cost-only.bin",
+            "lookup-tables/lookup-table-7x7x7-daisy-oblique-weave-centers.cost-only.bin",
+        )
         for index in (0, 3):
             self.assertIn("--phase7", commands[index])
             self.assertNotIn("--phase8", commands[index])
@@ -879,7 +878,7 @@ class CenterStagingTablesTest(unittest.TestCase):
             for index in (1, 2, 4, 5):
                 self.assertNotIn(filename, commands[index])
                 self.assertNotIn("--perfect-cost", commands[index])
-                self.assertNotIn(DAISY_INNER_X_SPINE_TABLE_777[0], commands[index])
+                self.assertNotIn("--inner-x-spine-cost", commands[index])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

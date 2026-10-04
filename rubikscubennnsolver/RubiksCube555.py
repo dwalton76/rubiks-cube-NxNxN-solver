@@ -758,7 +758,29 @@ class RankedCenterCoordinate555:
 
 
 class LookupTableIDA555RankedCenters:
-    """Shared process and output handling for the two dedicated center solvers."""
+    """
+    Shared process and output handling for the two dedicated center solvers.
+
+    This base owns no cost file. The LR t-center goal is:
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+    """
 
     avoid_oll = None
 
@@ -897,6 +919,53 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA555RankedCenters):
     an unreachable rank. The search always starts from the live cube (``--kociemba``) and rejects
     pre-ranked roots. ``solution_count`` returns a portfolio of optimal LR-staging solutions
     (``group_centers_phase1_and_2`` asks for 64) that phase 2 then searches from.
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin
+    =====================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
+
+    lookup-table-5x5x5-step12-LR-centers-stage-x-center-only.cost-only.bin
+    =====================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 82 entries (0 percent, 20.50x previous step)
+    3 steps has 1,206 entries (0 percent, 14.71x previous step)
+    4 steps has 14,116 entries (1 percent, 11.70x previous step)
+    5 steps has 123,404 entries (16 percent, 8.74x previous step)
+    6 steps has 422,508 entries (57 percent, 3.42x previous step)
+    7 steps has 173,254 entries (23 percent, 0.41x previous step)
+    8 steps has 896 entries (0 percent, 0.01x previous step)
+
+    Total: 735,471 entries
+    Average: 6.03 moves
     """
 
     def __init__(self, parent):
@@ -950,6 +1019,38 @@ class LookupTableIDA555LRTCenterStage(LookupTableIDA555RankedCenters):
     Same ``ida_search_555_phase1`` binary as LookupTableIDA555LRCenterStage, run with
     ``--t-centers-only`` so the x-center term contributes nothing and the heuristic is the
     t-center cost alone. Pre-ranked roots are rejected; the search starts from the live cube.
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . L . L .  . x . x .  . L . L .  . x . x .
+    . . L . .  . . x . .  . . L . .  . . x . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step11-LR-centers-stage-t-center-only.cost-only.bin
+    =====================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 66 entries (0 percent, 16.50x previous step)
+    3 steps has 900 entries (0 percent, 13.64x previous step)
+    4 steps has 9,626 entries (1 percent, 10.70x previous step)
+    5 steps has 80,202 entries (10 percent, 8.33x previous step)
+    6 steps has 329,202 entries (44 percent, 4.10x previous step)
+    7 steps has 302,146 entries (41 percent, 0.92x previous step)
+    8 steps has 13,324 entries (1 percent, 0.04x previous step)
+
+    Total: 735,471 entries
+    Average: 6.31 moves
     """
 
     def __init__(self, parent):
@@ -1106,6 +1207,53 @@ class LookupTableIDA555FBCentersStage(LookupTableIDA555RankedCenters):
     ``--orbit0-need-odd-w`` depending on whether the phase-1 endpoint already leads to OLL parity.
     A portfolio of phase-1 endpoints is passed as ``pt_states`` and written to a roots file;
     solutions come back sorted shortest first, each tagged with the root it came from.
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . F . F .  . . . . .  . F . F .
+    . . . . .  . . F . .  . . . . .  . . F . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . x . .
+               . x . x .
+               . . x . .
+               . . . . .
+
+    lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin
+    =========================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (0 percent, 12.50x previous step)
+    3 steps has 210 entries (1 percent, 8.40x previous step)
+    4 steps has 722 entries (5 percent, 3.44x previous step)
+    5 steps has 1,752 entries (13 percent, 2.43x previous step)
+    6 steps has 4,033 entries (31 percent, 2.30x previous step)
+    7 steps has 4,014 entries (31 percent, 1.00x previous step)
+    8 steps has 1,977 entries (15 percent, 0.49x previous step)
+    9 steps has 134 entries (1 percent, 0.07x previous step)
+
+    Total: 12,870 entries
+    Average: 6.34 moves
+
+    lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin
+    =========================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 234 entries (1 percent, 8.07x previous step)
+    4 steps has 1,246 entries (9 percent, 5.32x previous step)
+    5 steps has 4,466 entries (34 percent, 3.58x previous step)
+    6 steps has 6,236 entries (48 percent, 1.40x previous step)
+    7 steps has 656 entries (5 percent, 0.11x previous step)
+
+    Total: 12,870 entries
+    Average: 5.45 moves
     """
 
     def __init__(self, parent):
@@ -1385,6 +1533,66 @@ class LookupTableIDA555LRCenterStageEOBothOrbits(LookupTableIDA555RankedCenters)
     Solutions come back sorted shortest first, each tagged with the root it came from.
     ``reduce_333`` asks for every solution at that minimum length and keeps the endpoint whose
     phase 4+5+6 continuation is shortest.
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . . . . .  . R R R .  . . . . .
+    . L . L .  . . . . .  . R . R .  . . . . .
+    . L L L .  . . . . .  . R R R .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin
+    ========================================================
+    0 steps has 432 entries (8 percent, 0.00x previous step)
+    1 steps has 396 entries (8 percent, 0.92x previous step)
+    2 steps has 1,064 entries (21 percent, 2.69x previous step)
+    3 steps has 1,692 entries (34 percent, 1.59x previous step)
+    4 steps has 1,220 entries (24 percent, 0.72x previous step)
+    5 steps has 96 entries (1 percent, 0.08x previous step)
+
+    Total: 4,900 entries
+    Average: 2.64 moves
+
+    lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 278 entries (0 percent, 9.59x previous step)
+    4 steps has 1,934 entries (0 percent, 6.96x previous step)
+    5 steps has 15,640 entries (0 percent, 8.09x previous step)
+    6 steps has 124,249 entries (4 percent, 7.94x previous step)
+    7 steps has 609,241 entries (22 percent, 4.90x previous step)
+    8 steps has 1,224,098 entries (45 percent, 2.01x previous step)
+    9 steps has 688,124 entries (25 percent, 0.56x previous step)
+    10 steps has 40,560 entries (1 percent, 0.06x previous step)
+
+    Total: 2,704,156 entries
+    Average: 7.95 moves
+
+    lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 25 entries (1 percent, 12.50x previous step)
+    3 steps has 202 entries (9 percent, 8.08x previous step)
+    4 steps has 620 entries (30 percent, 3.07x previous step)
+    5 steps has 900 entries (43 percent, 1.45x previous step)
+    6 steps has 285 entries (13 percent, 0.32x previous step)
+    7 steps has 13 entries (0 percent, 0.05x previous step)
+
+    Total: 2,048 entries
+    Average: 4.61 moves
     """
 
     def __init__(self, parent):
@@ -1629,6 +1837,80 @@ class LookupTableIDA555Phase5:
     asks for 10 with ``find_extra``, which measured the same move counts as asking for 500 while
     letting the searcher stop sweeping the threshold level early on cubes where solutions are
     plentiful. Solutions come back sorted shortest first, each tagged with the root it came from.
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . B F B .  . R R R .  . F B F .
+    . L . L .  . B . B .  . R . R .  . F . F .
+    . L L L .  . B F B .  . R R R .  . F B F .
+    . . . . .  . . . . .  . . . . .  . . . . .
+
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+               . . . . .
+
+    lookup-table-5x5x5-step51-phase5-centers.cost-only.bin
+    ======================================================
+    0 steps has 36 entries (0 percent, 0.00x previous step)
+    1 steps has 132 entries (0 percent, 3.67x previous step)
+    2 steps has 1,146 entries (0 percent, 8.68x previous step)
+    3 steps has 7,176 entries (0 percent, 6.26x previous step)
+    4 steps has 36,836 entries (1 percent, 5.13x previous step)
+    5 steps has 171,754 entries (8 percent, 4.66x previous step)
+    6 steps has 503,484 entries (23 percent, 2.93x previous step)
+    7 steps has 749,808 entries (35 percent, 1.49x previous step)
+    8 steps has 483,736 entries (22 percent, 0.65x previous step)
+    9 steps has 158,924 entries (7 percent, 0.33x previous step)
+    10 steps has 3,768 entries (0 percent, 0.02x previous step)
+
+    Total: 2,116,800 entries
+    Average: 6.91 moves
+
+    lookup-table-5x5x5-step55-phase5-fb-centers-high-edge-and-midge.cost-only.bin
+    ===========================================================================
+    0 steps has 6 entries (0 percent, 0.00x previous step)
+    1 steps has 24 entries (0 percent, 4.00x previous step)
+    2 steps has 216 entries (0 percent, 9.00x previous step)
+    3 steps has 1,622 entries (0 percent, 7.51x previous step)
+    4 steps has 11,198 entries (0 percent, 6.90x previous step)
+    5 steps has 75,990 entries (0 percent, 6.79x previous step)
+    6 steps has 498,774 entries (0 percent, 6.56x previous step)
+    7 steps has 3,105,912 entries (0 percent, 6.23x previous step)
+    8 steps has 17,585,391 entries (3 percent, 5.66x previous step)
+    9 steps has 81,079,954 entries (14 percent, 4.61x previous step)
+    10 steps has 230,361,431 entries (39 percent, 2.84x previous step)
+    11 steps has 220,472,982 entries (38 percent, 0.96x previous step)
+    12 steps has 23,022,104 entries (3 percent, 0.10x previous step)
+    13 steps has 24,396 entries (0 percent, 0.00x previous step)
+
+    Total: 576,240,000 entries
+    Average: 10.24 moves
+
+    lookup-table-5x5x5-step57-phase5-fb-centers-low-edge-and-midge.cost-only.bin
+    ==========================================================================
+    0 steps has 6 entries (0 percent, 0.00x previous step)
+    1 steps has 24 entries (0 percent, 4.00x previous step)
+    2 steps has 216 entries (0 percent, 9.00x previous step)
+    3 steps has 1,622 entries (0 percent, 7.51x previous step)
+    4 steps has 11,198 entries (0 percent, 6.90x previous step)
+    5 steps has 75,990 entries (0 percent, 6.79x previous step)
+    6 steps has 498,774 entries (0 percent, 6.56x previous step)
+    7 steps has 3,105,912 entries (0 percent, 6.23x previous step)
+    8 steps has 17,585,391 entries (3 percent, 5.66x previous step)
+    9 steps has 81,079,954 entries (14 percent, 4.61x previous step)
+    10 steps has 230,361,431 entries (39 percent, 2.84x previous step)
+    11 steps has 220,472,982 entries (38 percent, 0.96x previous step)
+    12 steps has 23,022,104 entries (3 percent, 0.10x previous step)
+    13 steps has 24,396 entries (0 percent, 0.00x previous step)
+
+    Total: 576,240,000 entries
+    Average: 10.24 moves
     """
 
     centers_filename = "lookup-tables/lookup-table-5x5x5-step51-phase5-centers.cost-only.bin"
@@ -1804,6 +2086,61 @@ class LookupTableIDA555Phase6:
     roots by prefix length and searches each group separately. ``reduce_333`` builds that portfolio
     from the two shortest phase-3 endpoints with the best phase-4 lower bound. After an incumbent
     total is known, a later group is capped one move below a tie with that total.
+               . U U U .
+               U . . . U
+               U . . . U
+               U . . . U
+               . U U U .
+
+    . L L L .  . F F F .  . R R R .  . B B B .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . . . . .  . . . . .  . . . . .  . . . . .
+    . L L L .  . F F F .  . R R R .  . B B B .
+
+               . D D D .
+               D . . . D
+               D . . . D
+               D . . . D
+               . D D D .
+
+    lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin
+    =========================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 26 entries (0 percent, 6.50x previous step)
+    3 steps has 156 entries (0 percent, 6.00x previous step)
+    4 steps has 999 entries (0 percent, 6.40x previous step)
+    5 steps has 5,892 entries (0 percent, 5.90x previous step)
+    6 steps has 36,376 entries (0 percent, 6.17x previous step)
+    7 steps has 222,480 entries (0 percent, 6.12x previous step)
+    8 steps has 1,301,886 entries (0 percent, 5.85x previous step)
+    9 steps has 7,238,228 entries (0 percent, 5.56x previous step)
+    10 steps has 36,410,756 entries (4 percent, 5.03x previous step)
+    11 steps has 144,974,952 entries (17 percent, 3.98x previous step)
+    12 steps has 343,690,470 entries (42 percent, 2.37x previous step)
+    13 steps has 262,142,742 entries (32 percent, 0.76x previous step)
+    14 steps has 16,825,016 entries (2 percent, 0.06x previous step)
+    15 steps has 1,216 entries (0 percent, 0.00x previous step)
+
+    Total: 812,851,200 entries
+    Average: 12.06 moves
+
+    lookup-table-5x5x5-step61-phase6-centers.cost-only.bin
+    ======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 42 entries (0 percent, 10.50x previous step)
+    3 steps has 280 entries (0 percent, 6.67x previous step)
+    4 steps has 1,691 entries (0 percent, 6.04x previous step)
+    5 steps has 8,806 entries (4 percent, 5.21x previous step)
+    6 steps has 36,264 entries (20 percent, 4.12x previous step)
+    7 steps has 77,966 entries (44 percent, 2.15x previous step)
+    8 steps has 46,518 entries (26 percent, 0.60x previous step)
+    9 steps has 4,828 entries (2 percent, 0.10x previous step)
+
+    Total: 176,400 entries
+    Average: 6.98 moves
     """
 
     edge_filename = "lookup-tables/lookup-table-5x5x5-step501-pair-last-eight-edges-edges-only.cost-only.bin"

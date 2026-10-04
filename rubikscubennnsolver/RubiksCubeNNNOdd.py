@@ -49,7 +49,36 @@ solved_171717 = "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
 
 
 class LookupTableIDA777LRObliqueEdgePairing:
-    """Pair LR obliques on a fake 7x7 orbit without staging UD inner centers."""
+    """
+    Pair LR obliques on a fake 7x7 orbit without staging UD inner centers.
+
+    The search loads no cost file. It asks ``ida_search_777_centers_stage``
+    for ``--obliques-only``.
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . L . L . .  . . . . . . .  . . R . R . .  . . . . . . .
+    . . L . L . .  . . . . . . .  . . R . R . .  . . . . . . .
+    . . L . L . .  . . . . . . .  . . R . R . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+    """
 
     def __init__(self, parent):
         self.parent = parent
@@ -98,7 +127,36 @@ class LookupTableIDA777LRObliqueEdgePairing:
 
 
 class LookupTableIDA777UDObliqueEdgePairing:
-    """Pair UD obliques (and therefore outer t-centers) without using outer-x tables."""
+    """
+    Pair UD obliques (and therefore outer t-centers) without using outer-x tables.
+
+    The search loads no cost file. It asks ``ida_search_777_UD_centers_stage``
+    for ``--obliques-only``.
+
+                   . . . . . . .
+                   . . U . U . .
+                   . U . . . U .
+                   . . . . . . .
+                   . U . . . U .
+                   . . U . U . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . x . x . .  . . . . . . .  . . x . x . .
+    . . . . . . .  . x . . . x .  . . . . . . .  . x . . . x .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . x . . . x .  . . . . . . .  . x . . . x .
+    . . . . . . .  . . x . x . .  . . . . . . .  . . x . x . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . U . U . .
+                   . U . . . U .
+                   . . . . . . .
+                   . U . . . U .
+                   . . U . U . .
+                   . . . . . . .
+    """
 
     def __init__(self, parent, multiplier=1.3):
         self.parent = parent

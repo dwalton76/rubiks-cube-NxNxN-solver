@@ -618,6 +618,26 @@ class LookupTable666RankedPhase4:
     pair of the three phase-4 UD orbits, so its diagram and histogram below are
     the whole story for that table. ``LookupTableIDA666UDCentersStage`` takes the
     max over all three.
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
     """
 
     def __init__(self, parent, filename):
@@ -814,6 +834,86 @@ class LookupTableIDA666UDCentersStage:
     and returns the root index that produced the shortest phase-4 solution, which
     is how ``stage_LR_and_UD_centers`` picks the best phase-3/phase-4 pair. This
     phase owns orbit-0 OLL; ``avoid_oll`` becomes the per-root parity requirement.
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . x . . x .  . . . . . .  . x . . x .
+    . . . . . .  . . x x . .  . . . . . .  . . x x . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . U U . .
+                 . U . . U .
+                 . U . . U .
+                 . . U U . .
+                 . . . . . .
+
+    lookup-table-6x6x6-step31-UD-left-right-oblique-centers-stage.cost-only.bin
+    ===========================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 286 entries (0 percent, 9.86x previous step)
+    4 steps has 2,052 entries (0 percent, 7.17x previous step)
+    5 steps has 16,348 entries (0 percent, 7.97x previous step)
+    6 steps has 127,859 entries (0 percent, 7.82x previous step)
+    7 steps has 844,248 entries (0 percent, 6.60x previous step)
+    8 steps has 4,623,585 entries (2 percent, 5.48x previous step)
+    9 steps has 19,019,322 entries (11 percent, 4.11x previous step)
+    10 steps has 47,544,426 entries (28 percent, 2.50x previous step)
+    11 steps has 61,805,656 entries (37 percent, 1.30x previous step)
+    12 steps has 28,890,234 entries (17 percent, 0.47x previous step)
+    13 steps has 2,722,462 entries (1 percent, 0.09x previous step)
+    14 steps has 40,242 entries (0 percent, 0.01x previous step)
+    15 steps has 148 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 10.58 moves
+
+    lookup-table-6x6x6-step32-UD-left-oblique-outer-x-centers-stage.cost-only.bin
+    =============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
+
+    lookup-table-6x6x6-step33-UD-right-oblique-outer-x-centers-stage.cost-only.bin
+    ==============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
     """
 
     def __init__(self, parent):
@@ -968,6 +1068,26 @@ class LookupTableIDA666DaisyCenters:
     matrix. Passing ``multiplier`` scales max(UD, LR, FB) instead; that is not
     admissible and exists to collect the samples that rebuild the matrix, see
     ``utils/build-666-daisy-cost-matrix.py``.
+                 . . . . . .
+                 . . U U . .
+                 . U U U U .
+                 . U U U U .
+                 . . U U . .
+                 . . . . . .
+
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . L L . .  . . F F . .  . . R R . .  . . B B . .
+    . . L L . .  . . F F . .  . . R R . .  . . B B . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+    . . . . . .  . . . . . .  . . . . . .  . . . . . .
+
+                 . . . . . .
+                 . . D D . .
+                 . D D D D .
+                 . D D D D .
+                 . . D D . .
+                 . . . . . .
     """
 
     def __init__(self, parent, multiplier=None):

@@ -181,12 +181,48 @@ def _c_lookup_references(path):
     }
 
 
+def _derived_lookup_names(path, referenced):
+    """Filenames built with ``str.replace`` on a production lookup-table name."""
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    derived = set()
+    for node in ast.walk(tree):
+        if not (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "replace"
+            and len(node.args) == 2
+        ):
+            continue
+        old, new = node.args
+        if not (
+            isinstance(old, ast.Constant)
+            and isinstance(new, ast.Constant)
+            and isinstance(old.value, str)
+            and isinstance(new.value, str)
+        ):
+            continue
+        for name in referenced:
+            replaced = Path(name.replace(old.value, new.value)).name
+            if (
+                replaced != name
+                and LOOKUP_NAME.fullmatch(replaced)
+                and replaced.endswith(ARTIFACT_SUFFIXES)
+            ):
+                derived.add(replaced)
+    return derived
+
+
 def _production_artifact_basenames():
     referenced = set()
-    for path in PACKAGE.glob("*.py"):
+    python_files = tuple(PACKAGE.glob("*.py"))
+    for path in python_files:
         referenced.update(_python_lookup_references(path))
     for path in itertools.chain(PACKAGE.glob("*.c"), PACKAGE.glob("*.h")):
         referenced.update(_c_lookup_references(path))
+    derived = set()
+    for path in python_files:
+        derived.update(_derived_lookup_names(path, referenced))
+    referenced.update(derived)
 
     # Ranked builders emit metadata beside a cost file. Metadata is valid only
     # for a production-referenced binary; arbitrary orphan JSON remains rejected.

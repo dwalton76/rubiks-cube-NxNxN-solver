@@ -637,6 +637,152 @@ class LookupTableIDA777UDObliquesOuterXStage:
     first, then the matrix, and returns ``None`` when the matrix budget runs
     out. The first root that solves at the shortest depth is kept. The middle
     obliques are the outer t-centers. This phase owns orbit-0 OLL.
+                   . . . . . . .
+                   . . U . U . .
+                   . U . . . U .
+                   . . . . . . .
+                   . U . . . U .
+                   . . U . U . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . x . x . .  . . . . . . .  . . x . x . .
+    . . . . . . .  . x . . . x .  . . . . . . .  . x . . . x .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . x . . . x .  . . . . . . .  . x . . . x .
+    . . . . . . .  . . x . x . .  . . . . . . .  . . x . x . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . U . U . .
+                   . U . . . U .
+                   . . . . . . .
+                   . U . . . U .
+                   . . U . U . .
+                   . . . . . . .
+
+    lookup-table-7x7x7-phase5-6-UD-left-right-oblique-centers-stage.cost-only.bin
+    =============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 29 entries (0 percent, 14.50x previous step)
+    3 steps has 286 entries (0 percent, 9.86x previous step)
+    4 steps has 2,052 entries (0 percent, 7.17x previous step)
+    5 steps has 16,348 entries (0 percent, 7.97x previous step)
+    6 steps has 127,859 entries (0 percent, 7.82x previous step)
+    7 steps has 844,248 entries (0 percent, 6.60x previous step)
+    8 steps has 4,623,585 entries (2 percent, 5.48x previous step)
+    9 steps has 19,019,322 entries (11 percent, 4.11x previous step)
+    10 steps has 47,544,426 entries (28 percent, 2.50x previous step)
+    11 steps has 61,805,656 entries (37 percent, 1.30x previous step)
+    12 steps has 28,890,234 entries (17 percent, 0.47x previous step)
+    13 steps has 2,722,462 entries (1 percent, 0.09x previous step)
+    14 steps has 40,242 entries (0 percent, 0.01x previous step)
+    15 steps has 148 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 10.58 moves
+
+    lookup-table-7x7x7-phase5-6-UD-left-middle-oblique-centers-stage.cost-only.bin
+    ==============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 33 entries (0 percent, 16.50x previous step)
+    3 steps has 358 entries (0 percent, 10.85x previous step)
+    4 steps has 2,934 entries (0 percent, 8.20x previous step)
+    5 steps has 23,262 entries (0 percent, 7.93x previous step)
+    6 steps has 155,679 entries (0 percent, 6.69x previous step)
+    7 steps has 893,008 entries (0 percent, 5.74x previous step)
+    8 steps has 4,447,409 entries (2 percent, 4.98x previous step)
+    9 steps has 17,048,560 entries (10 percent, 3.83x previous step)
+    10 steps has 41,869,962 entries (25 percent, 2.46x previous step)
+    11 steps has 57,876,856 entries (34 percent, 1.38x previous step)
+    12 steps has 35,846,966 entries (21 percent, 0.62x previous step)
+    13 steps has 7,122,098 entries (4 percent, 0.20x previous step)
+    14 steps has 346,646 entries (0 percent, 0.05x previous step)
+    15 steps has 3,126 entries (0 percent, 0.01x previous step)
+
+    Total: 165,636,900 entries
+    Average: 10.74 moves
+
+    lookup-table-7x7x7-phase5-6-UD-left-oblique-outer-x-centers-stage.cost-only.bin
+    ===============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
+
+    lookup-table-7x7x7-phase5-6-UD-middle-right-oblique-centers-stage.cost-only.bin
+    ===============================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 33 entries (0 percent, 16.50x previous step)
+    3 steps has 358 entries (0 percent, 10.85x previous step)
+    4 steps has 2,934 entries (0 percent, 8.20x previous step)
+    5 steps has 23,262 entries (0 percent, 7.93x previous step)
+    6 steps has 155,679 entries (0 percent, 6.69x previous step)
+    7 steps has 893,008 entries (0 percent, 5.74x previous step)
+    8 steps has 4,447,409 entries (2 percent, 4.98x previous step)
+    9 steps has 17,048,560 entries (10 percent, 3.83x previous step)
+    10 steps has 41,869,962 entries (25 percent, 2.46x previous step)
+    11 steps has 57,876,856 entries (34 percent, 1.38x previous step)
+    12 steps has 35,846,966 entries (21 percent, 0.62x previous step)
+    13 steps has 7,122,098 entries (4 percent, 0.20x previous step)
+    14 steps has 346,646 entries (0 percent, 0.05x previous step)
+    15 steps has 3,126 entries (0 percent, 0.01x previous step)
+
+    Total: 165,636,900 entries
+    Average: 10.74 moves
+
+    lookup-table-7x7x7-phase5-6-UD-right-oblique-outer-x-centers-stage.cost-only.bin
+    ================================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 37 entries (0 percent, 18.50x previous step)
+    3 steps has 426 entries (0 percent, 11.51x previous step)
+    4 steps has 4,552 entries (0 percent, 10.69x previous step)
+    5 steps has 48,826 entries (0 percent, 10.73x previous step)
+    6 steps has 497,305 entries (0 percent, 10.19x previous step)
+    7 steps has 4,366,446 entries (2 percent, 8.78x previous step)
+    8 steps has 25,800,644 entries (15 percent, 5.91x previous step)
+    9 steps has 71,891,909 entries (43 percent, 2.79x previous step)
+    10 steps has 57,817,231 entries (34 percent, 0.80x previous step)
+    11 steps has 5,204,126 entries (3 percent, 0.09x previous step)
+    12 steps has 5,395 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.19 moves
+
+    lookup-table-7x7x7-phase5-6-UD-middle-oblique-outer-x-centers-stage.cost-only.bin
+    =================================================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 2 entries (0 percent, 2.00x previous step)
+    2 steps has 33 entries (0 percent, 16.50x previous step)
+    3 steps has 374 entries (0 percent, 11.33x previous step)
+    4 steps has 3,838 entries (0 percent, 10.26x previous step)
+    5 steps has 39,254 entries (0 percent, 10.23x previous step)
+    6 steps has 387,357 entries (0 percent, 9.87x previous step)
+    7 steps has 3,374,380 entries (2 percent, 8.71x previous step)
+    8 steps has 20,851,334 entries (12 percent, 6.18x previous step)
+    9 steps has 65,556,972 entries (39 percent, 3.14x previous step)
+    10 steps has 66,986,957 entries (40 percent, 1.02x previous step)
+    11 steps has 8,423,610 entries (5 percent, 0.13x previous step)
+    12 steps has 12,788 entries (0 percent, 0.00x previous step)
+
+    Total: 165,636,900 entries
+    Average: 9.33 moves
     """
 
     def __init__(self, parent):
@@ -838,66 +984,11 @@ class LookupTableIDA777UDObliquesOuterXStage:
 # phases 7 and 8
 # daisy-solve UD, LR, and FB centers
 # ==================================================
-# One table covers all three axes. Any cube rotation taking one axis onto another
-# carries that axis's tracked stickers along with it, so the three 70^5 coordinates
-# index a single cost function, and each is constant on the orbits of the 16
-# symmetries that fix its axis. That leaves 105,356,972 orbits, roughly 100 MiB plus
-# a 213 MiB rank-select index, where the three raw per-axis tables were 1.6 GiB each.
-DAISY_PERFECT_TABLES_777 = (
-    ("--perfect-cost", "lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin"),
-    (
-        "--perfect-index",
-        "lookup-tables/lookup-table-7x7x7-daisy-perfect-centers.cost-only.bin.symmetry-index.bin",
-    ),
-)
-
-# The daisy tables cost 0 at either daisy orientation, which leaves --native-only
-# blind exactly where the remaining work is. These twins are built to the native
-# goal alone, so they measure the distance a larger odd cube actually has to walk.
-NATIVE_SOLVE_PERFECT_TABLES_777 = (
-    ("--perfect-cost", "lookup-tables/lookup-table-7x7x7-solve-perfect-centers.cost-only.bin"),
-    (
-        "--perfect-index",
-        "lookup-tables/lookup-table-7x7x7-solve-perfect-centers.cost-only.bin.symmetry-index.bin",
-    ),
-)
-
-# One raw 70^5 file: the three inner-x orbits plus the UD left and right
-# obliques. The searcher rewrites the LR and FB group ranks onto that square
-# order, so this single table supplies all three spine probes. It is a lower
-# bound for both the daisy and the native-only goal.
-DAISY_INNER_X_SPINE_TABLE_777 = (
-    "--inner-x-spine-cost",
-    "lookup-tables/lookup-table-7x7x7-daisy-inner-x-spine-centers.cost-only.bin",
-)
-
 # Phase 7. LR inner-t then LR inner-x, 70^2, one native goal. The two orbits are
 # closed under the daisy moves, so the byte is the exact inner distance.
 DAISY_LR_INNER_TABLE_777 = (
     "--lr-inner-cost",
     "lookup-tables/lookup-table-7x7x7-daisy-lr-inner-centers.cost-only.bin",
-)
-
-# Four more raw 70^5 files. Each file is the identity probe; the searcher
-# rotates by x y and by z' y' to cover the other two. Inner-only coordinates have
-# one goal. Coordinates that include an oblique have both daisy orientations.
-DAISY_MIXED_TABLES_777 = (
-    (
-        "--inner-x-plus-two-inner-t-cost",
-        "lookup-tables/lookup-table-7x7x7-daisy-inner-x-plus-two-inner-t-centers.cost-only.bin",
-    ),
-    (
-        "--inner-t-plus-two-inner-x-cost",
-        "lookup-tables/lookup-table-7x7x7-daisy-inner-t-plus-two-inner-x-centers.cost-only.bin",
-    ),
-    (
-        "--middle-plus-two-inner-t-cost",
-        "lookup-tables/lookup-table-7x7x7-daisy-middle-plus-two-inner-t-centers.cost-only.bin",
-    ),
-    (
-        "--oblique-weave-cost",
-        "lookup-tables/lookup-table-7x7x7-daisy-oblique-weave-centers.cost-only.bin",
-    ),
 )
 
 # Phase 8 takes the max of the paired-bar tables and the two inner-plus-oblique
@@ -1030,6 +1121,44 @@ class LookupTableIDA777DaisyCenters:
     | PHASE8_INNER_OBLIQUE_TABLES_777      | 2      | phase 8     |
     | PHASE8_INNER_INTERACTION_TABLE_777   | 1      | phase 8     |
     | PHASE9_TABLES_777                    | 8      | phase 9     |
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . L L L . .  . . . . . . .  . . R R R . .  . . . . . . .
+    . . L . L . .  . . . . . . .  . . R . R . .  . . . . . . .
+    . . L L L . .  . . . . . . .  . . R R R . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+    . . . . . . .  . . . . . . .  . . . . . . .  . . . . . . .
+
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+                   . . . . . . .
+
+    lookup-table-7x7x7-daisy-lr-inner-centers.cost-only.bin
+    =======================================================
+    0 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 4 entries (0 percent, 4.00x previous step)
+    2 steps has 22 entries (0 percent, 5.50x previous step)
+    3 steps has 82 entries (1 percent, 3.73x previous step)
+    4 steps has 292 entries (5 percent, 3.56x previous step)
+    5 steps has 986 entries (20 percent, 3.38x previous step)
+    6 steps has 2,001 entries (40 percent, 2.03x previous step)
+    7 steps has 1,312 entries (26 percent, 0.66x previous step)
+    8 steps has 200 entries (4 percent, 0.15x previous step)
+
+    Total: 4,900 entries
+    Average: 5.96 moves
     """
 
     def __init__(self, parent, multiplier=None):

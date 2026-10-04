@@ -203,11 +203,7 @@ def _derived_lookup_names(path, referenced):
             continue
         for name in referenced:
             replaced = Path(name.replace(old.value, new.value)).name
-            if (
-                replaced != name
-                and LOOKUP_NAME.fullmatch(replaced)
-                and replaced.endswith(ARTIFACT_SUFFIXES)
-            ):
+            if replaced != name and LOOKUP_NAME.fullmatch(replaced) and replaced.endswith(ARTIFACT_SUFFIXES):
                 derived.add(replaced)
     return derived
 

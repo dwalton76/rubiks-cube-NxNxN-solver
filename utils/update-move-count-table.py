@@ -3,8 +3,10 @@
 """
 Measure the average moves to solve 4x4x4 through 10x10x10 cubes and insert a new
 row at the top of README.md's Move Counts table. Each count covers the whole solve:
-reducing the cube to a 3x3x3 plus solving that 3x3x3. Scrambles come from the first
-``--count`` entries per size in ``utils/test-cubes.json``.
+reducing the cube to a 3x3x3 plus solving that 3x3x3. By default the 4x4x4 through
+7x7x7 use ten scrambles and the larger cubes use five. ``--count`` overrides that
+split for every selected size. Scrambles come from the first entries per size in
+``utils/test-cubes.json``.
 
 Example:
     cd ~/rubiks-cube-NxNxN-solver
@@ -39,6 +41,15 @@ README = ROOT / "README.md"
 TEST_CUBES = ROOT / "utils" / "test-cubes.json"
 ORDER = "URFDLB"
 DEFAULT_SIZES = ("4x4x4", "5x5x5", "6x6x6", "7x7x7", "8x8x8", "9x9x9", "10x10x10")
+DEFAULT_COUNTS = {
+    "4x4x4": 10,
+    "5x5x5": 10,
+    "6x6x6": 10,
+    "7x7x7": 10,
+    "8x8x8": 5,
+    "9x9x9": 5,
+    "10x10x10": 5,
+}
 GITHUB_COMMIT_URL = "https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit"
 # Averages this far from the previous README row almost always mean we counted
 # the scramble, failed to reduce, or otherwise measured the wrong thing.
@@ -61,8 +72,7 @@ def parse_args():
     parser.add_argument(
         "--count",
         type=int,
-        default=10,
-        help="first N cubes per size from utils/test-cubes.json (default: 10)",
+        help="override the default and use the first N cubes for every selected size",
     )
     parser.add_argument(
         "--sizes",
@@ -198,7 +208,7 @@ def main() -> int:
     if args.quiet:
         logging.getLogger("rubikscubennnsolver").setLevel(logging.WARNING)
 
-    if args.count < 1:
+    if args.count is not None and args.count < 1:
         logger.error("--count must be at least 1")
         return 1
 
@@ -212,10 +222,11 @@ def main() -> int:
     test_cubes = load_test_cubes()
 
     for size in args.sizes:
-        states = cube_states_for_size(test_cubes, size, args.count)
+        count = args.count if args.count is not None else DEFAULT_COUNTS[size]
+        states = cube_states_for_size(test_cubes, size, count)
         lengths = measure_size(size, states)
         averages[size] = sum(lengths) / len(lengths)
-        logger.info("%s average over %d cubes: %s", size, args.count, format_average(averages[size]))
+        logger.info("%s average over %d cubes: %s", size, count, format_average(averages[size]))
 
     row = build_row(averages, previous)
     print(row)

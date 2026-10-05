@@ -903,8 +903,55 @@ class CenterStagingTablesTest(unittest.TestCase):
         ):
             daisy.solve_via_c(do_phase9=False)
 
-        self.assertEqual([cmd[1] for cmd in commands], ["--phase7", "--phase8"])
+        self.assertEqual(commands, [])
         self.assertNotIn("centers daisy solved", " ".join(cube.solution))
+
+    def test_partial_daisy_skips_a_met_phase_and_requests_one_root(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        daisy = cube.lt_daisy_centers
+        cube.state[67] = "U"
+        commands = []
+
+        def fake_run(cmd):
+            commands.append(cmd)
+            return "SOLUTION (0 steps):"
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777.download_file_if_needed"),
+            patch.object(daisy, "_run", side_effect=fake_run),
+        ):
+            daisy.solve_via_c(do_phase9=False)
+
+        self.assertEqual([cmd[1] for cmd in commands], ["--phase7"])
+        self.assertEqual(commands[0][commands[0].index("--solution-count") + 1], "0")
+
+    def test_partial_daisy_keeps_the_shorter_phase7_phase8_chain(self):
+        cube = RubiksCube777(solved_777, "URFDLB")
+        cube.lt_init()
+        daisy = cube.lt_daisy_centers
+        calls = []
+
+        def fake_solutions(phase, states, solution_count=None, **_kwargs):
+            calls.append((phase, solution_count, len(states)))
+            if phase == 7:
+                return [(0, ("L",)), (0, ("R", "R"))]
+            return [(0, ("U", "U", "U")), (1, ())]
+
+        with (
+            patch("rubikscubennnsolver.RubiksCube777._phase7_goal_reached", return_value=False),
+            patch("rubikscubennnsolver.RubiksCube777._phase8_goal_reached", return_value=False),
+            patch.object(
+                daisy,
+                "_distinct_centers",
+                side_effect=lambda move_lists: [(tuple(moves), "STATE") for moves in move_lists],
+            ),
+            patch.object(daisy, "_solutions", side_effect=fake_solutions),
+        ):
+            daisy.solve_via_c(do_phase9=False)
+
+        self.assertEqual(calls, [(7, 0, 1), (8, 1, 2)])
+        self.assertEqual([step for step in cube.solution if not step.startswith("COMMENT")], ["R", "R"])
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):

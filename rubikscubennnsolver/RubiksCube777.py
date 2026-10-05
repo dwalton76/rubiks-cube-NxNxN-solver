@@ -1067,6 +1067,74 @@ PHASE9_ILLEGAL_MOVES_777 = PHASE8_PRESERVE_ILLEGAL_MOVES_777 + (
 )
 
 
+# Same left/middle/right triplets as oblique_bar_777 in ida_search_777_daisy_centers.c.
+_OBLIQUE_BARS_777 = (
+    (10, 11, 12),
+    (30, 23, 16),
+    (20, 27, 34),
+    (40, 39, 38),
+    (59, 60, 61),
+    (79, 72, 65),
+    (69, 76, 83),
+    (89, 88, 87),
+    (108, 109, 110),
+    (128, 121, 114),
+    (118, 125, 132),
+    (138, 137, 136),
+    (157, 158, 159),
+    (177, 170, 163),
+    (167, 174, 181),
+    (187, 186, 185),
+    (206, 207, 208),
+    (226, 219, 212),
+    (216, 223, 230),
+    (236, 235, 234),
+    (255, 256, 257),
+    (275, 268, 261),
+    (265, 272, 279),
+    (285, 284, 283),
+)
+_LR_INNER_T_777 = (67, 73, 75, 81, 165, 171, 173, 179)
+_LR_INNER_X_777 = (66, 68, 80, 82, 164, 166, 178, 180)
+_UD_INNER_T_777 = (18, 24, 26, 32, 263, 269, 271, 277)
+_UD_INNER_X_777 = (17, 19, 31, 33, 262, 264, 276, 278)
+_FB_INNER_T_777 = (116, 122, 124, 130, 214, 220, 222, 228)
+_FB_INNER_X_777 = (115, 117, 129, 131, 213, 215, 227, 229)
+
+
+def _orbit_has_colors(state, squares, colors):
+    return all(state[square] in colors for square in squares)
+
+
+def _bars_paired_on(state, on_face):
+    for left, middle, right in _OBLIQUE_BARS_777:
+        if not on_face(middle):
+            continue
+        color = state[left]
+        if state[middle] != color or state[right] != color:
+            return False
+    return True
+
+
+def _phase7_goal_reached(state):
+    return (
+        _orbit_has_colors(state, _LR_INNER_T_777, "LR")
+        and _orbit_has_colors(state, _LR_INNER_X_777, "LR")
+        and _bars_paired_on(state, lambda square: 50 <= square <= 98 or 148 <= square <= 196)
+    )
+
+
+def _phase8_goal_reached(state):
+    return (
+        _orbit_has_colors(state, _UD_INNER_T_777, "UD")
+        and _orbit_has_colors(state, _UD_INNER_X_777, "UD")
+        and _orbit_has_colors(state, _FB_INNER_T_777, "FB")
+        and _orbit_has_colors(state, _FB_INNER_X_777, "FB")
+        and _bars_paired_on(state, lambda square: square <= 49 or 246 <= square <= 294)
+        and _bars_paired_on(state, lambda square: 99 <= square <= 147 or 197 <= square <= 245)
+    )
+
+
 class LookupTableIDA777DaisyCenters:
     """
     Phase 7, phase 8, then phase 9. Each axis has five C(8,4) center orbits -
@@ -1106,7 +1174,10 @@ class LookupTableIDA777DaisyCenters:
     Phase 9 daisy-solves all six sides. It drops every 3-wide move, so the
     phase 8 inners stay solved and the bars stay paired. ``native_only`` applies
     here. ``do_phase9`` skips this search and defaults to true; NNNOdd sets it
-    false on every cycle except the last of an orbit. Its cost is the max of
+    false on every cycle except the last of an orbit. That path keeps the
+    shortest phase-7 endings, takes the phase-8 continuation with the fewest
+    added moves, and stops once that continuation is found. It skips either
+    phase when its goal is already met. Phase 9's cost is the max of
     ``PHASE9_TABLES_777``, with no multiplier.
     Those files are built for phase 9's smaller move set. Tables that include
     an oblique cost 0 at
@@ -1170,7 +1241,31 @@ class LookupTableIDA777DaisyCenters:
 
     def solve_via_c(self, native_only=False, portfolio_cap=None, distinct=True, do_phase9=True, **_kwargs):
         parent = self.parent
-        portfolio_cap = DAISY_PORTFOLIO_CAP if portfolio_cap is None else portfolio_cap
+        if do_phase9:
+            portfolio_cap = DAISY_PORTFOLIO_CAP if portfolio_cap is None else portfolio_cap
+            phase7_steps, phase8_steps, phase9_steps = self._solve_phases_7_through_9(
+                native_only, portfolio_cap, distinct
+            )
+        else:
+            phase7_steps, phase8_steps = self._solve_phases_7_and_8()
+            phase9_steps = ()
+
+        tmp_solution_len = len(parent.solution)
+        for step in phase7_steps:
+            parent.rotate(step)
+        parent.print_cube_add_comment("LR inners solved, LR obliques paired", tmp_solution_len)
+        tmp_solution_len = len(parent.solution)
+        for step in phase8_steps:
+            parent.rotate(step)
+        parent.print_cube_add_comment("UD/FB inners solved, UD/FB obliques paired", tmp_solution_len)
+        if do_phase9:
+            tmp_solution_len = len(parent.solution)
+            for step in phase9_steps:
+                parent.rotate(step)
+            parent.print_cube_add_comment("centers daisy solved", tmp_solution_len)
+
+    def _solve_phases_7_through_9(self, native_only, portfolio_cap, distinct):
+        parent = self.parent
         phase7 = self._solutions(
             7,
             [parent.get_kociemba_string(True)],
@@ -1196,31 +1291,63 @@ class LookupTableIDA777DaisyCenters:
             len(phase8),
             len(roots9),
         )
-        if do_phase9:
-            phase9 = self._solutions(
-                9,
-                [kociemba for _phase7, _phase8, kociemba in roots9],
-                native_only=native_only,
-            )
-            root_index, phase9_steps = phase9[0]
-            phase7_steps, phase8_steps, _kociemba = roots9[root_index]
-        else:
-            phase7_steps, phase8_steps, _kociemba = roots9[0]
-            phase9_steps = ()
+        phase9 = self._solutions(
+            9,
+            [kociemba for _phase7, _phase8, kociemba in roots9],
+            native_only=native_only,
+        )
+        root_index, phase9_steps = phase9[0]
+        phase7_steps, phase8_steps, _kociemba = roots9[root_index]
+        return phase7_steps, phase8_steps, phase9_steps
 
-        tmp_solution_len = len(parent.solution)
-        for step in phase7_steps:
-            parent.rotate(step)
-        parent.print_cube_add_comment("LR inners solved, LR obliques paired", tmp_solution_len)
-        tmp_solution_len = len(parent.solution)
-        for step in phase8_steps:
-            parent.rotate(step)
-        parent.print_cube_add_comment("UD/FB inners solved, UD/FB obliques paired", tmp_solution_len)
-        if do_phase9:
-            tmp_solution_len = len(parent.solution)
-            for step in phase9_steps:
-                parent.rotate(step)
-            parent.print_cube_add_comment("centers daisy solved", tmp_solution_len)
+    def _solve_phases_7_and_8(self):
+        """Shortest phase-7 endings, then the first phase-8 continuation at the minimum length."""
+        parent = self.parent
+        if _phase7_goal_reached(parent.state):
+            roots8 = [((), parent.get_kociemba_string(True))]
+            logger.info("phase 7: goal already met")
+        else:
+            phase7 = self._solutions(7, [parent.get_kociemba_string(True)], solution_count=0)
+            roots8 = self._distinct_centers([steps for _root, steps in phase7])
+            logger.info("phase 7: %d shortest solutions, %d distinct roots", len(phase7), len(roots8))
+
+        original_state = parent.state[:]
+        original_solution = parent.solution[:]
+        done = []
+        pending = []
+        try:
+            for moves, kociemba in roots8:
+                parent.state = original_state[:]
+                parent.solution = original_solution[:]
+                for step in moves:
+                    parent.rotate(step)
+                if _phase8_goal_reached(parent.state):
+                    done.append((moves, ()))
+                else:
+                    pending.append((moves, kociemba))
+        finally:
+            parent.state = original_state[:]
+            parent.solution = original_solution[:]
+
+        if done:
+            chains = done
+            logger.info("phase 8: goal already met")
+        elif pending:
+            phase8 = self._solutions(8, [kociemba for _moves, kociemba in pending], solution_count=1)
+            chains = [(pending[root_index][0], steps) for root_index, steps in phase8]
+            logger.info("phase 8: %d shortest solutions", len(phase8))
+        else:
+            chains = []
+        if not chains:
+            raise SolveError("phase 8 produced no phase-7/8 chains")
+        phase7_steps, phase8_steps = min(chains, key=lambda chain: (len(chain[0]) + len(chain[1]), len(chain[0])))
+        logger.info(
+            "phase 7+8: kept %d+%d (%d total)",
+            len(phase7_steps),
+            len(phase8_steps),
+            len(phase7_steps) + len(phase8_steps),
+        )
+        return phase7_steps, phase8_steps
 
     def _solutions(self, phase, states, native_only=False, solution_count=None, distinct=True):
         roots_filename = None

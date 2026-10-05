@@ -26,7 +26,22 @@ class UpdateMoveCountTableTest(unittest.TestCase):
             args = self.mod.parse_args()
         self.assertFalse(hasattr(args, "update_readme"))
         self.assertFalse(hasattr(args, "readme"))
+        self.assertIsNone(args.count)
         self.assertEqual(self.mod.README, ROOT / "README.md")
+
+    def test_default_counts_use_ten_small_and_five_large_cubes(self):
+        self.assertEqual(
+            self.mod.DEFAULT_COUNTS,
+            {
+                "4x4x4": 10,
+                "5x5x5": 10,
+                "6x6x6": 10,
+                "7x7x7": 10,
+                "8x8x8": 5,
+                "9x9x9": 5,
+                "10x10x10": 5,
+            },
+        )
 
     def test_previous_row_matches_readme_top_counts(self):
         previous = self.mod.previous_row_counts(ROOT / "README.md")

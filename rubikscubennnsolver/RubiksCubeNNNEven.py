@@ -20,6 +20,34 @@ and reuses the ranked 6x6x6 center-staging phases.
 ``group_edges`` (on ``RubiksCubeNNNEvenEdges``) then pairs any outer wing
 orbits that the odd reduction did not already pair, again via a fake 5x5x5,
 inside to outside. ``solve_333`` finishes the cube.
+
+Why the plus sign is required
+-----------------------------
+The odd solver reduces centers with a fake 7x7x7 and pairs wings with a fake
+5x5x5. Those fake cubes depend on two pieces that only odd cubes have:
+
+- A fixed center sticker. The middle of a 7x7x7 or 5x5x5 face never moves
+  under a face or wide turn. An even face has a 2x2 block in the middle
+  instead, and a quarter turn cycles those four stickers.
+- A midge. Each oblique line on a 7x7x7 face is left, midge, right, and each
+  edge has a center wing that pairs with itself across the edge. An even edge
+  has two middle wings. Each one pairs with the other column on the adjacent
+  face, so U column 3 pairs with B column 4, and U column 4 pairs with B
+  column 3.
+
+Copying an even cube's middle column onto the middle slot of a fake 7x7x7
+breaks both. The fake center is not fixed, and the fake center wing is paired
+with the real wing's neighbor, giving impossible pieces such as a (B, B) wing.
+Parity checks like ``get_edge_swap_count`` fail on that state.
+
+A fake 6x6x6 has no middle slot, so it maps cleanly onto an even cube. The
+plus sign uses it to make the middle two rows and the middle two columns
+match on every face, and ``pair_inside_edges_via_444`` pairs the two middle
+wings of every edge. After that, each middle row, column, and wing matches
+its twin. Dropping one of each leaves an odd cube of size N-1. The remaining
+middle row and column act as a real fixed center line, and the remaining
+middle wing acts as a real midge, so ``RubiksCubeNNNOdd`` can run its fake
+7x7x7 and 5x5x5 steps on it.
 """
 
 # standard libraries
@@ -144,6 +172,9 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         Pair the middle two columns/rows in order to convert this Even cube into an Odd cube...this
         allows us to use the RubiksCubeNNNOdd solver later.  It makes what looks like a large "plus"
         sign on each cube face thus the name of this method.
+
+        This runs on a fake 6x6x6 because an even face has no fixed center and
+        no midge. See "Why the plus sign is required" in the module docstring.
         """
         center_orbit_count = int((self.size - 4) / 2)
         side_name = {0: "U", 1: "L", 2: "F", 3: "R", 4: "B", 5: "D"}

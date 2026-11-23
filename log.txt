@@ -1,0 +1,48 @@
+(venv) dwalton76@dwalton76-pc:~/rubiks-cube/rubiks-cube-NxNxN-solver$ for w in odd even; do PYTHONPATH=. ./venv/bin/python3 utils/benchmark-555-centers-stage.py --count 10 --scramble-length 60 --timeout 600 --config "nibble:--no-t-x-tables --lr-joint-cost $N --orbit0-need-$w-w" --config "parity:--no-t-x-tables --lr-joint-parity-cost $P --orbit0-need-$w-w"; done
+cube=000     nibble solved=True length=15 nodes=182447524 search=51.19s wall=52.18s
+cube=000     parity solved=True length=15 nodes=104578645 search=57.90s wall=59.23s
+cube=001     nibble solved=True length=16 nodes=406259417 search=15.95s wall=17.04s
+cube=001     parity solved=True length=16 nodes=226543065 search=21.55s wall=23.15s
+cube=002     nibble solved=True length=16 nodes=1998091581 search=61.49s wall=62.55s
+cube=002     parity solved=True length=16 nodes=1076955444 search=40.33s wall=41.88s
+cube=003     nibble solved=True length=15 nodes=50953588 search=1.68s wall=2.75s
+cube=003     parity solved=True length=15 nodes=28762096 search=1.24s wall=2.80s
+cube=004     nibble solved=True length=17 nodes=2933488437 search=107.22s wall=108.38s
+cube=004     parity solved=True length=17 nodes=1494519215 search=58.82s wall=60.36s
+cube=005     nibble solved=True length=15 nodes=146368865 search=4.59s wall=5.63s
+cube=005     parity solved=True length=15 nodes=81292561 search=3.33s wall=4.84s
+cube=006     nibble solved=True length=16 nodes=603111637 search=18.87s wall=19.92s
+cube=006     parity solved=True length=16 nodes=310295187 search=12.70s wall=14.25s
+cube=007     nibble solved=True length=16 nodes=321534756 search=11.69s wall=12.76s
+cube=007     parity solved=True length=16 nodes=165861615 search=7.25s wall=8.80s
+cube=008     nibble solved=True length=16 nodes=476692283 search=16.62s wall=17.79s
+cube=008     parity solved=True length=16 nodes=238394105 search=10.33s wall=12.32s
+cube=009     nibble solved=True length=16 nodes=311746933 search=11.26s wall=12.54s
+cube=009     parity solved=True length=16 nodes=168748499 search=7.89s wall=9.46s
+
+    nibble: solved 10/10, total nodes 7,430,695,021, total search 300.6s, wall 311.5s
+    parity: solved 10/10, total nodes 3,895,950,432, total search 221.3s, wall 237.1s, over 10 deep cubes: search time x0.75, nodes x0.54 (10 solved by both)
+cube=000     nibble solved=True length=15 nodes=159356063 search=4.84s wall=6.13s
+cube=000     parity solved=True length=15 nodes=85909923 search=3.41s wall=5.12s
+cube=001     nibble solved=True length=16 nodes=250378166 search=8.88s wall=10.16s
+cube=001     parity solved=True length=16 nodes=139200627 search=5.69s wall=7.25s
+cube=002     nibble solved=True length=15 nodes=85690886 search=2.77s wall=3.85s
+cube=002     parity solved=True length=15 nodes=47615312 search=1.98s wall=3.52s
+cube=003     nibble solved=True length=16 nodes=1175097313 search=42.09s wall=43.67s
+cube=003     parity solved=True length=16 nodes=659038656 search=28.72s wall=30.57s
+cube=004     nibble solved=True length=16 nodes=760661272 search=24.62s wall=25.87s
+cube=004     parity solved=True length=16 nodes=391793718 search=16.76s wall=18.30s
+cube=005     nibble solved=True length=16 nodes=846529765 search=28.16s wall=29.97s
+cube=005     parity solved=True length=16 nodes=465143898 search=20.09s wall=22.15s
+cube=006     nibble solved=True length=16 nodes=817653779 search=26.98s wall=28.33s
+cube=006     parity solved=True length=16 nodes=427492642 search=18.62s wall=20.75s
+cube=007     nibble solved=True length=16 nodes=2401267316 search=84.77s wall=85.87s
+cube=007     parity solved=True length=16 nodes=1245407679 search=55.57s wall=57.14s
+cube=008     nibble solved=True length=16 nodes=1501471795 search=50.19s wall=51.26s
+cube=008     parity solved=True length=16 nodes=810473491 search=38.55s wall=40.13s
+cube=009     nibble solved=True length=15 nodes=137122371 search=4.29s wall=5.33s
+cube=009     parity solved=True length=15 nodes=77664345 search=3.59s wall=5.12s
+
+    nibble: solved 10/10, total nodes 8,135,228,726, total search 277.6s, wall 290.4s
+    parity: solved 10/10, total nodes 4,349,740,291, total search 193.0s, wall 210.0s, over 10 deep cubes: search time x0.71, nodes x0.54 (10 solved by both)
+(venv) dwalton76@dwalton76-pc:~/rubiks-cube/rubiks-cube-NxNxN-solver$

@@ -1,0 +1,185 @@
+(venv) dwalton@NV-HV15W44:~/rubiks-cube/rubiks-cube-NxNxN-solver$ time ./ida_search_555_centers_stage --kociemba LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBU
+LLUFFBLRDDDDFRRBUBRLBUUFFRRDFF --t-center-cost lookup-tables/lookup-table-5x5x5-step10-t-centers-stage.cost-only.bin --x-center-cost lookup-tables/lookup-table-5x5x5-step10-x-centers-stage.cost-only.bin --orbit0-need-even-w
+starting cube
+
+          x x x x x
+          x F U D x
+          x B U L x
+          x D D U x
+          x x x x x
+
+x x x x x x x x x x x x x x x x x x x x
+x L F D x x R D R x x U R F x x D F R x
+x U L D x x L F B x x F R L x x U B R x
+x B R B x x L B U x x F D B x x U U F x
+x x x x x x x x x x x x x x x x x x x x
+
+          x x x x x
+          x L L L x
+          x R D F x
+          x R B B x
+          x x x x x
+
+[2026-11-23T13:56:53.069] 918 root tasks across 22 threads
+[2026-11-23T13:56:53.071] IDA threshold 10, explored 735 nodes, took 0.001s, 596107 nodes-per-sec
+[2026-11-23T13:56:53.072] IDA threshold 11, explored 19532 nodes, took 0.002s, 11336041 nodes-per-sec
+[2026-11-23T13:56:53.082] IDA threshold 12, explored 505373 nodes, took 0.009s, 54658555 nodes-per-sec
+[2026-11-23T13:56:53.375] IDA threshold 13, explored 12832328 nodes, took 0.294s, 43678573 nodes-per-sec
+[2026-11-23T13:57:00.825] IDA threshold 14, explored 323392575 nodes, took 7.450s, 43410986 nodes-per-sec
+[2026-11-23T13:58:51.911] IDA threshold 15, explored 8201408718 nodes, took 111.085s, 73829713 nodes-per-sec
+SOLUTION (16 steps): U' Fw2 D' Lw' Fw L2 Rw Dw2 L' Lw' Fw' L' Dw Lw2 Rw' Bw
+ending cube
+
+          x x x x x
+          x U U D x
+          x D U D x
+          x D D U x
+          x x x x x
+
+x x x x x x x x x x x x x x x x x x x x
+x R L R x x F B F x x R R L x x B F B x
+x L L L x x B F B x x L R R x x F B F x
+x L R L x x B F F x x R R L x x B B F x
+x x x x x x x x x x x x x x x x x x x x
+
+          x x x x x
+          x D U D x
+          x D D U x
+          x U U U x
+          x x x x x
+
+
+       T-CTR  X-CTR  PAR  CTG  TRU  IDX
+       =====  =====  ===  ===  ===  ===
+ INIT     10      9    0   10   16    0
+   U'      9      9    0    9   15    1
+  Fw2      9      9    0    9   14    2
+   D'      8      8    0    8   13    3
+  Lw'      9      8    1    9   12    4
+   Fw      9      8    0    9   11    5
+   L2      8      7    0    8   10    6
+   Rw      7      6    1    7    9    7
+  Dw2      6      7    1    7    8    8
+   L'      7      6    1    7    7    9
+  Lw'      6      5    0    6    6   10
+  Fw'      5      4    1    5    5   11
+   L'      4      3    1    4    4   12
+   Dw      3      2    0    3    3   13
+  Lw2      2      2    0    2    2   14
+  Rw'      1      1    1    1    1   15
+   Bw      0      0    0    0    0   16
+
+[2026-11-23T14:02:53.400] IDA threshold 16, explored 15845042486 nodes, took 241.489s, 65613943 nodes-per-sec
+
+real    6m4.707s
+user    125m41.747s
+sys     0m37.398s
+(venv) dwalton@NV-HV15W44:~/rubiks-cube/rubiks-cube-NxNxN-solver$
+
+
+
+
+
+
+(venv) dwalton@NV-HV15W44:~/rubiks-cube/rubiks-cube-NxNxN-solver$ time ./ida_search_555_centers_stage --kociemba LLFBRBFUDULBULBBDDUBBBBLDFDULDLURFBDFRLDUFDBRLDUFBLURFRFRDRBULFBLLLBURUFRFURDDLBULLLRLRDFRDRBBRUDFDUFRBUDULFDUFULDFRBRBULLUFFBLRDDDDFRRBUBRLBUUFFRRDFF --lr-joint-cost lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin --orbit0-need-even-w
+starting cube
+
+          x x x x x
+          x F U D x
+          x B U L x
+          x D D U x
+          x x x x x
+
+x x x x x x x x x x x x x x x x x x x x
+x L F D x x R D R x x U R F x x D F R x
+x U L D x x L F B x x F R L x x U B R x
+x B R B x x L B U x x F D B x x U U F x
+x x x x x x x x x x x x x x x x x x x x
+
+          x x x x x
+          x L L L x
+          x R D F x
+          x R B B x
+          x x x x x
+
+[2026-11-24T15:27:45.073] 918 root tasks across 22 threads
+[2026-11-24T15:27:45.074] IDA threshold 11, explored 312 nodes, took 0.001s, 251207 nodes-per-sec
+[2026-11-24T15:27:45.076] IDA threshold 12, explored 9875 nodes, took 0.002s, 5668771 nodes-per-sec
+[2026-11-24T15:27:45.084] IDA threshold 13, explored 260148 nodes, took 0.007s, 34769847 nodes-per-sec
+[2026-11-24T15:27:45.249] IDA threshold 14, explored 6731433 nodes, took 0.165s, 40859958 nodes-per-sec
+[2026-11-24T15:27:49.645] IDA threshold 15, explored 172743687 nodes, took 4.397s, 39288743 nodes-per-sec
+SOLUTION (16 steps): U' Fw2 D' Lw' Fw L2 Rw Dw2 L' Lw' Fw' L' Dw Lw2 Rw' Bw
+ending cube
+
+          x x x x x
+          x U U D x
+          x D U D x
+          x D D U x
+          x x x x x
+
+x x x x x x x x x x x x x x x x x x x x
+x R L R x x F B F x x R R L x x B F B x
+x L L L x x B F B x x L R R x x F B F x
+x L R L x x B F F x x R R L x x B B F x
+x x x x x x x x x x x x x x x x x x x x
+
+          x x x x x
+          x D U D x
+          x D D U x
+          x U U U x
+          x x x x x
+
+
+        LR-TX  PAR  CTG  TRU  IDX
+        =====  ===  ===  ===  ===
+ INIT      11    0   11   16    0
+   U'      10    0   10   15    1
+  Fw2      10    0   10   14    2
+   D'      10    0   10   13    3
+  Lw'      10    1   10   12    4
+   Fw       9    0    9   11    5
+   L2       9    0    9   10    6
+   Rw       9    1    9    9    7
+  Dw2       8    1    8    8    8
+   L'       7    1    7    7    9
+  Lw'       6    0    6    6   10
+  Fw'       5    1    5    5   11
+   L'       4    1    4    4   12
+   Dw       3    0    3    3   13
+  Lw2       2    0    2    2   14
+  Rw'       1    1    1    1   15
+   Bw       0    0    0    0   16
+
+[2026-11-24T15:27:58.828] IDA threshold 16, explored 362000368 nodes, took 9.182s, 39422923 nodes-per-sec
+
+real    0m19.719s
+user    4m56.720s
+sys     0m8.124s
+(venv) dwalton@NV-HV15W44:~/rubiks-cube/rubiks-cube-NxNxN-solver$
+
+
+==========================
+
+cd ~/rubiks-cube/rubiks-cube-lookup-tables
+make 555-lr-joint-parity 2>&1 | tee 555-lr-joint-parity.log
+make 555-lr-joint-parity-verify
+
+
+Benchmark. Copy the table and sidecar into the solver's lookup-tables/, rebuild the searcher, then compare odd and even parity against the nibble table:
+
+
+cd ~/rubiks-cube/rubiks-cube-NxNxN-solver
+cp ../rubiks-cube-lookup-tables/lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-parity6.bin* lookup-tables/
+gcc -O3 -o ida_search_555_centers_stage rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_centers_stage.c -lm -lpthread
+N=lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin
+P=lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-parity6.bin
+for w in odd even; do PYTHONPATH=. ./venv/bin/python3 utils/benchmark-555-centers-stage.py --count 10 --scramble-length 14 --timeout 600 --config "nibble:--no-t-x-tables --lr-joint-cost $N --orbit0-need-$w-w" --config "parity:--no-t-x-tables --lr-joint-parity-cost $P --orbit0-need-$w-w"; done
+
+
+==========================
+
+for w in odd even; do PYTHONPATH=. ./venv/bin/python3 utils/benchmark-555-centers-stage.py --count 10 --scramble-length 60 --timeout 600 --config "nibble:--no-t-x-tables --lr-joint-cost $N --orbit0-need-$w-w" --config "parity:--no-t-x-tables --lr-joint-parity-cost $P --orbit0-need-$w-w"; done
+
+
+
+

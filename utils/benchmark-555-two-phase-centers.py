@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure two-phase LR-then-FB 5x5x5 center staging length."""
+"""Measure native 5x5x5 center-staging length."""
 
 # standard libraries
 import json

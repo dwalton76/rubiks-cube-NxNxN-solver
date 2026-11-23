@@ -18,6 +18,7 @@ exclude = '''
     | build
     | dist
     | venv
+    | tmp
   )/
 )
 '''

@@ -1566,7 +1566,7 @@ uint64_t ida_combination_rank_pair(
     return rank;
 }
 
-struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expected_size)
+static struct mapped_cost_file map_cost_file(const char *filename, uint64_t expected_size, int populate)
 {
     struct mapped_cost_file result = {-1, NULL, 0};
     struct stat file_stat;
@@ -1592,7 +1592,7 @@ struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expecte
         exit(1);
     }
 #ifdef MAP_POPULATE
-    if ((uint64_t)file_stat.st_blocks * 512 >= expected_size) {
+    if (populate && (uint64_t)file_stat.st_blocks * 512 >= expected_size) {
         mmap_flags |= MAP_POPULATE;
     }
 #endif
@@ -1602,6 +1602,82 @@ struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expecte
         fprintf(stderr, "ERROR: could not mmap %s: %s\n", filename, strerror(errno));
         exit(1);
     }
+    return result;
+}
+
+struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expected_size)
+{
+    return map_cost_file(filename, expected_size, 1);
+}
+
+#define WARM_CHUNK_BYTES ((size_t)8 << 20)
+
+/*
+ * Random 4 KB faults on an uncached multi-GB table run the search several times slower than a
+ * sequential read of the file, so read every run of pages that is not already in the page cache.
+ */
+static void warm_page_cache(const struct mapped_cost_file *mapped, const char *filename)
+{
+    size_t page_size = (size_t)sysconf(_SC_PAGESIZE);
+    unsigned char resident[WARM_CHUNK_BYTES / 4096];
+    unsigned char *buffer = NULL;
+    size_t warmed = 0;
+    struct timeval start, end;
+
+    if (page_size == 0 || WARM_CHUNK_BYTES / page_size > sizeof(resident)) {
+        return;
+    }
+    gettimeofday(&start, NULL);
+    for (size_t offset = 0; offset < mapped->size; offset += WARM_CHUNK_BYTES) {
+        size_t length = mapped->size - offset < WARM_CHUNK_BYTES ? mapped->size - offset : WARM_CHUNK_BYTES;
+        size_t pages = (length + page_size - 1) / page_size;
+
+        if (mincore(mapped->costs + offset, length, resident) != 0) {
+            memset(resident, 0, pages);
+        }
+        for (size_t page = 0; page < pages;) {
+            size_t first = page, run_start, run_length;
+
+            if (resident[page] & 1) {
+                page++;
+                continue;
+            }
+            while (page < pages && !(resident[page] & 1)) {
+                page++;
+            }
+            run_start = offset + first * page_size;
+            run_length = (page == pages ? offset + length : offset + page * page_size) - run_start;
+            if (!buffer && !(buffer = malloc(WARM_CHUNK_BYTES))) {
+                return;
+            }
+            for (size_t done = 0; done < run_length;) {
+                ssize_t got = pread(mapped->fd, buffer, run_length - done, (off_t)(run_start + done));
+
+                if (got <= 0) {
+                    break;
+                }
+                done += (size_t)got;
+            }
+            warmed += run_length;
+        }
+    }
+    free(buffer);
+    if (warmed) {
+        gettimeofday(&end, NULL);
+        LOG("read %.1f MB of %s into the page cache in %.3fs\n",
+            (double)warmed / 1e6,
+            filename,
+            (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_usec - start.tv_usec) / 1e6);
+    }
+}
+
+/* For multi-GB tables read at random: populating every page up front can cost more than a short search. */
+struct mapped_cost_file ida_map_cost_file_random(const char *filename, uint64_t expected_size)
+{
+    struct mapped_cost_file result = map_cost_file(filename, expected_size, 0);
+
+    warm_page_cache(&result, filename);
+    madvise(result.costs, result.size, MADV_RANDOM);
     return result;
 }
 

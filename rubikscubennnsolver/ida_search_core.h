@@ -206,6 +206,7 @@ struct mapped_cost_file {
 };
 
 struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expected_size);
+struct mapped_cost_file ida_map_cost_file_random(const char *filename, uint64_t expected_size);
 void ida_unmap_cost_file(int fd, unsigned char *costs, size_t size);
 
 struct symmetry_index_header {

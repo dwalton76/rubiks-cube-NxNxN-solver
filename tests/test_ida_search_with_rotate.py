@@ -957,54 +957,24 @@ class CenterStagingTablesTest(unittest.TestCase):
 
 
 class PhaseOnePortfolioTest(unittest.TestCase):
-    class FakePruneTable:
-        def __init__(self, parent, coordinate):
-            self.parent = parent
-            self.coordinate = coordinate
-
-        def state_index(self):
-            roots = {
-                "A": (10, 20),
-                "B": (11, 21),
-                "C": (11, 21),
-            }
-            return roots[self.parent.state[0]][self.coordinate]
-
-        def rank(self):
-            return self.state_index()
-
-    class FakePhaseOne:
-        def solutions_via_c(self, solution_count):
-            assert solution_count == 64
-            return [
-                (("A",), (0, 0, 0, 0, 0)),
-                (("B",), (0, 0, 0, 0, 0)),
-                (("C",), (0, 0, 0, 0, 0)),
-            ]
-
-    class FakePhaseTwo:
+    class FakeStage:
         def __init__(self, parent):
             self.parent = parent
-            self.prune_tables = [
-                PhaseOnePortfolioTest.FakePruneTable(parent, 0),
-                PhaseOnePortfolioTest.FakePruneTable(parent, 1),
-            ]
-            self.calls = []
 
-        def solutions_via_c(self, pt_states):
-            parity = 0 in self.parent.center_solution_leads_to_oll_parity()
-            self.calls.append((parity, tuple(pt_states)))
-
-            if parity:
-                return [(("PA1", "PA2", "PA3"), (10, 20, 0, 0, 0))]
-            return [(("PB1", "PB2"), (11, 21, 0, 0, 0))]
+        def solve_via_c(self):
+            self.parent.calls += 1
+            self.parent.rotate("Uw")
+            self.parent.state[0] = "staged"
+            self.parent.oll = False
 
     class FakeCube:
-        def __init__(self):
-            self.state = ["root"]
+        def __init__(self, staged=False, oll=False):
+            self.state = ["staged" if staged else "open"]
             self.solution = []
-            self.lt_LR_centers_stage = PhaseOnePortfolioTest.FakePhaseOne()
-            self.lt_FB_centers_stage = PhaseOnePortfolioTest.FakePhaseTwo(self)
+            self.calls = 0
+            self.oll = oll
+            self.comments = []
+            self.lt_centers_stage = PhaseOnePortfolioTest.FakeStage(self)
 
         def rotate_U_to_U(self):
             pass
@@ -1013,40 +983,41 @@ class PhaseOnePortfolioTest(unittest.TestCase):
             pass
 
         def centers_staged(self):
-            return self.state[0] == "done"
-
-        def LR_centers_staged(self):
-            return self.state[0] in {"A", "B", "C", "done"}
-
-        def FB_centers_staged(self):
-            return self.state[0] == "done"
+            return self.state[0] == "staged"
 
         def center_solution_leads_to_oll_parity(self):
-            return [0] if self.state[0] == "A" else []
+            return [0] if self.oll else []
 
         def rotate(self, move):
             self.solution.append(move)
-            if move in {"A", "B", "C"}:
-                self.state[0] = move
-            elif move.startswith("P"):
-                self.state[0] = "done"
 
         def print_cube_add_comment(self, comment, start):
-            pass
+            self.comments.append((comment, start))
 
-    def test_portfolio_deduplicates_roots_groups_parity_and_picks_shortest_phase_two(self):
+    def test_stages_centers_in_one_search(self):
         cube = self.FakeCube()
 
         RubiksCube555.group_centers_phase1_and_2(cube)
 
-        self.assertEqual(cube.solution, ["B", "PB1", "PB2"])
-        self.assertEqual(
-            set(cube.lt_FB_centers_stage.calls),
-            {
-                (True, ((10, 20),)),
-                (False, ((11, 21),)),
-            },
-        )
+        self.assertEqual(cube.calls, 1)
+        self.assertEqual(cube.solution, ["Uw"])
+        self.assertEqual(cube.comments, [("Phase 1: centers staged", 0)])
+
+    def test_skips_search_when_centers_are_staged_without_oll(self):
+        cube = self.FakeCube(staged=True)
+
+        RubiksCube555.group_centers_phase1_and_2(cube)
+
+        self.assertEqual(cube.calls, 0)
+        self.assertEqual(cube.solution, [])
+
+    def test_searches_when_staged_centers_still_have_oll(self):
+        cube = self.FakeCube(staged=True, oll=True)
+
+        RubiksCube555.group_centers_phase1_and_2(cube)
+
+        self.assertEqual(cube.calls, 1)
+        self.assertEqual(cube.solution, ["Uw"])
 
 
 class PhaseOne444Test(unittest.TestCase):

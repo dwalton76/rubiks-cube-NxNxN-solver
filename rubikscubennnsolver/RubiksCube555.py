@@ -4,26 +4,28 @@
 A 5x5x5 has 54 centers (nine per face: four t-centers, four x-centers, and a
 fixed middle), 24 wings (the outer edge orbit), 12 midges (the inner edge
 orbit), and 8 corners. Reduction pairs each wing with its midge and solves the
-centers so the remaining puzzle is a 3x3x3. ``RubiksCube555.reduce_333`` runs
-six phases; ``solve_333`` then solves the paired cube.
+centers so the remaining puzzle is a 3x3x3. ``RubiksCube555.reduce_333`` stages
+the centers, orients the edges, pairs them, and solves the centers; ``solve_333``
+then solves the paired cube.
 
-Each IDA phase is guided by prune tables. All six phases use dedicated C solvers
-over dense ranked costs and are searched as a portfolio: many solutions of the
-earlier phase are collected, later phases are solved from those endpoints, and
-the shortest combined path is kept. Phases 4+5+6 do the same.
+Each IDA phase is guided by prune tables. Center staging, EO, and edge pairing
+are dedicated C solvers over dense ranked costs. EO and the later edge phases
+are searched as a portfolio: many solutions of the earlier phase are collected,
+later phases are solved from those endpoints, and the shortest combined path
+is kept. Phases 4+5+6 do the same.
 
-Phase 1 - stage LR centers
-    Put all eight LR t-centers and eight LR x-centers onto the L and R faces
-    (they need not be solved). ``group_centers_phase1_and_2`` takes a portfolio
-    of optimal LR-staging solutions (default 64). Endpoints are grouped by
-    whether orbit-0 wide turns would cause OLL parity, because phase 2 must use
-    a matching even/odd constraint.
-
-Phase 2 - stage FB (and UD) centers
-    Stage the FB t-centers and x-centers onto FB, which also puts the
-    remaining centers onto UD. Quarter-turn wide moves that would unstage LR
-    are illegal. Orbit-0 OLL is avoided so the later 3x3x3 solve is not left
-    with that parity. The search keeps the shortest phase-1 plus phase-2 pair.
+Phase 1 - stage every center
+    Recolor D to U, R to L, and B to F. The joint LR t+x table (46,935 t
+    classes times C(24,8) x placements) is read once per axis, mapping the U
+    and F axes onto LR by symmetry, and the search takes the max. A parity-aware
+    26 GB version of that table, when present, also tells each lookup whether a
+    shortest path can have the orbit-0 OLL parity the search needs. If the
+    joint table is absent, the search takes the max of the two step10 tables
+    instead: one for the t-centers and one for the x-centers, each with
+    24!/(8!*8!*8!) states. An outer turn spins the centers on that face,
+    and a wide turn carries centers onto the next face. This phase owns orbit-0
+    OLL: phase 3 has no wide quarter turn left, so a wrong parity here cannot
+    be fixed later.
 
 Phase 3 - EO the wings and midges; LR centers to 1-of-432
     Split the 24 wings and 12 midges into high/low groups. Each of the 12
@@ -52,11 +54,11 @@ Phase 6 - pair the last eight edges and solve the centers
     at a time so the total, not just the phase-6 suffix, is minimized. A later
     group is capped one move below a tie with the incumbent.
 
-Larger cubes that have already reduced to a 5x5x5 reuse the phase-1 and
-phase-2 ranked solvers (``lt_LR_centers_stage``, ``lt_FB_centers_stage``,
-and ``lt_LR_t_centers_stage_ida``) without going through this six-phase
-reduction. Their remaining centers are solved by the 6x6/7x7 daisy searches,
-not by a separate 5x5 center-solve IDA.
+Larger cubes that have already reduced to a 5x5x5 reuse the LR and FB ranked
+solvers (``lt_LR_centers_stage``, ``lt_FB_centers_stage``, and
+``lt_LR_t_centers_stage_ida``) without going through this reduction. Their
+remaining centers are solved by the 6x6/7x7 daisy searches, not by a separate
+5x5 center-solve IDA.
 """
 
 # standard libraries
@@ -101,6 +103,10 @@ PHASE1_X_CENTERS_TABLE_555 = (
 )
 PHASE2_T_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin"
 PHASE2_X_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin"
+PHASE12_T_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step10-t-centers-stage.cost-only.bin"
+PHASE12_X_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step10-x-centers-stage.cost-only.bin"
+PHASE12_LR_JOINT_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin"
+PHASE12_LR_JOINT_PARITY_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-parity6.bin"
 PHASE3_LR_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin"
 PHASE3_EO_OUTER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin"
 PHASE3_EO_INNER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin"
@@ -806,6 +812,77 @@ class LookupTableIDA555RankedCenters:
             self.parent.rotate(step)
 
 
+class LookupTableIDA555CentersStage(LookupTableIDA555RankedCenters):
+    """
+    Native phase 1 (``ida_search_555_centers_stage``): stage every t-center and x-center.
+
+    D is recolored U, R is recolored L, and B is recolored F, so each orbit is eight
+    F, eight L, and eight U (24!/(8!*8!*8!) = 9,465,511,770 states). Every 5x5 move is
+    legal. Orbit-0 OLL is owned here because phase 3 has no wide quarter turn left.
+
+    When the joint LR t+x table is present, the heuristic is the max of its L, U, and F
+    axis lookups (about 18x faster on deep cubes). It is built by ``make 555-lr-joint``
+    in rubiks-cube-lookup-tables, which needs about 35 GB of RAM, so ``make 555-tables``
+    does not build it. Without it, the heuristic is the max of the two step10 tables.
+
+    The parity-aware version of the joint table (``make 555-lr-joint-parity``, about 69 GB
+    of RAM) is preferred when present. It adds two flag bits per cell, which of the even
+    and odd orbit-0 OLL parities a shortest path can have, so a node whose shortest paths
+    all have the wrong parity gets a bound one higher.
+
+        lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-parity6.bin
+        lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin
+        lookup-table-5x5x5-step10-t-centers-stage.cost-only.bin
+        lookup-table-5x5x5-step10-x-centers-stage.cost-only.bin
+    """
+
+    def __init__(self, parent):
+        self.parent = parent
+        self.avoid_oll = 0
+
+    def solutions_via_c(
+        self,
+        min_ida_threshold=None,
+        max_ida_threshold=None,
+        solution_count=1,
+        **_kwargs,
+    ):
+        if os.path.exists(PHASE12_LR_JOINT_PARITY_TABLE_555):
+            tables = ["--lr-joint-parity-cost", PHASE12_LR_JOINT_PARITY_TABLE_555]
+        elif os.path.exists(PHASE12_LR_JOINT_TABLE_555):
+            tables = ["--lr-joint-cost", PHASE12_LR_JOINT_TABLE_555]
+        else:
+            logger.warning(
+                "%s is missing, using the slower step10 t/x tables; build it with make 555-lr-joint "
+                "in rubiks-cube-lookup-tables",
+                PHASE12_LR_JOINT_TABLE_555,
+            )
+            download_file_if_needed(PHASE12_T_CENTERS_TABLE_555)
+            download_file_if_needed(PHASE12_X_CENTERS_TABLE_555)
+            tables = ["--t-center-cost", PHASE12_T_CENTERS_TABLE_555, "--x-center-cost", PHASE12_X_CENTERS_TABLE_555]
+        cmd = [
+            "./ida_search_555_centers_stage",
+            "--kociemba",
+            self.parent.get_kociemba_string(True),
+            *tables,
+            *self._parity_args(),
+        ]
+        if min_ida_threshold is not None:
+            cmd.extend(("--min-ida-threshold", str(min_ida_threshold)))
+        if max_ida_threshold is not None:
+            cmd.extend(("--max-ida-threshold", str(max_ida_threshold)))
+        if solution_count != 1:
+            cmd.extend(("--solution-count", str(solution_count)))
+        output = self._run(cmd)
+        solutions = []
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                solutions.append((tuple(line.split(":", 1)[1].strip().split()), (None,) * 5))
+        if not solutions:
+            raise NoIDASolution(f"Did not find SOLUTION line in\n{output}\n")
+        return solutions
+
+
 # ==================================================
 # phase 1
 # stage LR centers
@@ -917,8 +994,8 @@ class LookupTableIDA555LRCenterStage(LookupTableIDA555RankedCenters):
 
     Heuristic is the max of the two component costs; a state is pruned when either table reports
     an unreachable rank. The search always starts from the live cube (``--kociemba``) and rejects
-    pre-ranked roots. ``solution_count`` returns a portfolio of optimal LR-staging solutions
-    (``group_centers_phase1_and_2`` asks for 64) that phase 2 then searches from.
+    pre-ranked roots. ``solution_count`` returns a portfolio of optimal LR-staging solutions.
+    6x6 and 7x7 keep that portfolio; native 5x5 no longer calls this search.
                . . . . .
                . . x . .
                . x . x .
@@ -2409,9 +2486,11 @@ class RubiksCube555(RubiksCube):
             return
         self.lt_init_called = True
 
-        # phase 1 - stage LR centers
-        # t-center and x-center prune tables plus the IDA that reduce_333 searches.
-        # lt_LR_t_centers_stage_ida is for larger cubes that have reduced to 555.
+        # Native phase 1 stages every center. The LR and FB solvers below stay
+        # for 6x6, 7x7, and NNNOdd.
+        self.lt_centers_stage = LookupTableIDA555CentersStage(self)
+
+        # LR center staging. lt_LR_t_centers_stage_ida is for larger cubes.
         self.lt_LR_t_centers_stage = LookupTable555LRTCenterStage(self)
         self.lt_LR_x_centers_stage = LookupTable555LRXCenterStage(self)
         self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
@@ -2894,101 +2973,26 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_phase1_and_2(self) -> None:
         """
-        Find up to 64 optimal phase-1 LR-center solutions, then solve phase 2
-        from all distinct endpoints and keep the pair with the shortest total
-        solution. Phase-1 endpoints are grouped by orbit-0 parity because phase
-        2 must use a different wide-turn parity constraint for each group.
+        Stage every t-center and x-center with one search. The heuristic is the
+        max of the two ULF 8/8/8 tables, and the search owns orbit-0 OLL.
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-        if self.centers_staged():
+        if self.centers_staged() and 0 not in self.center_solution_leads_to_oll_parity():
             return
 
         original_state = self.state[:]
         original_solution = self.solution[:]
-        phase1_comment_start = len(self.solution)
+        comment_start = len(self.solution)
+        self.lt_centers_stage.solve_via_c()
 
-        if self.LR_centers_staged():
-            phase1_solutions = [((), (None, None, None, None, None))]
-        else:
-            phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=64)
-
-        phase2_roots_by_parity = {}
-        phase1_solution_by_root = {}
-        representative_state_by_parity = {}
-        logger.info("found %d optimal phase-1 solutions", len(phase1_solutions))
-
-        for phase1_solution, _ in phase1_solutions:
+        if not self.centers_staged() or 0 in self.center_solution_leads_to_oll_parity():
             self.state = original_state[:]
             self.solution = original_solution[:]
+            raise SolveError("phase 1 did not stage centers")
 
-            for step in phase1_solution:
-                self.rotate(step)
-
-            phase2_root = tuple(pt.rank() for pt in self.lt_FB_centers_stage.prune_tables)
-            orbit0_has_oll = 0 in self.center_solution_leads_to_oll_parity()
-            root_key = (orbit0_has_oll, phase2_root)
-
-            if root_key not in phase1_solution_by_root:
-                phase2_roots_by_parity.setdefault(orbit0_has_oll, []).append(phase2_root)
-                phase1_solution_by_root[root_key] = phase1_solution
-                representative_state_by_parity.setdefault(
-                    orbit0_has_oll,
-                    (self.state[:], self.solution[:]),
-                )
-
-        logger.info(
-            "phase-1 portfolio has %d distinct phase-2 roots in %d parity groups",
-            len(phase1_solution_by_root),
-            len(phase2_roots_by_parity),
-        )
-
-        best = None
-        for orbit0_has_oll, phase2_roots in phase2_roots_by_parity.items():
-            representative_state, representative_solution = representative_state_by_parity[orbit0_has_oll]
-            self.state = representative_state[:]
-            self.solution = representative_solution[:]
-
-            phase2_solution, phase2_states = self.lt_FB_centers_stage.solutions_via_c(pt_states=phase2_roots)[0]
-            phase2_root = tuple(phase2_states[: len(self.lt_FB_centers_stage.prune_tables)])
-            phase1_solution = phase1_solution_by_root[orbit0_has_oll, phase2_root]
-            candidate = (
-                len(phase1_solution) + len(phase2_solution),
-                len(phase2_solution),
-                phase1_solution,
-                phase2_solution,
-            )
-
-            if best is None or candidate < best:
-                best = candidate
-
-        if best is None:
-            raise SolveError("could not solve phase 2 from any phase-1 portfolio endpoint")
-
-        _, _, best_phase1_solution, best_phase2_solution = best
-        self.state = original_state[:]
-        self.solution = original_solution[:]
-
-        for step in best_phase1_solution:
-            self.rotate(step)
-
-        self.print_cube_add_comment("Phase 1: LR centers staged", phase1_comment_start)
-
-        phase2_comment_start = len(self.solution)
-        for step in best_phase2_solution:
-            self.rotate(step)
-
-        if not self.LR_centers_staged() or not self.FB_centers_staged():
-            raise SolveError("phase-1 portfolio did not stage LR and FB centers")
-
-        logger.info(
-            "selected phase-1 length %d and phase-2 length %d (%d total)",
-            len(best_phase1_solution),
-            len(best_phase2_solution),
-            len(best_phase1_solution) + len(best_phase2_solution),
-        )
-        self.print_cube_add_comment("Phase 2: UD FB centers staged", phase2_comment_start)
+        self.print_cube_add_comment("Phase 1: centers staged", comment_start)
 
     def pair_edges(self):
         """

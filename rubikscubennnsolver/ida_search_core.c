@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1814,6 +1815,62 @@ void map_symmetry_index(
     index->low = (const uint64_t *)(index->mapping + sizeof(*index->header));
     index->high = index->low + index->header->low_word_count;
     index->zero_samples = (const uint32_t *)(index->high + index->header->high_word_count);
+}
+
+#define IDA_MAX_TASK_THREADS 64
+
+unsigned int ida_thread_count(unsigned int requested)
+{
+    if (!requested) {
+        long online = sysconf(_SC_NPROCESSORS_ONLN);
+        requested = online > 1 ? (unsigned int)online : 1;
+    }
+    return requested > IDA_MAX_TASK_THREADS ? IDA_MAX_TASK_THREADS : requested;
+}
+
+void ida_stop_tasks_after(struct ida_ordered_tasks *tasks, size_t task)
+{
+    size_t current = __atomic_load_n(&tasks->stop_task, __ATOMIC_RELAXED);
+
+    while (task < current &&
+            !__atomic_compare_exchange_n(&tasks->stop_task, &current, task, 1,
+                                         __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
+    }
+}
+
+static void *ordered_task_worker(void *argument)
+{
+    struct ida_ordered_tasks *tasks = argument;
+
+    for (;;) {
+        size_t task = __atomic_fetch_add(&tasks->next_task, 1, __ATOMIC_RELAXED);
+
+        if (task >= tasks->task_count || ida_task_abandoned(tasks, task)) {
+            return NULL;
+        }
+        tasks->run(tasks, task);
+    }
+}
+
+void ida_run_ordered_tasks(struct ida_ordered_tasks *tasks, unsigned int thread_count)
+{
+    pthread_t threads[IDA_MAX_TASK_THREADS];
+    unsigned int started = 0;
+
+    tasks->next_task = 0;
+    tasks->stop_task = SIZE_MAX;
+    thread_count = ida_thread_count(thread_count);
+    if (thread_count > tasks->task_count) {
+        thread_count = (unsigned int)tasks->task_count;
+    }
+    while (started + 1 < thread_count &&
+            pthread_create(&threads[started], NULL, ordered_task_worker, tasks) == 0) {
+        started++;
+    }
+    ordered_task_worker(tasks);
+    for (unsigned int index = 0; index < started; index++) {
+        pthread_join(threads[index], NULL);
+    }
 }
 
 void unmap_symmetry_index(struct symmetry_index *index)

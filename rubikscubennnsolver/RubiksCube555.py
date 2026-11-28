@@ -22,6 +22,14 @@ Phase 1 - stage every center
     onto the next face. This phase owns orbit-0 OLL: phase 3 has no wide
     quarter turn left, so a wrong parity here cannot be fixed later.
 
+    The joint table is built by ``make 555-lr-joint`` in rubiks-cube-lookup-tables,
+    not by ``make 555-tables``, and the build needs about 36 GB of RAM. When the
+    table is missing and the machine has that much available, the solve exits 1
+    and names that target. A smaller machine falls back to the old two steps:
+    a portfolio of 64 optimal LR-center stagings (``ida_search_555_phase1``),
+    then FB centers from every distinct endpoint (``ida_search_555_phase2``),
+    keeping the shortest pair. In that path phase 2 owns orbit-0 OLL.
+
 Phase 3 - EO the wings and midges; LR centers to 1-of-432
     Split the 24 wings and 12 midges into high/low groups. Each of the 12
     edges can be in its final orientation or not, but only an even number may
@@ -62,6 +70,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 import tempfile
 from math import comb
 
@@ -75,6 +84,46 @@ from rubikscubennnsolver.swaps import swaps_555
 logger = logging.getLogger(__name__)
 
 PHASE3_ENDPOINT_CAP = 2
+
+
+def available_ram_bytes():
+    """MemAvailable from /proc/meminfo, or None when this OS does not provide it."""
+    try:
+        with open("/proc/meminfo") as meminfo:
+            for line in meminfo:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) * 1024
+    except (OSError, ValueError, IndexError):
+        pass
+    return None
+
+
+def use_joint_centers_stage():
+    """
+    True when the joint LR table is present, so phase 1 can stage every center in one search.
+
+    A missing table falls back to LR then FB staging only on a machine that could not build it.
+    A machine with enough free RAM for ``make 555-lr-joint`` stops with that command instead.
+    """
+    if os.path.exists(PHASE12_LR_JOINT_TABLE_555):
+        return True
+    available = available_ram_bytes()
+    if available is not None and available >= PHASE12_LR_JOINT_BUILD_RAM_BYTES:
+        print(
+            f"{available / 1e9:.0f} GB of RAM is available, enough to build the joint LR center table "
+            f"(about {PHASE12_LR_JOINT_BUILD_RAM_BYTES / 1e9:.0f} GB).",
+            file=sys.stderr,
+        )
+        download_file_if_needed(PHASE12_LR_JOINT_TABLE_555)
+    logger.warning(
+        "%s is missing and this machine has %s of RAM available, less than the %.0f GB needed to build it; "
+        "staging LR centers, then FB centers",
+        PHASE12_LR_JOINT_TABLE_555,
+        "an unknown amount" if available is None else f"{available / 1e9:.1f} GB",
+        PHASE12_LR_JOINT_BUILD_RAM_BYTES / 1e9,
+    )
+    return False
+
 
 # fmt: off
 moves_555 = (
@@ -99,6 +148,8 @@ PHASE1_X_CENTERS_TABLE_555 = (
 PHASE2_T_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin"
 PHASE2_X_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin"
 PHASE12_LR_JOINT_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin"
+# `make 555-lr-joint` holds one byte per joint cell (34.5 GB) while it runs.
+PHASE12_LR_JOINT_BUILD_RAM_BYTES = 36 * 10**9
 PHASE3_LR_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin"
 PHASE3_EO_OUTER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin"
 PHASE3_EO_INNER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin"
@@ -814,7 +865,8 @@ class LookupTableIDA555CentersStage(LookupTableIDA555RankedCenters):
 
     The heuristic is the max of the joint LR t+x table's L, U, and F axis lookups. The
     table is built by ``make 555-lr-joint`` in rubiks-cube-lookup-tables, which needs
-    about 36 GB of RAM, so ``make 555-tables`` does not build it.
+    about 36 GB of RAM, so ``make 555-tables`` does not build it. Without the table,
+    ``use_joint_centers_stage`` picks LR then FB staging on smaller machines.
 
         lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin
     """
@@ -2945,8 +2997,8 @@ class RubiksCube555(RubiksCube):
 
     def group_centers_phase1_and_2(self) -> None:
         """
-        Stage every t-center and x-center with one search. The heuristic is the
-        joint LR t+x table read on three axes, and the search owns orbit-0 OLL.
+        Stage every t-center and x-center without orbit-0 OLL. With the joint LR table
+        this is one search; without it, on a machine too small to build it, LR then FB.
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()
@@ -2954,6 +3006,16 @@ class RubiksCube555(RubiksCube):
         if self.centers_staged() and 0 not in self.center_solution_leads_to_oll_parity():
             return
 
+        if use_joint_centers_stage():
+            self.stage_centers_joint()
+        else:
+            self.stage_centers_LR_then_FB()
+
+    def stage_centers_joint(self) -> None:
+        """
+        Stage every t-center and x-center with one search. The heuristic is the
+        joint LR t+x table read on three axes, and the search owns orbit-0 OLL.
+        """
         original_state = self.state[:]
         original_solution = self.solution[:]
         comment_start = len(self.solution)
@@ -2965,6 +3027,98 @@ class RubiksCube555(RubiksCube):
             raise SolveError("phase 1 did not stage centers")
 
         self.print_cube_add_comment("Phase 1: centers staged", comment_start)
+
+    def stage_centers_LR_then_FB(self) -> None:
+        """
+        Find up to 64 optimal phase-1 LR-center solutions, then solve phase 2
+        from all distinct endpoints and keep the pair with the shortest total
+        solution. Phase-1 endpoints are grouped by orbit-0 parity because phase
+        2 must use a different wide-turn parity constraint for each group.
+        """
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        phase1_comment_start = len(self.solution)
+
+        if self.LR_centers_staged():
+            phase1_solutions = [((), (None, None, None, None, None))]
+        else:
+            phase1_solutions = self.lt_LR_centers_stage.solutions_via_c(solution_count=64)
+
+        phase2_roots_by_parity = {}
+        phase1_solution_by_root = {}
+        representative_state_by_parity = {}
+        logger.info("found %d optimal phase-1 solutions", len(phase1_solutions))
+
+        for phase1_solution, _ in phase1_solutions:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in phase1_solution:
+                self.rotate(step)
+
+            phase2_root = tuple(pt.rank() for pt in self.lt_FB_centers_stage.prune_tables)
+            orbit0_has_oll = 0 in self.center_solution_leads_to_oll_parity()
+            root_key = (orbit0_has_oll, phase2_root)
+
+            if root_key not in phase1_solution_by_root:
+                phase2_roots_by_parity.setdefault(orbit0_has_oll, []).append(phase2_root)
+                phase1_solution_by_root[root_key] = phase1_solution
+                representative_state_by_parity.setdefault(
+                    orbit0_has_oll,
+                    (self.state[:], self.solution[:]),
+                )
+
+        logger.info(
+            "phase-1 portfolio has %d distinct phase-2 roots in %d parity groups",
+            len(phase1_solution_by_root),
+            len(phase2_roots_by_parity),
+        )
+
+        best = None
+        for orbit0_has_oll, phase2_roots in phase2_roots_by_parity.items():
+            representative_state, representative_solution = representative_state_by_parity[orbit0_has_oll]
+            self.state = representative_state[:]
+            self.solution = representative_solution[:]
+
+            phase2_solution, phase2_states = self.lt_FB_centers_stage.solutions_via_c(pt_states=phase2_roots)[0]
+            phase2_root = tuple(phase2_states[: len(self.lt_FB_centers_stage.prune_tables)])
+            phase1_solution = phase1_solution_by_root[orbit0_has_oll, phase2_root]
+            candidate = (
+                len(phase1_solution) + len(phase2_solution),
+                len(phase2_solution),
+                phase1_solution,
+                phase2_solution,
+            )
+
+            if best is None or candidate < best:
+                best = candidate
+
+        if best is None:
+            raise SolveError("could not solve phase 2 from any phase-1 portfolio endpoint")
+
+        _, _, best_phase1_solution, best_phase2_solution = best
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in best_phase1_solution:
+            self.rotate(step)
+
+        self.print_cube_add_comment("Phase 1: LR centers staged", phase1_comment_start)
+
+        phase2_comment_start = len(self.solution)
+        for step in best_phase2_solution:
+            self.rotate(step)
+
+        if not self.LR_centers_staged() or not self.FB_centers_staged():
+            raise SolveError("phase-1 portfolio did not stage LR and FB centers")
+
+        logger.info(
+            "selected phase-1 length %d and phase-2 length %d (%d total)",
+            len(best_phase1_solution),
+            len(best_phase2_solution),
+            len(best_phase1_solution) + len(best_phase2_solution),
+        )
+        self.print_cube_add_comment("Phase 2: UD FB centers staged", phase2_comment_start)
 
     def pair_edges(self):
         """

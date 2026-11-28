@@ -17,6 +17,10 @@
 #define DEFAULT_MAX_THRESHOLD 20
 #define MAX_THRESHOLD 40
 #define ROOT_ID_SIZE 128
+#define WING_CODES 390625
+#define RELABELINGS 24
+#define MAX_SPLIT_DEPTH 2
+#define SPLIT_TARGET_TASKS 4096
 
 static const unsigned int center_squares[BINARY_GROUPS][GROUP_SIZE] = {
     {33, 37, 39, 43, 83, 87, 89, 93},
@@ -54,6 +58,26 @@ struct root {
     unsigned char initial_cost;
 };
 
+/* A subtree below the first few moves of one root, searched by one thread. */
+struct task {
+    size_t root_index;
+    struct coordinate coordinate;
+    unsigned char cost;
+    unsigned char depth;
+    move_type prefix[MAX_SPLIT_DEPTH];
+    move_type *solutions;
+    unsigned int solution_count;
+    unsigned int solution_capacity;
+};
+
+struct search_context {
+    struct ida_ordered_tasks *tasks;
+    struct task *task;
+    size_t task_index;
+    unsigned int threshold;
+    move_type path[MAX_THRESHOLD + 1];
+};
+
 static unsigned char *centers_costs;
 static unsigned char *high_costs;
 static unsigned char *low_costs;
@@ -63,16 +87,23 @@ static int low_fd = -1;
 static uint8_t binary_transition[BINARY_GROUPS + 1][BINARY_UNIVERSE][MOVE_COUNT_555];
 static uint16_t wing_transition[3][WING_UNIVERSE][MOVE_COUNT_555];
 static uint8_t wing_state_table[WING_UNIVERSE][GROUP_SIZE];
+static uint16_t wing_rank_by_code[WING_CODES];
 static uint8_t midge_occupancy_rank[WING_UNIVERSE];
+static uint8_t midge_relabeling[WING_UNIVERSE];
 static uint8_t wing_is_parked[WING_UNIVERSE];
-static uint16_t relative_wing_table[WING_UNIVERSE][WING_UNIVERSE];
+static uint8_t relabeling_index[256];
+static uint8_t relabeling_order[RELABELINGS][4];
+static uint16_t relative_wing_table[RELABELINGS][WING_UNIVERSE];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][IDA_MOVE_INDEX_MAX];
 static move_type inverse_move[MOVE_MAX];
-static move_type path[MAX_THRESHOLD + 1];
 static unsigned int solution_limit = 1;
 static unsigned int solutions_found;
 static int find_extra;
+static struct root *roots;
+static struct task *tasks;
+static size_t task_count;
+static size_t task_capacity;
 
 static void usage(const char *program)
 {
@@ -80,7 +111,7 @@ static void usage(const char *program)
         "usage: %s --roots-file FILE --centers-cost FILE "
         "--high-combo-cost FILE --low-combo-cost FILE "
         "[--min-ida-threshold N] [--max-ida-threshold N] "
-        "[--solution-count N] [--find-extra] [--print-ranks] "
+        "[--solution-count N] [--find-extra] [--threads N] [--print-ranks] "
         "[--print-legal-moves]\n",
         program
     );
@@ -186,29 +217,6 @@ static unsigned int multiset_count(const unsigned int counts[5])
     return result;
 }
 
-static uint16_t wing_rank(const uint8_t state[GROUP_SIZE])
-{
-    unsigned int counts[5] = {1, 1, 1, 1, 4};
-    unsigned int rank = 0;
-
-    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
-        unsigned int actual = state[position];
-
-        if (actual >= 5 || !counts[actual]) {
-            return UINT16_MAX;
-        }
-        for (unsigned int symbol = 0; symbol < actual; symbol++) {
-            if (counts[symbol]) {
-                counts[symbol]--;
-                rank += multiset_count(counts);
-                counts[symbol]++;
-            }
-        }
-        counts[actual]--;
-    }
-    return (uint16_t)rank;
-}
-
 static int wing_unrank(uint64_t rank, uint8_t state[GROUP_SIZE])
 {
     unsigned int counts[5] = {1, 1, 1, 1, 4};
@@ -242,19 +250,49 @@ static int wing_unrank(uint64_t rank, uint8_t state[GROUP_SIZE])
     return 1;
 }
 
+static unsigned int wing_code(const uint8_t state[GROUP_SIZE])
+{
+    unsigned int code = 0;
+
+    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+        code = code * 5 + state[position];
+    }
+    return code;
+}
+
+static uint16_t fast_wing_rank(const uint8_t state[GROUP_SIZE])
+{
+    return wing_rank_by_code[wing_code(state)];
+}
+
 /*
- * The searcher touches these per node, so unranking on the fly (multiset_count
- * recomputes factorials for every symbol at every slot) dominated the cost of
- * the three table probes it exists to serve.
+ * Every wing state holds labels 0-3 once and label 4 four times, so ranking a wing relative to the
+ * midges only depends on the order in which the midges show labels 0-3: one of 24 relabelings.
  */
 static void init_wing_tables(void)
 {
+    memset(wing_rank_by_code, 0xFF, sizeof(wing_rank_by_code));
+    for (unsigned int rank = 0; rank < WING_UNIVERSE; rank++) {
+        wing_unrank(rank, wing_state_table[rank]);
+        wing_rank_by_code[wing_code(wing_state_table[rank])] = (uint16_t)rank;
+    }
     for (unsigned int rank = 0; rank < WING_UNIVERSE; rank++) {
         uint8_t *state = wing_state_table[rank];
         uint8_t mask = 0;
+        uint8_t order[4];
+        unsigned int seen = 0;
+        unsigned int relabeling = 0;
         int parked = 1;
 
-        wing_unrank(rank, state);
+        for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+            if (state[position] < 4) {
+                order[seen++] = state[position];
+            }
+        }
+        for (unsigned int index = 0; index < 4; index++) {
+            relabeling = relabeling * 4 + order[index];
+        }
+        midge_relabeling[rank] = relabeling_index[relabeling];
         for (unsigned int position = 0; position < GROUP_SIZE; position++) {
             int occupied = state[position] != 4;
 
@@ -268,33 +306,40 @@ static void init_wing_tables(void)
         midge_occupancy_rank[rank] = binary_rank(mask);
         wing_is_parked[rank] = (uint8_t)parked;
     }
-    for (unsigned int midge = 0; midge < WING_UNIVERSE; midge++) {
-        const uint8_t *midges = wing_state_table[midge];
-        uint8_t map[5] = {255, 255, 255, 255, 4};
-        uint8_t next = 0;
+}
 
-        for (unsigned int position = 0; position < GROUP_SIZE; position++) {
-            uint8_t label = midges[position];
+/* relabeling_order[index] lists labels 0-3 in the order the midges show them. */
+static void init_relabelings(void)
+{
+    unsigned int count = 0;
 
-            if (label < 4 && map[label] == 255) {
-                map[label] = next++;
-            }
+    for (unsigned int code = 0; code < 256; code++) {
+        uint8_t order[4] = {code >> 6, (code >> 4) & 3, (code >> 2) & 3, code & 3};
+
+        if ((1U << order[0] | 1U << order[1] | 1U << order[2] | 1U << order[3]) != 0xFU) {
+            continue;
+        }
+        relabeling_index[code] = (uint8_t)count;
+        memcpy(relabeling_order[count], order, sizeof(order));
+        count++;
+    }
+}
+
+static void init_relative_wing_table(void)
+{
+    for (unsigned int relabeling = 0; relabeling < RELABELINGS; relabeling++) {
+        uint8_t map[5] = {0, 0, 0, 0, 4};
+
+        for (unsigned int index = 0; index < 4; index++) {
+            map[relabeling_order[relabeling][index]] = (uint8_t)index;
         }
         for (unsigned int wing = 0; wing < WING_UNIVERSE; wing++) {
-            const uint8_t *wings = wing_state_table[wing];
             uint8_t child[GROUP_SIZE];
-            int ok = next == 4;
 
-            for (unsigned int position = 0; ok && position < GROUP_SIZE; position++) {
-                uint8_t mapped = map[wings[position]];
-
-                if (mapped == 255) {
-                    ok = 0;
-                    break;
-                }
-                child[position] = mapped;
+            for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+                child[position] = map[wing_state_table[wing][position]];
             }
-            relative_wing_table[wing][midge] = ok ? wing_rank(child) : UINT16_MAX;
+            relative_wing_table[relabeling][wing] = fast_wing_rank(child);
         }
     }
 }
@@ -407,7 +452,7 @@ static void init_edge_transitions(void)
                 for (unsigned int source = 0; source < GROUP_SIZE; source++) {
                     child[permutations[orbit][move_index][source]] = state[source];
                 }
-                wing_transition[orbit][rank][move_index] = wing_rank(child);
+                wing_transition[orbit][rank][move_index] = fast_wing_rank(child);
             }
         }
     }
@@ -470,25 +515,31 @@ static unsigned char table_cost(const unsigned char *costs, uint64_t rank)
     return decode_cost_byte(costs[rank]);
 }
 
-static unsigned char heuristic(const struct coordinate *coordinate)
+static uint64_t high_combo_rank(const struct coordinate *coordinate)
 {
-    unsigned char center = table_cost(centers_costs, centers_rank(coordinate));
-    uint8_t midge_rank = midge_occupancy_rank[coordinate->midge];
-    uint16_t high_wing = relative_wing_table[coordinate->high_wing][coordinate->midge];
-    uint16_t low_wing = relative_wing_table[coordinate->low_wing][coordinate->midge];
-    unsigned char high;
-    unsigned char low;
-    unsigned char result;
+    return combo_rank(
+        coordinate->high_fb,
+        relative_wing_table[midge_relabeling[coordinate->midge]][coordinate->high_wing],
+        midge_occupancy_rank[coordinate->midge]
+    );
+}
 
-    if (center == UINT8_MAX || high_wing == UINT16_MAX || low_wing == UINT16_MAX) {
+static uint64_t low_combo_rank(const struct coordinate *coordinate)
+{
+    return combo_rank(
+        coordinate->low_fb,
+        relative_wing_table[midge_relabeling[coordinate->midge]][coordinate->low_wing],
+        midge_occupancy_rank[coordinate->midge]
+    );
+}
+
+static unsigned char combine_costs(unsigned char center, unsigned char high, unsigned char low)
+{
+    unsigned char result = center;
+
+    if (center == UINT8_MAX || high == UINT8_MAX || low == UINT8_MAX) {
         return UINT8_MAX;
     }
-    high = table_cost(high_costs, combo_rank(coordinate->high_fb, high_wing, midge_rank));
-    low = table_cost(low_costs, combo_rank(coordinate->low_fb, low_wing, midge_rank));
-    if (high == UINT8_MAX || low == UINT8_MAX) {
-        return UINT8_MAX;
-    }
-    result = center;
     if (high > result) {
         result = high;
     }
@@ -496,6 +547,15 @@ static unsigned char heuristic(const struct coordinate *coordinate)
         result = low;
     }
     return result;
+}
+
+static unsigned char heuristic(const struct coordinate *coordinate)
+{
+    return combine_costs(
+        table_cost(centers_costs, centers_rank(coordinate)),
+        table_cost(high_costs, high_combo_rank(coordinate)),
+        table_cost(low_costs, low_combo_rank(coordinate))
+    );
 }
 
 static int exact_goal(const struct coordinate *coordinate)
@@ -540,49 +600,216 @@ static struct coordinate apply_move(const struct coordinate *coordinate, unsigne
     return child;
 }
 
-static int emit_solution(const struct root *root, unsigned int depth)
+static int record_solution(struct search_context *context)
 {
-    printf("SOLUTION ROOT %s (%u steps):", root->id, depth);
-    for (unsigned int index = 0; index < depth; index++) {
-        printf(" %s", move2str[path[index]]);
+    struct task *task = context->task;
+    unsigned int cap = find_extra ? solution_limit : 1;
+
+    if (task->solution_count == task->solution_capacity) {
+        unsigned int capacity = task->solution_capacity ? task->solution_capacity * 2 : 4;
+        move_type *resized = realloc(task->solutions, (size_t)capacity * context->threshold * sizeof(move_type));
+
+        if (!resized) {
+            fprintf(stderr, "ERROR: could not allocate solutions\n");
+            exit(1);
+        }
+        task->solutions = resized;
+        task->solution_capacity = capacity;
     }
-    printf("\n");
-    solutions_found++;
-    if (!find_extra) {
+    memcpy(&task->solutions[(size_t)task->solution_count * context->threshold],
+           context->path, context->threshold * sizeof(move_type));
+    task->solution_count++;
+    if (cap && task->solution_count >= cap) {
+        ida_stop_tasks_after(context->tasks, context->task_index);
         return 1;
     }
-    return solution_limit && solutions_found >= solution_limit;
+    return 0;
 }
 
+/*
+ * The caller has already checked that depth + cost fits the threshold. Children are checked against
+ * the 24 MB center table before the two 576 MB combo tables, and each table's bytes are prefetched
+ * for every surviving child before any of them is read.
+ */
 static int search(
-    const struct root *root,
+    struct search_context *context,
     const struct coordinate *coordinate,
+    unsigned char cost,
     unsigned int depth,
-    unsigned int threshold,
     move_type previous)
 {
-    unsigned char cost = heuristic(coordinate);
+    struct coordinate children[IDA_MOVE_INDEX_MAX];
+    uint64_t center_ranks[IDA_MOVE_INDEX_MAX];
+    uint64_t high_ranks[IDA_MOVE_INDEX_MAX];
+    uint64_t low_ranks[IDA_MOVE_INDEX_MAX];
+    unsigned char center_child_costs[IDA_MOVE_INDEX_MAX];
+    unsigned char child_moves[IDA_MOVE_INDEX_MAX];
+    unsigned int child_count = 0;
+    unsigned int survivor_count = 0;
+    unsigned int threshold = context->threshold;
 
-    if (cost == UINT8_MAX || depth + cost > threshold) {
-        return 0;
-    }
     if (!cost && exact_goal(coordinate)) {
-        return depth == threshold ? emit_solution(root, depth) : 0;
+        return depth == threshold ? record_solution(context) : 0;
     }
-    if (depth >= threshold) {
+    if (depth >= threshold || ida_task_abandoned(context->tasks, context->task_index)) {
         return 0;
     }
     for (unsigned int legal = 0; legal < legal_move_count[previous]; legal++) {
         unsigned int move_index = legal_move_index[previous][legal];
-        struct coordinate child = apply_move(coordinate, move_index);
 
-        path[depth] = moves_555[move_index];
-        if (search(root, &child, depth + 1, threshold, moves_555[move_index])) {
+        children[child_count] = apply_move(coordinate, move_index);
+        center_ranks[child_count] = centers_rank(&children[child_count]);
+        __builtin_prefetch(&centers_costs[center_ranks[child_count]]);
+        child_moves[child_count] = (unsigned char)move_index;
+        child_count++;
+    }
+    for (unsigned int index = 0; index < child_count; index++) {
+        unsigned char center = table_cost(centers_costs, center_ranks[index]);
+
+        if (center == UINT8_MAX || depth + 1 + center > threshold) {
+            continue;
+        }
+        children[survivor_count] = children[index];
+        child_moves[survivor_count] = child_moves[index];
+        center_child_costs[survivor_count] = center;
+        high_ranks[survivor_count] = high_combo_rank(&children[survivor_count]);
+        low_ranks[survivor_count] = low_combo_rank(&children[survivor_count]);
+        __builtin_prefetch(&high_costs[high_ranks[survivor_count]]);
+        __builtin_prefetch(&low_costs[low_ranks[survivor_count]]);
+        survivor_count++;
+    }
+    for (unsigned int index = 0; index < survivor_count; index++) {
+        unsigned char child_cost = combine_costs(
+            center_child_costs[index],
+            table_cost(high_costs, high_ranks[index]),
+            table_cost(low_costs, low_ranks[index])
+        );
+        move_type move = moves_555[child_moves[index]];
+
+        if (child_cost == UINT8_MAX || depth + 1 + child_cost > threshold) {
+            continue;
+        }
+        context->path[depth] = move;
+        if (search(context, &children[index], child_cost, depth + 1, move)) {
             return 1;
         }
     }
-    path[depth] = MOVE_NONE;
     return 0;
+}
+
+static void add_task(size_t root_index, const struct coordinate *coordinate, unsigned char cost,
+                     unsigned int depth, const move_type *prefix)
+{
+    struct task *task;
+
+    if (task_count == task_capacity) {
+        size_t capacity = task_capacity ? task_capacity * 2 : 1024;
+        struct task *resized = realloc(tasks, capacity * sizeof(*tasks));
+
+        if (!resized) {
+            fprintf(stderr, "ERROR: could not allocate tasks\n");
+            exit(1);
+        }
+        tasks = resized;
+        task_capacity = capacity;
+    }
+    task = &tasks[task_count++];
+    memset(task, 0, sizeof(*task));
+    task->root_index = root_index;
+    task->coordinate = *coordinate;
+    task->cost = cost;
+    task->depth = (unsigned char)depth;
+    memcpy(task->prefix, prefix, depth * sizeof(move_type));
+}
+
+/* Walks the first split_depth moves in search order, with the same pruning, and queues each subtree. */
+static void split_tasks(size_t root_index, const struct coordinate *coordinate, unsigned char cost,
+                        unsigned int depth, unsigned int split_depth, unsigned int threshold,
+                        move_type previous, move_type *prefix)
+{
+    if ((!cost && exact_goal(coordinate)) || depth == split_depth || depth >= threshold) {
+        add_task(root_index, coordinate, cost, depth, prefix);
+        return;
+    }
+    for (unsigned int legal = 0; legal < legal_move_count[previous]; legal++) {
+        unsigned int move_index = legal_move_index[previous][legal];
+        struct coordinate child = apply_move(coordinate, move_index);
+        unsigned char child_cost = heuristic(&child);
+
+        if (child_cost == UINT8_MAX || depth + 1 + child_cost > threshold) {
+            continue;
+        }
+        prefix[depth] = moves_555[move_index];
+        split_tasks(root_index, &child, child_cost, depth + 1, split_depth, threshold,
+                    moves_555[move_index], prefix);
+    }
+}
+
+static void run_task(struct ida_ordered_tasks *ordered, size_t task_index)
+{
+    struct task *task = &tasks[task_index];
+    struct search_context context;
+
+    context.tasks = ordered;
+    context.task = task;
+    context.task_index = task_index;
+    context.threshold = *(const unsigned int *)ordered->context;
+    memcpy(context.path, task->prefix, task->depth * sizeof(move_type));
+    search(&context, &task->coordinate, task->cost, task->depth,
+           task->depth ? task->prefix[task->depth - 1] : MOVE_NONE);
+}
+
+/* Prints solutions in single-threaded search order, stopping where that search would have stopped. */
+static void print_solutions(unsigned int threshold)
+{
+    for (size_t task_index = 0; task_index < task_count; task_index++) {
+        struct task *task = &tasks[task_index];
+
+        for (unsigned int solution = 0; solution < task->solution_count; solution++) {
+            const move_type *moves = &task->solutions[(size_t)solution * threshold];
+
+            printf("SOLUTION ROOT %s (%u steps):", roots[task->root_index].id, threshold);
+            for (unsigned int index = 0; index < threshold; index++) {
+                printf(" %s", move2str[moves[index]]);
+            }
+            printf("\n");
+            solutions_found++;
+            if (!find_extra || (solution_limit && solutions_found >= solution_limit)) {
+                return;
+            }
+        }
+    }
+}
+
+static void search_threshold(size_t root_count, unsigned int threshold, unsigned int thread_count)
+{
+    struct ida_ordered_tasks ordered = {0};
+    move_type prefix[MAX_SPLIT_DEPTH];
+    size_t active = 0;
+    unsigned int split_depth = 0;
+
+    for (size_t index = 0; index < root_count; index++) {
+        active += roots[index].initial_cost <= threshold;
+    }
+    for (size_t estimate = active; estimate && estimate < SPLIT_TARGET_TASKS && split_depth < MAX_SPLIT_DEPTH;
+            estimate *= 20) {
+        split_depth++;
+    }
+    for (size_t index = 0; index < root_count; index++) {
+        if (roots[index].initial_cost <= threshold) {
+            split_tasks(index, &roots[index].coordinate, roots[index].initial_cost, 0, split_depth, threshold,
+                        MOVE_NONE, prefix);
+        }
+    }
+    ordered.task_count = task_count;
+    ordered.run = run_task;
+    ordered.context = &threshold;
+    ida_run_ordered_tasks(&ordered, thread_count);
+    print_solutions(threshold);
+    for (size_t task_index = 0; task_index < task_count; task_index++) {
+        free(tasks[task_index].solutions);
+    }
+    task_count = 0;
 }
 
 static void append_root(struct root **roots, size_t *count, size_t *capacity, const struct root *root)
@@ -687,7 +914,7 @@ int main(int argc, char **argv)
     unsigned int max_threshold = DEFAULT_MAX_THRESHOLD;
     int print_ranks = 0;
     int print_legal_moves = 0;
-    struct root *roots = NULL;
+    unsigned int thread_count = 0;
     size_t root_count = 0;
 
     for (int index = 1; index < argc; index++) {
@@ -707,6 +934,8 @@ int main(int argc, char **argv)
             solution_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--find-extra")) {
             find_extra = 1;
+        } else if (!strcmp(argv[index], "--threads") && index + 1 < argc) {
+            thread_count = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--print-rank") || !strcmp(argv[index], "--print-ranks")) {
             print_ranks = 1;
         } else if (!strcmp(argv[index], "--print-legal-moves")) {
@@ -727,7 +956,9 @@ int main(int argc, char **argv)
     }
 
     init_binom();
+    init_relabelings();
     init_wing_tables();
+    init_relative_wing_table();
     ida_init_move_tables(
         moves_555, MOVE_COUNT_555, move_is_allowed,
         legal_move_count, legal_move_index, inverse_move
@@ -774,16 +1005,8 @@ int main(int argc, char **argv)
                     " LOW_RANK %" PRIu64 " COST %u\n",
                     roots[index].id,
                     centers_rank(&roots[index].coordinate),
-                    combo_rank(
-                        roots[index].coordinate.high_fb,
-                        relative_wing_table[roots[index].coordinate.high_wing][roots[index].coordinate.midge],
-                        midge_occupancy_rank[roots[index].coordinate.midge]
-                    ),
-                    combo_rank(
-                        roots[index].coordinate.low_fb,
-                        relative_wing_table[roots[index].coordinate.low_wing][roots[index].coordinate.midge],
-                        midge_occupancy_rank[roots[index].coordinate.midge]
-                    ),
+                    high_combo_rank(&roots[index].coordinate),
+                    low_combo_rank(&roots[index].coordinate),
                     roots[index].initial_cost
                 );
             }
@@ -796,29 +1019,14 @@ int main(int argc, char **argv)
         }
     }
 
-    for (unsigned int threshold = min_threshold; threshold <= max_threshold; threshold++) {
-        unsigned int before = solutions_found;
-        int stop = 0;
-
-        for (size_t index = 0; index < root_count && !stop; index++) {
-            if (roots[index].initial_cost <= threshold) {
-                stop = search(
-                    &roots[index],
-                    &roots[index].coordinate,
-                    0,
-                    threshold,
-                    MOVE_NONE
-                );
-            }
-        }
-        if (solutions_found != before) {
-            break;
-        }
+    for (unsigned int threshold = min_threshold; threshold <= max_threshold && !solutions_found; threshold++) {
+        search_threshold(root_count, threshold, thread_count);
     }
 
     ida_unmap_cost_file(centers_fd, centers_costs, CENTERS_UNIVERSE);
     ida_unmap_cost_file(high_fd, high_costs, COMBO_UNIVERSE);
     ida_unmap_cost_file(low_fd, low_costs, COMBO_UNIVERSE);
+    free(tasks);
     free(roots);
     if (!solutions_found) {
         fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);

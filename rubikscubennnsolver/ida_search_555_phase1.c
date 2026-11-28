@@ -14,6 +14,7 @@
 #define GROUP_UNIVERSE UINT64_C(735471)
 #define DEFAULT_MAX_THRESHOLD 20
 #define MAX_THRESHOLD 40
+#define SPLIT_DEPTH 3
 
 static const unsigned int t_squares[GROUP_SIZE] = {
     8, 12, 14, 18, 33, 37, 39, 43, 58, 62, 64, 68,
@@ -32,78 +33,92 @@ static uint32_t t_move_bits[MOVE_COUNT_555][GROUP_SIZE];
 static uint32_t x_move_bits[MOVE_COUNT_555][GROUP_SIZE];
 static uint32_t t_move_chunks[MOVE_COUNT_555][3][256];
 static uint32_t x_move_chunks[MOVE_COUNT_555][3][256];
-static uint32_t *rank_cache;
-static uint32_t *t_transitions;
-static uint32_t *x_transitions;
+static uint32_t rank_chunks[3][SELECTED_COUNT + 1][256];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][IDA_MOVE_INDEX_MAX];
 static move_type inverse_move[MOVE_MAX];
-static move_type path[MAX_THRESHOLD + 1];
 static unsigned int solution_limit = 1;
 static unsigned int solution_count;
 static int t_centers_only;
+
+struct node {
+    uint32_t t_mask;
+    uint32_t x_mask;
+};
+
+/* A subtree below the first few moves, searched by one thread. */
+struct task {
+    struct node node;
+    unsigned char cost;
+    unsigned char depth;
+    move_type prefix[SPLIT_DEPTH];
+    move_type *solutions;
+    unsigned int solution_count;
+    unsigned int solution_capacity;
+};
+
+struct search_context {
+    struct ida_ordered_tasks *tasks;
+    struct task *task;
+    size_t task_index;
+    unsigned int threshold;
+    move_type path[MAX_THRESHOLD + 1];
+};
+
+static struct task *tasks;
+static size_t task_count;
+static size_t task_capacity;
 
 static void usage(const char *program)
 {
     printf(
         "usage: %s --kociemba STATE --t-center-cost FILE "
         "(--x-center-cost FILE | --t-centers-only) "
-        "[--min-ida-threshold N] [--max-ida-threshold N] [--solution-count N] "
+        "[--min-ida-threshold N] [--max-ida-threshold N] [--solution-count N] [--threads N] "
         "[--print-ranks] [--print-legal-moves]\n",
         program
     );
 }
 
-/* buildercore.multiset_rank order for eight lower symbols followed by sixteen higher symbols. */
-static uint64_t combination_rank(uint32_t selected)
+/*
+ * buildercore.multiset_rank order for eight lower symbols followed by sixteen higher symbols. Each
+ * byte of the mask adds one table entry, indexed by how many selected squares the earlier bytes held.
+ */
+static void init_rank_chunks(void)
 {
-    uint64_t rank = 0;
-    unsigned int remaining = SELECTED_COUNT;
-    uint32_t cached;
+    for (unsigned int chunk = 0; chunk < 3; chunk++) {
+        for (unsigned int start = 0; start <= SELECTED_COUNT; start++) {
+            for (unsigned int value = 0; value < 256; value++) {
+                unsigned int remaining = start;
+                uint32_t rank = 0;
 
-    if (__builtin_popcount(selected) != SELECTED_COUNT) {
-        return UINT64_MAX;
-    }
-    cached = rank_cache[selected];
-    if (cached) {
-        return cached - 1;
-    }
-    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
-        unsigned int after = GROUP_SIZE - position - 1;
+                for (unsigned int bit = 0; bit < 8; bit++) {
+                    unsigned int after = GROUP_SIZE - (8 * chunk + bit) - 1;
 
-        if (selected & (UINT32_C(1) << position)) {
-            remaining--;
-        } else if (remaining) {
-            rank += binom[after][remaining - 1];
+                    if (value & (1U << bit)) {
+                        if (remaining) {
+                            remaining--;
+                        }
+                    } else if (remaining) {
+                        rank += (uint32_t)binom[after][remaining - 1];
+                    }
+                }
+                rank_chunks[chunk][start][value] = rank;
+            }
         }
     }
-    if (remaining) {
-        return UINT64_MAX;
-    }
-    rank_cache[selected] = (uint32_t)rank + 1;
-    return rank;
 }
 
-static uint32_t combination_unrank(uint64_t rank)
+/* The mask must hold exactly SELECTED_COUNT bits. */
+static uint32_t combination_rank(uint32_t selected)
 {
-    uint32_t mask = 0;
-    unsigned int remaining = SELECTED_COUNT;
+    unsigned int low = selected & 0xffU;
+    unsigned int middle = (selected >> 8) & 0xffU;
+    unsigned int remaining = SELECTED_COUNT - (unsigned int)__builtin_popcount(low);
 
-    if (rank >= GROUP_UNIVERSE) {
-        return UINT32_MAX;
-    }
-    for (unsigned int position = 0; position < GROUP_SIZE && remaining; position++) {
-        unsigned int after = GROUP_SIZE - position - 1;
-        uint64_t selected_prefix = binom[after][remaining - 1];
-
-        if (rank < selected_prefix) {
-            mask |= UINT32_C(1) << position;
-            remaining--;
-        } else {
-            rank -= selected_prefix;
-        }
-    }
-    return remaining ? UINT32_MAX : mask;
+    return rank_chunks[0][SELECTED_COUNT][low] +
+        rank_chunks[1][remaining][middle] +
+        rank_chunks[2][remaining - (unsigned int)__builtin_popcount(middle)][selected >> 16];
 }
 
 static uint32_t mask_from_cube(const char cube[CUBE_ARRAY_SIZE], const unsigned int squares[GROUP_SIZE])
@@ -202,71 +217,184 @@ static void init_move_chunks(
     }
 }
 
-static uint32_t *build_transitions(const uint32_t chunks[MOVE_COUNT_555][3][256])
+static unsigned char node_cost(const struct node *node)
 {
-    size_t entry_count = (size_t)GROUP_UNIVERSE * MOVE_COUNT_555;
-    uint32_t *transitions = malloc(entry_count * sizeof(*transitions));
+    return heuristic(combination_rank(node->t_mask), t_centers_only ? 0 : combination_rank(node->x_mask));
+}
 
-    if (!transitions) {
-        fprintf(stderr, "ERROR: could not allocate ranked move transitions\n");
-        exit(1);
-    }
-    for (uint32_t rank = 0; rank < GROUP_UNIVERSE; rank++) {
-        uint32_t mask = combination_unrank(rank);
+static void node_apply_move(const struct node *node, unsigned int move_index, struct node *child)
+{
+    child->t_mask = apply_move(node->t_mask, t_move_chunks[move_index]);
+    child->x_mask = t_centers_only ? 0 : apply_move(node->x_mask, x_move_chunks[move_index]);
+}
 
-        for (unsigned int move_index = 0; move_index < MOVE_COUNT_555; move_index++) {
-            transitions[(size_t)rank * MOVE_COUNT_555 + move_index] =
-                (uint32_t)combination_rank(apply_move(mask, chunks[move_index]));
+static int record_solution(struct search_context *context)
+{
+    struct task *task = context->task;
+
+    if (task->solution_count == task->solution_capacity) {
+        unsigned int capacity = task->solution_capacity ? task->solution_capacity * 2 : 4;
+        move_type *resized = realloc(task->solutions, (size_t)capacity * context->threshold * sizeof(move_type));
+
+        if (!resized) {
+            fprintf(stderr, "ERROR: could not allocate solutions\n");
+            exit(1);
         }
+        task->solutions = resized;
+        task->solution_capacity = capacity;
     }
-    return transitions;
+    memcpy(&task->solutions[(size_t)task->solution_count * context->threshold],
+           context->path, context->threshold * sizeof(move_type));
+    task->solution_count++;
+    if (solution_limit && task->solution_count >= solution_limit) {
+        ida_stop_tasks_after(context->tasks, context->task_index);
+        return 1;
+    }
+    return 0;
 }
 
-static int emit_solution(unsigned int depth)
-{
-    printf("SOLUTION (%u steps):", depth);
-    for (unsigned int index = 0; index < depth; index++) {
-        printf(" %s", move2str[path[index]]);
-    }
-    printf("\n");
-    solution_count++;
-    return solution_limit && solution_count >= solution_limit;
-}
-
+/* The caller has already checked that depth + cost fits the threshold. */
 static int search(
-    uint32_t t_rank,
-    uint32_t x_rank,
+    struct search_context *context,
+    const struct node *node,
+    unsigned char cost,
     unsigned int depth,
-    unsigned int threshold,
     move_type previous)
 {
-    unsigned char cost = heuristic(t_rank, x_rank);
+    struct node children[IDA_MOVE_INDEX_MAX];
+    uint32_t t_ranks[IDA_MOVE_INDEX_MAX];
+    uint32_t x_ranks[IDA_MOVE_INDEX_MAX];
+    unsigned int move_count = legal_move_count[previous];
+    unsigned int threshold = context->threshold;
 
-    if (cost == UINT8_MAX || depth + cost > threshold) {
-        return 0;
-    }
     if (!cost) {
-        return depth == threshold ? emit_solution(depth) : 0;
+        return depth == threshold ? record_solution(context) : 0;
     }
-    if (depth >= threshold) {
+    if (depth >= threshold || ida_task_abandoned(context->tasks, context->task_index)) {
         return 0;
     }
+    for (unsigned int legal = 0; legal < move_count; legal++) {
+        node_apply_move(node, legal_move_index[previous][legal], &children[legal]);
+        t_ranks[legal] = combination_rank(children[legal].t_mask);
+        __builtin_prefetch(&t_costs[t_ranks[legal]]);
+        if (!t_centers_only) {
+            x_ranks[legal] = combination_rank(children[legal].x_mask);
+            __builtin_prefetch(&x_costs[x_ranks[legal]]);
+        }
+    }
+    for (unsigned int legal = 0; legal < move_count; legal++) {
+        move_type move = moves_555[legal_move_index[previous][legal]];
+        unsigned char child_cost = heuristic(t_ranks[legal], t_centers_only ? 0 : x_ranks[legal]);
 
-    for (unsigned int legal = 0; legal < legal_move_count[previous]; legal++) {
-        unsigned int move_index = legal_move_index[previous][legal];
-
-        path[depth] = moves_555[move_index];
-        if (search(
-                t_transitions[(size_t)t_rank * MOVE_COUNT_555 + move_index],
-                t_centers_only ? 0 : x_transitions[(size_t)x_rank * MOVE_COUNT_555 + move_index],
-                depth + 1,
-                threshold,
-                path[depth])) {
+        if (child_cost == UINT8_MAX || depth + 1 + child_cost > threshold) {
+            continue;
+        }
+        context->path[depth] = move;
+        if (search(context, &children[legal], child_cost, depth + 1, move)) {
             return 1;
         }
     }
-    path[depth] = MOVE_NONE;
     return 0;
+}
+
+static void add_task(const struct node *node, unsigned char cost, unsigned int depth, const move_type *prefix)
+{
+    struct task *task;
+
+    if (task_count == task_capacity) {
+        size_t capacity = task_capacity ? task_capacity * 2 : 1024;
+        struct task *resized = realloc(tasks, capacity * sizeof(*tasks));
+
+        if (!resized) {
+            fprintf(stderr, "ERROR: could not allocate tasks\n");
+            exit(1);
+        }
+        tasks = resized;
+        task_capacity = capacity;
+    }
+    task = &tasks[task_count++];
+    memset(task, 0, sizeof(*task));
+    task->node = *node;
+    task->cost = cost;
+    task->depth = (unsigned char)depth;
+    memcpy(task->prefix, prefix, depth * sizeof(move_type));
+}
+
+/* Walks the first SPLIT_DEPTH moves in search order, with the same pruning, and queues each subtree. */
+static void split_tasks(const struct node *node, unsigned char cost, unsigned int depth, unsigned int split_depth,
+                        unsigned int threshold, move_type previous, move_type *prefix)
+{
+    if (!cost || depth == split_depth || depth >= threshold) {
+        add_task(node, cost, depth, prefix);
+        return;
+    }
+    for (unsigned int legal = 0; legal < legal_move_count[previous]; legal++) {
+        unsigned int move_index = legal_move_index[previous][legal];
+        struct node child;
+        unsigned char child_cost;
+
+        node_apply_move(node, move_index, &child);
+        child_cost = node_cost(&child);
+        if (child_cost == UINT8_MAX || depth + 1 + child_cost > threshold) {
+            continue;
+        }
+        prefix[depth] = moves_555[move_index];
+        split_tasks(&child, child_cost, depth + 1, split_depth, threshold, moves_555[move_index], prefix);
+    }
+}
+
+static void run_task(struct ida_ordered_tasks *ordered, size_t task_index)
+{
+    struct task *task = &tasks[task_index];
+    struct search_context context;
+
+    context.tasks = ordered;
+    context.task = task;
+    context.task_index = task_index;
+    context.threshold = *(const unsigned int *)ordered->context;
+    memcpy(context.path, task->prefix, task->depth * sizeof(move_type));
+    search(&context, &task->node, task->cost, task->depth,
+           task->depth ? task->prefix[task->depth - 1] : MOVE_NONE);
+}
+
+/* Prints solutions in single-threaded search order, stopping where that search would have stopped. */
+static void print_solutions(unsigned int threshold)
+{
+    for (size_t task_index = 0; task_index < task_count; task_index++) {
+        struct task *task = &tasks[task_index];
+
+        for (unsigned int solution = 0; solution < task->solution_count; solution++) {
+            const move_type *moves = &task->solutions[(size_t)solution * threshold];
+
+            printf("SOLUTION (%u steps):", threshold);
+            for (unsigned int index = 0; index < threshold; index++) {
+                printf(" %s", move2str[moves[index]]);
+            }
+            printf("\n");
+            solution_count++;
+            if (solution_limit && solution_count >= solution_limit) {
+                return;
+            }
+        }
+    }
+}
+
+static void search_threshold(const struct node *root, unsigned char cost, unsigned int threshold,
+                             unsigned int thread_count)
+{
+    struct ida_ordered_tasks ordered = {0};
+    move_type prefix[SPLIT_DEPTH];
+
+    split_tasks(root, cost, 0, SPLIT_DEPTH, threshold, MOVE_NONE, prefix);
+    ordered.task_count = task_count;
+    ordered.run = run_task;
+    ordered.context = &threshold;
+    ida_run_ordered_tasks(&ordered, thread_count);
+    print_solutions(threshold);
+    for (size_t task_index = 0; task_index < task_count; task_index++) {
+        free(tasks[task_index].solutions);
+    }
+    task_count = 0;
 }
 
 int main(int argc, char **argv)
@@ -283,6 +411,8 @@ int main(int argc, char **argv)
     uint32_t x_mask;
     uint32_t t_rank;
     uint32_t x_rank;
+    unsigned int thread_count = 0;
+    struct node root;
 
     for (int index = 1; index < argc; index++) {
         if (!strcmp(argv[index], "--kociemba") && index + 1 < argc) {
@@ -299,6 +429,8 @@ int main(int argc, char **argv)
             max_threshold = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--solution-count") && index + 1 < argc) {
             solution_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
+        } else if (!strcmp(argv[index], "--threads") && index + 1 < argc) {
+            thread_count = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--print-rank") || !strcmp(argv[index], "--print-ranks")) {
             print_ranks = 1;
         } else if (!strcmp(argv[index], "--print-legal-moves")) {
@@ -328,11 +460,7 @@ int main(int argc, char **argv)
     init_permutation(x_squares, x_move_bits);
     init_move_chunks(t_move_bits, t_move_chunks);
     init_move_chunks(x_move_bits, x_move_chunks);
-    rank_cache = calloc(UINT32_C(1) << GROUP_SIZE, sizeof(*rank_cache));
-    if (!rank_cache) {
-        fprintf(stderr, "ERROR: could not allocate combination-rank cache\n");
-        return 1;
-    }
+    init_rank_chunks();
     ida_init_cube(cube, CUBE_SIZE, kociemba);
     t_mask = mask_from_cube(cube, t_squares);
     x_mask = t_centers_only ? 0 : mask_from_cube(cube, x_squares);
@@ -342,11 +470,12 @@ int main(int argc, char **argv)
             "ERROR: %s center coordinate must contain eight L/R stickers\n",
             t_centers_only ? "the t" : "each"
         );
-        free(rank_cache);
         return 1;
     }
-    t_rank = (uint32_t)combination_rank(t_mask);
-    x_rank = t_centers_only ? 0 : (uint32_t)combination_rank(x_mask);
+    t_rank = combination_rank(t_mask);
+    x_rank = t_centers_only ? 0 : combination_rank(x_mask);
+    root.t_mask = t_mask;
+    root.x_mask = x_mask;
 
     {
         struct mapped_cost_file mapped = ida_map_cost_file(t_filename, GROUP_UNIVERSE);
@@ -374,13 +503,6 @@ int main(int argc, char **argv)
         );
     }
 
-    t_transitions = build_transitions(t_move_chunks);
-    if (!t_centers_only) {
-        x_transitions = build_transitions(x_move_chunks);
-    }
-    free(rank_cache);
-    rank_cache = NULL;
-
     unsigned char initial_cost = heuristic(t_rank, x_rank);
     if (initial_cost == UINT8_MAX) {
         fprintf(stderr, "ERROR: initial state is absent from a ranked cost table\n");
@@ -388,28 +510,21 @@ int main(int argc, char **argv)
         if (!t_centers_only) {
             ida_unmap_cost_file(x_fd, x_costs, GROUP_UNIVERSE);
         }
-        free(t_transitions);
-        free(x_transitions);
         return 1;
     }
     if (min_threshold < initial_cost) {
         min_threshold = initial_cost;
     }
-    for (unsigned int threshold = min_threshold; threshold <= max_threshold; threshold++) {
-        unsigned int before = solution_count;
-
-        search(t_rank, x_rank, 0, threshold, MOVE_NONE);
-        if (solution_count != before) {
-            break; /* solution-count zero means all solutions at this first solved threshold */
-        }
+    /* solution-count zero means all solutions at the first solved threshold */
+    for (unsigned int threshold = min_threshold; threshold <= max_threshold && !solution_count; threshold++) {
+        search_threshold(&root, initial_cost, threshold, thread_count);
     }
 
     ida_unmap_cost_file(t_fd, t_costs, GROUP_UNIVERSE);
     if (!t_centers_only) {
         ida_unmap_cost_file(x_fd, x_costs, GROUP_UNIVERSE);
     }
-    free(t_transitions);
-    free(x_transitions);
+    free(tasks);
     if (!solution_count) {
         fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);
         return 1;

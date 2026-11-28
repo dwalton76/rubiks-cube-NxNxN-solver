@@ -1,9 +1,11 @@
 # standard libraries
+import io
 import subprocess
 import unittest
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 
 # rubiks cube libraries
+import rubikscubennnsolver.RubiksCube555 as cube555
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import (
     DAISY_INNER_X_SPINE_TABLES_666,
@@ -994,6 +996,13 @@ class PhaseOnePortfolioTest(unittest.TestCase):
         def print_cube_add_comment(self, comment, start):
             self.comments.append((comment, start))
 
+        stage_centers_joint = RubiksCube555.stage_centers_joint
+
+    def setUp(self):
+        joint = patch("rubikscubennnsolver.RubiksCube555.use_joint_centers_stage", return_value=True)
+        joint.start()
+        self.addCleanup(joint.stop)
+
     def test_stages_centers_in_one_search(self):
         cube = self.FakeCube()
 
@@ -1018,6 +1027,138 @@ class PhaseOnePortfolioTest(unittest.TestCase):
 
         self.assertEqual(cube.calls, 1)
         self.assertEqual(cube.solution, ["Uw"])
+
+
+class PhaseOneLRThenFBPortfolioTest(unittest.TestCase):
+    """Without the joint table, a machine too small to build it stages LR, then FB."""
+
+    class FakePruneTable:
+        def __init__(self, parent, coordinate):
+            self.parent = parent
+            self.coordinate = coordinate
+
+        def rank(self):
+            roots = {
+                "A": (10, 20),
+                "B": (11, 21),
+                "C": (11, 21),
+            }
+            return roots[self.parent.state[0]][self.coordinate]
+
+    class FakePhaseOne:
+        def solutions_via_c(self, solution_count):
+            assert solution_count == 64
+            return [
+                (("A",), (0, 0, 0, 0, 0)),
+                (("B",), (0, 0, 0, 0, 0)),
+                (("C",), (0, 0, 0, 0, 0)),
+            ]
+
+    class FakePhaseTwo:
+        def __init__(self, parent):
+            self.parent = parent
+            self.prune_tables = [
+                PhaseOneLRThenFBPortfolioTest.FakePruneTable(parent, 0),
+                PhaseOneLRThenFBPortfolioTest.FakePruneTable(parent, 1),
+            ]
+            self.calls = []
+
+        def solutions_via_c(self, pt_states):
+            parity = 0 in self.parent.center_solution_leads_to_oll_parity()
+            self.calls.append((parity, tuple(pt_states)))
+
+            if parity:
+                return [(("PA1", "PA2", "PA3"), (10, 20, 0, 0, 0))]
+            return [(("PB1", "PB2"), (11, 21, 0, 0, 0))]
+
+    class FakeCube:
+        def __init__(self):
+            self.state = ["root"]
+            self.solution = []
+            self.lt_LR_centers_stage = PhaseOneLRThenFBPortfolioTest.FakePhaseOne()
+            self.lt_FB_centers_stage = PhaseOneLRThenFBPortfolioTest.FakePhaseTwo(self)
+
+        def rotate_U_to_U(self):
+            pass
+
+        def rotate_F_to_F(self):
+            pass
+
+        def centers_staged(self):
+            return self.state[0] == "done"
+
+        def LR_centers_staged(self):
+            return self.state[0] in {"A", "B", "C", "done"}
+
+        def FB_centers_staged(self):
+            return self.state[0] == "done"
+
+        def center_solution_leads_to_oll_parity(self):
+            return [0] if self.state[0] == "A" else []
+
+        def rotate(self, move):
+            self.solution.append(move)
+            if move in {"A", "B", "C"}:
+                self.state[0] = move
+            elif move.startswith("P"):
+                self.state[0] = "done"
+
+        def print_cube_add_comment(self, comment, start):
+            pass
+
+        stage_centers_LR_then_FB = RubiksCube555.stage_centers_LR_then_FB
+
+    def test_portfolio_deduplicates_roots_groups_parity_and_picks_shortest_phase_two(self):
+        cube = self.FakeCube()
+
+        with patch("rubikscubennnsolver.RubiksCube555.use_joint_centers_stage", return_value=False):
+            RubiksCube555.group_centers_phase1_and_2(cube)
+
+        self.assertEqual(cube.solution, ["B", "PB1", "PB2"])
+        self.assertEqual(
+            set(cube.lt_FB_centers_stage.calls),
+            {
+                (True, ((10, 20),)),
+                (False, ((11, 21),)),
+            },
+        )
+
+
+class JointCentersStageChoiceTest(unittest.TestCase):
+    """The joint table is used when present; when missing, free RAM decides between building it and LR then FB."""
+
+    def choose(self, present, available):
+        with (
+            patch("rubikscubennnsolver.RubiksCube555.os.path.exists", return_value=present),
+            patch("rubikscubennnsolver.RubiksCube555.available_ram_bytes", return_value=available),
+        ):
+            return cube555.use_joint_centers_stage()
+
+    def test_present_table_is_used_whatever_the_ram(self):
+        self.assertTrue(self.choose(True, 1 * 10**9))
+
+    def test_missing_table_on_a_big_machine_exits_with_the_make_target(self):
+        with patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            with self.assertRaises(SystemExit) as raised:
+                self.choose(False, cube555.PHASE12_LR_JOINT_BUILD_RAM_BYTES)
+        self.assertEqual(raised.exception.code, 1)
+        self.assertIn("make 555-lr-joint", stderr.getvalue())
+        self.assertIn("36 GB", stderr.getvalue())
+
+    def test_missing_table_on_a_small_machine_stages_lr_then_fb(self):
+        with self.assertLogs(cube555.logger, level="WARNING"):
+            self.assertFalse(self.choose(False, cube555.PHASE12_LR_JOINT_BUILD_RAM_BYTES - 1))
+
+    def test_unknown_ram_stages_lr_then_fb(self):
+        with self.assertLogs(cube555.logger, level="WARNING"):
+            self.assertFalse(self.choose(False, None))
+
+    def test_available_ram_reads_memavailable(self):
+        meminfo = "MemTotal:       65000000 kB\nMemAvailable:   40000000 kB\n"
+        with patch("builtins.open", mock_open(read_data=meminfo)):
+            self.assertEqual(cube555.available_ram_bytes(), 40000000 * 1024)
+        with patch("builtins.open", side_effect=OSError):
+            self.assertIsNone(cube555.available_ram_bytes())
 
 
 class PhaseOne444Test(unittest.TestCase):

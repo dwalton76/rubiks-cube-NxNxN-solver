@@ -12,12 +12,12 @@ gcc: clean-gcc
 	gcc -O3 $(ARCH_CFLAGS) -o ida_search_444_phase1 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase1.c -lm -lpthread
 	gcc -O3 $(ARCH_CFLAGS) -o ida_search_444_phase2 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_444_phase2.c -lm -lpthread
 	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_centers_stage rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_centers_stage.c -lm -lpthread
-	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase1 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase1.c -lm
-	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase2 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase2.c -lm
-	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase3 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase3.c -lm
-	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase4 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase4.c -lm
-	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase5 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase5.c -lm
-	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase6 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase6.c -lm
+	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase1 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase1.c -lm -lpthread
+	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase2 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase2.c -lm -lpthread
+	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase3 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase3.c -lm -lpthread
+	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase4 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase4.c -lm -lpthread
+	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase5 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase5.c -lm -lpthread
+	gcc -O3 $(ARCH_CFLAGS) -Wall -Wextra -o ida_search_555_phase6 rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_555_phase6.c -lm -lpthread
 	gcc -O3 $(ARCH_CFLAGS) -o ida_search_666_centers_stage rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666_centers_stage.c -lm -lpthread
 	gcc -O3 $(ARCH_CFLAGS) -o ida_search_666_daisy_centers rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_666_daisy_centers.c -lm -lpthread
 	gcc -O3 $(ARCH_CFLAGS) -o ida_search_777_centers_stage rubikscubennnsolver/ida_search_core.c rubikscubennnsolver/rotate_xxx.c rubikscubennnsolver/ida_search_777_centers_stage.c -lm -lpthread

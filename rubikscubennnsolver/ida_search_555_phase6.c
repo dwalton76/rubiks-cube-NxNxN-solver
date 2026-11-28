@@ -19,6 +19,7 @@
 #define DEFAULT_MAX_THRESHOLD 20
 #define MAX_THRESHOLD 40
 #define ROOT_ID_SIZE 128
+#define SPLIT_DEPTH 2
 
 static const unsigned int edge_squares[EDGE_GROUPS][EDGE_GROUP_SIZE] = {
     {2, 24, 16, 10, 127, 149, 141, 135},
@@ -45,10 +46,37 @@ struct coordinate {
     uint32_t center_rank;
 };
 
+/* Edge labels at each position for the high wings, midges, and low wings, plus each center group's rank. */
+struct node {
+    uint8_t edges[EDGE_GROUPS][EDGE_GROUP_SIZE];
+    uint8_t centers[CENTER_GROUPS];
+};
+
 struct root {
     char id[ROOT_ID_SIZE];
     struct coordinate coordinate;
+    struct node node;
     unsigned char initial_cost;
+};
+
+/* A subtree below the first SPLIT_DEPTH moves, searched by one thread. */
+struct task {
+    size_t root_index;
+    struct node node;
+    unsigned char cost;
+    unsigned char depth;
+    move_type prefix[SPLIT_DEPTH];
+    move_type *solutions;
+    unsigned int solution_count;
+    unsigned int solution_capacity;
+};
+
+struct search_context {
+    struct ida_ordered_tasks *tasks;
+    struct task *task;
+    size_t task_index;
+    unsigned int threshold;
+    move_type path[MAX_THRESHOLD + 1];
 };
 
 static unsigned char *edge_costs;
@@ -56,21 +84,25 @@ static unsigned char *center_costs;
 static int edge_fd = -1;
 static int center_fd = -1;
 static uint8_t edge_permutation[EDGE_GROUPS][MOVE_COUNT_555][EDGE_GROUP_SIZE];
+static uint8_t edge_source[MOVE_COUNT_555][EDGE_GROUPS][EDGE_GROUP_SIZE];
 static uint8_t center_transition[CENTER_GROUPS][70][MOVE_COUNT_555];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][IDA_MOVE_INDEX_MAX];
 static move_type inverse_move[MOVE_MAX];
-static move_type path[MAX_THRESHOLD + 1];
 static unsigned int solution_limit = 1;
 static unsigned int solutions_found;
 static int find_extra;
+static struct root *roots;
+static struct task *tasks;
+static size_t task_count;
+static size_t task_capacity;
 
 static void usage(const char *program)
 {
     printf(
         "usage: %s --roots-file FILE --edge-cost FILE --center-cost FILE "
         "[--min-ida-threshold N] [--max-ida-threshold N] "
-        "[--solution-count N] [--find-extra] [--print-ranks] "
+        "[--solution-count N] [--find-extra] [--threads N] [--print-ranks] "
         "[--print-legal-moves] [--print-transitions]\n",
         program
     );
@@ -118,32 +150,6 @@ static uint32_t factorial(unsigned int value)
     return result;
 }
 
-static uint32_t permutation_rank(const uint8_t permutation[EDGE_GROUP_SIZE])
-{
-    uint8_t remaining[EDGE_GROUP_SIZE] = {0, 1, 2, 3, 4, 5, 6, 7};
-    unsigned int remaining_count = EDGE_GROUP_SIZE;
-    uint32_t rank = 0;
-
-    for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
-        unsigned int digit = 0;
-
-        while (digit < remaining_count && remaining[digit] != permutation[position]) {
-            digit++;
-        }
-        if (digit == remaining_count) {
-            return UINT32_MAX;
-        }
-        rank = rank * (EDGE_GROUP_SIZE - position) + digit;
-        memmove(
-            &remaining[digit],
-            &remaining[digit + 1],
-            (remaining_count - digit - 1) * sizeof(remaining[0])
-        );
-        remaining_count--;
-    }
-    return rank;
-}
-
 static int permutation_unrank(uint32_t rank, uint8_t permutation[EDGE_GROUP_SIZE])
 {
     uint8_t digits[EDGE_GROUP_SIZE] = {0};
@@ -170,36 +176,6 @@ static int permutation_unrank(uint32_t rank, uint8_t permutation[EDGE_GROUP_SIZE
         remaining_count--;
     }
     return 1;
-}
-
-static uint32_t even_permutation_rank(const uint8_t permutation[EDGE_GROUP_SIZE])
-{
-    uint8_t remaining[EDGE_GROUP_SIZE] = {0, 1, 2, 3, 4, 5, 6, 7};
-    unsigned int remaining_count = EDGE_GROUP_SIZE;
-    unsigned int parity = 0;
-    uint32_t rank = 0;
-
-    for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
-        unsigned int digit = 0;
-
-        while (digit < remaining_count && remaining[digit] != permutation[position]) {
-            digit++;
-        }
-        if (digit == remaining_count) {
-            return UINT32_MAX;
-        }
-        parity += digit;
-        if (position < EDGE_GROUP_SIZE - 2) {
-            rank = rank * (EDGE_GROUP_SIZE - position) + digit;
-        }
-        memmove(
-            &remaining[digit],
-            &remaining[digit + 1],
-            (remaining_count - digit - 1) * sizeof(remaining[0])
-        );
-        remaining_count--;
-    }
-    return parity & 1U ? UINT32_MAX : rank;
 }
 
 static int even_permutation_unrank(uint32_t rank, uint8_t permutation[EDGE_GROUP_SIZE])
@@ -253,58 +229,46 @@ static int edge_unrank(
     return 1;
 }
 
-static uint64_t edge_rank(
-    const uint8_t high[EDGE_GROUP_SIZE],
-    const uint8_t midge[EDGE_GROUP_SIZE],
-    const uint8_t low[EDGE_GROUP_SIZE])
+/*
+ * The rank relabels pieces so the midges read 0..7: the high wings rank as a permutation and the
+ * low wings as an even permutation relative to the high wings. Lehmer digits come from popcounts
+ * of the labels not yet used.
+ */
+static uint64_t node_edge_rank(const struct node *node)
 {
     uint8_t midge_position[EDGE_GROUP_SIZE];
-    uint8_t high_permutation[EDGE_GROUP_SIZE];
     uint8_t inverse_high[EDGE_GROUP_SIZE];
-    uint8_t delta[EDGE_GROUP_SIZE];
-    uint32_t high_rank;
-    uint32_t delta_rank;
+    unsigned int remaining = 0xFFU;
+    unsigned int parity = 0;
+    uint32_t high_rank = 0;
+    uint32_t delta_rank = 0;
 
     for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
-        if (midge[position] >= EDGE_GROUP_SIZE) {
-            return UINT64_MAX;
+        midge_position[node->edges[1][position]] = (uint8_t)position;
+    }
+    for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
+        unsigned int value = midge_position[node->edges[0][position]];
+
+        inverse_high[value] = (uint8_t)position;
+        high_rank = high_rank * (EDGE_GROUP_SIZE - position) +
+            (unsigned int)__builtin_popcount(remaining & ((1U << value) - 1U));
+        remaining ^= 1U << value;
+    }
+    remaining = 0xFFU;
+    for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
+        unsigned int value = inverse_high[midge_position[node->edges[2][position]]];
+        unsigned int digit = (unsigned int)__builtin_popcount(remaining & ((1U << value) - 1U));
+
+        parity += digit;
+        if (position < EDGE_GROUP_SIZE - 2) {
+            delta_rank = delta_rank * (EDGE_GROUP_SIZE - position) + digit;
         }
-        midge_position[midge[position]] = (uint8_t)position;
+        remaining ^= 1U << value;
     }
-    for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
-        if (high[position] >= EDGE_GROUP_SIZE || low[position] >= EDGE_GROUP_SIZE) {
-            return UINT64_MAX;
-        }
-        high_permutation[position] = midge_position[high[position]];
-    }
-    for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
-        inverse_high[high_permutation[position]] = (uint8_t)position;
-    }
-    for (unsigned int position = 0; position < EDGE_GROUP_SIZE; position++) {
-        delta[position] = inverse_high[midge_position[low[position]]];
-    }
-    high_rank = permutation_rank(high_permutation);
-    delta_rank = even_permutation_rank(delta);
-    if (high_rank == UINT32_MAX || delta_rank == UINT32_MAX) {
+    if (parity & 1U) {
         return UINT64_MAX;
     }
     return (uint64_t)high_rank * EDGE_DELTA_UNIVERSE + delta_rank;
-}
-
-static uint64_t apply_edge_move(uint64_t rank, unsigned int move_index)
-{
-    uint8_t state[EDGE_GROUPS][EDGE_GROUP_SIZE];
-    uint8_t child[EDGE_GROUPS][EDGE_GROUP_SIZE];
-
-    if (!edge_unrank(rank, state[0], state[1], state[2])) {
-        return UINT64_MAX;
-    }
-    for (unsigned int group = 0; group < EDGE_GROUPS; group++) {
-        for (unsigned int source = 0; source < EDGE_GROUP_SIZE; source++) {
-            child[group][edge_permutation[group][move_index][source]] = state[group][source];
-        }
-    }
-    return edge_rank(child[0], child[1], child[2]);
 }
 
 static uint8_t combination_rank(uint8_t mask, unsigned int size, unsigned int selected)
@@ -378,6 +342,7 @@ static void init_edge_permutations(void)
                     exit(1);
                 }
                 edge_permutation[group][move_index][source - 1] = (uint8_t)destination;
+                edge_source[move_index][group][destination] = (uint8_t)(source - 1);
             }
         }
     }
@@ -455,88 +420,248 @@ static uint32_t center_rank(const uint8_t groups[CENTER_GROUPS])
     return rank;
 }
 
-static uint32_t apply_center_move(uint32_t rank, unsigned int move_index)
+static int node_from_coordinate(const struct coordinate *coordinate, struct node *node)
 {
-    uint8_t groups[CENTER_GROUPS];
-
-    center_unrank(rank, groups);
-    for (unsigned int group = 0; group < CENTER_GROUPS; group++) {
-        groups[group] = center_transition[group][groups[group]][move_index];
+    if (!edge_unrank(coordinate->edge_rank, node->edges[0], node->edges[1], node->edges[2])) {
+        return 0;
     }
-    return center_rank(groups);
+    center_unrank(coordinate->center_rank, node->centers);
+    return 1;
 }
 
-static unsigned char table_cost(const unsigned char *costs, uint64_t rank)
+static void node_apply_move(const struct node *node, unsigned int move_index, struct node *child)
 {
-    return decode_cost_byte(costs[rank]);
+    for (unsigned int group = 0; group < EDGE_GROUPS; group++) {
+        const uint8_t *source = edge_source[move_index][group];
+
+        for (unsigned int destination = 0; destination < EDGE_GROUP_SIZE; destination++) {
+            child->edges[group][destination] = node->edges[group][source[destination]];
+        }
+    }
+    for (unsigned int group = 0; group < CENTER_GROUPS; group++) {
+        child->centers[group] = center_transition[group][node->centers[group]][move_index];
+    }
 }
 
-static unsigned char heuristic(const struct coordinate *coordinate)
+static unsigned char max_cost(unsigned char edge, unsigned char center)
 {
-    unsigned char edge = table_cost(edge_costs, coordinate->edge_rank);
-    unsigned char center = table_cost(center_costs, coordinate->center_rank);
-
     if (edge == UINT8_MAX || center == UINT8_MAX) {
         return UINT8_MAX;
     }
     return edge > center ? edge : center;
 }
 
-static struct coordinate apply_move(const struct coordinate *coordinate, unsigned int move_index)
+static unsigned char node_cost(const struct node *node)
 {
-    struct coordinate child;
+    uint64_t edge_rank = node_edge_rank(node);
 
-    child.edge_rank = apply_edge_move(coordinate->edge_rank, move_index);
-    child.center_rank = apply_center_move(coordinate->center_rank, move_index);
-    return child;
+    if (edge_rank == UINT64_MAX) {
+        return UINT8_MAX;
+    }
+    return max_cost(decode_cost_byte(edge_costs[edge_rank]),
+                    decode_cost_byte(center_costs[center_rank(node->centers)]));
 }
 
-static int emit_solution(const struct root *root, unsigned int depth)
+static int record_solution(struct search_context *context)
 {
-    printf("SOLUTION ROOT %s (%u steps):", root->id, depth);
-    for (unsigned int index = 0; index < depth; index++) {
-        printf(" %s", move2str[path[index]]);
+    struct task *task = context->task;
+    unsigned int cap = find_extra ? solution_limit : 1;
+
+    if (task->solution_count == task->solution_capacity) {
+        unsigned int capacity = task->solution_capacity ? task->solution_capacity * 2 : 4;
+        move_type *resized = realloc(task->solutions, (size_t)capacity * context->threshold * sizeof(move_type));
+
+        if (!resized) {
+            fprintf(stderr, "ERROR: could not allocate solutions\n");
+            exit(1);
+        }
+        task->solutions = resized;
+        task->solution_capacity = capacity;
     }
-    printf("\n");
-    solutions_found++;
-    if (!find_extra) {
+    memcpy(&task->solutions[(size_t)task->solution_count * context->threshold],
+           context->path, context->threshold * sizeof(move_type));
+    task->solution_count++;
+    if (cap && task->solution_count >= cap) {
+        ida_stop_tasks_after(context->tasks, context->task_index);
         return 1;
     }
-    return solution_limit && solutions_found >= solution_limit;
+    return 0;
 }
 
+/*
+ * The caller has already checked that depth + cost fits the threshold. Children are pruned on the
+ * small center table before their edge rank is computed, and the edge-table bytes of every survivor
+ * are prefetched before any is read.
+ */
 static int search(
-    const struct root *root,
-    const struct coordinate *coordinate,
+    struct search_context *context,
+    const struct node *node,
+    unsigned char cost,
     unsigned int depth,
-    unsigned int threshold,
     move_type previous)
 {
-    unsigned char cost = heuristic(coordinate);
+    struct node children[IDA_MOVE_INDEX_MAX];
+    uint64_t edge_ranks[IDA_MOVE_INDEX_MAX];
+    unsigned char center_child_costs[IDA_MOVE_INDEX_MAX];
+    unsigned char child_moves[IDA_MOVE_INDEX_MAX];
+    unsigned int child_count = 0;
+    unsigned int threshold = context->threshold;
 
-    if (cost == UINT8_MAX || depth + cost > threshold) {
-        return 0;
-    }
     if (!cost) {
-        return depth == threshold ? emit_solution(root, depth) : 0;
+        return depth == threshold ? record_solution(context) : 0;
     }
-    if (depth >= threshold) {
+    if (depth >= threshold || ida_task_abandoned(context->tasks, context->task_index)) {
         return 0;
     }
     for (unsigned int legal = 0; legal < legal_move_count[previous]; legal++) {
         unsigned int move_index = legal_move_index[previous][legal];
-        struct coordinate child = apply_move(coordinate, move_index);
+        struct node *child = &children[child_count];
+        unsigned char center;
 
-        if (child.edge_rank == UINT64_MAX || child.center_rank >= CENTER_UNIVERSE) {
+        node_apply_move(node, move_index, child);
+        center = decode_cost_byte(center_costs[center_rank(child->centers)]);
+        if (center == UINT8_MAX || depth + 1 + center > threshold) {
             continue;
         }
-        path[depth] = moves_555[move_index];
-        if (search(root, &child, depth + 1, threshold, moves_555[move_index])) {
+        edge_ranks[child_count] = node_edge_rank(child);
+        if (edge_ranks[child_count] == UINT64_MAX) {
+            continue;
+        }
+        __builtin_prefetch(&edge_costs[edge_ranks[child_count]]);
+        center_child_costs[child_count] = center;
+        child_moves[child_count] = (unsigned char)move_index;
+        child_count++;
+    }
+    for (unsigned int index = 0; index < child_count; index++) {
+        unsigned char child_cost = max_cost(decode_cost_byte(edge_costs[edge_ranks[index]]),
+                                            center_child_costs[index]);
+        move_type move = moves_555[child_moves[index]];
+
+        if (child_cost == UINT8_MAX || depth + 1 + child_cost > threshold) {
+            continue;
+        }
+        context->path[depth] = move;
+        if (search(context, &children[index], child_cost, depth + 1, move)) {
             return 1;
         }
     }
-    path[depth] = MOVE_NONE;
     return 0;
+}
+
+static void add_task(size_t root_index, const struct node *node, unsigned char cost,
+                     unsigned int depth, const move_type *prefix)
+{
+    struct task *task;
+
+    if (task_count == task_capacity) {
+        size_t capacity = task_capacity ? task_capacity * 2 : 1024;
+        struct task *resized = realloc(tasks, capacity * sizeof(*tasks));
+
+        if (!resized) {
+            fprintf(stderr, "ERROR: could not allocate tasks\n");
+            exit(1);
+        }
+        tasks = resized;
+        task_capacity = capacity;
+    }
+    task = &tasks[task_count++];
+    memset(task, 0, sizeof(*task));
+    task->root_index = root_index;
+    task->node = *node;
+    task->cost = cost;
+    task->depth = (unsigned char)depth;
+    memcpy(task->prefix, prefix, depth * sizeof(move_type));
+}
+
+/* Walks the first SPLIT_DEPTH moves in search order, with the same pruning, and queues each subtree. */
+static void split_tasks(size_t root_index, const struct node *node, unsigned char cost,
+                        unsigned int depth, unsigned int threshold, move_type previous, move_type *prefix)
+{
+    if (!cost || depth == SPLIT_DEPTH || depth >= threshold) {
+        add_task(root_index, node, cost, depth, prefix);
+        return;
+    }
+    for (unsigned int legal = 0; legal < legal_move_count[previous]; legal++) {
+        unsigned int move_index = legal_move_index[previous][legal];
+        struct node child;
+        unsigned char child_cost;
+
+        node_apply_move(node, move_index, &child);
+        child_cost = node_cost(&child);
+        if (child_cost == UINT8_MAX || depth + 1 + child_cost > threshold) {
+            continue;
+        }
+        prefix[depth] = moves_555[move_index];
+        split_tasks(root_index, &child, child_cost, depth + 1, threshold, moves_555[move_index], prefix);
+    }
+}
+
+struct threshold_run {
+    unsigned int threshold;
+};
+
+static void run_task(struct ida_ordered_tasks *ordered, size_t task_index)
+{
+    struct threshold_run *run = ordered->context;
+    struct task *task = &tasks[task_index];
+    struct search_context context;
+
+    context.tasks = ordered;
+    context.task = task;
+    context.task_index = task_index;
+    context.threshold = run->threshold;
+    memcpy(context.path, task->prefix, task->depth * sizeof(move_type));
+    search(&context, &task->node, task->cost, task->depth,
+           task->depth ? task->prefix[task->depth - 1] : MOVE_NONE);
+}
+
+/* Prints solutions in single-threaded search order, stopping where that search would have stopped. */
+static void print_solutions(unsigned int threshold)
+{
+    for (size_t task_index = 0; task_index < task_count; task_index++) {
+        struct task *task = &tasks[task_index];
+
+        for (unsigned int solution = 0; solution < task->solution_count; solution++) {
+            const move_type *moves = &task->solutions[(size_t)solution * threshold];
+
+            printf("SOLUTION ROOT %s (%u steps):", roots[task->root_index].id, threshold);
+            for (unsigned int index = 0; index < threshold; index++) {
+                printf(" %s", move2str[moves[index]]);
+            }
+            printf("\n");
+            solutions_found++;
+            if (!find_extra || (solution_limit && solutions_found >= solution_limit)) {
+                return;
+            }
+        }
+    }
+}
+
+static void free_tasks(void)
+{
+    for (size_t task_index = 0; task_index < task_count; task_index++) {
+        free(tasks[task_index].solutions);
+    }
+    task_count = 0;
+}
+
+static void search_threshold(size_t root_count, unsigned int threshold, unsigned int thread_count)
+{
+    struct threshold_run run = {threshold};
+    struct ida_ordered_tasks ordered = {0};
+    move_type prefix[SPLIT_DEPTH];
+
+    for (size_t index = 0; index < root_count; index++) {
+        if (roots[index].initial_cost <= threshold) {
+            split_tasks(index, &roots[index].node, roots[index].initial_cost, 0, threshold, MOVE_NONE, prefix);
+        }
+    }
+    ordered.task_count = task_count;
+    ordered.run = run_task;
+    ordered.context = &run;
+    ida_run_ordered_tasks(&ordered, thread_count);
+    print_solutions(threshold);
+    free_tasks();
 }
 
 static void append_root(struct root **roots, size_t *count, size_t *capacity, const struct root *root)
@@ -668,7 +793,7 @@ int main(int argc, char **argv)
     int print_ranks = 0;
     int print_legal_moves = 0;
     int print_transitions = 0;
-    struct root *roots = NULL;
+    unsigned int thread_count = 0;
     size_t root_count = 0;
 
     for (int index = 1; index < argc; index++) {
@@ -686,6 +811,8 @@ int main(int argc, char **argv)
             solution_limit = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--find-extra")) {
             find_extra = 1;
+        } else if (!strcmp(argv[index], "--threads") && index + 1 < argc) {
+            thread_count = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--print-rank") || !strcmp(argv[index], "--print-ranks")) {
             print_ranks = 1;
         } else if (!strcmp(argv[index], "--print-legal-moves")) {
@@ -738,7 +865,11 @@ int main(int argc, char **argv)
         unsigned int cheapest = UINT8_MAX;
 
         for (size_t index = 0; index < root_count; index++) {
-            roots[index].initial_cost = heuristic(&roots[index].coordinate);
+            if (!node_from_coordinate(&roots[index].coordinate, &roots[index].node)) {
+                fprintf(stderr, "ERROR: root %s has an invalid edge rank\n", roots[index].id);
+                return 1;
+            }
+            roots[index].initial_cost = node_cost(&roots[index].node);
             if (roots[index].initial_cost == UINT8_MAX) {
                 fprintf(stderr, "ERROR: root %s is absent from a ranked cost table\n", roots[index].id);
                 return 1;
@@ -755,13 +886,15 @@ int main(int argc, char **argv)
             if (print_transitions) {
                 for (unsigned int legal = 0; legal < legal_move_count[MOVE_NONE]; legal++) {
                     unsigned int move_index = legal_move_index[MOVE_NONE][legal];
-                    struct coordinate child = apply_move(&roots[index].coordinate, move_index);
+                    struct node child;
+
+                    node_apply_move(&roots[index].node, move_index, &child);
                     printf(
                         "TRANSITION ROOT %s MOVE %s EDGE_RANK %" PRIu64 " CENTER_RANK %" PRIu32 "\n",
                         roots[index].id,
                         move2str[moves_555[move_index]],
-                        child.edge_rank,
-                        child.center_rank
+                        node_edge_rank(&child),
+                        center_rank(child.centers)
                     );
                 }
             }
@@ -774,28 +907,13 @@ int main(int argc, char **argv)
         }
     }
 
-    for (unsigned int threshold = min_threshold; threshold <= max_threshold; threshold++) {
-        unsigned int before = solutions_found;
-        int stop = 0;
-
-        for (size_t index = 0; index < root_count && !stop; index++) {
-            if (roots[index].initial_cost <= threshold) {
-                stop = search(
-                    &roots[index],
-                    &roots[index].coordinate,
-                    0,
-                    threshold,
-                    MOVE_NONE
-                );
-            }
-        }
-        if (solutions_found != before) {
-            break;
-        }
+    for (unsigned int threshold = min_threshold; threshold <= max_threshold && !solutions_found; threshold++) {
+        search_threshold(root_count, threshold, thread_count);
     }
 
     ida_unmap_cost_file(edge_fd, edge_costs, EDGE_UNIVERSE);
     ida_unmap_cost_file(center_fd, center_costs, CENTER_UNIVERSE);
+    free(tasks);
     free(roots);
     if (!solutions_found) {
         fprintf(stderr, "ERROR: no solution found through threshold %u\n", max_threshold);

@@ -82,7 +82,14 @@ Focused C tests live next to each searcher (`tests/test_ida_search_777_UD_center
 
 Ranked searchers are pthread IDA. A `SOLUTION (N steps): …` line on stdout is the contract Python parses.
 
-`ida_search_555_phase1`, `phase3`, `phase5`, and `phase6` split each threshold's first few moves into tasks with `ida_run_ordered_tasks` (`ida_search_core.c`, `--threads N`, default every CPU). Each task keeps its own solutions and they print in task order, so the output is identical to a single-threaded search. A task that alone fills `--solution-count` cancels every later task. Each child is checked against the cache-resident tables before the big ones, and the big-table bytes of every surviving child are prefetched before any is read.
+`ida_search_555_phase1`, `phase3`, `phase5`, and `phase6` split each threshold's first few moves into tasks with `ida_run_ordered_tasks` (`ida_search_core.c`, `--threads N`, default every CPU). Each task keeps its own solutions and they print in task order, so the output is identical to a single-threaded search. A task that alone fills `--solution-count` cancels every later task (`ida_stop_tasks_after`). Each child is checked against the cache-resident tables before the big ones, and the big-table bytes of every surviving child are prefetched before any is read.
+
+The 6x6 and 7x7 searchers (`666_centers_stage`, `777_centers_stage`, `777_UD_centers_stage`, `777_daisy_centers`) also run through `ida_run_ordered_tasks`. Each threshold expands its first plies with the normal pruning until there are about 2048 surviving states (at most 3 or 4 plies), and each survivor becomes one task, cheapest first. Splitting only on the first move left a few heavy subtrees running alone. When one solution is wanted, the first task to find one calls `ida_stop_all_tasks`, so ties among equally short solutions can change from run to run, as they did before. Collect modes keep their own rules:
+- `777_centers_stage --solution-count` merges per-task solutions in task order, so its output is deterministic.
+- `666_centers_stage` streams solutions as they are found.
+- `777_daisy_centers` sorts each root's kept solutions by their moves; which solutions fill a capped `--solution-count` still depends on timing.
+
+The 7x7 centers searchers move bitmask node states (per-orbit masks, byte-chunk move tables, table-driven ranks) instead of cube arrays.
 
 ### Ranked `cost-only.bin`
 

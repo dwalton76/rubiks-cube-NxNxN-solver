@@ -3,8 +3,6 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <math.h>
-#include <pthread.h>
-#include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +33,6 @@
 #define DEFAULT_MAX_IDA_THRESHOLD 30
 #define MAX_IDA_THRESHOLD 99
 #define MAX_THREADS 64
-#define NO_TASK UINT_MAX
 #define PARITY_ANY 0
 #define PARITY_ODD 1
 #define PARITY_EVEN 2
@@ -105,10 +102,6 @@ static move_type inverse_move[MOVE_MAX];
 static unsigned char legal_move_count[MOVE_MAX];
 static unsigned char legal_move_index[MOVE_MAX][MOVE_COUNT_777];
 static move_type solution[MAX_IDA_THRESHOLD + 1];
-static atomic_uint next_task;
-static atomic_uint solution_task = NO_TASK;
-static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
-static unsigned char search_threshold;
 static float cost_to_goal_multiplier;
 static unsigned char orbit0_requirement;
 static int obliques_only;
@@ -123,17 +116,23 @@ struct heuristic_result {
     unsigned char cost;
 };
 
-struct worker {
-    const char *root_cube;
-    uint64_t ida_count;
-    move_type solution[MAX_IDA_THRESHOLD + 1];
+/* Bit p of mask[orbit] is set when orbit_squares[orbit][p] holds a U or D sticker. */
+struct node {
+    uint16_t mask[ORBIT_COUNT];
 };
 
 struct child {
+    struct node node;
+    uint32_t table_rank[TABLE_COUNT];
+    unsigned char table_cost[TABLE_COUNT];
     move_type move;
     unsigned char parity;
     unsigned char cost;
 };
+
+#define MASK_INVALID UINT16_MAX
+static uint16_t mask_rank[1 << GROUP_SIZE];
+static uint16_t orbit_move_chunk[MOVE_MAX][ORBIT_COUNT][2][256];
 
 static void usage(const char *program)
 {
@@ -270,7 +269,7 @@ static unsigned char decode_product_cost(const unsigned char *costs, uint64_t ra
     return encoded ? (unsigned char)(encoded - 1) : UINT8_MAX;
 }
 
-static unsigned char pair_orbit0_cost(const struct heuristic_result *found, unsigned char parity)
+static unsigned char pair_orbit0_cost(const uint32_t table_rank[TABLE_COUNT], unsigned char parity)
 {
     unsigned char current_odd = parity & 1;
     unsigned char best = 0;
@@ -291,8 +290,8 @@ static unsigned char pair_orbit0_cost(const struct heuristic_result *found, unsi
             continue;
         }
         loaded = 1;
-        even_cost = decode_product_cost(pair_even_costs[index], found->table_rank[index]);
-        odd_cost = decode_product_cost(pair_odd_costs[index], found->table_rank[index]);
+        even_cost = decode_product_cost(pair_even_costs[index], table_rank[index]);
+        odd_cost = decode_product_cost(pair_odd_costs[index], table_rank[index]);
         if (need_odd < 0) {
             if (even_cost == UINT8_MAX) {
                 cost = odd_cost;
@@ -314,57 +313,242 @@ static unsigned char pair_orbit0_cost(const struct heuristic_result *found, unsi
     return loaded ? best : 0;
 }
 
+static void init_mask_rank(void)
+{
+    for (unsigned int mask = 0; mask < (1u << GROUP_SIZE); mask++) {
+        unsigned int u_remaining = GROUP_U_COUNT;
+        unsigned int rank = 0;
+
+        if (__builtin_popcount(mask) != GROUP_U_COUNT) {
+            mask_rank[mask] = MASK_INVALID;
+            continue;
+        }
+        for (unsigned int position = 0; position < GROUP_SIZE && u_remaining; position++) {
+            if (mask & (1u << position)) {
+                u_remaining--;
+            } else {
+                rank += (unsigned int)binom[GROUP_SIZE - position - 1][u_remaining - 1];
+            }
+        }
+        mask_rank[mask] = (uint16_t)rank;
+    }
+}
+
+/* Each legal move permutes the 16 squares of every orbit among themselves. */
+static void init_orbit_moves(void)
+{
+    for (unsigned int index = 0; index < legal_move_count[MOVE_NONE]; index++) {
+        move_type move = moves_777[legal_move_index[MOVE_NONE][index]];
+        char cube[CUBE_ARRAY_SIZE];
+        char rotate_tmp[CUBE_ARRAY_SIZE];
+        unsigned char source[ORBIT_COUNT][GROUP_SIZE];
+
+        memset(cube, 0, sizeof(cube));
+        for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+            for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+                cube[orbit_squares[orbit][position]] = (char)(1 + orbit * GROUP_SIZE + position);
+            }
+        }
+        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+            for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+                int value = cube[orbit_squares[orbit][position]] - 1;
+
+                if (value < 0 || (unsigned int)value / GROUP_SIZE != orbit) {
+                    fprintf(stderr, "ERROR: %s moves a square out of its orbit\n", move2str[move]);
+                    exit(1);
+                }
+                source[orbit][position] = (unsigned char)(value % GROUP_SIZE);
+            }
+            for (unsigned int chunk = 0; chunk < 2; chunk++) {
+                for (unsigned int byte = 0; byte < 256; byte++) {
+                    uint16_t bits = 0;
+
+                    for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+                        unsigned int from = source[orbit][position];
+
+                        if (from / 8 == chunk && (byte & (1u << (from % 8)))) {
+                            bits |= (uint16_t)(1u << position);
+                        }
+                    }
+                    orbit_move_chunk[move][orbit][chunk][byte] = bits;
+                }
+            }
+        }
+    }
+}
+
+static struct node node_from_cube(const char *cube)
+{
+    struct node node;
+
+    for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+        node.mask[orbit] = 0;
+        for (unsigned int position = 0; position < GROUP_SIZE; position++) {
+            char sticker = cube[orbit_squares[orbit][position]];
+
+            if (sticker == 'U' || sticker == 'D') {
+                node.mask[orbit] |= (uint16_t)(1u << position);
+            }
+        }
+    }
+    return node;
+}
+
+static int node_is_valid(const struct node *node)
+{
+    for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+        if (!(obliques_only && orbit == ORBIT_OUTER_X) && mask_rank[node->mask[orbit]] == MASK_INVALID) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static inline struct node node_apply_move(const struct node *node, move_type move)
+{
+    struct node next;
+
+    for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+        const uint16_t (*chunk)[256] = orbit_move_chunk[move][orbit];
+
+        next.mask[orbit] = chunk[0][node->mask[orbit] & 0xFF] | chunk[1][node->mask[orbit] >> 8];
+    }
+    return next;
+}
+
+/*
+ * Costs come in three passes so a node's table bytes can all be in flight at
+ * once: rank and prefetch the pair tables, read them, then prefetch and read
+ * the orbit0 even/odd tables and the matrix for the children that survive.
+ */
+static inline void child_prefetch_pairs(struct child *child)
+{
+    uint32_t orbit_rank[ORBIT_COUNT];
+
+    for (unsigned int orbit = 0; orbit < ORBIT_COUNT; orbit++) {
+        orbit_rank[orbit] = mask_rank[child->node.mask[orbit]];
+    }
+    for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+        const struct ranked_table *table = &ranked_tables[index];
+
+        if (table->costs) {
+            child->table_rank[index] =
+                orbit_rank[table->orbit_a] * (uint32_t)GROUP_UNIVERSE + orbit_rank[table->orbit_b];
+            __builtin_prefetch(&table->costs[child->table_rank[index]]);
+        }
+    }
+}
+
+/* The max of the loaded pair tables, or UINT8_MAX when any of them lacks the state. */
+static inline unsigned char child_pair_cost(struct child *child)
+{
+    unsigned char cost = 0;
+
+    for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+        const struct ranked_table *table = &ranked_tables[index];
+        unsigned char encoded;
+
+        if (!table->costs) {
+            child->table_cost[index] = UINT8_MAX;
+            continue;
+        }
+        encoded = table->costs[child->table_rank[index]];
+        if (!encoded) {
+            return UINT8_MAX;
+        }
+        child->table_cost[index] = encoded - 1;
+        if (child->table_cost[index] > cost) {
+            cost = child->table_cost[index];
+        }
+    }
+    return cost;
+}
+
 /* Six pair costs, each clamped to 0..15, packed in ranked_tables order. */
-static unsigned char matrix_pair_cost(const unsigned char table_cost[TABLE_COUNT])
+static uint32_t matrix_index(const unsigned char table_cost[TABLE_COUNT])
 {
     uint32_t index = 0;
 
     for (unsigned int axis = 0; axis < TABLE_COUNT; axis++) {
-        unsigned char cost = table_cost[axis];
+        unsigned char cost = table_cost[axis] > PHASE56_COST_MAX ? PHASE56_COST_MAX : table_cost[axis];
 
-        if (cost == UINT8_MAX) {
-            return UINT8_MAX;
-        }
-        if (cost > PHASE56_COST_MAX) {
-            cost = PHASE56_COST_MAX;
-        }
         index = index * PHASE56_MATRIX_SIDE + cost;
     }
-    return pair_cost_matrix[index];
+    return index;
 }
 
-static unsigned char cube_cost(const char *cube, unsigned char parity)
+static int use_pair_cost_matrix(void)
 {
-    struct heuristic_result found = heuristic(cube);
-    unsigned char cost = found.cost;
+    return pair_cost_matrix && !cost_to_goal_multiplier && !obliques_only;
+}
+
+static inline void child_prefetch_rest(const struct child *child)
+{
+    for (unsigned int index = 0; index < TABLE_COUNT; index++) {
+        if (pair_even_costs[index]) {
+            __builtin_prefetch(&pair_even_costs[index][child->table_rank[index]]);
+            __builtin_prefetch(&pair_odd_costs[index][child->table_rank[index]]);
+        }
+    }
+    if (use_pair_cost_matrix()) {
+        __builtin_prefetch(&pair_cost_matrix[matrix_index(child->table_cost)]);
+    }
+}
+
+static unsigned char scaled_cost(unsigned char cost)
+{
+    if (cost && cost_to_goal_multiplier) {
+        return (unsigned char)roundf(cost * cost_to_goal_multiplier);
+    }
+    return cost;
+}
+
+/* pair_cost is child_pair_cost(child); returns the full heuristic. */
+static unsigned char child_final_cost(const struct child *child, unsigned char pair_cost)
+{
+    unsigned char cost = pair_cost;
     unsigned char orbit_cost;
 
-    if (cost == UINT8_MAX) {
-        return UINT8_MAX;
-    }
     /*
      * The matrix estimates the moves still left from the six pair costs. It is
      * not applied on top of --multiplier: that flag already inflates the
      * admissible max, and stacking both over-prunes.
      */
-    if (pair_cost_matrix && !cost_to_goal_multiplier) {
-        unsigned char estimated = matrix_pair_cost(found.table_cost);
+    if (use_pair_cost_matrix()) {
+        unsigned char estimated = pair_cost_matrix[matrix_index(child->table_cost)];
 
         if (estimated != UINT8_MAX && estimated > cost) {
             cost = estimated;
         }
     }
-    orbit_cost = pair_orbit0_cost(&found, parity);
+    orbit_cost = pair_orbit0_cost(child->table_rank, child->parity);
     if (orbit_cost == UINT8_MAX) {
         return UINT8_MAX;
     }
     if (orbit_cost > cost) {
         cost = orbit_cost;
     }
-    if (cost && cost_to_goal_multiplier) {
-        cost = (unsigned char)roundf(cost * cost_to_goal_multiplier);
+    cost = scaled_cost(cost);
+    return cost ? cost : parity_flip_floor(child->parity);
+}
+
+static unsigned char cube_cost(const char *cube, unsigned char parity)
+{
+    struct child child;
+    unsigned char pair_cost;
+
+    child.node = node_from_cube(cube);
+    child.parity = parity;
+    if (!node_is_valid(&child.node)) {
+        return UINT8_MAX;
     }
-    return cost ? cost : parity_flip_floor(parity);
+    child_prefetch_pairs(&child);
+    pair_cost = child_pair_cost(&child);
+    if (pair_cost == UINT8_MAX) {
+        return UINT8_MAX;
+    }
+    return child_final_cost(&child, pair_cost);
 }
 
 /*
@@ -521,58 +705,85 @@ static move_type parse_move(const char *move_string)
     return ida_parse_move(move_string, moves_777, MOVE_COUNT_777);
 }
 
-static int ida_search(
-    struct worker *worker,
-    char cube[CUBE_ARRAY_SIZE],
+struct walker {
+    const struct ida_ordered_tasks *tasks;
+    size_t task;
+    unsigned char threshold;
+    uint64_t nodes;
+    move_type path[MAX_IDA_THRESHOLD + 1];
+};
+
+/*
+ * Score every legal child of node. Below the root, the first goal child in
+ * move order is returned alone with *goal set; otherwise the children that fit
+ * under the threshold come back cheapest first. The root keeps move order and
+ * its goal children, because each root move is searched on its own.
+ */
+static unsigned int score_children(
+    struct walker *walker,
+    const struct node *node,
     unsigned char depth,
-    unsigned char threshold,
     move_type previous_move,
-    unsigned char parity
+    unsigned char parity,
+    int root,
+    struct child children[MOVE_COUNT_777],
+    int *goal
 )
 {
-    struct child children[MOVE_COUNT_777];
-    unsigned int child_count = 0;
     unsigned char next_depth = depth + 1;
+    unsigned char threshold = walker->threshold;
     int last_ply = next_depth == threshold;
-    char rotate_tmp[CUBE_ARRAY_SIZE];
+    unsigned char pair_cost[MOVE_COUNT_777];
+    unsigned int count = 0;
+    unsigned int kept = 0;
 
-    if (atomic_load_explicit(&solution_task, memory_order_relaxed) != NO_TASK) {
-        return 0;
-    }
+    *goal = 0;
     for (unsigned int index = 0; index < legal_move_count[previous_move]; index++) {
         move_type move = moves_777[legal_move_index[previous_move][index]];
-        unsigned char next_parity;
-        unsigned char cost;
+        struct child *child = &children[count++];
 
         if (last_ply && !last_ply_can_be_goal(parity, move)) {
+            count--;
             continue;
         }
-        next_parity = parity_after_move(parity, move);
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-        cost = cube_cost(cube, next_parity);
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
-        worker->ida_count++;
+        child->move = move;
+        child->parity = parity_after_move(parity, move);
+        child->node = node_apply_move(node, move);
+        child_prefetch_pairs(child);
+    }
+    walker->nodes += count;
+    for (unsigned int index = 0; index < count; index++) {
+        unsigned char cost = child_pair_cost(&children[index]);
+
+        if (cost == UINT8_MAX || next_depth + scaled_cost(cost) > threshold) {
+            continue;
+        }
+        pair_cost[kept] = cost;
+        children[kept++] = children[index];
+    }
+    for (unsigned int index = 0; index < kept; index++) {
+        child_prefetch_rest(&children[index]);
+    }
+    count = kept;
+    kept = 0;
+    for (unsigned int index = 0; index < count; index++) {
+        unsigned char cost = child_final_cost(&children[index], pair_cost[index]);
 
         if (cost == UINT8_MAX || next_depth + cost > threshold) {
             continue;
         }
-        if (!cost) {
-            worker->solution[depth] = move;
-            worker->solution[next_depth] = MOVE_NONE;
+        children[index].cost = cost;
+        if (!cost && !root) {
+            children[0] = children[index];
+            *goal = 1;
             return 1;
         }
-        children[child_count].move = move;
-        children[child_count].parity = next_parity;
-        children[child_count].cost = cost;
-        child_count++;
+        children[kept++] = children[index];
     }
-
-    if (next_depth >= threshold || next_depth >= MAX_IDA_THRESHOLD) {
-        worker->solution[depth] = MOVE_NONE;
-        return 0;
+    if (root || next_depth >= threshold) {
+        return kept;
     }
-
-    for (unsigned int index = 1; index < child_count; index++) {
+    for (unsigned int index = 1; index < kept; index++) {
         struct child pending = children[index];
         unsigned int destination = index;
 
@@ -582,71 +793,179 @@ static int ida_search(
         }
         children[destination] = pending;
     }
+    return kept;
+}
 
-    for (unsigned int index = 0; index < child_count; index++) {
-        move_type move = children[index].move;
+static int ida_search(
+    struct walker *walker,
+    const struct node *node,
+    unsigned char depth,
+    move_type previous_move,
+    unsigned char parity
+)
+{
+    struct child children[MOVE_COUNT_777];
+    unsigned char next_depth = depth + 1;
+    unsigned int count;
+    int goal;
 
-        worker->solution[depth] = move;
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
-        if (ida_search(worker, cube, next_depth, threshold, move, children[index].parity)) {
+    if (ida_task_abandoned(walker->tasks, walker->task)) {
+        return 0;
+    }
+    count = score_children(walker, node, depth, previous_move, parity, 0, children, &goal);
+    if (goal) {
+        walker->path[depth] = children[0].move;
+        walker->path[next_depth] = MOVE_NONE;
+        return 1;
+    }
+    if (next_depth >= walker->threshold || next_depth >= MAX_IDA_THRESHOLD) {
+        return 0;
+    }
+    for (unsigned int index = 0; index < count; index++) {
+        walker->path[depth] = children[index].move;
+        if (ida_search(walker, &children[index].node, next_depth, children[index].move, children[index].parity)) {
             return 1;
         }
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, inverse_move[move]);
     }
-    worker->solution[depth] = MOVE_NONE;
     return 0;
 }
 
-static void *search_root_moves(void *argument)
+/*
+ * The first few plies are walked once and every surviving node at split_depth
+ * becomes a task. Tasks run cheapest first, ties in search order, and the
+ * first solution found stops every task: making later tasks wait on earlier
+ * ones costs up to ten times the nodes at the solving threshold.
+ */
+#define MAX_SPLIT_DEPTH 3
+#define SPLIT_TASK_TARGET 2048
+#define SPLIT_BRANCHING 24
+
+struct split_task {
+    struct node node;
+    move_type prefix[MAX_SPLIT_DEPTH];
+    unsigned char depth;
+    unsigned char parity;
+    unsigned char solved;
+    unsigned char cost;
+    uint32_t order;
+    uint64_t nodes;
+    move_type *solution;
+};
+
+static int compare_split_tasks(const void *left, const void *right)
 {
-    struct worker *worker = argument;
+    const struct split_task *a = left;
+    const struct split_task *b = right;
 
-    while (1) {
-        unsigned int task = atomic_fetch_add(&next_task, 1);
-        char cube[CUBE_ARRAY_SIZE];
-        char rotate_tmp[CUBE_ARRAY_SIZE];
-        move_type first;
-        unsigned char parity;
-        unsigned char cost;
-        int found;
+    if (a->cost != b->cost) {
+        return a->cost < b->cost ? -1 : 1;
+    }
+    return a->order < b->order ? -1 : a->order > b->order;
+}
 
-        if (task >= legal_move_count[MOVE_NONE] || atomic_load(&solution_task) != NO_TASK) {
-            break;
-        }
-        first = moves_777[legal_move_index[MOVE_NONE][task]];
-        if (search_threshold == 1 && !last_ply_can_be_goal(0, first)) {
-            continue;
-        }
-        parity = parity_after_move(0, first);
-        memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
-        worker->ida_count++;
-        cost = cube_cost(cube, parity);
+struct split_search {
+    struct ida_ordered_tasks tasks;
+    unsigned char threshold;
+    unsigned char split_depth;
+    struct split_task *items;
+    size_t count;
+    size_t capacity;
+};
 
-        if (cost == UINT8_MAX || 1 + cost > search_threshold) {
-            continue;
-        }
-        worker->solution[0] = first;
-        if (!cost) {
-            worker->solution[1] = MOVE_NONE;
-            found = 1;
-        } else if (search_threshold <= 1) {
-            continue;
-        } else {
-            found = ida_search(worker, cube, 1, search_threshold, first, parity);
-        }
+static void add_split_task(
+    struct split_search *search,
+    const move_type *prefix,
+    unsigned char depth,
+    const struct child *child,
+    int solved
+)
+{
+    struct split_task *task;
 
-        if (found) {
-            pthread_mutex_lock(&solution_lock);
-            if (atomic_load(&solution_task) == NO_TASK) {
-                memcpy(solution, worker->solution, sizeof(solution));
-                atomic_store(&solution_task, task);
-            }
-            pthread_mutex_unlock(&solution_lock);
-            break;
+    if (search->count == search->capacity) {
+        size_t capacity = search->capacity ? search->capacity * 2 : 1024;
+        struct split_task *grown = realloc(search->items, capacity * sizeof(*grown));
+
+        if (!grown) {
+            fprintf(stderr, "ERROR: could not allocate search tasks\n");
+            exit(1);
+        }
+        search->items = grown;
+        search->capacity = capacity;
+    }
+    task = &search->items[search->count++];
+    memcpy(task->prefix, prefix, depth * sizeof(*prefix));
+    task->node = child->node;
+    task->depth = depth;
+    task->parity = child->parity;
+    task->solved = (unsigned char)solved;
+    task->cost = solved ? 0 : child->cost;
+    task->order = (uint32_t)(search->count - 1);
+    task->nodes = 0;
+    task->solution = NULL;
+}
+
+/* Mirrors ida_search down to split_depth; returns 1 once a goal ends the walk. */
+static int split_node(
+    struct split_search *search,
+    struct walker *walker,
+    const struct node *node,
+    unsigned char depth,
+    move_type previous_move,
+    unsigned char parity
+)
+{
+    struct child children[MOVE_COUNT_777];
+    unsigned char next_depth = depth + 1;
+    unsigned int count;
+    int goal;
+
+    count = score_children(walker, node, depth, previous_move, parity, 0, children, &goal);
+    if (goal) {
+        walker->path[depth] = children[0].move;
+        add_split_task(search, walker->path, next_depth, &children[0], 1);
+        return 1;
+    }
+    if (next_depth >= walker->threshold || next_depth >= MAX_IDA_THRESHOLD) {
+        return 0;
+    }
+    for (unsigned int index = 0; index < count; index++) {
+        walker->path[depth] = children[index].move;
+        if (next_depth == search->split_depth) {
+            add_split_task(search, walker->path, next_depth, &children[index], 0);
+        } else if (split_node(search, walker, &children[index].node, next_depth, children[index].move, children[index].parity)) {
+            return 1;
         }
     }
-    return NULL;
+    return 0;
+}
+
+static void run_split_task(struct ida_ordered_tasks *tasks, size_t index)
+{
+    struct split_search *search = tasks->context;
+    struct split_task *task = &search->items[index];
+    struct walker walker;
+    int found = 1;
+
+    walker.tasks = tasks;
+    walker.task = index;
+    walker.threshold = search->threshold;
+    walker.nodes = 0;
+    memcpy(walker.path, task->prefix, task->depth * sizeof(*task->prefix));
+    walker.path[task->depth] = MOVE_NONE;
+    if (!task->solved) {
+        found = ida_search(&walker, &task->node, task->depth, task->prefix[task->depth - 1], task->parity);
+    }
+    task->nodes = walker.nodes;
+    if (found) {
+        task->solution = malloc(sizeof(walker.path));
+        if (!task->solution) {
+            fprintf(stderr, "ERROR: could not allocate a solution\n");
+            exit(1);
+        }
+        memcpy(task->solution, walker.path, sizeof(walker.path));
+        ida_stop_all_tasks(tasks);
+    }
 }
 
 static int search_at_threshold(
@@ -656,28 +975,64 @@ static int search_at_threshold(
     uint64_t *nodes
 )
 {
-    struct worker workers[MAX_THREADS];
-    pthread_t threads[MAX_THREADS];
-    unsigned int worker_count = thread_count < legal_move_count[MOVE_NONE] ?
-                                thread_count : legal_move_count[MOVE_NONE];
+    struct split_search search;
+    struct walker walker;
+    struct node root = node_from_cube(cube);
+    struct child children[MOVE_COUNT_777];
+    unsigned int count;
+    unsigned int estimate = legal_move_count[MOVE_NONE];
+    int goal;
+    int found = 0;
 
-    *nodes = 1;
-    search_threshold = threshold;
-    atomic_store(&next_task, 0);
-    atomic_store(&solution_task, NO_TASK);
-    for (unsigned int index = 0; index < worker_count; index++) {
-        memset(&workers[index], 0, sizeof(workers[index]));
-        workers[index].root_cube = cube;
-        if (pthread_create(&threads[index], NULL, search_root_moves, &workers[index]) != 0) {
-            fprintf(stderr, "ERROR: could not create search thread %u\n", index);
-            exit(1);
+    memset(&search, 0, sizeof(search));
+    search.threshold = threshold;
+    search.split_depth = 1;
+    while (estimate < SPLIT_TASK_TARGET && search.split_depth < MAX_SPLIT_DEPTH && search.split_depth + 1 < threshold) {
+        estimate *= SPLIT_BRANCHING;
+        search.split_depth++;
+    }
+    search.tasks.stop_from = SIZE_MAX;
+    walker.tasks = &search.tasks;
+    walker.task = 0;
+    walker.threshold = threshold;
+    walker.nodes = 1;
+
+    count = score_children(&walker, &root, 0, MOVE_NONE, 0, 1, children, &goal);
+    for (unsigned int index = 0; index < count; index++) {
+        walker.path[0] = children[index].move;
+        if (!children[index].cost) {
+            add_split_task(&search, walker.path, 1, &children[index], 1);
+            break;
+        }
+        if (threshold <= 1) {
+            continue;
+        }
+        if (search.split_depth == 1) {
+            add_split_task(&search, walker.path, 1, &children[index], 0);
+        } else if (split_node(&search, &walker, &children[index].node, 1, children[index].move, children[index].parity)) {
+            break;
         }
     }
-    for (unsigned int index = 0; index < worker_count; index++) {
-        pthread_join(threads[index], NULL);
-        *nodes += workers[index].ida_count;
+
+    qsort(search.items, search.count, sizeof(*search.items), compare_split_tasks);
+    search.tasks.task_count = search.count;
+    search.tasks.run = run_split_task;
+    search.tasks.context = &search;
+    ida_run_ordered_tasks(&search.tasks, thread_count);
+
+    *nodes = walker.nodes;
+    for (size_t index = 0; index < search.count; index++) {
+        struct split_task *task = &search.items[index];
+
+        *nodes += task->nodes;
+        if (task->solution && !found) {
+            memcpy(solution, task->solution, sizeof(solution));
+            found = 1;
+        }
+        free(task->solution);
     }
-    return atomic_load(&solution_task) != NO_TASK;
+    free(search.items);
+    return found;
 }
 
 static double elapsed_seconds(const struct timeval *start, const struct timeval *end)
@@ -945,7 +1300,9 @@ int main(int argc, char **argv)
     }
 
     init_binom();
+    init_mask_rank();
     init_move_tables();
+    init_orbit_moves();
     map_ranked_tables();
     if (pair_cost_matrix_filename) {
         struct mapped_cost_file mapped = ida_map_cost_file(pair_cost_matrix_filename, PHASE56_MATRIX_SIZE);

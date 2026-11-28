@@ -249,22 +249,24 @@ static inline unsigned char decode_cost_byte(unsigned char encoded)
  * Tasks are claimed in index order by a pool of threads. A task that has found every solution the
  * caller still needs calls ida_stop_tasks_after(), and tasks with a larger index are then skipped
  * or abandoned, so merging per-task results in index order reproduces a single-threaded search.
+ * A search that takes whichever solution turns up first calls ida_stop_all_tasks() instead.
  */
 struct ida_ordered_tasks {
     size_t task_count;
     void (*run)(struct ida_ordered_tasks *tasks, size_t task);
     void *context;
     size_t next_task;
-    size_t stop_task;
+    size_t stop_from;
 };
 
 unsigned int ida_thread_count(unsigned int requested);
 void ida_run_ordered_tasks(struct ida_ordered_tasks *tasks, unsigned int thread_count);
 void ida_stop_tasks_after(struct ida_ordered_tasks *tasks, size_t task);
+void ida_stop_all_tasks(struct ida_ordered_tasks *tasks);
 
 static inline int ida_task_abandoned(const struct ida_ordered_tasks *tasks, size_t task)
 {
-    return task > __atomic_load_n(&tasks->stop_task, __ATOMIC_RELAXED);
+    return task >= __atomic_load_n(&tasks->stop_from, __ATOMIC_RELAXED);
 }
 
 #endif /* _IDA_SEARCH_CORE_H */

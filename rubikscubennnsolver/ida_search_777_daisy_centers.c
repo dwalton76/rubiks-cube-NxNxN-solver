@@ -167,10 +167,8 @@ static unsigned int *collected_roots;
 static char (*collected_keys)[CUBE_ARRAY_SIZE];
 static unsigned int raw_solution_count;
 static unsigned int current_root_index;
-static atomic_uint next_task;
 static atomic_uint solution_task = NO_TASK;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
-static unsigned char search_threshold;
 static unsigned int loaded_table_count;
 static unsigned int loaded_tables[TABLE_COUNT];
 static float cost_to_goal_multiplier;
@@ -342,13 +340,6 @@ struct heuristic_result {
     unsigned char prune_table;
 };
 
-struct worker {
-    const char *root_cube;
-    uint64_t ida_count;
-    unsigned int profile_slot;
-    move_type solution[MAX_IDA_THRESHOLD + 1];
-};
-
 /* event[][PHASE8_TABLE_COUNT] counts nodes the heuristic kept. pair_ud[table]
  * is the UD-axis cost against that table's cost, for kept nodes only. */
 struct prune_profile {
@@ -359,7 +350,14 @@ struct prune_profile {
     uint64_t pair_ud[PHASE8_TABLE_COUNT][18][18];
 };
 
-static struct prune_profile prune_profiles[MAX_THREADS];
+struct worker {
+    uint64_t ida_count;
+    /* NULL unless --profile-prunes; merged into prune_total when the task ends. */
+    struct prune_profile *profile;
+    move_type solution[MAX_IDA_THRESHOLD + 1];
+};
+
+static struct prune_profile prune_total;
 static int profile_prunes;
 
 struct child {
@@ -1291,10 +1289,10 @@ static void note_prune_profile(
     unsigned char ud;
     unsigned char slack;
 
-    if (!profile_prunes || worker->profile_slot >= MAX_THREADS) {
+    if (!worker->profile) {
         return;
     }
-    profile = &prune_profiles[worker->profile_slot];
+    profile = worker->profile;
     slot = depth < 31 ? depth : 31;
     if (h->cost == UINT8_MAX || h->cost > budget) {
         table = h->prune_table <= PHASE8_TABLE_COUNT ? h->prune_table : PHASE8_TABLE_COUNT;
@@ -1323,7 +1321,7 @@ static void note_prune_profile(
     profile->survivor_slack[slack]++;
 }
 
-static void print_prune_profile(unsigned int worker_count)
+static void print_prune_profile(void)
 {
     uint64_t event[32][PHASE8_TABLE_COUNT + 1];
     uint64_t total_event[PHASE8_TABLE_COUNT + 1];
@@ -1340,8 +1338,8 @@ static void print_prune_profile(unsigned int worker_count)
     memset(slack_hist, 0, sizeof(slack_hist));
     memset(binding, 0, sizeof(binding));
     memset(pair, 0, sizeof(pair));
-    for (unsigned int worker = 0; worker < worker_count && worker < MAX_THREADS; worker++) {
-        struct prune_profile *profile = &prune_profiles[worker];
+    {
+        const struct prune_profile *profile = &prune_total;
 
         for (unsigned int depth = 0; depth < 32; depth++) {
             for (unsigned int table = 0; table < PHASE8_TABLE_COUNT + 1; table++) {
@@ -1601,59 +1599,224 @@ static int ida_search(
     return 0;
 }
 
-static void *search_root_moves(void *argument)
+/*
+ * Splitting only on the first move leaves a few heavy subtrees running alone
+ * at the end of every threshold. The first plies are expanded level by level,
+ * in parallel and with the same pruning as ida_search, until there are
+ * SPLIT_TASK_TARGET surviving states or MAX_SPLIT_PREFIX plies; each survivor
+ * is then one task, cheapest first.
+ */
+#define MAX_SPLIT_PREFIX 3
+#define SPLIT_TASK_TARGET 2048
+
+struct frontier_node {
+    char cube[CUBE_ARRAY_SIZE];
+    move_type moves[MAX_SPLIT_PREFIX];
+    move_type previous;
+    unsigned char depth;
+    unsigned char cost;
+    uint32_t order;
+};
+
+struct frontier_level {
+    struct ida_ordered_tasks tasks;
+    unsigned char threshold;
+    struct frontier_node *nodes;
+    size_t count;
+    /* Expansion only: the surviving children of nodes[index]. */
+    struct frontier_node **children;
+    unsigned char *child_count;
+    uint64_t explored;
+};
+
+static void start_task(struct worker *worker, const struct frontier_node *node)
 {
-    struct worker *worker = argument;
+    memset(worker, 0, sizeof(*worker));
+    memcpy(worker->solution, node->moves, node->depth * sizeof(*node->moves));
+    worker->solution[node->depth] = MOVE_NONE;
+    if (profile_prunes) {
+        worker->profile = calloc(1, sizeof(*worker->profile));
+        if (!worker->profile) {
+            fprintf(stderr, "ERROR: could not allocate prune profile\n");
+            exit(1);
+        }
+    }
+}
 
-    while (1) {
-        unsigned int task = atomic_fetch_add(&next_task, 1);
-        char cube[CUBE_ARRAY_SIZE];
-        char rotate_tmp[CUBE_ARRAY_SIZE];
-        move_type first;
+static void finish_task(struct frontier_level *level, struct worker *worker)
+{
+    __atomic_fetch_add(&level->explored, worker->ida_count, __ATOMIC_RELAXED);
+    if (worker->profile) {
+        const uint64_t *from = (const uint64_t *)worker->profile;
+        uint64_t *to = (uint64_t *)&prune_total;
+
+        pthread_mutex_lock(&solution_lock);
+        for (size_t word = 0; word < sizeof(prune_total) / sizeof(uint64_t); word++) {
+            to[word] += from[word];
+        }
+        pthread_mutex_unlock(&solution_lock);
+        free(worker->profile);
+    }
+}
+
+static void claim_solution(const struct worker *worker)
+{
+    pthread_mutex_lock(&solution_lock);
+    if (atomic_load(&solution_task) == NO_TASK) {
+        memcpy(solution, worker->solution, sizeof(solution));
+        atomic_store(&solution_task, 0);
+    }
+    pthread_mutex_unlock(&solution_lock);
+}
+
+/* One ply of ida_search: a goal child ends the node, the rest are kept cheapest first. */
+static void expand_frontier_node(struct ida_ordered_tasks *tasks, size_t index)
+{
+    struct frontier_level *level = tasks->context;
+    const struct frontier_node *node = &level->nodes[index];
+    unsigned char next_depth = node->depth + 1;
+    unsigned char budget = level->threshold - next_depth;
+    struct frontier_node *children = malloc(MOVE_COUNT_777 * sizeof(*children));
+    struct worker worker;
+    char rotate_tmp[CUBE_ARRAY_SIZE];
+    unsigned int kept = 0;
+
+    if (!children) {
+        fprintf(stderr, "ERROR: could not allocate search tasks\n");
+        exit(1);
+    }
+    start_task(&worker, node);
+    for (unsigned int move_index = 0; move_index < legal_move_count[node->previous]; move_index++) {
+        move_type move = moves_777[legal_move_index[node->previous][move_index]];
+        struct frontier_node *child = &children[kept];
         struct heuristic_result h;
-        unsigned char budget = search_threshold > 0 ? (unsigned char)(search_threshold - 1) : 0;
-        int found;
 
-        if (task >= legal_move_count[MOVE_NONE] || atomic_load(&solution_task) != NO_TASK) {
+        if (atomic_load_explicit(&solution_task, memory_order_relaxed) != NO_TASK) {
+            kept = 0;
             break;
         }
-        first = moves_777[legal_move_index[MOVE_NONE][task]];
-        memcpy(cube, worker->root_cube, CUBE_ARRAY_SIZE);
-        rotate_777_centers(cube, rotate_tmp, CUBE_ARRAY_SIZE, first);
-        worker->ida_count++;
-        h = heuristic(cube, budget);
-        note_prune_profile(worker, 1, &h, budget);
-
-        if (h.cost == UINT8_MAX || 1 + h.cost > search_threshold) {
+        memcpy(child->cube, node->cube, CUBE_ARRAY_SIZE);
+        rotate_777_centers(child->cube, rotate_tmp, CUBE_ARRAY_SIZE, move);
+        h = heuristic(child->cube, budget);
+        worker.ida_count++;
+        note_prune_profile(&worker, next_depth, &h, budget);
+        if (h.cost == UINT8_MAX || next_depth + h.cost > level->threshold) {
             continue;
         }
-        worker->solution[0] = first;
         if (h.goal) {
-            worker->solution[1] = MOVE_NONE;
-            if (collect_solutions) {
-                if (keep_solution(worker->solution, cube)) {
-                    break;
-                }
+            worker.solution[node->depth] = move;
+            worker.solution[next_depth] = MOVE_NONE;
+            if (!collect_solutions) {
+                claim_solution(&worker);
+                ida_stop_all_tasks(tasks);
+            } else if (keep_solution(worker.solution, child->cube)) {
+                ida_stop_all_tasks(tasks);
+            } else if (!node->depth) {
+                /* Only below the root does a goal end the node. */
                 continue;
             }
-            found = 1;
-        } else if (search_threshold <= 1) {
-            continue;
-        } else {
-            found = ida_search(worker, cube, 1, search_threshold, first);
+            kept = 0;
+            break;
         }
+        if (next_depth >= level->threshold) {
+            continue;
+        }
+        memcpy(child->moves, node->moves, node->depth * sizeof(*node->moves));
+        child->moves[node->depth] = move;
+        child->previous = move;
+        child->depth = next_depth;
+        child->cost = h.cost;
+        kept++;
+    }
+    for (unsigned int child = 1; child < kept; child++) {
+        struct frontier_node pending = children[child];
+        unsigned int destination = child;
 
-        if (found) {
-            pthread_mutex_lock(&solution_lock);
-            if (atomic_load(&solution_task) == NO_TASK) {
-                memcpy(solution, worker->solution, sizeof(solution));
-                atomic_store(&solution_task, task);
-            }
-            pthread_mutex_unlock(&solution_lock);
+        while (destination && children[destination - 1].cost > pending.cost) {
+            children[destination] = children[destination - 1];
+            destination--;
+        }
+        children[destination] = pending;
+    }
+    level->children[index] = children;
+    level->child_count[index] = (unsigned char)kept;
+    finish_task(level, &worker);
+}
+
+static void search_frontier_node(struct ida_ordered_tasks *tasks, size_t index)
+{
+    struct frontier_level *level = tasks->context;
+    struct frontier_node *node = &level->nodes[index];
+    struct worker worker;
+
+    start_task(&worker, node);
+    if (ida_search(&worker, node->cube, node->depth, level->threshold, node->previous)) {
+        if (!collect_solutions) {
+            claim_solution(&worker);
+        }
+        ida_stop_all_tasks(tasks);
+    }
+    finish_task(level, &worker);
+}
+
+static int compare_collected(const void *left, const void *right)
+{
+    const move_type *a = collected[*(const unsigned int *)left];
+    const move_type *b = collected[*(const unsigned int *)right];
+
+    for (unsigned int index = 0; index <= MAX_IDA_THRESHOLD; index++) {
+        if (a[index] != b[index]) {
+            return a[index] < b[index] ? -1 : 1;
+        }
+        if (a[index] == MOVE_NONE) {
             break;
         }
     }
-    return NULL;
+    return 0;
+}
+
+/* Tasks finish in any order, so solutions kept from one root are sorted by their moves. */
+static void sort_collected(unsigned int first)
+{
+    unsigned int count = collected_count - first;
+    unsigned int *order;
+    move_type (*moves)[MAX_IDA_THRESHOLD + 1];
+    char (*keys)[CUBE_ARRAY_SIZE];
+
+    if (count < 2) {
+        return;
+    }
+    order = malloc(count * sizeof(*order));
+    moves = malloc(count * sizeof(*moves));
+    keys = malloc(count * sizeof(*keys));
+    if (!order || !moves || !keys) {
+        fprintf(stderr, "ERROR: could not sort daisy solutions\n");
+        exit(1);
+    }
+    for (unsigned int index = 0; index < count; index++) {
+        order[index] = first + index;
+    }
+    qsort(order, count, sizeof(*order), compare_collected);
+    for (unsigned int index = 0; index < count; index++) {
+        memcpy(moves[index], collected[order[index]], sizeof(*moves));
+        memcpy(keys[index], collected_keys[order[index]], sizeof(*keys));
+    }
+    memcpy(collected[first], moves, count * sizeof(*moves));
+    memcpy(collected_keys[first], keys, count * sizeof(*keys));
+    free(order);
+    free(moves);
+    free(keys);
+}
+
+static int compare_frontier_nodes(const void *left, const void *right)
+{
+    const struct frontier_node *a = left;
+    const struct frontier_node *b = right;
+
+    if (a->cost != b->cost) {
+        return a->cost < b->cost ? -1 : 1;
+    }
+    return a->order < b->order ? -1 : a->order > b->order;
 }
 
 static int search_at_threshold(
@@ -1663,35 +1826,83 @@ static int search_at_threshold(
     uint64_t *nodes
 )
 {
-    struct worker workers[MAX_THREADS];
-    pthread_t threads[MAX_THREADS];
-    unsigned int worker_count = thread_count < legal_move_count[MOVE_NONE] ?
-                                thread_count : legal_move_count[MOVE_NONE];
-
     unsigned int collected_before = collected_count;
+    struct frontier_level level;
 
     *nodes = 1;
-    search_threshold = threshold;
-    atomic_store(&next_task, 0);
     atomic_store(&solution_task, NO_TASK);
-    for (unsigned int index = 0; index < worker_count; index++) {
-        memset(&workers[index], 0, sizeof(workers[index]));
-        memset(&prune_profiles[index], 0, sizeof(prune_profiles[index]));
-        workers[index].root_cube = cube;
-        workers[index].profile_slot = index;
-        if (pthread_create(&threads[index], NULL, search_root_moves, &workers[index]) != 0) {
-            fprintf(stderr, "ERROR: could not create search thread %u\n", index);
+    memset(&prune_total, 0, sizeof(prune_total));
+    memset(&level, 0, sizeof(level));
+    level.threshold = threshold;
+    level.count = 1;
+    level.nodes = calloc(1, sizeof(*level.nodes));
+    if (!level.nodes) {
+        fprintf(stderr, "ERROR: could not allocate search tasks\n");
+        exit(1);
+    }
+    memcpy(level.nodes[0].cube, cube, CUBE_ARRAY_SIZE);
+    level.nodes[0].previous = MOVE_NONE;
+
+    for (unsigned char depth = 0;
+         !depth || (depth < MAX_SPLIT_PREFIX && level.count && level.count < SPLIT_TASK_TARGET &&
+                    depth + 1 < threshold && atomic_load(&solution_task) == NO_TASK);
+         depth++) {
+        struct frontier_node *next;
+        size_t next_count = 0;
+
+        level.children = calloc(level.count, sizeof(*level.children));
+        level.child_count = calloc(level.count, sizeof(*level.child_count));
+        if (!level.children || !level.child_count) {
+            fprintf(stderr, "ERROR: could not allocate search tasks\n");
             exit(1);
         }
+        level.tasks.task_count = level.count;
+        level.tasks.run = expand_frontier_node;
+        level.tasks.context = &level;
+        ida_run_ordered_tasks(&level.tasks, thread_count);
+
+        for (size_t index = 0; index < level.count; index++) {
+            next_count += level.child_count[index];
+        }
+        next = malloc((next_count ? next_count : 1) * sizeof(*next));
+        if (!next) {
+            fprintf(stderr, "ERROR: could not allocate search tasks\n");
+            exit(1);
+        }
+        next_count = 0;
+        for (size_t index = 0; index < level.count; index++) {
+            if (level.children[index]) {
+                memcpy(&next[next_count], level.children[index], level.child_count[index] * sizeof(*next));
+                next_count += level.child_count[index];
+                free(level.children[index]);
+            }
+        }
+        free(level.children);
+        free(level.child_count);
+        level.children = NULL;
+        level.child_count = NULL;
+        free(level.nodes);
+        level.nodes = next;
+        level.count = next_count;
     }
-    for (unsigned int index = 0; index < worker_count; index++) {
-        pthread_join(threads[index], NULL);
-        *nodes += workers[index].ida_count;
+
+    if (level.count && atomic_load(&solution_task) == NO_TASK) {
+        for (size_t index = 0; index < level.count; index++) {
+            level.nodes[index].order = (uint32_t)index;
+        }
+        qsort(level.nodes, level.count, sizeof(*level.nodes), compare_frontier_nodes);
+        level.tasks.task_count = level.count;
+        level.tasks.run = search_frontier_node;
+        level.tasks.context = &level;
+        ida_run_ordered_tasks(&level.tasks, thread_count);
     }
+    free(level.nodes);
+    *nodes += level.explored;
     if (profile_prunes) {
-        print_prune_profile(worker_count);
+        print_prune_profile();
     }
     if (collect_solutions) {
+        sort_collected(collected_before);
         return collected_count > collected_before;
     }
     return atomic_load(&solution_task) != NO_TASK;

@@ -1828,14 +1828,24 @@ unsigned int ida_thread_count(unsigned int requested)
     return requested > IDA_MAX_TASK_THREADS ? IDA_MAX_TASK_THREADS : requested;
 }
 
-void ida_stop_tasks_after(struct ida_ordered_tasks *tasks, size_t task)
+static void stop_tasks_from(struct ida_ordered_tasks *tasks, size_t task)
 {
-    size_t current = __atomic_load_n(&tasks->stop_task, __ATOMIC_RELAXED);
+    size_t current = __atomic_load_n(&tasks->stop_from, __ATOMIC_RELAXED);
 
     while (task < current &&
-            !__atomic_compare_exchange_n(&tasks->stop_task, &current, task, 1,
+            !__atomic_compare_exchange_n(&tasks->stop_from, &current, task, 1,
                                          __ATOMIC_RELAXED, __ATOMIC_RELAXED)) {
     }
+}
+
+void ida_stop_tasks_after(struct ida_ordered_tasks *tasks, size_t task)
+{
+    stop_tasks_from(tasks, task + 1);
+}
+
+void ida_stop_all_tasks(struct ida_ordered_tasks *tasks)
+{
+    stop_tasks_from(tasks, 0);
 }
 
 static void *ordered_task_worker(void *argument)
@@ -1858,7 +1868,7 @@ void ida_run_ordered_tasks(struct ida_ordered_tasks *tasks, unsigned int thread_
     unsigned int started = 0;
 
     tasks->next_task = 0;
-    tasks->stop_task = SIZE_MAX;
+    tasks->stop_from = SIZE_MAX;
     thread_count = ida_thread_count(thread_count);
     if (thread_count > tasks->task_count) {
         thread_count = (unsigned int)tasks->task_count;

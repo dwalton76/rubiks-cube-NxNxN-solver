@@ -4,6 +4,11 @@ Brainstorm from Nov 23. The searcher is `ida_search_555_centers_stage`. Phase 1 
 canonical state in the recolored 8 F / 8 L / 8 U space, plus the wing parity bit. The current heuristic is
 `max(t-cost, x-cost)` from two 9.47-billion-entry byte tables.
 
+**Status (Nov 27):** the searcher now uses only the joint LR nibble table (`--lr-joint-cost`, 17 GB to load, about
+36 GB to build). The step10 t/x tables (`--t-center-cost`/`--x-center-cost`, average depth about 9, too slow), the
+parity-aware `.sym-parity6.bin` table (about 69 GB to build, 26 GB to load), and the depth-8 goal ball (`--goal-ball`)
+were removed from both repos. The sections below are the record of those experiments; their flags no longer exist.
+
 ## Corrections to the earlier brainstorm message
 
 1. I said all 48 cube symmetries keep the goal. Only 4 do without relabelling colours (identity, x2, y2, z2). If you
@@ -504,10 +509,10 @@ most ~10% — not worth building unless deeper tables first shrink the `remainin
 ## Suggested order
 
 1. ~~Transposition table~~ (tried, no gain; see Results).
-2. ~~Backward ball~~ (tried raw to depth 6 and 48-sym to depth 8; caps depth cleanly, no wall-time gain; `--goal-ball` kept as optional CLI).
+2. ~~Backward ball~~ (tried raw to depth 6 and 48-sym to depth 8; caps depth cleanly, no wall-time gain; `--goal-ball` since removed).
 3. ~~Move ordering~~ (tried, no gain; see Results).
 4. ~~Move-compatibility bound~~ (redundant with the child expansion; see Results).
 5. Joint LR t+x table with UD and FB lookups: built; joint-only nibble is ~18x faster than the step10 t/x tables, and
-   the 6-bit parity-aware table (`.sym-parity6.bin`) cuts another 1.87x nodes / 1.44x search time on top. `RubiksCube555`
-   prefers `.sym-parity6.bin`, then `.sym-nibble.bin`, then step10 t/x.
+   the 6-bit parity-aware table (`.sym-parity6.bin`) cut another 1.87x nodes / 1.44x search time on top. The parity
+   table needed too much RAM, so `RubiksCube555` now uses only `.sym-nibble.bin`; step10 t/x and parity6 were removed.
 6. Prefetch the child table reads at tight nodes (unmeasured; likely still worthwhile).

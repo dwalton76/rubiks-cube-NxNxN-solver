@@ -15,6 +15,11 @@ _TABLE_TARGETS = (
     ("7x7x7", "777-tables"),
 )
 
+# Tables that make NNN-tables does not build. Each has its own target in ../rubiks-cube-lookup-tables.
+_SEPARATE_TABLE_TARGETS = {
+    "lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin": "555-lr-joint",
+}
+
 
 def _make_target(filename: str) -> str:
     basename = os.path.basename(filename)
@@ -32,8 +37,15 @@ def download_file_if_needed(filename: str) -> None:
     """
     if os.path.exists(filename):
         return
+    basename = os.path.basename(filename)
+    separate = _SEPARATE_TABLE_TARGETS.get(basename)
     target = _make_target(filename)
-    if target:
+    if separate:
+        instruction = (
+            f"Build it in ../rubiks-cube-lookup-tables with:\n\n    make {separate}\n\n"
+            f"then move lookup-tables/{basename} into this repo's lookup-tables/.\n"
+        )
+    elif target:
         instruction = f"Build them with:\n\n    make {target}\n"
     else:
         instruction = (

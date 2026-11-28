@@ -1,4 +1,4 @@
-
+#define _GNU_SOURCE
 #include "ida_search_core.h"
 
 #include <errno.h>
@@ -1615,6 +1615,7 @@ struct mapped_cost_file ida_map_cost_file(const char *filename, uint64_t expecte
 /*
  * Random 4 KB faults on an uncached multi-GB table run the search several times slower than a
  * sequential read of the file, so read every run of pages that is not already in the page cache.
+ * Holes in a sparse file fault in the zero page without disk I/O, so chunks with no data are skipped.
  */
 static void warm_page_cache(const struct mapped_cost_file *mapped, const char *filename)
 {
@@ -1631,6 +1632,17 @@ static void warm_page_cache(const struct mapped_cost_file *mapped, const char *f
     for (size_t offset = 0; offset < mapped->size; offset += WARM_CHUNK_BYTES) {
         size_t length = mapped->size - offset < WARM_CHUNK_BYTES ? mapped->size - offset : WARM_CHUNK_BYTES;
         size_t pages = (length + page_size - 1) / page_size;
+#ifdef SEEK_DATA
+        off_t data = lseek(mapped->fd, (off_t)offset, SEEK_DATA);
+
+        if (data < 0 && errno == ENXIO) {
+            break;
+        }
+        if (data >= 0 && (size_t)data >= offset + length) {
+            offset = ((size_t)data / WARM_CHUNK_BYTES - 1) * WARM_CHUNK_BYTES;
+            continue;
+        }
+#endif
 
         if (mincore(mapped->costs + offset, length, resident) != 0) {
             memset(resident, 0, pages);

@@ -16,13 +16,6 @@
  *
  * The packed file stores one nibble per cell: depth + 1, 0 is unseen.
  *
- * The parity-aware file adds two flag bits per cell, 6 bits in all. Orbit-0 OLL parity is the
- * parity of the number of wide quarter turns in the whole path (lrj_move_parity), and the
- * search needs a staging path of one fixed parity. With d the plain distance, flag p says that
- * a path of parity p reaches the goal in exactly d moves. A parity with no flag needs d + 1 or
- * more, so it is a valid lower bound that prunes exactly as well as the exact per-parity
- * distance did on sampled search nodes.
- *
  * The lookup-tables builder (build-555-lr-joint.c) and the searcher both
  * include this file, so geometry and indexing cannot drift apart.
  */
@@ -168,25 +161,6 @@ static inline uint64_t lrj_cell_index(uint32_t t_mask, uint32_t x_mask)
 static inline uint64_t lrj_packed_bytes(void)
 {
     return (lrj_cell_count() + 1) / 2;
-}
-
-/* Parity-aware file: cell i holds 6 bits at bit 6i, little endian: bits 0-3 are depth + 1 (0 unseen),
- * bit 4 is set when an even path reaches the goal in depth moves, bit 5 when an odd path does.
- * One pad byte follows so a 16-bit load at the last cell stays inside the file. */
-#define LRJ_PARITY_BITS 6
-
-static inline uint64_t lrj_parity_packed_bytes(void)
-{
-    return (lrj_cell_count() * LRJ_PARITY_BITS + 7) / 8 + 1;
-}
-
-static inline unsigned int lrj_parity_get(const unsigned char *packed, uint64_t cell)
-{
-    uint64_t bit = cell * LRJ_PARITY_BITS;
-    uint16_t word;
-
-    memcpy(&word, packed + (bit >> 3), sizeof(word));
-    return (unsigned int)((word >> (bit & 7)) & 0x3f);
 }
 
 /* Parity of a move for orbit-0 OLL: 1 for the wide quarter turns, 0 for every other 5x5 move. */
@@ -351,9 +325,7 @@ static inline int lrj_symmetry_keeps_lr(unsigned int symmetry)
     return symmetry / 8 < 2;
 }
 
-/* Every symmetry must conjugate the move set onto itself, for t and x together, and the move it
- * lands on must have the same wide-quarter parity. Every move with the same center action is
- * checked, so the parity-aware table is symmetric whichever one a search would pick. */
+/* Every symmetry must conjugate the move set onto itself, for t and x together. */
 static inline void lrj_check_conjugation(void)
 {
     for (unsigned int symmetry = 0; symmetry < LRJ_SYMMETRIES; symmetry++) {
@@ -371,9 +343,7 @@ static inline void lrj_check_conjugation(void)
                 }
                 if (matches) {
                     found = 1;
-                    if (lrj_move_parity(moves_555[candidate]) != lrj_move_parity(moves_555[move])) {
-                        lrj_fail("a symmetry does not preserve wide quarter turn parity");
-                    }
+                    break;
                 }
             }
             if (!found) {

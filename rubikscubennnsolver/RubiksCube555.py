@@ -16,16 +16,11 @@ is kept. Phases 4+5+6 do the same.
 
 Phase 1 - stage every center
     Recolor D to U, R to L, and B to F. The joint LR t+x table (46,935 t
-    classes times C(24,8) x placements) is read once per axis, mapping the U
-    and F axes onto LR by symmetry, and the search takes the max. A parity-aware
-    26 GB version of that table, when present, also tells each lookup whether a
-    shortest path can have the orbit-0 OLL parity the search needs. If the
-    joint table is absent, the search takes the max of the two step10 tables
-    instead: one for the t-centers and one for the x-centers, each with
-    24!/(8!*8!*8!) states. An outer turn spins the centers on that face,
-    and a wide turn carries centers onto the next face. This phase owns orbit-0
-    OLL: phase 3 has no wide quarter turn left, so a wrong parity here cannot
-    be fixed later.
+    classes times C(24,8) x placements, 17 GB) is read once per axis, mapping
+    the U and F axes onto LR by symmetry, and the search takes the max. An
+    outer turn spins the centers on that face, and a wide turn carries centers
+    onto the next face. This phase owns orbit-0 OLL: phase 3 has no wide
+    quarter turn left, so a wrong parity here cannot be fixed later.
 
 Phase 3 - EO the wings and midges; LR centers to 1-of-432
     Split the 24 wings and 12 midges into high/low groups. Each of the 12
@@ -103,10 +98,7 @@ PHASE1_X_CENTERS_TABLE_555 = (
 )
 PHASE2_T_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step21-FB-t-centers-stage.cost-only.bin"
 PHASE2_X_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step22-FB-x-centers-stage.cost-only.bin"
-PHASE12_T_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step10-t-centers-stage.cost-only.bin"
-PHASE12_X_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step10-x-centers-stage.cost-only.bin"
 PHASE12_LR_JOINT_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin"
-PHASE12_LR_JOINT_PARITY_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-parity6.bin"
 PHASE3_LR_CENTERS_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step901-LR-center-stage.cost-only.bin"
 PHASE3_EO_OUTER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step902-EO-outer-orbit.cost-only.bin"
 PHASE3_EO_INNER_TABLE_555 = "lookup-tables/lookup-table-5x5x5-step903-EO-inner-orbit.cost-only.bin"
@@ -820,20 +812,11 @@ class LookupTableIDA555CentersStage(LookupTableIDA555RankedCenters):
     F, eight L, and eight U (24!/(8!*8!*8!) = 9,465,511,770 states). Every 5x5 move is
     legal. Orbit-0 OLL is owned here because phase 3 has no wide quarter turn left.
 
-    When the joint LR t+x table is present, the heuristic is the max of its L, U, and F
-    axis lookups (about 18x faster on deep cubes). It is built by ``make 555-lr-joint``
-    in rubiks-cube-lookup-tables, which needs about 35 GB of RAM, so ``make 555-tables``
-    does not build it. Without it, the heuristic is the max of the two step10 tables.
+    The heuristic is the max of the joint LR t+x table's L, U, and F axis lookups. The
+    table is built by ``make 555-lr-joint`` in rubiks-cube-lookup-tables, which needs
+    about 36 GB of RAM, so ``make 555-tables`` does not build it.
 
-    The parity-aware version of the joint table (``make 555-lr-joint-parity``, about 69 GB
-    of RAM) is preferred when present. It adds two flag bits per cell, which of the even
-    and odd orbit-0 OLL parities a shortest path can have, so a node whose shortest paths
-    all have the wrong parity gets a bound one higher.
-
-        lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-parity6.bin
         lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin
-        lookup-table-5x5x5-step10-t-centers-stage.cost-only.bin
-        lookup-table-5x5x5-step10-x-centers-stage.cost-only.bin
     """
 
     def __init__(self, parent):
@@ -847,24 +830,13 @@ class LookupTableIDA555CentersStage(LookupTableIDA555RankedCenters):
         solution_count=1,
         **_kwargs,
     ):
-        if os.path.exists(PHASE12_LR_JOINT_PARITY_TABLE_555):
-            tables = ["--lr-joint-parity-cost", PHASE12_LR_JOINT_PARITY_TABLE_555]
-        elif os.path.exists(PHASE12_LR_JOINT_TABLE_555):
-            tables = ["--lr-joint-cost", PHASE12_LR_JOINT_TABLE_555]
-        else:
-            logger.warning(
-                "%s is missing, using the slower step10 t/x tables; build it with make 555-lr-joint "
-                "in rubiks-cube-lookup-tables",
-                PHASE12_LR_JOINT_TABLE_555,
-            )
-            download_file_if_needed(PHASE12_T_CENTERS_TABLE_555)
-            download_file_if_needed(PHASE12_X_CENTERS_TABLE_555)
-            tables = ["--t-center-cost", PHASE12_T_CENTERS_TABLE_555, "--x-center-cost", PHASE12_X_CENTERS_TABLE_555]
+        download_file_if_needed(PHASE12_LR_JOINT_TABLE_555)
         cmd = [
             "./ida_search_555_centers_stage",
             "--kociemba",
             self.parent.get_kociemba_string(True),
-            *tables,
+            "--lr-joint-cost",
+            PHASE12_LR_JOINT_TABLE_555,
             *self._parity_args(),
         ]
         if min_ida_threshold is not None:
@@ -2974,7 +2946,7 @@ class RubiksCube555(RubiksCube):
     def group_centers_phase1_and_2(self) -> None:
         """
         Stage every t-center and x-center with one search. The heuristic is the
-        max of the two ULF 8/8/8 tables, and the search owns orbit-0 OLL.
+        joint LR t+x table read on three axes, and the search owns orbit-0 OLL.
         """
         self.rotate_U_to_U()
         self.rotate_F_to_F()

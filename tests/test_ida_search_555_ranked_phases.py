@@ -34,7 +34,7 @@ PHASE4 = ROOT / "ida_search_555_phase4"
 PHASE5 = ROOT / "ida_search_555_phase5"
 PHASE6 = ROOT / "ida_search_555_phase6"
 PHASE1_UNIVERSE = math.comb(24, 8)
-CENTERS_UNIVERSE = math.comb(24, 8) * math.comb(16, 8)
+JOINT_BYTES = (46935 * 735471 + 1) // 2
 PHASE2_UNIVERSE = math.comb(16, 8)
 PHASE5_CENTERS_UNIVERSE = 70**4
 PHASE5_COMBO_UNIVERSE = 70 * 70 * 1680 * 70
@@ -191,15 +191,9 @@ class Ranked555PythonWiringTest(unittest.TestCase):
         self.assertNotIn("--x-center-cost", command)
         self.assertEqual(solutions, [((), (None,) * 5)])
 
-    def centers_stage_command(self, joint_present, parity_present=False):
-        present = set()
-        if joint_present:
-            present.add(cube555_module.PHASE12_LR_JOINT_TABLE_555)
-        if parity_present:
-            present.add(cube555_module.PHASE12_LR_JOINT_PARITY_TABLE_555)
+    def test_centers_stage_wrapper_passes_the_joint_table(self):
         with (
-            patch.object(cube555_module, "download_file_if_needed"),
-            patch.object(cube555_module.os.path, "exists", side_effect=lambda path: path in present),
+            patch.object(cube555_module, "download_file_if_needed") as download,
             patch.object(
                 cube555_module.subprocess,
                 "check_output",
@@ -209,31 +203,11 @@ class Ranked555PythonWiringTest(unittest.TestCase):
             solutions = self.cube.lt_centers_stage.solutions_via_c()
 
         self.assertEqual(solutions, [(("Uw'",), (None,) * 5)])
+        download.assert_called_once_with(cube555_module.PHASE12_LR_JOINT_TABLE_555)
         command = check_output.call_args.args[0]
         self.assertEqual(command[0], "./ida_search_555_centers_stage")
-        self.assertIn("--orbit0-need-even-w", command)
-        return command
-
-    def test_centers_stage_wrapper_uses_the_joint_table_when_present(self):
-        command = self.centers_stage_command(joint_present=True)
         self.assertEqual(command[command.index("--lr-joint-cost") + 1], cube555_module.PHASE12_LR_JOINT_TABLE_555)
-        self.assertNotIn("--t-center-cost", command)
-        self.assertNotIn("--x-center-cost", command)
-
-    def test_centers_stage_wrapper_prefers_the_parity_aware_joint_table(self):
-        command = self.centers_stage_command(joint_present=True, parity_present=True)
-        self.assertEqual(
-            command[command.index("--lr-joint-parity-cost") + 1], cube555_module.PHASE12_LR_JOINT_PARITY_TABLE_555
-        )
-        self.assertNotIn("--lr-joint-cost", command)
-        self.assertNotIn("--t-center-cost", command)
-
-    def test_centers_stage_wrapper_falls_back_to_t_x_tables(self):
-        with self.assertLogs(cube555_module.logger, level="WARNING"):
-            command = self.centers_stage_command(joint_present=False)
-        self.assertNotIn("--lr-joint-cost", command)
-        self.assertIn(cube555_module.PHASE12_T_CENTERS_TABLE_555, command)
-        self.assertIn(cube555_module.PHASE12_X_CENTERS_TABLE_555, command)
+        self.assertIn("--orbit0-need-even-w", command)
 
     def test_phase2_wrapper_maps_solution_back_to_ranked_root(self):
         with (
@@ -1024,48 +998,27 @@ class Ranked555Phase6Test(unittest.TestCase):
         self.assertIn("SOLUTION ROOT moved (1 steps): F2", result.stdout)
 
 
-def flu_rank(cube, squares):
-    recolor = str.maketrans("DRB", "ULF")
-    values = "".join(cube.state[square] for square in squares).translate(recolor)
-    return multiset_rank(values, "FLU", (8, 8, 8))
-
-
 @unittest.skipUnless(CENTERS.is_file(), "ida_search_555_centers_stage was not built")
 class Ranked555CentersStageTest(unittest.TestCase):
+    """An empty joint table gives no bound, so these runs are a blind search over the full move set."""
+
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
-        self.directory = Path(self.tempdir.name)
+        self.joint = Path(self.tempdir.name) / "joint.bin"
+        sparse_cost_file(self.joint, JOINT_BYTES, [])
         self.cube = RubiksCube555(solved_555, "URFDLB")
 
     def tearDown(self):
         self.tempdir.cleanup()
 
-    def write_tables(self, solved_ranks, extra_ranks=()):
-        t_path = self.directory / "t.bin"
-        x_path = self.directory / "x.bin"
-        sparse_cost_file(t_path, CENTERS_UNIVERSE, [solved_ranks[0], *extra_ranks[0:1]])
-        sparse_cost_file(x_path, CENTERS_UNIVERSE, [solved_ranks[1], *extra_ranks[1:2]])
-        if extra_ranks:
-            sparse_cost_file(t_path, CENTERS_UNIVERSE, extra_ranks[0:1], encoded=2)
-            sparse_cost_file(x_path, CENTERS_UNIVERSE, extra_ranks[1:2], encoded=2)
-        return t_path, x_path
-
-    def test_solved_rank_legal_moves_and_zero_solution(self):
-        solved_ranks = (
-            flu_rank(self.cube, t_centers_without_middles_555),
-            flu_rank(self.cube, x_centers_without_middles_555),
-        )
-        t_path, x_path = self.write_tables(solved_ranks)
-
+    def test_solved_cost_legal_moves_and_zero_solution(self):
         result = subprocess.run(
             [
                 str(CENTERS),
                 "--kociemba",
                 self.cube.get_kociemba_string(True),
-                "--t-center-cost",
-                str(t_path),
-                "--x-center-cost",
-                str(x_path),
+                "--lr-joint-cost",
+                str(self.joint),
                 "--orbit0-need-even-w",
                 "--max-ida-threshold",
                 "0",
@@ -1076,37 +1029,25 @@ class Ranked555CentersStageTest(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        actual = fields(result.stdout, "T_RANK ")
-        self.assertEqual(int(actual["T_RANK"]), solved_ranks[0])
-        self.assertEqual(int(actual["X_RANK"]), solved_ranks[1])
-        self.assertEqual(int(actual["COST"]), 0)
+        self.assertEqual(int(fields(result.stdout, "COST ")["COST"]), 0)
         self.assertIn("SOLUTION (0 steps):", result.stdout)
         legal = set(next(line for line in result.stdout.splitlines() if line.startswith("LEGAL_MOVES")).split()[1:])
         self.assertEqual(legal, set(moves_555))
 
     def test_uw_scramble_is_one_wide_quarter(self):
-        solved_ranks = (
-            flu_rank(self.cube, t_centers_without_middles_555),
-            flu_rank(self.cube, x_centers_without_middles_555),
-        )
         self.cube.rotate("Uw")
-        scrambled = (
-            flu_rank(self.cube, t_centers_without_middles_555),
-            flu_rank(self.cube, x_centers_without_middles_555),
-        )
-        self.assertNotEqual(scrambled, solved_ranks)
-        t_path, x_path = self.write_tables(solved_ranks, scrambled)
+        self.assertFalse(self.cube.centers_staged())
 
         result = subprocess.run(
             [
                 str(CENTERS),
                 "--kociemba",
                 self.cube.get_kociemba_string(True),
-                "--t-center-cost",
-                str(t_path),
-                "--x-center-cost",
-                str(x_path),
+                "--lr-joint-cost",
+                str(self.joint),
                 "--orbit0-need-odd-w",
+                "--threads",
+                "1",
                 "--print-ranks",
             ],
             capture_output=True,

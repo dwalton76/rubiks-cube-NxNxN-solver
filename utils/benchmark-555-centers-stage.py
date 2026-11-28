@@ -3,10 +3,10 @@
 
 Each --config is LABEL:FLAGS (FLAGS may be empty). The first config is the baseline: every other
 config must find a solution of the same length, and the summary reports nodes and wall-time ratios.
-Every config gets the step10 t and x tables unless its FLAGS include --no-t-x-tables.
+Every config gets the joint LR t+x table unless its FLAGS pass their own --lr-joint-cost.
 
     ./venv/bin/python3 utils/benchmark-555-centers-stage.py --count 20 --scramble-length 14 \
-        --config base: --config threads8:"--threads 8"
+        --config base:--orbit0-need-even-w --config threads8:"--orbit0-need-even-w --threads 8"
 """
 
 # standard libraries
@@ -23,13 +23,7 @@ from rubikscubennnsolver.RubiksCube555 import RubiksCube555, moves_555, solved_5
 
 SOLUTION_RE = re.compile(r"SOLUTION \((\d+) steps\)")
 THRESHOLD_RE = re.compile(r"IDA threshold (\d+), explored (\d+) nodes, took ([\d.]+)s")
-TABLES = (
-    "--t-center-cost",
-    "lookup-tables/lookup-table-5x5x5-step10-t-centers-stage.cost-only.bin",
-    "--x-center-cost",
-    "lookup-tables/lookup-table-5x5x5-step10-x-centers-stage.cost-only.bin",
-)
-NO_TABLES = "--no-t-x-tables"
+TABLES = ("--lr-joint-cost", "lookup-tables/lookup-table-5x5x5-step13-LR-t-x-centers-joint.sym-nibble.bin")
 
 
 def scrambled_states(count, length, seed):
@@ -44,8 +38,7 @@ def scrambled_states(count, length, seed):
 
 
 def run(state, flags, timeout):
-    tables = () if NO_TABLES in flags else TABLES
-    flags = [flag for flag in flags if flag != NO_TABLES]
+    tables = () if "--lr-joint-cost" in flags else TABLES
     cmd = ["./ida_search_555_centers_stage", "--kociemba", state, *tables, *flags]
     started = time.perf_counter()
     try:

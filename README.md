@@ -16,6 +16,7 @@ solving that 3x3x3.
 
 | Date | Commit | 4x4x4 | 5x5x5 | 6x6x6 | 7x7x7 | 8x8x8 | 9x9x9 | 10x10x10 |
 | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| 11/27/2026 | [f5b7bc3d](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/f5b7bc3d4850a84b1c6acc0223bb62f2250461ff) | **47** | **76.3** | **131.9** | **183.3** | **301.2** | **360** | **521** |
 | 11/18/2026 | [d1a98505](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/d1a98505b025b8ab1638c0d32e493aec41f8338e) | **47.1** | 78.9 | **132.9** | **185.9** | **304** | 368 | 524.6 |
 | 09/28/2021 | [60e964d4](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/60e964d4cd04951427ac00e4e709de785d98cac9)| 51.6 | 78.9 | **135.7** | 193.8 | **306.4** | **368.6** | **523.4** |
 | 09/26/2021 | [b6ab34f](https://github.com/dwalton76/rubiks-cube-NxNxN-solver/commit/b6ab34f9ef0323cb55466e67a1bf4d3510a8b7c0) | 51.6 | 78.9 | 139.7 | 193.8 | **320.6** | 394.4 | **549.2** |

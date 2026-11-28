@@ -81,14 +81,13 @@ static unsigned int requested_solutions = 1;
 static unsigned int min_threshold;
 static unsigned int max_threshold = DEFAULT_MAX_THRESHOLD;
 static int avoid_pll;
+static unsigned int thread_count;
 static atomic_uint found_solutions;
 static atomic_int stop_search;
 static pthread_mutex_t solution_lock = PTHREAD_MUTEX_INITIALIZER;
 static char summary_root_cube[CUBE_ARRAY_SIZE];
 
 struct worker {
-    char cube[CUBE_ARRAY_SIZE];
-    unsigned int threshold;
     uint64_t nodes;
     move_type path[MAX_THRESHOLD + 1];
 };
@@ -99,7 +98,7 @@ static void usage(const char *program)
         "usage: %s --kociemba STATE --edge-pairing-cost FILE "
         "--center-cost FILE "
         "[--solution-count N] [--min-ida-threshold N] "
-        "[--max-ida-threshold N] [--avoid-pll] [--print-rank]\n",
+        "[--max-ida-threshold N] [--avoid-pll] [--threads N] [--print-rank]\n",
         program
     );
 }
@@ -133,30 +132,44 @@ static unsigned int edge_id(char first, char second)
 #undef EDGE_KEY
 }
 
+/* edge_id for every pair of sticker characters, 0xff when they are not an edge. */
+static unsigned char edge_id_of[128][128];
+
+static void init_edge_ids(void)
+{
+    for (unsigned int first = 0; first < 128; first++) {
+        for (unsigned int second = 0; second < 128; second++) {
+            unsigned int id = edge_id((char)first, (char)second);
+
+            edge_id_of[first][second] = id < PAIR_COUNT ? (unsigned char)id : 0xff;
+        }
+    }
+}
+
+static unsigned int cube_edge_id(const char cube[CUBE_ARRAY_SIZE], unsigned int square, unsigned int partner)
+{
+    return edge_id_of[(unsigned char)cube[square] & 0x7f][(unsigned char)cube[partner] & 0x7f];
+}
+
+/* The Lehmer code of the first ten positions; odd permutations are not in the table. */
 static uint64_t even_permutation_rank(const unsigned char permutation[PAIR_COUNT])
 {
-    unsigned char remaining[PAIR_COUNT];
+    unsigned int remaining = (1U << PAIR_COUNT) - 1;
     uint64_t rank = 0;
     unsigned int parity = 0;
 
     for (unsigned int index = 0; index < PAIR_COUNT; index++) {
-        remaining[index] = (unsigned char)index;
-    }
-    for (unsigned int index = 0; index < PAIR_COUNT; index++) {
-        unsigned int digit = 0;
-        unsigned int remaining_count = PAIR_COUNT - index;
+        unsigned int value = permutation[index];
+        unsigned int digit = __builtin_popcount(remaining & ((1U << value) - 1));
 
-        while (digit < remaining_count && remaining[digit] != permutation[index]) {
-            digit++;
-        }
-        if (digit == remaining_count) {
+        if (!(remaining & (1U << value))) {
             return UINT64_MAX;
         }
         parity ^= digit & 1;
         if (index < PAIR_COUNT - 2) {
-            rank = (rank * remaining_count) + digit;
+            rank = (rank * (PAIR_COUNT - index)) + digit;
         }
-        memmove(&remaining[digit], &remaining[digit + 1], remaining_count - digit - 1);
+        remaining &= ~(1U << value);
     }
     return parity ? UINT64_MAX : rank;
 }
@@ -168,14 +181,14 @@ static uint64_t edge_pairing_rank(const char cube[CUBE_ARRAY_SIZE])
 
     memset(low_position, 0xff, sizeof(low_position));
     for (unsigned int low = 0; low < PAIR_COUNT; low++) {
-        unsigned int id = edge_id(cube[low_squares[low]], cube[low_partners[low]]);
+        unsigned int id = cube_edge_id(cube, low_squares[low], low_partners[low]);
         if (id >= PAIR_COUNT || low_position[id] != 0xff) {
             return UINT64_MAX;
         }
         low_position[id] = (unsigned char)low;
     }
     for (unsigned int high = 0; high < PAIR_COUNT; high++) {
-        unsigned int id = edge_id(cube[high_squares[high]], cube[high_partners[high]]);
+        unsigned int id = cube_edge_id(cube, high_squares[high], high_partners[high]);
         if (id >= PAIR_COUNT || low_position[id] == 0xff) {
             return UINT64_MAX;
         }
@@ -381,6 +394,98 @@ static void print_ida_summary(const move_type path[MAX_THRESHOLD + 1], unsigned 
     printf("\n");
 }
 
+/*
+ * Children are scored in their parent: every child's ranks are computed and its
+ * edge table byte prefetched before any table is read, since the 240 MB edge
+ * table misses cache on nearly every probe.
+ */
+struct child {
+    char cube[CUBE_ARRAY_SIZE];
+    move_type move;
+    unsigned char cost;
+};
+
+static unsigned int score_children(const char cube[CUBE_ARRAY_SIZE], move_type previous, struct child children[])
+{
+    uint64_t edge_ranks[MOVE_COUNT_444];
+    uint64_t center_ranks[MOVE_COUNT_444];
+    char scratch[CUBE_ARRAY_SIZE];
+    unsigned int count = 0;
+
+    for (unsigned int index = 0; index < MOVE_COUNT_444; index++) {
+        move_type move = moves_444[index];
+
+        if (!move_is_allowed(move) || !move_follows(previous, move)) {
+            continue;
+        }
+        memcpy(children[count].cube, cube, CUBE_ARRAY_SIZE);
+        rotate_444(children[count].cube, scratch, CUBE_ARRAY_SIZE, move);
+        children[count].move = move;
+        edge_ranks[count] = edge_pairing_rank(children[count].cube);
+        center_ranks[count] = center_rank(children[count].cube);
+        if (edge_ranks[count] < EDGE_PAIRING_UNIVERSE) {
+            __builtin_prefetch(&edge_costs[edge_ranks[count]]);
+        }
+        count++;
+    }
+    for (unsigned int index = 0; index < count; index++) {
+        unsigned char edge = encoded_cost(edge_costs, edge_ranks[index], EDGE_PAIRING_UNIVERSE);
+        unsigned char centers = encoded_cost(center_costs, center_ranks[index], CENTER_UNIVERSE);
+
+        children[index].cost = edge == UINT8_MAX || centers == UINT8_MAX ? UINT8_MAX
+                               : edge > centers                          ? edge
+                                                                         : centers;
+    }
+    return count;
+}
+
+/* 1 when the search should stop. */
+static int report_solution(const char cube[CUBE_ARRAY_SIZE], const move_type path[MAX_THRESHOLD + 1], unsigned int depth)
+{
+    if (avoid_pll && reduction_has_pll_parity(cube)) {
+        return 0;
+    }
+    pthread_mutex_lock(&solution_lock);
+    if (!atomic_load_explicit(&stop_search, memory_order_relaxed)) {
+        print_solution(path, depth);
+        print_ida_summary(path, depth);
+        if (atomic_fetch_add_explicit(&found_solutions, 1, memory_order_relaxed) + 1 >= requested_solutions) {
+            atomic_store_explicit(&stop_search, 1, memory_order_relaxed);
+        }
+    }
+    pthread_mutex_unlock(&solution_lock);
+    return atomic_load_explicit(&stop_search, memory_order_relaxed);
+}
+
+enum child_action { CHILD_PRUNED, CHILD_STOP, CHILD_EXPAND };
+
+/*
+ * A goal is only accepted at the threshold. A goal above it would have been
+ * found at a smaller threshold, so its subtree is skipped.
+ */
+static enum child_action classify_child(
+    struct worker *worker,
+    const struct child *child,
+    unsigned int next_depth,
+    unsigned int threshold)
+{
+    worker->nodes++;
+    if (atomic_load_explicit(&stop_search, memory_order_relaxed)) {
+        return CHILD_STOP;
+    }
+    if (child->cost == UINT8_MAX || next_depth + child->cost > threshold) {
+        return CHILD_PRUNED;
+    }
+    worker->path[next_depth - 1] = child->move;
+    if (!child->cost) {
+        if (next_depth == threshold && report_solution(child->cube, worker->path, next_depth)) {
+            return CHILD_STOP;
+        }
+        return CHILD_PRUNED;
+    }
+    return next_depth == threshold ? CHILD_PRUNED : CHILD_EXPAND;
+}
+
 static int search(
     struct worker *worker,
     const char cube[CUBE_ARRAY_SIZE],
@@ -388,58 +493,23 @@ static int search(
     unsigned int threshold,
     move_type previous)
 {
-    unsigned char cost = heuristic(cube);
-    char child[CUBE_ARRAY_SIZE];
-    char scratch[CUBE_ARRAY_SIZE];
+    struct child children[MOVE_COUNT_444];
+    unsigned int count = score_children(cube, previous, children);
 
-    worker->nodes++;
-    if (atomic_load_explicit(&stop_search, memory_order_relaxed)) {
-        return 1;
-    }
-    if (cost == UINT8_MAX || depth + cost > threshold) {
-        return 0;
-    }
-    if (!cost) {
-        if (depth == threshold) {
-            if (avoid_pll && reduction_has_pll_parity(cube)) {
-                return 0;
-            }
-            pthread_mutex_lock(&solution_lock);
-            if (!atomic_load_explicit(&stop_search, memory_order_relaxed)) {
-                print_solution(worker->path, depth);
-                print_ida_summary(worker->path, depth);
-                if (atomic_fetch_add_explicit(&found_solutions, 1, memory_order_relaxed) + 1 >= requested_solutions) {
-                    atomic_store_explicit(&stop_search, 1, memory_order_relaxed);
+    for (unsigned int index = 0; index < count; index++) {
+        switch (classify_child(worker, &children[index], depth + 1, threshold)) {
+            case CHILD_STOP:
+                return 1;
+            case CHILD_EXPAND:
+                if (search(worker, children[index].cube, depth + 1, threshold, children[index].move)) {
+                    return 1;
                 }
-            }
-            pthread_mutex_unlock(&solution_lock);
-        }
-        return atomic_load_explicit(&stop_search, memory_order_relaxed);
-    }
-    if (depth == threshold) {
-        return 0;
-    }
-
-    for (unsigned int index = 0; index < MOVE_COUNT_444; index++) {
-        move_type move = moves_444[index];
-        if (!move_is_allowed(move) || !move_follows(previous, move)) {
-            continue;
-        }
-        memcpy(child, cube, sizeof(child));
-        rotate_444(child, scratch, CUBE_ARRAY_SIZE, move);
-        worker->path[depth] = move;
-        if (search(worker, child, depth + 1, threshold, move)) {
-            return 1;
+                break;
+            case CHILD_PRUNED:
+                break;
         }
     }
     return 0;
-}
-
-static void *search_worker(void *argument)
-{
-    struct worker *worker = argument;
-    search(worker, worker->cube, 1, worker->threshold, worker->path[0]);
-    return NULL;
 }
 
 static double elapsed_seconds(const struct timeval *start, const struct timeval *end)
@@ -447,43 +517,159 @@ static double elapsed_seconds(const struct timeval *start, const struct timeval 
     return (end->tv_sec - start->tv_sec) + (end->tv_usec - start->tv_usec) / 1000000.0;
 }
 
+/*
+ * One task per root move left a few heavy subtrees running alone. The first
+ * plies are expanded level by level, in parallel and with the same rules as
+ * search, until there are SPLIT_TASK_TARGET surviving states or
+ * MAX_SPLIT_PREFIX plies; each survivor is then one task, in search order.
+ * Sorting the tasks by cost made the first solution arrive later.
+ */
+#define MAX_SPLIT_PREFIX 3
+#define SPLIT_TASK_TARGET 2048
+
+struct frontier_node {
+    char cube[CUBE_ARRAY_SIZE];
+    move_type path[MAX_SPLIT_PREFIX];
+    move_type previous;
+    unsigned char depth;
+};
+
+struct frontier_level {
+    struct ida_ordered_tasks tasks;
+    unsigned int threshold;
+    struct frontier_node *nodes;
+    size_t count;
+    /* Expansion only: the surviving children of nodes[index]. */
+    struct frontier_node **children;
+    unsigned char *child_count;
+    uint64_t explored;
+};
+
+static void start_task(struct worker *worker, const struct frontier_node *node)
+{
+    memset(worker, 0, sizeof(*worker));
+    memcpy(worker->path, node->path, node->depth * sizeof(*node->path));
+}
+
+static void expand_frontier_node(struct ida_ordered_tasks *tasks, size_t index)
+{
+    struct frontier_level *level = tasks->context;
+    const struct frontier_node *node = &level->nodes[index];
+    struct child children[MOVE_COUNT_444];
+    struct frontier_node *kept = malloc(MOVE_COUNT_444 * sizeof(*kept));
+    unsigned int count = score_children(node->cube, node->previous, children);
+    unsigned int kept_count = 0;
+    struct worker worker;
+
+    if (!kept) {
+        fprintf(stderr, "ERROR: could not allocate search tasks\n");
+        exit(1);
+    }
+    start_task(&worker, node);
+    for (unsigned int child = 0; child < count; child++) {
+        enum child_action action = classify_child(&worker, &children[child], node->depth + 1, level->threshold);
+
+        if (action == CHILD_STOP) {
+            ida_stop_all_tasks(tasks);
+            break;
+        }
+        if (action == CHILD_EXPAND) {
+            struct frontier_node *next = &kept[kept_count++];
+
+            memcpy(next->cube, children[child].cube, CUBE_ARRAY_SIZE);
+            memcpy(next->path, worker.path, (node->depth + 1) * sizeof(*next->path));
+            next->previous = children[child].move;
+            next->depth = node->depth + 1;
+        }
+    }
+    level->children[index] = kept;
+    level->child_count[index] = (unsigned char)kept_count;
+    __atomic_fetch_add(&level->explored, worker.nodes, __ATOMIC_RELAXED);
+}
+
+static void search_frontier_node(struct ida_ordered_tasks *tasks, size_t index)
+{
+    struct frontier_level *level = tasks->context;
+    const struct frontier_node *node = &level->nodes[index];
+    struct worker worker;
+
+    start_task(&worker, node);
+    if (search(&worker, node->cube, node->depth, level->threshold, node->previous)) {
+        ida_stop_all_tasks(tasks);
+    }
+    __atomic_fetch_add(&level->explored, worker.nodes, __ATOMIC_RELAXED);
+}
+
 static uint64_t search_threshold(
     const char cube[CUBE_ARRAY_SIZE],
     unsigned int threshold)
 {
-    pthread_t threads[MOVE_COUNT_444];
-    struct worker workers[MOVE_COUNT_444];
-    unsigned int thread_count = 0;
-    uint64_t total_nodes = 1;
+    struct frontier_level level;
 
     atomic_store(&found_solutions, 0);
     atomic_store(&stop_search, 0);
+    memset(&level, 0, sizeof(level));
+    level.threshold = threshold;
+    level.count = 1;
+    level.nodes = calloc(1, sizeof(*level.nodes));
+    if (!level.nodes) {
+        fprintf(stderr, "ERROR: could not allocate search tasks\n");
+        exit(1);
+    }
+    memcpy(level.nodes[0].cube, cube, CUBE_ARRAY_SIZE);
+    level.nodes[0].previous = MOVE_NONE;
 
-    for (unsigned int index = 0; index < MOVE_COUNT_444; index++) {
-        move_type move = moves_444[index];
-        char scratch[CUBE_ARRAY_SIZE];
-        struct worker *worker;
+    for (unsigned int depth = 0;
+         !depth || (depth < MAX_SPLIT_PREFIX && level.count && level.count < SPLIT_TASK_TARGET &&
+                    depth + 1 < threshold && !atomic_load(&stop_search));
+         depth++) {
+        struct frontier_node *next;
+        size_t next_count = 0;
 
-        if (!move_is_allowed(move)) {
-            continue;
-        }
-        worker = &workers[thread_count];
-        memset(worker, 0, sizeof(*worker));
-        memcpy(worker->cube, cube, CUBE_ARRAY_SIZE);
-        rotate_444(worker->cube, scratch, CUBE_ARRAY_SIZE, move);
-        worker->threshold = threshold;
-        worker->path[0] = move;
-        if (pthread_create(&threads[thread_count], NULL, search_worker, worker) != 0) {
-            fprintf(stderr, "ERROR: could not create search thread\n");
+        level.children = calloc(level.count, sizeof(*level.children));
+        level.child_count = calloc(level.count, sizeof(*level.child_count));
+        if (!level.children || !level.child_count) {
+            fprintf(stderr, "ERROR: could not allocate search tasks\n");
             exit(1);
         }
-        thread_count++;
+        level.tasks.task_count = level.count;
+        level.tasks.run = expand_frontier_node;
+        level.tasks.context = &level;
+        ida_run_ordered_tasks(&level.tasks, thread_count);
+
+        for (size_t index = 0; index < level.count; index++) {
+            next_count += level.child_count[index];
+        }
+        next = malloc((next_count ? next_count : 1) * sizeof(*next));
+        if (!next) {
+            fprintf(stderr, "ERROR: could not allocate search tasks\n");
+            exit(1);
+        }
+        next_count = 0;
+        for (size_t index = 0; index < level.count; index++) {
+            if (level.children[index]) {
+                memcpy(&next[next_count], level.children[index], level.child_count[index] * sizeof(*next));
+                next_count += level.child_count[index];
+                free(level.children[index]);
+            }
+        }
+        free(level.children);
+        free(level.child_count);
+        level.children = NULL;
+        level.child_count = NULL;
+        free(level.nodes);
+        level.nodes = next;
+        level.count = next_count;
     }
-    for (unsigned int index = 0; index < thread_count; index++) {
-        pthread_join(threads[index], NULL);
-        total_nodes += workers[index].nodes;
+
+    if (level.count && !atomic_load(&stop_search)) {
+        level.tasks.task_count = level.count;
+        level.tasks.run = search_frontier_node;
+        level.tasks.context = &level;
+        ida_run_ordered_tasks(&level.tasks, thread_count);
     }
-    return total_nodes;
+    free(level.nodes);
+    return 1 + level.explored;
 }
 
 static void init_cube(char cube[CUBE_ARRAY_SIZE], const char *kociemba)
@@ -522,6 +708,8 @@ int main(int argc, char **argv)
             max_threshold = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--avoid-pll")) {
             avoid_pll = 1;
+        } else if (!strcmp(argv[index], "--threads") && index + 1 < argc) {
+            thread_count = (unsigned int)strtoul(argv[++index], NULL, 10);
         } else if (!strcmp(argv[index], "--print-rank")) {
             print_rank = 1;
         } else if (!strcmp(argv[index], "-h") || !strcmp(argv[index], "--help")) {
@@ -539,6 +727,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    thread_count = ida_thread_count(thread_count);
+    init_edge_ids();
     init_cube(cube, kociemba);
     map_cost_file(cost_filename, EDGE_PAIRING_UNIVERSE, &edge_cost_fd, &edge_costs);
     map_cost_file(center_cost_filename, CENTER_UNIVERSE, &center_cost_fd, &center_costs);

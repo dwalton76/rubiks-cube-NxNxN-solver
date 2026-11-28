@@ -104,16 +104,4 @@ transform_center_symbol_444(unsigned int symmetry, unsigned char symbol)
     return center_symmetry_symbols_444[symmetry][index];
 }
 
-static void
-transform_centers_444(
-    const unsigned char source[CENTER_SYMMETRY_STICKERS_444],
-    unsigned char destination[CENTER_SYMMETRY_STICKERS_444],
-    unsigned int symmetry)
-{
-    for (unsigned int index = 0; index < CENTER_SYMMETRY_STICKERS_444; index++) {
-        destination[center_symmetry_positions_444[symmetry][index]] =
-            transform_center_symbol_444(symmetry, source[index]);
-    }
-}
-
 #endif

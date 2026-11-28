@@ -91,6 +91,8 @@ The 6x6 and 7x7 searchers (`666_centers_stage`, `777_centers_stage`, `777_UD_cen
 
 The 7x7 centers searchers move bitmask node states (per-orbit masks, byte-chunk move tables, table-driven ranks) instead of cube arrays.
 
+`ida_search_444_phase2` splits the same way, but runs its tasks in search order, because sorting them by cost delayed the first streamed solution. It scores each node's children together and prefetches their edge-table bytes, and takes `--threads N`. `ida_search_444_phase1` keeps its two-move prefix pool. Its wing cost still scans every even edge mapping in root-cost order and stops at the first mapping at or below the budget floor, but it ranks mappings in prefetched batches with byte-chunk tables. Its 48-symmetry center canonicalization moves 24-bit symbol masks through per-symmetry byte tables, and its multiset ranks come from per-position step tables.
+
 ### Ranked `cost-only.bin`
 
 Dense byte array, one byte per mixed-radix rank.

@@ -321,58 +321,135 @@ static float cost_to_goal_multiplier;
 static move_type solution[MAX_THRESHOLD + 1];
 static unsigned int solution_length;
 
-static uint64_t center_888_rank(const unsigned char state[CENTER_COUNT])
+/*
+ * The rank of the smallest of the 48 symmetric center strings, where U/D, L/R
+ * and F/B are merged into U, L and F and strings compare with F < L < U. Each
+ * symbol is a 24-bit mask, and a symmetry moves a mask one byte at a time
+ * straight into key bits. The key holds two bits per position (F = 0, L = 1,
+ * U = 2), position 0 highest, so comparing keys compares the strings.
+ */
+static uint64_t center_key_chunk[CENTER_SYMMETRY_COUNT_444][3][256];
+static unsigned char center_source_symbol[CENTER_SYMMETRY_COUNT_444][3];
+/* center_rank_step[f][l][u][symbol] is one position's share of the multiset permutation rank. */
+static uint64_t center_rank_step[9][9][9][3];
+/* The same for lr_center_rank, whose symbols are L, R and everything else. */
+static uint32_t lr_rank_step[5][5][17][3];
+
+static uint64_t multinomial(unsigned int a, unsigned int b, unsigned int c)
 {
-    uint64_t rank = 0;
-    uint64_t permutations = ALL_CENTER_RAW_UNIVERSE;
+    return binom[a + b + c][a] * binom[b + c][b];
+}
+
+static void init_center_ranking(void)
+{
+    static const char symbols[3] = {'F', 'L', 'U'};
+
+    for (unsigned int symmetry = 0; symmetry < CENTER_SYMMETRY_COUNT_444; symmetry++) {
+        for (unsigned int chunk = 0; chunk < 3; chunk++) {
+            for (unsigned int byte = 0; byte < 256; byte++) {
+                uint64_t moved = 0;
+
+                for (unsigned int bit = 0; bit < 8; bit++) {
+                    if (byte & (1U << bit)) {
+                        unsigned int position = center_symmetry_positions_444[symmetry][chunk * 8 + bit];
+
+                        moved |= UINT64_C(1) << (2 * (23 - position));
+                    }
+                }
+                center_key_chunk[symmetry][chunk][byte] = moved;
+            }
+        }
+        for (unsigned int source = 0; source < 3; source++) {
+            char target = (char)transform_center_symbol_444(symmetry, (unsigned char)symbols[source]);
+
+            for (unsigned int code = 0; code < 3; code++) {
+                if (symbols[code] == target) {
+                    center_source_symbol[symmetry][code] = (unsigned char)source;
+                }
+            }
+        }
+    }
+    for (unsigned int f = 0; f <= 8; f++) {
+        for (unsigned int l = 0; l <= 8; l++) {
+            for (unsigned int u = 0; u <= 8; u++) {
+                center_rank_step[f][l][u][0] = 0;
+                center_rank_step[f][l][u][1] = f ? multinomial(f - 1, l, u) : 0;
+                center_rank_step[f][l][u][2] = center_rank_step[f][l][u][1] + (l ? multinomial(f, l - 1, u) : 0);
+            }
+        }
+    }
+    for (unsigned int l = 0; l <= 4; l++) {
+        for (unsigned int r = 0; r <= 4; r++) {
+            for (unsigned int other = 0; other <= 16; other++) {
+                lr_rank_step[l][r][other][0] = 0;
+                lr_rank_step[l][r][other][1] = l ? (uint32_t)multinomial(l - 1, r, other) : 0;
+                lr_rank_step[l][r][other][2] =
+                    lr_rank_step[l][r][other][1] + (r ? (uint32_t)multinomial(l, r - 1, other) : 0);
+            }
+        }
+    }
+}
+
+static uint64_t center_key_bits(unsigned int symmetry, uint32_t mask)
+{
+    return center_key_chunk[symmetry][0][mask & 0xff] | center_key_chunk[symmetry][1][(mask >> 8) & 0xff] |
+           center_key_chunk[symmetry][2][mask >> 16];
+}
+
+static uint64_t all_center_canonical_rank(const char cube[CUBE_ARRAY_SIZE])
+{
+    uint32_t masks[3] = {0, 0, 0};
+    uint64_t best = UINT64_MAX;
     unsigned int remaining[3] = {8, 8, 8};
+    uint64_t rank = 0;
 
-    for (unsigned int position = 0; position < CENTER_COUNT; position++) {
-        unsigned int slots = CENTER_COUNT - position;
-        unsigned int symbol;
-
-        switch (state[position]) {
-            case 'F': symbol = 0; break;
-            case 'L': symbol = 1; break;
-            case 'U': symbol = 2; break;
+    for (unsigned int index = 0; index < CENTER_COUNT; index++) {
+        switch (cube[center_squares[index]]) {
+            case 'F':
+            case 'B': masks[0] |= UINT32_C(1) << index; break;
+            case 'L':
+            case 'R': masks[1] |= UINT32_C(1) << index; break;
+            case 'U':
+            case 'D': masks[2] |= UINT32_C(1) << index; break;
             default: return UINT64_MAX;
         }
-        if (!remaining[symbol]) {
-            return UINT64_MAX;
+    }
+    if (__builtin_popcount(masks[0]) != 8 || __builtin_popcount(masks[1]) != 8) {
+        return UINT64_MAX;
+    }
+    for (unsigned int symmetry = 0; symmetry < CENTER_SYMMETRY_COUNT_444; symmetry++) {
+        uint64_t key = center_key_bits(symmetry, masks[center_source_symbol[symmetry][1]]) |
+                       (center_key_bits(symmetry, masks[center_source_symbol[symmetry][2]]) << 1);
+
+        if (key < best) {
+            best = key;
         }
-        for (unsigned int smaller = 0; smaller < symbol; smaller++) {
-            rank += permutations * remaining[smaller] / slots;
-        }
-        permutations = permutations * remaining[symbol] / slots;
+    }
+    for (int position = CENTER_COUNT - 1; position >= 0; position--) {
+        unsigned int symbol = (unsigned int)(best >> (2 * position)) & 3;
+
+        rank += center_rank_step[remaining[0]][remaining[1]][remaining[2]][symbol];
         remaining[symbol]--;
     }
     return rank;
 }
 
-static uint64_t all_center_canonical_rank(const char cube[CUBE_ARRAY_SIZE])
+static uint64_t lr_center_rank(const char cube[CUBE_ARRAY_SIZE])
 {
-    unsigned char state[CENTER_COUNT];
-    unsigned char transformed[CENTER_COUNT];
-    unsigned char canonical[CENTER_COUNT];
+    unsigned int remaining[3] = {4, 4, 16};
+    uint64_t rank = 0;
 
-    for (unsigned int index = 0; index < CENTER_COUNT; index++) {
-        switch (cube[center_squares[index]]) {
-            case 'U':
-            case 'D': state[index] = 'U'; break;
-            case 'L':
-            case 'R': state[index] = 'L'; break;
-            case 'F':
-            case 'B': state[index] = 'F'; break;
-            default: return UINT64_MAX;
+    for (unsigned int position = 0; position < CENTER_COUNT; position++) {
+        char value = cube[center_squares[position]];
+        unsigned int symbol = value == 'L' ? 0 : value == 'R' ? 1 : 2;
+
+        if (!remaining[symbol]) {
+            return UINT64_MAX;
         }
+        rank += lr_rank_step[remaining[0]][remaining[1]][remaining[2]][symbol];
+        remaining[symbol]--;
     }
-    for (unsigned int symmetry = 0; symmetry < CENTER_SYMMETRY_COUNT_444; symmetry++) {
-        transform_centers_444(state, transformed, symmetry);
-        if (!symmetry || memcmp(transformed, canonical, sizeof(canonical)) < 0) {
-            memcpy(canonical, transformed, sizeof(canonical));
-        }
-    }
-    return center_888_rank(canonical);
+    return rank;
 }
 
 static unsigned char decoded_cost(const struct cost_file *table, uint64_t rank)
@@ -392,26 +469,6 @@ static unsigned char all_center_cost(const char cube[CUBE_ARRAY_SIZE])
         ? UINT64_MAX
         : symmetry_dense_rank(&all_center_index, raw);
     return decoded_cost(&all_center_table, dense);
-}
-
-static uint64_t wing_rank_from_mask(uint32_t low_slots)
-{
-    uint64_t rank = 0;
-    unsigned int low_count = 12;
-
-    for (unsigned int position = 0; position < WING_COUNT; position++) {
-        unsigned int after = WING_COUNT - position - 1;
-
-        if (low_slots & (UINT32_C(1) << position)) {
-            if (!low_count) {
-                return UINT64_MAX;
-            }
-            low_count--;
-        } else if (low_count) {
-            rank += binom[after][low_count - 1];
-        }
-    }
-    return low_count ? UINT64_MAX : rank;
 }
 
 static unsigned int edge_id(char first, char second)
@@ -472,6 +529,52 @@ static int wing_slots(
     return 1;
 }
 
+/*
+ * The C(24,12) rank of the low-wing slots, one byte of slots at a time:
+ * wing_rank_chunk[chunk][byte][lows in the earlier chunks] is that byte's share.
+ */
+static uint32_t wing_rank_chunk[3][256][13];
+
+static void init_wing_rank_chunks(void)
+{
+    for (unsigned int chunk = 0; chunk < 3; chunk++) {
+        for (unsigned int byte = 0; byte < 256; byte++) {
+            for (unsigned int lows_before = 0; lows_before <= 12; lows_before++) {
+                unsigned int low_count = 12 - lows_before;
+                uint32_t rank = 0;
+
+                for (unsigned int bit = 0; bit < 8; bit++) {
+                    unsigned int after = WING_COUNT - (chunk * 8 + bit) - 1;
+
+                    if (byte & (1U << bit)) {
+                        if (!low_count) {
+                            break;
+                        }
+                        low_count--;
+                    } else if (low_count) {
+                        rank += (uint32_t)binom[after][low_count - 1];
+                    }
+                }
+                wing_rank_chunk[chunk][byte][lows_before] = rank;
+            }
+        }
+    }
+}
+
+static uint64_t wing_rank_from_mask(uint32_t low_slots)
+{
+    unsigned int byte0 = low_slots & 0xff;
+    unsigned int byte1 = (low_slots >> 8) & 0xff;
+    unsigned int lows0 = __builtin_popcount(byte0);
+    unsigned int lows1 = lows0 + __builtin_popcount(byte1);
+
+    if (__builtin_popcount(low_slots) != 12) {
+        return UINT64_MAX;
+    }
+    return wing_rank_chunk[0][byte0][0] + wing_rank_chunk[1][byte1][lows0] +
+           wing_rank_chunk[2][low_slots >> 16][lows1];
+}
+
 static unsigned char wing_cost_for_mapping(
     const uint32_t edge_slots[EDGE_COUNT],
     uint32_t low_slots,
@@ -490,7 +593,14 @@ static unsigned char wing_cost_for_mapping(
  * Any of the candidate mappings is an acceptable goal, so the admissible wing
  * cost is the cheapest of them. Stop as soon as one cannot raise the node cost
  * above the centers cost, which is the common case.
+ *
+ * The scan usually runs to the end near the solving threshold, so mappings are
+ * ranked a batch at a time and their table bytes prefetched before any is read.
+ * The first batch is small because the early exit usually fires on it.
  */
+#define WING_FIRST_BATCH 8
+#define WING_BATCH 64
+
 static unsigned char wing_cost_min(
     const char cube[CUBE_ARRAY_SIZE],
     const char highlow[CUBE_ARRAY_SIZE],
@@ -498,52 +608,47 @@ static unsigned char wing_cost_min(
 {
     uint32_t edge_slots[EDGE_COUNT];
     uint32_t low_slots;
+    uint32_t toggle_low[64];
+    uint32_t toggle_high[64];
+    uint64_t ranks[WING_BATCH];
     unsigned char best = UINT8_MAX;
+    unsigned int batch = WING_FIRST_BATCH;
 
     if (!wing_slots(cube, highlow, edge_slots, &low_slots)) {
         return UINT8_MAX;
     }
-    for (unsigned int index = 0; index < EVEN_MAPPING_COUNT; index++) {
-        unsigned char cost = wing_cost_for_mapping(edge_slots, low_slots, selected_mapping_masks[index]);
+    toggle_low[0] = low_slots;
+    toggle_high[0] = 0;
+    for (unsigned int mask = 1; mask < 64; mask++) {
+        unsigned int edge = __builtin_ctz(mask);
 
-        if (cost < best) {
-            best = cost;
-            if (best <= floor_cost) {
-                break;
+        toggle_low[mask] = toggle_low[mask & (mask - 1)] ^ edge_slots[edge];
+        toggle_high[mask] = toggle_high[mask & (mask - 1)] ^ edge_slots[edge + 6];
+    }
+    for (unsigned int start = 0; start < EVEN_MAPPING_COUNT; start += batch, batch = WING_BATCH) {
+        unsigned int count = EVEN_MAPPING_COUNT - start < batch ? EVEN_MAPPING_COUNT - start : batch;
+
+        for (unsigned int index = 0; index < count; index++) {
+            unsigned int mapping = selected_mapping_masks[start + index];
+            uint64_t rank = wing_rank_from_mask(toggle_low[mapping & 63] ^ toggle_high[mapping >> 6]);
+
+            ranks[index] = rank;
+            if (rank < WING_UNIVERSE) {
+                __builtin_prefetch(&wing_table.costs[rank]);
+            }
+        }
+        for (unsigned int index = 0; index < count; index++) {
+            unsigned char cost = decoded_cost(&wing_table, ranks[index]);
+
+            if (cost < best) {
+                best = cost;
+                if (best <= floor_cost) {
+                    return best;
+                }
             }
         }
     }
     return best;
-}
-
-static uint64_t lr_center_rank(const char cube[CUBE_ARRAY_SIZE])
-{
-    uint64_t rank = 0;
-    uint64_t permutations = LR_CENTER_UNIVERSE;
-    unsigned int remaining[3] = {4, 4, 16};
-
-    for (unsigned int position = 0; position < CENTER_COUNT; position++) {
-        unsigned int slots = CENTER_COUNT - position;
-        unsigned int symbol;
-        char value = cube[center_squares[position]];
-
-        if (value == 'L') {
-            symbol = 0;
-        } else if (value == 'R') {
-            symbol = 1;
-        } else {
-            symbol = 2;
-        }
-        if (!remaining[symbol]) {
-            return UINT64_MAX;
-        }
-        for (unsigned int smaller = 0; smaller < symbol; smaller++) {
-            rank += permutations * remaining[smaller] / slots;
-        }
-        permutations = permutations * remaining[symbol] / slots;
-        remaining[symbol]--;
-    }
-    return rank;
 }
 
 static int centers_are_phase2_goal(const char cube[CUBE_ARRAY_SIZE])
@@ -1171,7 +1276,9 @@ int main(int argc, char **argv)
     }
 
     init_binom();
+    init_wing_rank_chunks();
     init_center_symmetry_444();
+    init_center_ranking();
     init_cube(cube, kociemba);
     init_highlow(highlow, highlow_state);
     map_symmetry_index(&all_center_index, all_center_index_filename, ALL_CENTER_RAW_UNIVERSE, "4x4x4 center symmetry index");
